@@ -36,7 +36,7 @@ def main_numerical_only(
 ) -> None:
 
 
-    scores, predictions,data_shapes  = train_regressor(
+    scores, predictions,ls  = train_regressor(
                                             dataset=dataset,
                                             features_impute=columns_to_impute,
                                             special_impute=special_impute,
@@ -58,7 +58,7 @@ def main_numerical_only(
     
     save_results(scores,
                 predictions=predictions,
-                df_shapes=data_shapes,
+                feat_length_scale=ls,
                 imputer=imputer,
                 representation= None,
                 pu_type= None,
@@ -86,35 +86,40 @@ def main_numerical_only(
 
 
 if __name__ == "__main__":
-    if TEST==False:
+    # if TEST==False:
 
-        args = parse_arguments()
+    #     args = parse_arguments()
+    #     main_numerical_only(
+    #         dataset=w_data,
+    #         regressor_type=args.regressor_type,
+    #         kernel=args.kernel,
+    #         target_features=[args.target_features],  
+    #         transform_type='Standard',
+    #         hyperparameter_optimization=True,
+    #         columns_to_impute=args.columns_to_impute,  
+    #         special_impute=args.special_impute,
+    #         numerical_feats=args.numerical_feats,  
+    #         imputer=args.imputer,
+    #         cutoff=None,  
+    #         second_transformer=None,
+    #         classification=False
+    #     )
+    # else:
         main_numerical_only(
             dataset=w_data,
-            regressor_type=args.regressor_type,
-            kernel=args.kernel,
-            target_features=[args.target_features],  
-            transform_type='Standard',
-            hyperparameter_optimization=True,
-            columns_to_impute=args.columns_to_impute,  
-            special_impute=args.special_impute,
-            numerical_feats=args.numerical_feats,  
-            imputer=args.imputer,
-            cutoff=None,  
-            second_transformer=None,
-            classification=False
-        )
-    else:
-        main_numerical_only(
-            dataset=w_data,
-            regressor_type="MLP",
-            # kernel= "matern",
+            regressor_type="sklearn-GPR",
+            kernel= "rbf",
             target_features=['log Rg (nm)'],  # Can adjust based on actual usage
-            transform_type='Standard',
-            hyperparameter_optimization=True,
+            transform_type='Standard',  
+            hyperparameter_optimization=False,
             columns_to_impute=None,
             special_impute=None,
-            numerical_feats=['Mw (g/mol)','PDI', "Concentration (mg/ml)", "Temperature SANS/SLS/DLS/SEC (K)", "solvent dP", "solvent dD", "solvent dH"],
+            numerical_feats=[
+                            'Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
+                            "Temperature SANS/SLS/DLS/SEC (K)", 
+                            "polymer dP", "polymer dD", "polymer dH",
+                            'solvent dP', 'solvent dD', 'solvent dH'
+                             ],
             imputer=None,
             classification=False,
             cutoff=None)

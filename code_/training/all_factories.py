@@ -2,6 +2,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor,RandomForestClassifier
 from xgboost import XGBRegressor, XGBClassifier
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.svm import SVR
 from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
@@ -110,22 +111,34 @@ regressor_factory: dict[str, type]={
     "GPR": GPRegressor,
     "sklearn-GPR":GaussianProcessRegressor,
     "MLP": MLPRegressor(),
+    'HGBR': HistGradientBoostingRegressor(),
 }
 
-def optimized_models(model_name:str,random_state:int=0, **kwargs):
+def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'NGB'==model_name:
-        return NGBRegressor(n_estimators=2000, learning_rate=0.01, tol=1e-4,
+        return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,**kwargs)
     if 'XGBR'==model_name:
-        return  XGBRegressor(eval_metric="rmse", n_estimators=2000,
-                              learning_rate=0.01, max_depth=10000, random_state=None, n_jobs=-1,**kwargs)
+        return  XGBRegressor(eval_metric="rmse", n_estimators=500,
+                              learning_rate=0.01, random_state=None, n_jobs=-1,**kwargs)
     
     if 'RF'==model_name:
         return RandomForestRegressor(n_estimators=100, max_depth=None, 
-                                     random_state=None, n_jobs=-1,**kwargs,
-                                    #    max_features="sqrt"
-                                       )
+                                        random_state=None, n_jobs=-1,**kwargs,
+                                        max_features="sqrt"
+                                        )
+    if 'HGBR'==model_name:
+        return HistGradientBoostingRegressor(max_iter=2000, max_depth=None, 
+                                            #  min_samples_leaf=20, max_leaf_nodes=1000,
+                                             learning_rate=0.01, l2_regularization=1e-6,
+                                             scoring='neg_root_mean_squared_error', random_state=None,**kwargs)
+    if 'MLP'==model_name:
+        return MLPRegressor(max_iter=200)
 
+    if 'sklearn-GPR'==model_name:
+        # kernel = kwargs.get('kernel')
+        return GaussianProcessRegressor(random_state=random_state, **kwargs)
+    
     return None
 
 def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
@@ -257,16 +270,15 @@ def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
     if algortihm == "sklearn-GPR":
         if kernel == 'rbf':
             return {
-        "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
+            "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
             }
 
         if kernel == 'matern':
             return {
-        "regressor__regressor__n_restarts_optimizer": [25],
-        "regressor__regressor__kernel__nu": Real(0.5, 2.5),
-        "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
+            "regressor__regressor__n_restarts_optimizer": [25],
+            "regressor__regressor__kernel__nu": Real(0.5, 2.5),
+            "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
             }
-        # if kernel == 'tanimoto':
     
     else:
         return None

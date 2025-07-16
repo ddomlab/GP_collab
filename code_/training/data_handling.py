@@ -62,7 +62,7 @@ def get_cv_splits(score_for_indices):
 def _save(scores: Optional[Dict[int, Dict[str, float]]],
           predictions: Optional[pd.DataFrame],
           ground_truth: Optional[Dict],
-          df_shapes: Optional[Dict],
+          feat_length_scale: Optional[Dict],
           results_dir: Path,
           regressor_type: str,
           imputer: Optional[str],
@@ -137,10 +137,10 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
         with open(cluster_ground_truth, "w") as f:
             json.dump(ground_truth, f, cls=NumpyArrayEncoder, indent=2)
     
-    if df_shapes:
-        data_shape_file:Path = results_dir / f"{fname_root}_shape.json"
+    if feat_length_scale:
+        data_shape_file:Path = results_dir / f"{fname_root}_length_scale.json"
         with open(data_shape_file, "w") as f:
-            json.dump(df_shapes, f, cls=NumpyArrayEncoder, indent=2)
+            json.dump(feat_length_scale, f, cls=NumpyArrayEncoder, indent=2)
 
     
     print('Done Saving scores!')
@@ -149,7 +149,7 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
 def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
                  predictions: Optional[pd.DataFrame]=None,
                  ground_truth: Optional[pd.DataFrame]=None,
-                 df_shapes:Optional[Dict]=None,
+                 feat_length_scale:Optional[Dict]=None,
                  target_features: list=None,
                  regressor_type: str=None,
                  kernel: Optional[str]=None,
@@ -202,7 +202,7 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
           predictions=predictions,
           ground_truth=ground_truth,
           results_dir=results_dir,
-          df_shapes=df_shapes,
+          feat_length_scale=feat_length_scale,
           regressor_type=regressor_type,
           imputer=imputer,
           representation=representation,

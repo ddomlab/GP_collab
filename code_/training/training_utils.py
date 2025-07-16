@@ -3,6 +3,8 @@ from typing import Callable, Optional, Union, Dict, Tuple
 
 import numpy as np
 import pandas as pd
+from collections import defaultdict
+
 from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
@@ -10,6 +12,8 @@ from skopt import BayesSearchCV
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.multioutput import MultiOutputRegressor,MultiOutputClassifier
 # from optuna.integration import OptunaSearchCV
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
+from scipy.stats import invgamma
 
 # from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from data_handling import remove_unserializable_keys, save_results
@@ -20,7 +24,7 @@ from all_factories import (
                             transforms,
                             construct_kernel,
                             get_regressor_search_space)
-
+from all_factories import optimized_models
 
 from imputation_normalization import preprocessing_workflow
 from scoring import (
@@ -68,7 +72,7 @@ def train_regressor(
         """
             #seed scores and seed prediction
         set_globals(Test)
-        scores, predictions, data_shape = _prepare_data(
+        scores, predictions, ls = _prepare_data(
                                                     dataset=dataset,
                                                     features_impute= features_impute,
                                                     special_impute= special_impute,
@@ -88,7 +92,7 @@ def train_regressor(
                                                     )
         scores = process_scores(scores,classification)
   
-        return scores, predictions, data_shape
+        return scores, predictions, ls
         
 
 
@@ -120,7 +124,7 @@ def _prepare_data(
 
 
 
-    X, y, unrolled_feats, X_y_shape = filter_dataset(
+    X, y, unrolled_feats, _ = filter_dataset(
                                                     raw_dataset=dataset,
                                                     structure_feats=structural_features,
                                                     scalar_feats=numerical_feats,
@@ -142,23 +146,23 @@ def _prepare_data(
 
 
     preprocessor.set_output(transform="pandas")
-    score,predication= run(
-                            X,
-                            y,
-                            preprocessor=preprocessor,
-                            second_transformer=second_transformer,
-                            regressor_type=regressor_type,
-                            transform_type=transform_type,
-                            hyperparameter_optimization=hyperparameter_optimization,
-                            kernel=kernel,
-                            **kwargs,
-                            classification=classification,
-                            )
+    score,predication, ls = run(
+                                X,
+                                y,
+                                preprocessor=preprocessor,
+                                second_transformer=second_transformer,
+                                regressor_type=regressor_type,
+                                transform_type=transform_type,
+                                hyperparameter_optimization=hyperparameter_optimization,
+                                kernel=kernel,
+                                classification=classification,
+                                **kwargs,
+                                )
     # print(X_y_shape)
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = pd.concat([predication, y_frame], axis=1)
 
-    return score, combined_prediction_ground_truth, X_y_shape
+    return score, combined_prediction_ground_truth, ls
 
 def run(
     X, y, preprocessor: Union[ColumnTransformer, Pipeline], classification:bool,second_transformer:str, regressor_type: str,
@@ -168,60 +172,61 @@ def run(
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
+    length_scale_fitted_model = defaultdict(dict)
     # if 'Rh (IW avg log)' in target_features:
     #     y = np.log10(y)
-    search_space = get_regressor_search_space(regressor_type,kernel)
-    kernel = construct_kernel(regressor_type, kernel)
 
+    
     for seed in SEEDS:
-      cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
-    #   cv_outer = KFold(n_splits=N_FOLDS, shuffle=True, random_state=seed)
-      y_transform = get_target_transformer(transform_type,second_transformer)
+        cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
+        #   cv_outer = KFold(n_splits=N_FOLDS, shuffle=True, random_state=seed)
+        y_transform = get_target_transformer(transform_type,second_transformer)
+        if hyperparameter_optimization:
+            search_space = get_regressor_search_space(regressor_type,kernel)
+            kernel = construct_kernel(regressor_type, kernel)
+            if classification:
+                skop_scoring = "f1"
 
-      if classification:
-        skop_scoring = "f1"
+                if y.shape[1] > 1:
+                    y_transform_regressor = MultiOutputClassifier(regressor_factory[regressor_type],n_jobs=-1)
+                    search_space = {
+                    f"regressor__estimator__{key.split('__')[-1]}": value
+                    for key, value in search_space.items()
+                        }
+                    
+                else:
+                    y_transform_regressor = regressor_factory[regressor_type](kernel=kernel) if kernel!=None else regressor_factory[regressor_type]
+                                
+                
 
-        if y.shape[1] > 1:
-            y_transform_regressor = MultiOutputClassifier(regressor_factory[regressor_type],n_jobs=-1)
-            search_space = {
-            f"regressor__estimator__{key.split('__')[-1]}": value
-            for key, value in search_space.items()
-                }
-            
-        else:
-            y_transform_regressor = regressor_factory[regressor_type](kernel=kernel) if kernel!=None else regressor_factory[regressor_type]
-                            
-            
-
-      else:
-        skop_scoring = "neg_root_mean_squared_error"
-        if y.shape[1] > 1:
-            y_transform_regressor = TransformedTargetRegressor(
-            regressor = MultiOutputRegressor(
-            estimator=regressor_factory[regressor_type](kernel=kernel) if kernel is not None
-            else regressor_factory[regressor_type]
-            ),
-            transformer=y_transform,
-                )
-            
-            search_space = {
-            f"regressor__regressor__estimator__{key.split('__')[-1]}": value
-            for key, value in search_space.items()
-                }
-        else:
-            y_transform_regressor = TransformedTargetRegressor(
-                    regressor=regressor_factory[regressor_type](kernel=kernel) if kernel!=None
-                            else regressor_factory[regressor_type],
+            else:
+                skop_scoring = "neg_root_mean_squared_error"
+                if y.shape[1] > 1:
+                    y_transform_regressor = TransformedTargetRegressor(
+                    regressor = MultiOutputRegressor(
+                    estimator=regressor_factory[regressor_type](kernel=kernel) if kernel is not None
+                    else regressor_factory[regressor_type]
+                    ),
                     transformer=y_transform,
-            )
-      new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
-      regressor :Pipeline= Pipeline(steps=[
-                    ("preprocessor", new_preprocessor),
-                    ("regressor", y_transform_regressor),
-                        ])
+                        )
+                    
+                    search_space = {
+                    f"regressor__regressor__estimator__{key.split('__')[-1]}": value
+                    for key, value in search_space.items()
+                        }
+                else:
+                    y_transform_regressor = TransformedTargetRegressor(
+                            regressor=regressor_factory[regressor_type](kernel=kernel) if kernel!=None
+                                    else regressor_factory[regressor_type],
+                            transformer=y_transform,
+                    )
+            new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+            regressor :Pipeline= Pipeline(steps=[
+                        ("preprocessor", new_preprocessor),
+                        ("regressor", y_transform_regressor),
+                            ])
 
-      regressor.set_output(transform="pandas")
-      if hyperparameter_optimization:
+            regressor.set_output(transform="pandas")
             cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
             best_estimator, regressor_params = _optimize_hyperparams(
                 X,
@@ -237,21 +242,60 @@ def run(
                 classification=classification
             )
             scores, predictions = cross_validate_regressor(
-                best_estimator, X, y, cv_outer,classification=classification
+                best_estimator, X, y, cv_outer, classification=classification
             )
             scores["best_params"] = regressor_params
 
 
-      else:
+        else:
+            if regressor_type == "sklearn-GPR":
+                
+                length_scale_init = np.full(X.shape[1], .19)
+                length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
+                if kernel =='rbf':
+                    my_kernel = RBF(length_scale=length_scale_init,
+                                    #  length_scale_bounds=length_scale_bounds_inv_gamma
+                                     )
+                elif kernel == 'matern':
+                    my_kernel = Matern(length_scale=length_scale_init, nu=0.1,
+                                        # length_scale_bounds=length_scale_bounds_inv_gamma
+                                        )
+                else:
+                    raise ValueError(f"kernel required, unsupported")
+                
+            model = optimized_models(regressor_type,kernel=my_kernel)
+            y_transform_regressor = TransformedTargetRegressor(
+                        regressor=model,
+                        transformer=y_transform,
+                )
+            new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+            regressor :Pipeline= Pipeline(steps=[
+                        ("preprocessor", new_preprocessor),
+                        ("regressor", y_transform_regressor),
+                            ])
+            regressor.set_output(transform="pandas")
+
+
+
+
+                
             scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer)
-      seed_scores[seed] = scores
+        # print(scores)
+        seed_scores[seed] = scores.copy()
+        seed_scores[seed].pop("estimator", None)
+        # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
+        seed_predictions[seed] = predictions.flatten()
 
-      seed_predictions[seed] = predictions.flatten()
-
-    seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
-                      seed_predictions, orient="columns")
-
-    return seed_scores, seed_predictions
+        seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
+                        seed_predictions, orient="columns")
+        if regressor_type == "sklearn-GPR":
+            for i, est in enumerate(scores["estimator"]):
+                feature_names = est.named_steps["preprocessor"].get_feature_names_out()
+                length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
+                length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
+        else:
+            length_scale_fitted_model = None
+    return seed_scores, seed_predictions, length_scale_fitted_model
 
 
 def _optimize_hyperparams(
