@@ -108,8 +108,8 @@ if __name__ == "__main__":
         main_numerical_only(
             dataset=w_data,
             regressor_type="sklearn-GPR",
-            kernel= "rbf",
-            
+            kernel= "a_rbf",
+
             target_features=['log Rg (nm)'],  # Can adjust based on actual usage
             transform_type='Standard',  
             hyperparameter_optimization=False,

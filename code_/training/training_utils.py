@@ -30,7 +30,10 @@ from imputation_normalization import preprocessing_workflow
 from scoring import (
     cross_validate_regressor,
     process_scores,
+    _average_ls
 )
+
+from _custom_kernel import AdditiveRBF, JaccardRBF
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -91,6 +94,7 @@ def train_regressor(
                                                     classification=classification,
                                                     )
         scores = process_scores(scores,classification)
+        ls =_average_ls(ls)
   
         return scores, predictions, ls
         
@@ -249,8 +253,8 @@ def run(
 
         else:
             if regressor_type == "sklearn-GPR":
-                
-                length_scale_init = np.full(X.shape[1], .2)
+            
+                length_scale_init = np.full(X.shape[1], .5) if X.shape[1] < 500 else 1.5
                 length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
@@ -260,6 +264,15 @@ def run(
                     my_kernel = Matern(length_scale=length_scale_init, nu=0.1,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
+
+                elif kernel == 'j_rbf':
+                    my_kernel = JaccardRBF(length_scale=length_scale_init,
+                                        # length_scale_bounds=length_scale_bounds_inv_gamma
+                                        )
+                elif kernel == 'a_rbf':
+                    my_kernel = AdditiveRBF(length_scale=length_scale_init)
+
+
                 else:
                     raise ValueError(f"kernel required, unsupported")
                 
@@ -274,10 +287,6 @@ def run(
                         ("regressor", y_transform_regressor),
                             ])
             regressor.set_output(transform="pandas")
-
-
-
-
                 
             scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer)
         # print(scores)
@@ -289,10 +298,13 @@ def run(
         seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
                         seed_predictions, orient="columns")
         if regressor_type == "sklearn-GPR":
-            for i, est in enumerate(scores["estimator"]):
-                feature_names = est.named_steps["preprocessor"].get_feature_names_out()
-                length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
-                length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
+            if X.shape[1] < 500:
+                for i, est in enumerate(scores["estimator"]):
+                    feature_names = est.named_steps["preprocessor"].get_feature_names_out()
+                    length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
+                    length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
+            else:
+                length_scale_fitted_model = None
         else:
             length_scale_fitted_model = None
     return seed_scores, seed_predictions, length_scale_fitted_model

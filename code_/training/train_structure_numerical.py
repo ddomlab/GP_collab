@@ -99,8 +99,8 @@ def main_structural_numerical(
                 hypop=hyperparameter_optimization,
                 transform_type=transform_type,
                 second_transformer=second_transformer,
-                special_folder_name='hp_RF_differences',
-                special_file_name='v2_(max_feat_all_leaf_smaller)',
+                # special_folder_name='hp_RF_differences',
+                # special_file_name='v2_(max_feat_all_leaf_smaller)',
                 )
 
 
@@ -253,10 +253,10 @@ if __name__ == "__main__":
         radius=3,
         vector="count",
         regressor_type="sklearn-GPR",
-        kernel="rbf",
-        oligomer_representation="Trimer",
+        kernel="j_rbf",
+        oligomer_representation="Monomer",
         target_features=['log Rg (nm)'],  
-        transform_type="Standard",
+        transform_type="Robust Scaler",
         second_transformer=None,
         # columns_to_impute=["PDI", "Temperature SANS/SLS/DLS/SEC (K)", "Concentration (mg/ml)"],
         # special_impute="Mw (g/mol)",

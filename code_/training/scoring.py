@@ -251,6 +251,28 @@ def process_scores(
         return scores
 
 
+def _average_ls(ls_data: Dict) -> None:
+    feature_values = defaultdict(list)
+    for _, folds in ls_data.items():
+        for _, features in folds.items():
+            for feature, value in features.items():
+                feature_values[feature].append(value)
+
+    stats = {
+        feature: {
+            "mean": float(np.mean(values)),
+            "std": float(np.std(values, ddof=1))
+        }
+        for feature, values in feature_values.items()
+    }
+
+    ls_data["aggregated_ls"] = stats
+
+    return ls_data
+
+
+
+
 def compute_summary_stats(metrics: Dict[str, list[float]]) -> Dict[str, float]:
     """
     Helper function to compute the mean and standard deviation of the test/train metrics.
