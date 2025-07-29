@@ -109,6 +109,7 @@ if __name__ == "__main__":
             dataset=w_data,
             regressor_type="sklearn-GPR",
             kernel= "rbf",
+            
             target_features=['log Rg (nm)'],  # Can adjust based on actual usage
             transform_type='Standard',  
             hyperparameter_optimization=False,

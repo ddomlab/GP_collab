@@ -250,7 +250,7 @@ def run(
         else:
             if regressor_type == "sklearn-GPR":
                 
-                length_scale_init = np.full(X.shape[1], .19)
+                length_scale_init = np.full(X.shape[1], .2)
                 length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
