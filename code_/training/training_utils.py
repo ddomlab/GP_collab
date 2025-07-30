@@ -33,7 +33,7 @@ from scoring import (
     _average_ls
 )
 
-from _custom_kernel import AdditiveRBF, JaccardRBF
+from _custom_kernel import AdditiveMatern, AdditiveRBF, JaccardMatern, JaccardRBF
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -182,6 +182,7 @@ def run(
 
     
     for seed in SEEDS:
+        print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
         #   cv_outer = KFold(n_splits=N_FOLDS, shuffle=True, random_state=seed)
         y_transform = get_target_transformer(transform_type,second_transformer)
@@ -254,7 +255,7 @@ def run(
         else:
             if regressor_type == "sklearn-GPR":
             
-                length_scale_init = np.full(X.shape[1], .5) if X.shape[1] < 500 else 1.5
+                length_scale_init = np.full(X.shape[1], .5) if X.shape[1] < 500 else 2
                 length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
@@ -264,14 +265,20 @@ def run(
                     my_kernel = Matern(length_scale=length_scale_init, nu=0.1,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
-
                 elif kernel == 'j_rbf':
                     my_kernel = JaccardRBF(length_scale=length_scale_init,
+                                        # length_scale_bounds=length_scale_bounds_inv_gamma
+                                        )
+                    
+                elif kernel =='j_matern':
+                    my_kernel = JaccardMatern(length_scale=length_scale_init, nu=2,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
                 elif kernel == 'a_rbf':
                     my_kernel = AdditiveRBF(length_scale=length_scale_init)
 
+                elif kernel == 'a_matern':
+                    my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=1.5)
 
                 else:
                     raise ValueError(f"kernel required, unsupported")
