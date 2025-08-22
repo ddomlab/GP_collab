@@ -33,7 +33,13 @@ from scoring import (
     _average_ls
 )
 
-from _custom_kernel import AdditiveMatern, AdditiveRBF, JaccardMatern, JaccardRBF
+from _custom_kernel import (AdditiveMatern, 
+                            AdditiveRBF, 
+                            JaccardMatern, 
+                            JaccardRBF, 
+                            JaccardKernel, 
+                            Jaccard_gradient_RBF,
+                            CombinedKernel)
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -94,7 +100,9 @@ def train_regressor(
                                                     classification=classification,
                                                     )
         scores = process_scores(scores,classification)
-        ls =_average_ls(ls)
+
+        if ls is not None:
+            ls = _average_ls(ls)
   
         return scores, predictions, ls
         
@@ -260,7 +268,10 @@ def run(
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
                                     #  length_scale_bounds=length_scale_bounds_inv_gamma
-                                     )
+                    )
+
+                elif kernel == 'J_K':
+                    my_kernel = JaccardKernel()
                 elif kernel == 'matern':
                     my_kernel = Matern(length_scale=length_scale_init, nu=0.1,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
@@ -274,12 +285,37 @@ def run(
                     my_kernel = JaccardMatern(length_scale=length_scale_init, nu=2,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
+
+                elif kernel == 'j_gradient_rbf':
+                    my_kernel = Jaccard_gradient_RBF(length_scale=np.full(X.shape[1], 1),
+                                        # length_scale_bounds=length_scale_bounds_inv_gamma
+                                        )
+
                 elif kernel == 'a_rbf':
                     my_kernel = AdditiveRBF(length_scale=length_scale_init)
 
                 elif kernel == 'a_matern':
                     my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=1.5)
 
+                elif kernel =='fp_count_mix':
+                    print(type(X))
+                    feature_groups = {
+                        "continuous": ['Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
+                            "Temperature SANS/SLS/DLS/SEC (K)", 
+                            "polymer dP", "polymer dD", "polymer dH",
+                            'solvent dP', 'solvent dD', 'solvent dH'],
+
+                        "fingerprints": [c for c in X.columns if c.startswith("Monomer_ECFP6_count_bit")]# fingerprint bits
+                    }
+
+                    kernels = {
+                        "continuous": RBF(length_scale=np.ones(len(feature_groups["continuous"]))),
+                        "fingerprints": JaccardRBF(length_scale=1.0)
+                    }
+
+                    my_kernel = CombinedKernel(feature_groups, kernels, all_columns=X.columns)
+                    # my_kernel.set_feature_names(X.columns)
+                
                 else:
                     raise ValueError(f"kernel required, unsupported")
                 
