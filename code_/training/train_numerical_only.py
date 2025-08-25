@@ -23,35 +23,28 @@ def main_numerical_only(
     dataset: pd.DataFrame,
     regressor_type: str,
     target_features: list[str],
-    transform_type: str,
+    feat_transformer: str,
     hyperparameter_optimization: bool,
     numerical_feats: Optional[list[str]],
-    columns_to_impute: Optional[list[str]]=None,
-    special_impute: Optional[str]=None,
-    imputer:Optional[str]=None,
     kernel:str=None,
     cutoff:Optional[str]=None,
-    second_transformer:str=None,
+    target_transformer:str=None,
     classification:bool=False,
 ) -> None:
 
 
     scores, predictions,ls  = train_regressor(
                                             dataset=dataset,
-                                            features_impute=columns_to_impute,
-                                            special_impute=special_impute,
-                                            representation=None,
                                             structural_features=None,
                                             unroll=None,
                                             numerical_feats=numerical_feats,
                                             target_features=target_features,
                                             regressor_type=regressor_type,
                                             kernel=kernel,
-                                            transform_type=transform_type,
                                             cutoff=cutoff,
                                             hyperparameter_optimization=hyperparameter_optimization,
-                                            imputer=imputer,
-                                            second_transformer=second_transformer,
+                                            feat_transformer=feat_transformer,
+                                            target_transformer=target_transformer,
                                             Test=TEST,
                                             classification=classification,
                                             )
@@ -59,7 +52,6 @@ def main_numerical_only(
     save_results(scores,
                 predictions=predictions,
                 feat_length_scale=ls,
-                imputer=imputer,
                 representation= None,
                 pu_type= None,
                 target_features=target_features,
@@ -69,8 +61,8 @@ def main_numerical_only(
                 cutoff=cutoffs,
                 TEST=TEST,
                 hypop=hyperparameter_optimization,
-                transform_type=transform_type,
-                second_transformer=second_transformer,
+                transform_type=feat_transformer,
+                target_transformer=target_transformer,
                 classification=classification,
                 # special_folder_name='hp_RF_differences'
                 )
@@ -108,22 +100,18 @@ if __name__ == "__main__":
         main_numerical_only(
             dataset=w_data,
             regressor_type="sklearn-GPR",
-            kernel= "a_matern",
-
-            target_features=['log Rg (nm)'],  # Can adjust based on actual usage
-            transform_type='Robust Scaler',  
+            kernel= "j_rbf",
+            target_features=['log Rg (nm)'],
+            feat_transformer='Standard',
+            target_transformer='Standard', 
             hyperparameter_optimization=False,
-            columns_to_impute=None,
-            special_impute=None,
             numerical_feats=[
                             'Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
                             "Temperature SANS/SLS/DLS/SEC (K)", 
                             "polymer dP", "polymer dD", "polymer dH",
                             'solvent dP', 'solvent dD', 'solvent dH'
                              ],
-            imputer=None,
-            classification=False,
-            cutoff=None)
+            )
 
     # columns_to_impute: list[str] = ["PDI","Temperature SANS/SLS/DLS/SEC (K)","Concentration (mg/ml)"]
     # special_column: str = "Mw (g/mol)"

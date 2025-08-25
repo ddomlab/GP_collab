@@ -39,7 +39,7 @@ from _custom_kernel import (AdditiveMatern,
                             JaccardRBF, 
                             JaccardKernel, 
                             Jaccard_gradient_RBF,
-                            CombinedKernel)
+                            FeatureGroupProductKernel)
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -59,18 +59,15 @@ def set_globals(Test: bool=False) -> None:
 
 def train_regressor(
     dataset: pd.DataFrame,
-    features_impute: Optional[list[str]],
-    special_impute: Optional[str],
-    representation: Optional[str],
+    # representation: Optional[str],
     structural_features: Optional[list[str]],
     numerical_feats: Optional[list[str]],
     unroll: Union[dict[str, str], list[dict[str, str]], None],
     regressor_type: str,
     target_features: str,
-    transform_type: str=None,
-    second_transformer:str=None,
+    feat_transformer: str=None,
+    target_transformer:str=None,
     hyperparameter_optimization: bool=True,
-    imputer: Optional[str] = None,
     cutoff:Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     kernel: Optional[str] = None,
     Test:bool=False,
@@ -83,17 +80,14 @@ def train_regressor(
         set_globals(Test)
         scores, predictions, ls = _prepare_data(
                                                     dataset=dataset,
-                                                    features_impute= features_impute,
-                                                    special_impute= special_impute,
-                                                    representation=representation,
                                                     structural_features=structural_features,
                                                     unroll=unroll,
-                                                    numerical_feats = numerical_feats,
+                                                    numerical_feats=numerical_feats,
                                                     target_features=target_features,
                                                     regressor_type=regressor_type,
-                                                    transform_type=transform_type,
-                                                    second_transformer=second_transformer,
-                                                    imputer=imputer,
+                                                    transform_type=feat_transformer,
+                                                    second_transformer=target_transformer,
+                                
                                                     cutoff=cutoff,
                                                     hyperparameter_optimization=hyperparameter_optimization,
                                                     kernel=kernel,
@@ -113,16 +107,12 @@ def _prepare_data(
     dataset: pd.DataFrame,
     target_features: str,
     regressor_type: str,
-    features_impute: Optional[list[str]]=None,
-    special_impute: Optional[str]=None,
-    representation: Optional[str]=None,
     structural_features: Optional[list[str]]=None,
     numerical_feats: Optional[list[str]]=None,
     unroll: Union[dict, list, None] = None,
     transform_type: str = "Standard",
     second_transformer:str = None,
     hyperparameter_optimization: bool = True,
-    imputer: Optional[str] = None,
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     classification:bool=False,
     kernel:Optional[str] = None,
@@ -136,24 +126,22 @@ def _prepare_data(
 
 
 
-    X, y, unrolled_feats, _ = filter_dataset(
-                                                    raw_dataset=dataset,
-                                                    structure_feats=structural_features,
-                                                    scalar_feats=numerical_feats,
-                                                    target_feats=target_features,
-                                                    cutoff=cutoff,
-                                                    dropna = True,
-                                                    unroll=unroll,
-                                                    )
+    X, y, unrolled_structural_feats, _ = filter_dataset(
+                                            raw_dataset=dataset,
+                                            structure_feats=structural_features,
+                                            scalar_feats=numerical_feats,
+                                            target_feats=target_features,
+                                            cutoff=cutoff,
+                                            dropna = True,
+                                            unroll=unroll,
+                                            )
 
     # Pipline workflow here and preprocessor
-    preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
-                                                    feat_to_impute=features_impute,
-                                                    representation = representation,
-                                                    numerical_feat=numerical_feats,
-                                                    structural_feat = unrolled_feats,
-                                                    special_column=special_impute,
-                                                    scaler=transform_type)
+    preprocessor: Pipeline = preprocessing_workflow(
+                                    numerical_feat=numerical_feats,
+                                    structural_feat=unrolled_structural_feats,
+                                    scaler=transform_type
+                                )
     
 
 
@@ -161,10 +149,11 @@ def _prepare_data(
     score,predication, ls = run(
                                 X,
                                 y,
+                                fp_features=unrolled_structural_feats,
+                                scalar_feats=numerical_feats,
                                 preprocessor=preprocessor,
                                 second_transformer=second_transformer,
                                 regressor_type=regressor_type,
-                                transform_type=transform_type,
                                 hyperparameter_optimization=hyperparameter_optimization,
                                 kernel=kernel,
                                 classification=classification,
@@ -177,8 +166,13 @@ def _prepare_data(
     return score, combined_prediction_ground_truth, ls
 
 def run(
-    X, y, preprocessor: Union[ColumnTransformer, Pipeline], classification:bool,second_transformer:str, regressor_type: str,
-    transform_type: str, hyperparameter_optimization: bool = True,
+    X, y, 
+    preprocessor: Union[ColumnTransformer, Pipeline], 
+    classification:bool,
+    fp_features: list[str],
+    scalar_feats: list[str],
+    second_transformer:str, regressor_type: str,
+    hyperparameter_optimization: bool = True,
     kernel:Optional[str] = None,**kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -193,7 +187,7 @@ def run(
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
         #   cv_outer = KFold(n_splits=N_FOLDS, shuffle=True, random_state=seed)
-        y_transform = get_target_transformer(transform_type,second_transformer)
+        y_transform = get_target_transformer(second_transformer)
         if hyperparameter_optimization:
             search_space = get_regressor_search_space(regressor_type,kernel)
             kernel = construct_kernel(regressor_type, kernel)
@@ -242,18 +236,19 @@ def run(
             regressor.set_output(transform="pandas")
             cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
             best_estimator, regressor_params = _optimize_hyperparams(
-                X,
-                y,
-                cv_outer=cv_outer,
-                cv_in=cv_in,
-                n_iter=BO_ITER,
-                seed=seed,
-                regressor_type=regressor_type,
-                search_space=search_space,
-                regressor=regressor,
-                scoring=skop_scoring,
-                classification=classification
-            )
+                                                                    X,
+                                                                    y,
+                                                                    cv_outer=cv_outer,
+                                                                    cv_in=cv_in,
+                                                                    n_iter=BO_ITER,
+                                                                    seed=seed,
+                                                                    regressor_type=regressor_type,
+                                                                    search_space=search_space,
+                                                                    regressor=regressor,
+                                                                    scoring=skop_scoring,
+                                                                    classification=classification
+                                                                )
+            
             scores, predictions = cross_validate_regressor(
                 best_estimator, X, y, cv_outer, classification=classification
             )
@@ -263,7 +258,7 @@ def run(
         else:
             if regressor_type == "sklearn-GPR":
             
-                length_scale_init = np.full(X.shape[1], .5) if X.shape[1] < 500 else 2
+                length_scale_init = np.full(X.shape[1],.3) if X.shape[1] < 500 else .5
                 length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
@@ -273,7 +268,7 @@ def run(
                 elif kernel == 'J_K':
                     my_kernel = JaccardKernel()
                 elif kernel == 'matern':
-                    my_kernel = Matern(length_scale=length_scale_init, nu=0.1,
+                    my_kernel = Matern(length_scale=length_scale_init, nu=2.5,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
                 elif kernel == 'j_rbf':
@@ -282,7 +277,7 @@ def run(
                                         )
                     
                 elif kernel =='j_matern':
-                    my_kernel = JaccardMatern(length_scale=length_scale_init, nu=2,
+                    my_kernel = JaccardMatern(length_scale=length_scale_init, nu=1.5,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
 
@@ -295,30 +290,24 @@ def run(
                     my_kernel = AdditiveRBF(length_scale=length_scale_init)
 
                 elif kernel == 'a_matern':
-                    my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=1.5)
+                    my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=2.5)
 
                 elif kernel =='fp_count_mix':
-                    print(type(X))
-                    feature_groups = {
-                        "continuous": ['Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
-                            "Temperature SANS/SLS/DLS/SEC (K)", 
-                            "polymer dP", "polymer dD", "polymer dH",
-                            'solvent dP', 'solvent dD', 'solvent dH'],
+                    cont_idx = [X.columns.get_loc(c) for c in scalar_feats]
+                    fp_idx   = [X.columns.get_loc(c) for c in fp_features]
 
-                        "fingerprints": [c for c in X.columns if c.startswith("Monomer_ECFP6_count_bit")]# fingerprint bits
-                    }
+                    # base kernels
+                    kernel_cont = Matern(length_scale= np.full(len(cont_idx), 2), nu=2.5)
+                    kernel_fp = JaccardKernel()
 
-                    kernels = {
-                        "continuous": RBF(length_scale=np.ones(len(feature_groups["continuous"]))),
-                        "fingerprints": JaccardRBF(length_scale=1.0)
-                    }
 
-                    my_kernel = CombinedKernel(feature_groups, kernels, all_columns=X.columns)
+
+                    my_kernel = FeatureGroupProductKernel(kernel_cont, kernel_fp, cont_idx, fp_idx)
                     # my_kernel.set_feature_names(X.columns)
                 
                 else:
                     raise ValueError(f"kernel required, unsupported")
-                
+
             model = optimized_models(regressor_type,kernel=my_kernel)
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -332,7 +321,6 @@ def run(
             regressor.set_output(transform="pandas")
                 
             scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer)
-        # print(scores)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
@@ -341,15 +329,22 @@ def run(
         seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
                         seed_predictions, orient="columns")
         if regressor_type == "sklearn-GPR":
-            if X.shape[1] < 500:
+            if kernel == 'fp_count_mix':
                 for i, est in enumerate(scores["estimator"]):
-                    feature_names = est.named_steps["preprocessor"].get_feature_names_out()
-                    length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
-                    length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
+                    print('count',est.named_steps["regressor"].regressor_ .kernel_.length_scale_cont)
+                    print('fp',est.named_steps["regressor"].regressor_ .kernel_.length_scale_fp)
+
             else:
-                length_scale_fitted_model = None
+                if X.shape[1]<500:
+                    for i, est in enumerate(scores["estimator"]):
+                        feature_names = est.named_steps["preprocessor"].get_feature_names_out()
+                        length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
+                        length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
+                else:
+                    length_scale_fitted_model = None
         else:
             length_scale_fitted_model = None
+    print(length_scale_fitted_model)
     return seed_scores, seed_predictions, length_scale_fitted_model
 
 
@@ -429,16 +424,9 @@ def _pd_to_np(data):
 
 
 
-def get_target_transformer(transformer:str,extra_transformer:str) -> Pipeline:
-    
-    if extra_transformer:
-        return Pipeline(steps=[
-            ("extra y transform", transforms[extra_transformer]), 
-            ("y scaler", transforms[transformer])  
-            ])
-    else:
-        return Pipeline(steps=[
-            ("y scaler", transforms[transformer])  # StandardScaler to standardize the target
+def get_target_transformer(y_transformer:str) -> Pipeline:
+    return Pipeline(steps=[
+            ("y scaler", transforms[y_transformer])  # StandardScaler to standardize the target
             ])
 
 

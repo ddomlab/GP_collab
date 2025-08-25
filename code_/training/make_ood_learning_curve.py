@@ -71,7 +71,7 @@ def main_structural_numerical(
                     TEST=TEST,
                     hypop=False,
                     transform_type=transform_type,
-                    second_transformer=second_transformer,
+                    target_transformer=second_transformer,
                     clustering_method=clustering_method,
                     learning_curve=True,
                     # special_folder_name='mean_aggregated',

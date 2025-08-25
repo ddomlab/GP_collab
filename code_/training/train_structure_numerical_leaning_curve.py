@@ -76,7 +76,7 @@ def main_structural_numerical(
                 TEST=TEST,
                 hypop=hyperparameter_optimization,
                 transform_type=transform_type,
-                second_transformer=second_transformer,
+                target_transformer=second_transformer,
                 learning_curve=True
                 )
 

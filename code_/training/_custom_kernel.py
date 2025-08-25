@@ -15,6 +15,11 @@ from math import sqrt
 
 
 
+def weighted_jaccard(u, v, eps: float = 1e-6):
+    """Weighted Jaccard distance between two vectors u, v."""
+    min_sum = np.sum(np.minimum(u, v))
+    max_sum = np.sum(np.maximum(u, v))
+    return 1.0 - ((min_sum + eps) / (max_sum + eps))
 
 
 class JaccardKernel(NormalizedKernelMixin, Kernel):
@@ -24,12 +29,6 @@ class JaccardKernel(NormalizedKernelMixin, Kernel):
         pass  # no hyperparameters here
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        def weighted_jaccard(u, v, eps: float = 1e-6):
-            min_sum = np.sum(np.minimum(u, v))
-            max_sum = np.sum(np.maximum(u, v))
-            # return distance
-            return 1.0 - ((min_sum + eps) / (max_sum + eps))
-
         X = np.atleast_2d(X)
         if Y is None:
             dists = pdist(X, metric=weighted_jaccard)
@@ -78,11 +77,6 @@ class JaccardRBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         return Hyperparameter("length_scale", "numeric", self.length_scale_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        def weighted_jaccard(u, v, eps: float = 1e-6):
-            min_sum = np.sum(np.minimum(u, v))
-            max_sum = np.sum(np.maximum(u, v))
-            return 1.0 - ((min_sum + eps) / (max_sum + eps))
-
         X = np.atleast_2d(X)
         if Y is None:
             dists = pdist(X, metric=weighted_jaccard)
@@ -116,16 +110,6 @@ class JaccardRBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 
-# import numpy as np
-# from sklearn.gaussian_process.kernels import Kernel, StationaryKernelMixin, NormalizedKernelMixin, Hyperparameter
-# from scipy.spatial.distance import pdist, cdist, squareform
-
-
-def weighted_jaccard(u, v, eps: float = 1e-6):
-    """Weighted Jaccard distance between two vectors u, v."""
-    min_sum = np.sum(np.minimum(u, v))
-    max_sum = np.sum(np.maximum(u, v))
-    return 1.0 - ((min_sum + eps) / (max_sum + eps))
 
 
 class Jaccard_gradient_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
@@ -224,8 +208,6 @@ class Jaccard_gradient_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel)
             return "{0}(length_scale={1:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0]
             )
-
-
 
 
 
@@ -463,76 +445,65 @@ class AdditiveMatern(Matern):
 
 
 
-
 from sklearn.gaussian_process.kernels import Kernel
-import numpy as np
-import pandas as pd
 
-class CombinedKernel(Kernel):
-    """
-    A kernel that applies different kernels to named feature subsets
-    and sums the results. Accepts DataFrame at init, but will work with
-    numpy arrays when sklearn calls __call__.
-    """
+class FeatureGroupProductKernel(Kernel):
+    def __init__(self, kernel_cont, kernel_fp, cont_idx, fp_idx):
+        self.kernel_cont = kernel_cont
+        self.kernel_fp = kernel_fp
+        self.cont_idx = cont_idx
+        self.fp_idx = fp_idx
 
-    def __init__(self, feature_groups, kernels, all_columns):
-        """
-        Parameters
-        ----------
-        feature_groups : dict
-            Mapping { "group_name": [list_of_feature_names] }
-        kernels : dict
-            Mapping { "group_name": Kernel instance }
-        all_columns : list
-            List of all column names in the dataset (X DataFrame.columns)
-        """
-        assert feature_groups.keys() == kernels.keys(), \
-            "feature_groups and kernels must have the same keys"
-        self.feature_groups = feature_groups
-        self.kernels = kernels
-        self.all_columns = list(all_columns)
+    # --- Hyperparameter exposure ---
+    @property
+    def theta(self):
+        return np.concatenate([self.kernel_cont.theta, self.kernel_fp.theta])
 
-        # Map feature names → column indices
-        self.feature_indices = {
-            group: [self.all_columns.index(c) for c in cols]
-            for group, cols in feature_groups.items()
-        }
+    @theta.setter
+    def theta(self, theta):
+        n1 = self.kernel_cont.theta.shape[0]
+        self.kernel_cont.theta = theta[:n1]
+        self.kernel_fp.theta = theta[n1:]
 
+    @property
+    def bounds(self):
+        b1, b2 = self.kernel_cont.bounds, self.kernel_fp.bounds
+        if b1.shape[0] == 0 and b2.shape[0] == 0:
+            return np.empty((0, 2))
+        elif b1.shape[0] == 0:
+            return b2
+        elif b2.shape[0] == 0:
+            return b1
+        return np.vstack([b1, b2])
+
+    @property
+    def hyperparameters(self):
+        return [*self.kernel_cont.hyperparameters, *self.kernel_fp.hyperparameters]
+
+    # --- Kernel call ---
     def __call__(self, X, Y=None, eval_gradient=False):
-        # sklearn will pass numpy arrays here
-        K_total = None
-        grads = []
-
-        for group, indices in self.feature_indices.items():
-            X_sub = X[:, indices]
-            Y_sub = None if Y is None else Y[:, indices]
-            kernel = self.kernels[group]
-
-            if eval_gradient:
-                K, grad = kernel(X_sub, Y_sub, eval_gradient=True)
-                grads.append(grad)
-            else:
-                K = kernel(X_sub, Y_sub, eval_gradient=False)
-
-            K_total = K if K_total is None else K_total + K
+        X_cont, X_fp = X[:, self.cont_idx], X[:, self.fp_idx]
+        Y_cont = None if Y is None else Y[:, self.cont_idx]
+        Y_fp = None if Y is None else Y[:, self.fp_idx]
 
         if eval_gradient:
-            return K_total, np.concatenate(grads, axis=2)
+            Kc, grad_c = self.kernel_cont(X_cont, Y_cont, eval_gradient=True)
+            Kf, grad_f = self.kernel_fp(X_fp, Y_fp, eval_gradient=True)
+            K = Kc * Kf
+
+            grads = []
+            if grad_c.shape[2] > 0:
+                grads.append(grad_c * Kf[:, :, np.newaxis])
+            if grad_f.shape[2] > 0:
+                grads.append(grad_f * Kc[:, :, np.newaxis])
+
+            grad = np.concatenate(grads, axis=2) if grads else np.empty((X.shape[0], X.shape[0], 0))
+            return K, grad
         else:
-            return K_total
+            return self.kernel_cont(X_cont, Y_cont) * self.kernel_fp(X_fp, Y_fp)
 
     def diag(self, X):
-        return sum(
-            self.kernels[group].diag(X[:, indices])
-            for group, indices in self.feature_indices.items()
-        )
+        return self.kernel_cont.diag(X[:, self.cont_idx]) * self.kernel_fp.diag(X[:, self.fp_idx])
 
     def is_stationary(self):
-        return all(kernel.is_stationary() for kernel in self.kernels.values())
-
-    def __repr__(self):
-        parts = [
-            f"{group}: {self.kernels[group]} on {self.feature_groups[group]}"
-            for group in self.feature_groups
-        ]
-        return " + ".join(parts)
+        return self.kernel_cont.is_stationary() and self.kernel_fp.is_stationary()

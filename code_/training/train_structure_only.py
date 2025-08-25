@@ -50,8 +50,8 @@ def main_structural(
                                                     target_features=target_features,
                                                     regressor_type=regressor_type,
                                                     kernel=kernel,
-                                                    transform_type=transform_type,
-                                                    second_transformer=second_transformer,
+                                                    feat_transformer=transform_type,
+                                                    target_transformer=second_transformer,
                                                     cutoff=cutoff,
                                                     hyperparameter_optimization=hyperparameter_optimization,
                                                     Test=TEST,
@@ -70,7 +70,7 @@ def main_structural(
                 TEST=TEST,
                 hypop=hyperparameter_optimization,
                 transform_type=transform_type,
-                second_transformer=second_transformer,
+                target_transformer=second_transformer,
                 )
 
 
