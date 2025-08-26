@@ -298,7 +298,7 @@ def run(
 
                     # base kernels
                     kernel_cont = Matern(length_scale= np.full(len(cont_idx), 2), nu=2.5)
-                    kernel_fp = JaccardKernel()
+                    kernel_fp = Jaccard_gradient_RBF(length_scale=np.full(len(fp_idx), 1))
 
 
 

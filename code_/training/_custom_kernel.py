@@ -445,19 +445,47 @@ class AdditiveMatern(Matern):
 
 
 
+import numpy as np
 from sklearn.gaussian_process.kernels import Kernel
 
 class FeatureGroupProductKernel(Kernel):
+    """Product kernel = K_cont * K_fp on disjoint feature groups.
+
+    Parameters
+    ----------
+    kernel_cont : Kernel
+        Kernel to apply on continuous features.
+    kernel_fp : Kernel
+        Kernel to apply on fingerprint features.
+    cont_idx : array-like of int
+        Column indices of continuous features.
+    fp_idx : array-like of int
+        Column indices of fingerprint features.
+    """
+
     def __init__(self, kernel_cont, kernel_fp, cont_idx, fp_idx):
         self.kernel_cont = kernel_cont
         self.kernel_fp = kernel_fp
         self.cont_idx = cont_idx
         self.fp_idx = fp_idx
 
-    # --- Hyperparameter exposure ---
+    # --- sklearn plumbing: params, hyperparams, theta, bounds ---
+    def get_params(self, deep=True):
+        return dict(
+            kernel_cont=self.kernel_cont,
+            kernel_fp=self.kernel_fp,
+            cont_idx=self.cont_idx,
+            fp_idx=self.fp_idx,
+        )
+
+    @property
+    def hyperparameters(self):
+        return [*self.kernel_cont.hyperparameters,
+                *self.kernel_fp.hyperparameters]
+
     @property
     def theta(self):
-        return np.concatenate([self.kernel_cont.theta, self.kernel_fp.theta])
+        return np.hstack([self.kernel_cont.theta, self.kernel_fp.theta])
 
     @theta.setter
     def theta(self, theta):
@@ -470,21 +498,17 @@ class FeatureGroupProductKernel(Kernel):
         b1, b2 = self.kernel_cont.bounds, self.kernel_fp.bounds
         if b1.shape[0] == 0 and b2.shape[0] == 0:
             return np.empty((0, 2))
-        elif b1.shape[0] == 0:
+        if b1.shape[0] == 0:
             return b2
-        elif b2.shape[0] == 0:
+        if b2.shape[0] == 0:
             return b1
         return np.vstack([b1, b2])
 
-    @property
-    def hyperparameters(self):
-        return [*self.kernel_cont.hyperparameters, *self.kernel_fp.hyperparameters]
-
-    # --- Kernel call ---
+    # --- main kernel logic ---
     def __call__(self, X, Y=None, eval_gradient=False):
         X_cont, X_fp = X[:, self.cont_idx], X[:, self.fp_idx]
         Y_cont = None if Y is None else Y[:, self.cont_idx]
-        Y_fp = None if Y is None else Y[:, self.fp_idx]
+        Y_fp   = None if Y is None else Y[:, self.fp_idx]
 
         if eval_gradient:
             Kc, grad_c = self.kernel_cont(X_cont, Y_cont, eval_gradient=True)
@@ -497,13 +521,29 @@ class FeatureGroupProductKernel(Kernel):
             if grad_f.shape[2] > 0:
                 grads.append(grad_f * Kc[:, :, np.newaxis])
 
-            grad = np.concatenate(grads, axis=2) if grads else np.empty((X.shape[0], X.shape[0], 0))
+            grad = (np.concatenate(grads, axis=2)
+                    if grads else np.empty((X.shape[0], X.shape[0], 0)))
             return K, grad
         else:
             return self.kernel_cont(X_cont, Y_cont) * self.kernel_fp(X_fp, Y_fp)
 
     def diag(self, X):
-        return self.kernel_cont.diag(X[:, self.cont_idx]) * self.kernel_fp.diag(X[:, self.fp_idx])
+        return (self.kernel_cont.diag(X[:, self.cont_idx])
+                * self.kernel_fp.diag(X[:, self.fp_idx]))
 
     def is_stationary(self):
         return self.kernel_cont.is_stationary() and self.kernel_fp.is_stationary()
+
+    # convenience forwards
+    @property
+    def length_scale_cont(self):
+        return getattr(self.kernel_cont, "length_scale", None)
+
+    @property
+    def length_scale_fp(self):
+        return getattr(self.kernel_fp, "length_scale", None)
+
+    def __repr__(self):
+        return (f"FeatureGroupProductKernel("
+                f"{self.kernel_cont}, {self.kernel_fp}, "
+                f"cont_idx={self.cont_idx}, fp_idx={self.fp_idx})")
