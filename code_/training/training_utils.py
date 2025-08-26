@@ -33,13 +33,17 @@ from scoring import (
     _average_ls
 )
 
-from _custom_kernel import (AdditiveMatern, 
+from _custom_kernel import (AdditiveContinuousKernel, 
+                            AdditiveMatern, 
                             AdditiveRBF, 
-                            JaccardMatern, 
-                            JaccardRBF, 
+                            HybridKernel, 
+                            Jaccard_Matern, 
                             JaccardKernel, 
-                            Jaccard_gradient_RBF,
-                            FeatureGroupProductKernel)
+                            ProductKernel,
+                            Jaccard_RBF,
+                            AdditiveKernel,
+                            map_optimizer
+                            )
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -256,9 +260,11 @@ def run(
 
 
         else:
+            cont_idx = [X.columns.get_loc(c) for c in scalar_feats]
+            fp_idx   = [X.columns.get_loc(c) for c in fp_features]
             if regressor_type == "sklearn-GPR":
             
-                length_scale_init = np.full(X.shape[1],.3) if X.shape[1] < 500 else .5
+                length_scale_init = np.full(X.shape[1],.5) 
                 length_scale_bounds_inv_gamma = (invgamma.ppf(0.05, a=5, scale=5), invgamma.ppf(0.95, a=5, scale=5))
                 if kernel =='rbf':
                     my_kernel = RBF(length_scale=length_scale_init,
@@ -272,17 +278,12 @@ def run(
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
                 elif kernel == 'j_rbf':
-                    my_kernel = JaccardRBF(length_scale=length_scale_init,
+                    my_kernel = Jaccard_RBF(length_scale=length_scale_init,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
                     
                 elif kernel =='j_matern':
-                    my_kernel = JaccardMatern(length_scale=length_scale_init, nu=1.5,
-                                        # length_scale_bounds=length_scale_bounds_inv_gamma
-                                        )
-
-                elif kernel == 'j_gradient_rbf':
-                    my_kernel = Jaccard_gradient_RBF(length_scale=np.full(X.shape[1], 1),
+                    my_kernel = Jaccard_Matern(length_scale=length_scale_init, nu=1.5,
                                         # length_scale_bounds=length_scale_bounds_inv_gamma
                                         )
 
@@ -293,16 +294,14 @@ def run(
                     my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=2.5)
 
                 elif kernel =='fp_count_mix':
-                    cont_idx = [X.columns.get_loc(c) for c in scalar_feats]
-                    fp_idx   = [X.columns.get_loc(c) for c in fp_features]
 
-                    # base kernels
-                    kernel_cont = Matern(length_scale= np.full(len(cont_idx), 2), nu=2.5)
-                    kernel_fp = Jaccard_gradient_RBF(length_scale=np.full(len(fp_idx), 1))
+                    kernel_cont = AdditiveRBF(length_scale=np.full(len(cont_idx), .2))
+
+                    kernel_fp = Jaccard_RBF(length_scale=np.full(len(fp_idx), .2))
 
 
 
-                    my_kernel = FeatureGroupProductKernel(kernel_cont, kernel_fp, cont_idx, fp_idx)
+                    my_kernel = ProductKernel(kernel_cont, kernel_fp, cont_idx, fp_idx)
                     # my_kernel.set_feature_names(X.columns)
                 
                 else:
@@ -332,10 +331,10 @@ def run(
             if kernel == 'fp_count_mix':
                 for i, est in enumerate(scores["estimator"]):
                     print('count',est.named_steps["regressor"].regressor_ .kernel_.length_scale_cont)
-                    print('fp',est.named_steps["regressor"].regressor_ .kernel_.length_scale_fp)
+                    # print('fp',est.named_steps["regressor"].regressor_ .kernel_.length_scale_fp)
 
             else:
-                if X.shape[1]<500:
+                if X.shape[1]:
                     for i, est in enumerate(scores["estimator"]):
                         feature_names = est.named_steps["preprocessor"].get_feature_names_out()
                         length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale

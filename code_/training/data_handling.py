@@ -86,13 +86,13 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
     
     # just scaler
     if numerical_feats and pu_type==None:
-        short_num_feats = "-".join(feature_abbrev.get(key,key) for key in numerical_feats)
+        short_num_feats = 'all_num'
         fname_root = f"({short_num_feats})_{regressor_type}"
         fname_root = f"{fname_root}_{imputer}" if imputer else fname_root
     
     # scaler and structural mixed
     if numerical_feats and pu_type:
-        short_num_feats = "-".join(feature_abbrev.get(key,key) for key in numerical_feats)
+        short_num_feats = 'all_num'
         if radius:
             fname_root = f"({representation}{radius}_{vector}_{radius_to_bits[radius]}-{short_num_feats})_{regressor_type}"
         

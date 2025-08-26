@@ -100,7 +100,7 @@ if __name__ == "__main__":
         main_numerical_only(
             dataset=w_data,
             regressor_type="sklearn-GPR",
-            kernel= "j_rbf",
+            kernel= "a_matern",
             target_features=['log Rg (nm)'],
             feat_transformer='Standard',
             target_transformer='Standard', 
