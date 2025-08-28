@@ -245,7 +245,7 @@ if __name__ == "__main__":
         radius=3,
         vector="count",
         regressor_type="sklearn-GPR",
-        kernel="fp_count_mix",
+        kernel="matern32_j_rbf_mix",
         oligomer_representation="Monomer",
         target_features=['log Rg (nm)'],  
         feat_transformer='Standard',

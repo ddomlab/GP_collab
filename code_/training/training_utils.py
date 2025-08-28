@@ -293,19 +293,14 @@ def run(
                 elif kernel == 'a_matern':
                     my_kernel = AdditiveMatern(length_scale=length_scale_init, nu=2.5)
 
-                elif kernel =='fp_count_mix':
+                else:
 
-                    kernel_cont = AdditiveRBF(length_scale=np.full(len(cont_idx), .2))
-
-                    kernel_fp = Jaccard_RBF(length_scale=np.full(len(fp_idx), .2))
-
-
-
+                    kernel_cont = Matern(length_scale=np.full(len(cont_idx), 2),nu=2.5)
+                    kernel_fp = Jaccard_RBF(length_scale=np.full(len(fp_idx),2))
                     my_kernel = ProductKernel(kernel_cont, kernel_fp, cont_idx, fp_idx)
                     # my_kernel.set_feature_names(X.columns)
                 
-                else:
-                    raise ValueError(f"kernel required, unsupported")
+           
 
             model = optimized_models(regressor_type,kernel=my_kernel)
             y_transform_regressor = TransformedTargetRegressor(
@@ -328,13 +323,15 @@ def run(
         seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
                         seed_predictions, orient="columns")
         if regressor_type == "sklearn-GPR":
-            if kernel == 'fp_count_mix':
+            if 'mix' in kernel:
                 for i, est in enumerate(scores["estimator"]):
-                    print('count',est.named_steps["regressor"].regressor_ .kernel_.length_scale_cont)
+                    # print('count',est.named_steps["regressor"].regressor_ .kernel_.length_scale_cont)
                     # print('fp',est.named_steps["regressor"].regressor_ .kernel_.length_scale_fp)
-
+                    feature_names = est.named_steps["preprocessor"].get_feature_names_out()
+                    length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale_cont
+                    length_scale_fitted_model[seed][i] = dict(zip(feature_names, length_scales))
             else:
-                if X.shape[1]:
+                if X.shape[1]<500:
                     for i, est in enumerate(scores["estimator"]):
                         feature_names = est.named_steps["preprocessor"].get_feature_names_out()
                         length_scales = est.named_steps["regressor"].regressor_ .kernel_.length_scale
