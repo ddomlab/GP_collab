@@ -19,7 +19,7 @@ HERE: Path = Path(__file__).resolve().parent
 DATASETS: Path = HERE.parent.parent / "datasets"
 RESULTS = Path = HERE.parent.parent / "results"
 
-training_df_dir: Path = DATASETS/ "training_dataset"/"Rg data with clusters.pkl"
+training_df_dir: Path = DATASETS/ "training_dataset"/"Rg data with clusters aging imputed.pkl"
 w_data = pd.read_pickle(training_df_dir)
 
 # clusters = 'KM4 ECFP6_Count_512bit cluster'	

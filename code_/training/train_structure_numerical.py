@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from training_utils import train_regressor
+from training_utils_gp_special import train_regressor
 from all_factories import radius_to_bits,cutoffs
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np
@@ -13,7 +13,7 @@ HERE: Path = Path(__file__).resolve().parent
 DATASETS: Path = HERE.parent.parent / "datasets"
 RESULTS = Path = HERE.parent.parent / "results"
 
-training_df_dir: Path = DATASETS/ "training_dataset"/"Rg data with clusters.pkl"
+training_df_dir: Path = DATASETS/ "training_dataset"/"Rg data with clusters aging imputed.pkl"
 w_data = pd.read_pickle(training_df_dir)
 
 TEST = False

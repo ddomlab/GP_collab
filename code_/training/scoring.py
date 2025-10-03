@@ -5,7 +5,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.pipeline import Pipeline
-
+from sklearn.metrics._scorer import r2_scorer
+from sklearn.model_selection import cross_val_predict, cross_validate
+from sklearn.model_selection import learning_curve
+from _validation import multioutput_cross_validate 
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
@@ -20,10 +23,7 @@ from sklearn.metrics import (
 )
 
 
-from sklearn.metrics._scorer import r2_scorer
-from sklearn.model_selection import cross_val_predict, cross_validate
-from sklearn.model_selection import learning_curve
-from _validation import multioutput_cross_validate 
+
 
 
 def pearson(y_true: pd.Series, y_pred: np.ndarray) -> float:
@@ -34,10 +34,6 @@ def pearson(y_true: pd.Series, y_pred: np.ndarray) -> float:
     r = pearsonr(y_true, y_pred)[0]
     return r
 r_scorer = make_scorer(pearson, greater_is_better=True)
-
-
-# from training_utils import N_FOLDS, SEEDS
-
 
 def rmse_score(y_test: pd.Series, y_pred: pd.Series) -> float:
     """
@@ -52,32 +48,6 @@ def rmse_score(y_test: pd.Series, y_pred: pd.Series) -> float:
     """
     return root_mean_squared_error(y_test, y_pred)
 
-
-# def np_r(y_true: pd.Series, y_pred: np.ndarray) -> float:
-#     """
-#     Calculate the Pearson correlation coefficient.
-
-#     Args:
-#         y_true: Test targets.
-#         y_pred: Predicted targets.
-
-#     Returns:
-#         Pearson correlation coefficient.
-#     """
-#     if y_true.type == pd.Series:
-#         y_true = y_true.to_numpy().flatten()
-#     y_pred = y_pred.tolist()
-#     r = np.corrcoef(y_true, y_pred, rowvar=False)[0, 1]
-#     return r
-
-
-# def pearson(y_true: pd.Series, y_pred: np.ndarray) -> float:
-#     if isinstance(y_true, pd.Series) or isinstance(y_true, pd.DataFrame):
-#         y_true = y_true.to_numpy()
-#     y_true = y_true.flatten()
-#     y_pred = y_pred.flatten()
-#     r = pearsonr(y_true, y_pred)[0]
-#     return r
 
 def flatten_array(arr):
     if isinstance(arr, (pd.Series, pd.DataFrame)):
@@ -160,7 +130,7 @@ precision_scorer = make_scorer(precision_score, greater_is_better=True)
 
 
 def process_scores(
-    scores: dict[int, dict[str, float]],classification:bool=False,
+    scores: dict[int, dict[str, float]],
     ) -> dict[Union[int, str], dict[str, float]]:
         # print(scores)
         # 'test_roc_auc'
@@ -168,74 +138,39 @@ def process_scores(
         score_types: list[str] = [
                 key for key in scores[first_key].keys() if key.startswith("test_")
             ]
-        if classification:
-            #TODO: add multi and single
-            print(scores)
-            arr = np.array(scores[42]['test_f1'])
 
-            if arr.ndim > 1 and arr.shape[1] > 1:
-                avg_f1 = np.round(np.mean(np.vstack([arr for seed in scores.values() for arr in seed["test_f1"]]), axis=0), 3)
-                stdev_f1 = np.round(np.std(np.vstack([arr for seed in scores.values() for arr in seed["test_f1"]]), axis=0), 3)
-                print("Average scores:\t",
-                    # f"r: {avg_r}±{stdev_r}\t",
-                    f"f1: {avg_f1}±{stdev_f1}")
-                
-                avgs: list[float] = [
-                        np.mean(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-                    ]
-                stdevs: list[float] = [
-                        np.std(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-                    ]
-                
-            else:
-                avg_f1 = round(np.mean([seed["test_f1"] for seed in scores.values()]), 2)
-                stdev_f1 = round(np.std([seed["test_f1"] for seed in scores.values()]), 2)
-                print("Average scores:\t",
-                    # f"r: {avg_r}±{stdev_r}\t",
-                    f"f1: {avg_f1}±{stdev_f1}")
+        arr = np.array(scores[42]["test_r2"])
+        if arr.ndim > 1 and arr.shape[1] > 1:
 
-
-                avgs: list[float] = [
-                    np.mean([seed[score] for seed in scores.values()]) for score in score_types
-                ]
-                stdevs: list[float] = [
-                    np.std([seed[score] for seed in scores.values()]) for score in score_types
-                ]
+            avg_r2 = np.round(np.mean(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
+            stdev_r2 = np.round(np.std(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
+            print("Average scores:\t",
+                # f"r: {avg_r}±{stdev_r}\t",
+                f"r2: {avg_r2}±{stdev_r2}")
+            
+            avgs: list[float] = [
+                np.mean(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
+            ]
+            stdevs: list[float] = [
+                np.std(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
+            ]
+            # print(avgs)
         else:
-
-            arr = np.array(scores[42]["test_r2"])
-
-            if arr.ndim > 1 and arr.shape[1] > 1:
-
-                avg_r2 = np.round(np.mean(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
-                stdev_r2 = np.round(np.std(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
-                print("Average scores:\t",
-                    # f"r: {avg_r}±{stdev_r}\t",
-                    f"r2: {avg_r2}±{stdev_r2}")
-                
-                avgs: list[float] = [
-                    np.mean(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-                ]
-                stdevs: list[float] = [
-                    np.std(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-                ]
-                # print(avgs)
-            else:
-                avg_rmse = round(np.mean([seed["test_rmse"] for seed in scores.values()]), 2)
-                stdev_rmse = round(np.std([seed["test_rmse"] for seed in scores.values()]), 2)
-                avg_r2 = round(np.mean([seed["test_r2"] for seed in scores.values()]), 2)
-                stdev_r2 = round(np.std([seed["test_r2"] for seed in scores.values()]), 2)
-                print("Average scores:\t",
-                    f"rmse: {-avg_rmse}±{stdev_rmse}\t",
-                    f"r2: {avg_r2}±{stdev_r2}")
+            avg_rmse = round(np.mean([seed["test_rmse"] for seed in scores.values()]), 2)
+            stdev_rmse = round(np.std([seed["test_rmse"] for seed in scores.values()]), 2)
+            avg_r2 = round(np.mean([seed["test_r2"] for seed in scores.values()]), 2)
+            stdev_r2 = round(np.std([seed["test_r2"] for seed in scores.values()]), 2)
+            print("Average scores:\t",
+                f"rmse: {-avg_rmse}±{stdev_rmse}\t",
+                f"r2: {avg_r2}±{stdev_r2}")
 
 
-                avgs: list[float] = [
-                    np.mean([seed[score] for seed in scores.values()]) for score in score_types
-                ]
-                stdevs: list[float] = [
-                    np.std([seed[score] for seed in scores.values()]) for score in score_types
-                ]
+            avgs: list[float] = [
+                np.mean([seed[score] for seed in scores.values()]) for score in score_types
+            ]
+            stdevs: list[float] = [
+                np.std([seed[score] for seed in scores.values()]) for score in score_types
+            ]
 
 
         score_types: list[str] = [score.replace("test_", "") for score in score_types]
@@ -247,7 +182,7 @@ def process_scores(
             for score in score_types:
                 scores[f"{score}_avg_aggregate"] = np.mean(scores[f"{score}_avg"])
                 scores[f"{score}_stdev_aggregate"] = np.mean(scores[f"{score}_stdev"])
-        # print(scores)
+
         return scores
 
 
@@ -416,25 +351,17 @@ def process_learning_score(score: dict[int, dict[str, np.ndarray]]):
 
 
 def cross_validate_regressor(
-    regressor, X, y, cv,classification=False,
+    regressor, X, y, cv,
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
-        if y.shape[1]>1:
-            if classification:
-                scorers= {
-                "accuracy": accuracy_scorer_multi,  
-                "f1": f1_scorer_multi,
-                "recall": recall_scorer_multi,
-                "precision": precision_scorer_multi,
-                "roc_auc": roc_auc_scorer_multi    
-                }
-            else:
-                scorers = {
-                        "r2": r2_scorer_multi,
-                        "rmse": rmse_scorer_multi,
-                        "mae": mae_scorer_multi
-                        }
+        if y.ndim > 1 and y.shape[1] > 1:
+  
+            scorers = {
+                    "r2": r2_scorer_multi,
+                    "rmse": rmse_scorer_multi,
+                    "mae": mae_scorer_multi
+                    }
         
 
             score =  multioutput_cross_validate(
@@ -449,26 +376,14 @@ def cross_validate_regressor(
 
         # SINGLE OUTPUT
         else:
-            if classification:
-                scorers= {
-                # "accuracy": accuracy_scorer_multi,  
-                "f1": f1_scorer,
-                "recall": recall_scorer,
-                "precision": precision_scorer,
-                "roc_auc": roc_auc_scorer    
-                }
-            else:
-                scorers = {
-                    "pearson_r": r_scorer,
-                    # "pearson_p": pearson_p_scorer,
-                    "spearman_r": spearman_scorer,
-                    # "spearman_p": spearman_p_scorer,
-                    # "kendall_r": kendall_scorer,
-                    # "kendall_p": kendall_p_scorer,
-                    "rmse": rmse_scorer,
-                    "mae": mae_scorer,
-                    "r2": r2_scorer,
-                }
+        
+            scorers = {
+                "spearman_r": spearman_scorer,
+                "rmse": rmse_scorer,
+                "mae": mae_scorer,
+                "r2": r2_scorer,
+            }
+
             score: dict[str, float] = cross_validate(
                 regressor,
                 X,
@@ -512,13 +427,6 @@ def get_incremental_split(
  
     return training_sizes, training_scores, testing_scores
 
-
-# def get_score_func(score: str, output: str) -> Callable:
-#     """
-#     Returns the appropriate scoring function for the given output.
-#     """
-#     score_func: Callable = score_lookup[score][output]
-#     return score_func
 
 class PredictionUncertainty:
     def __init__(self, fitted_model):

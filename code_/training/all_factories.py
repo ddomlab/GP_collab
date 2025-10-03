@@ -7,7 +7,7 @@ from sklearn.svm import SVR
 from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
-from GPR_model import GPRegressor
+# from GPR_model import GPRegressor
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import FunctionTransformer
@@ -108,7 +108,7 @@ regressor_factory: dict[str, type]={
     "NGB": NGBRegressor(),
     "XGBC":XGBClassifier(),
     "RFC": RandomForestClassifier(),
-    "GPR": GPRegressor,
+    # "GPR": GPRegressor,
     "sklearn-GPR":GaussianProcessRegressor,
     "MLP": MLPRegressor(),
     'HGBR': HistGradientBoostingRegressor(),

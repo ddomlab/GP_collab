@@ -138,17 +138,15 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
 
 
     if ground_truth:
-        # print(ground_truth)
         cluster_ground_truth:Path = results_dir / f"{fname_root}_ClusterTruth.json"
         with open(cluster_ground_truth, "w") as f:
             json.dump(ground_truth, f, cls=NumpyArrayEncoder, indent=2)
     
     if feat_length_scale:
-        data_shape_file:Path = results_dir / f"{fname_root}_length_scale.json"
-        with open(data_shape_file, "w") as f:
+        feat_ls_file:Path = results_dir / f"{fname_root}_length_scale.json"
+        with open(feat_ls_file, "w") as f:
             json.dump(feat_length_scale, f, cls=NumpyArrayEncoder, indent=2)
 
-    
     print('Done Saving scores!')
 
 
@@ -158,7 +156,6 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
                  feat_length_scale:Optional[Dict]=None,
                  target_features: list=None,
                  regressor_type: str=None,
-                 kernel: Optional[str]=None,
                  TEST : bool =True,
                  representation: str=None,
                  pu_type : Optional[str]=None,
@@ -171,7 +168,6 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
                  hypop: Optional[bool]=True,
                  transform_type:Optional[str]=None,
                  target_transformer:Optional[str]=None,
-                 classification:bool=False,
                  clustering_method:str=None,
                  learning_curve:bool=False,
                  special_folder_name:Optional[str]=None,
@@ -181,7 +177,6 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
     targets_dir: str = "-".join([feature_abbrev.get(target, target) for target in target_features])
     feature_ids = []
     
-    regressor_type = f"{regressor_type}({kernel})" if kernel is not None else regressor_type
     
     if pu_type:
         feature_ids.append(pu_type)
@@ -190,7 +185,7 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
     features_dir: str = "_".join(feature_ids)
     if cutoff:
         cutoff_parameter = "-".join(feature_abbrev.get(key,key) for key in cutoff)
-    f_root_dir = f"classification_target_{targets_dir}" if classification else  f"target_{targets_dir}"
+    f_root_dir = f"target_{targets_dir}"
     f_root_dir = f"OOD_{f_root_dir}" if clustering_method else f_root_dir
     # f_root_dir = f"{f_root_dir}_{target_transformer}FT" if target_transformer else f_root_dir
     f_root_dir = f"{f_root_dir}_filter_({cutoff_parameter})" if cutoff else f_root_dir
