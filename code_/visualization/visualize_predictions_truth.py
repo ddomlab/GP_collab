@@ -9,6 +9,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from typing import List, Optional
 from matplotlib import rc
+from visualize_ood_learning_curve import ensure_long_path
 
 
 HERE: Path = Path(__file__).resolve().parent
@@ -22,7 +23,8 @@ set_plot_style()
 
 
 def get_file_info(file_path:Path)-> tuple[str, str]:
-    # return file name and polymer representation
+    if not file_path.exists():
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
     return file_path.stem , file_path.parent.name
 
 def get_prediction_plot(results_directory: Path, ground_truth_file: Path, target:str)->None:
@@ -51,13 +53,13 @@ def get_prediction_plot(results_directory: Path, ground_truth_file: Path, target
 
 
 
-def get_scores(dir: Path,peak_number:Optional[int]) -> tuple[float, float]:
+def get_scores(dir: Path,peak_number:Optional[int],score_metrics:str) -> tuple[float, float]:
     score_path = dir.with_name(dir.stem.replace("_prediction", "_score") + ".json")
     with open(score_path, "r") as f:
         scores: dict = json.load(f)
         
-    avg = scores["r2_avg"]
-    std = scores["r2_stdev"]
+    avg = scores[f"{score_metrics}_avg"]
+    std = scores[f"{score_metrics}_stdev"]
     avg = avg[peak_number] if isinstance(avg, list) else avg
     std = std[peak_number] if isinstance(std, list) else std
     r2_avg = round(avg, 2)
@@ -152,9 +154,10 @@ def draw_single_parity_plot(
                         log_scale:bool,
                         x_y_target_name:str,
                         peak_num:Optional[int]=None,
+                        score_metrics:str='r2',
                            ) -> None:
     # Load the data from CSV files
-    r2_avg, r2_stderr = get_scores(prediction_path,peak_number=peak_num)
+    r2_avg, r2_stderr = get_scores(prediction_path,peak_number=peak_num,score_metrics=score_metrics)
     predicted_values = pd.read_csv(prediction_path)
     seeds = predicted_values.drop(target, axis=1).columns 
     if peak_num:
@@ -170,6 +173,8 @@ def draw_single_parity_plot(
         predicted_values_ext = pd.concat([predicted_values[col] for col in seeds], axis=0, ignore_index=True)
     true_values_ext = pd.concat([predicted_values[target]] * len(seeds), ignore_index=True)
     combined_data = pd.concat([true_values_ext, predicted_values_ext], axis=1)
+    r_preason = combined_data.corr().iloc[0, 1]
+    r_spearman = combined_data.corr(method='spearman').iloc[0, 1]
     if log_scale:
         combined_data = np.log10(combined_data)
     
@@ -183,19 +188,20 @@ def draw_single_parity_plot(
     ax_max = ceil(max(combined_data.max()))
     ax_min = ceil(min(combined_data.min()))
     g.ax_joint.plot([0, ax_max], [0, ax_max], ls="--", c=".3")
-    g.ax_joint.annotate(f"$R^2$ = {r2_avg} ± {r2_stderr}",
+    score_sign = '$R^2$' if score_metrics == 'r2' else '$RMSE$'
+    g.ax_joint.annotate(f"{score_sign} = {r2_avg} ± {r2_stderr}",
                         xy=(0.1, 0.9), xycoords='axes fraction',
                         ha='left', va='center',
-                        fontsize=18,
-                        bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray")
+                        fontsize=16.5,
+                        # bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray")
                         )
 
     # Set plot limits to (0, 15) for both axes
     xlabel = f"log True {x_y_target_name}" if log_scale else f"True {x_y_target_name}"
     ylabel = f"log Predicted {x_y_target_name}" if log_scale else f"Predicted {x_y_target_name}"
 
-    g.ax_joint.set_xlabel(xlabel, fontdict={'fontsize': 16, 'fontweight': 'bold'})
-    g.ax_joint.set_ylabel(ylabel, fontdict={'fontsize': 16, 'fontweight': 'bold'})
+    g.ax_joint.set_xlabel(xlabel, fontdict={'fontsize': 18, 'fontweight': 'bold'})
+    g.ax_joint.set_ylabel(ylabel, fontdict={'fontsize': 18, 'fontweight': 'bold'})
     g.ax_joint.set_xlim(ax_min, ax_max)
     g.ax_joint.set_ylim(ax_min, ax_max)
     # plt.tight_layout()
@@ -207,7 +213,7 @@ def draw_single_parity_plot(
     os.makedirs(visualization_folder_path, exist_ok=True)
 
     saving_path = visualization_folder_path/ file_name
-
+    print(saving_path)
     try:
         save_img_path(visualization_folder_path, file_name)
     except Exception as e:
@@ -228,9 +234,11 @@ if __name__ == "__main__":
 
 
     target_to_an = 'target_log Rg (nm)'
-    file_n = "(Mordred-DP-Mw-PDI-concentration-temperature-polymer dP-polymer dD-polymer dH-solvent dP-solvent dD-solvent dH)_NGB_Standard_predictions.csv"
-    poly_representation_name = 'Trimer_scaler'
+    file_n = "(Xn-Mw-PDI-concentration-temperature-polymer dP-polymer dD-polymer dH-solvent dP-solvent dD-solvent dH-light exposure-aging time-aging temperature-prep temperature-prep time)_XGBR_Standard_predictions.csv"
+    poly_representation_name = 'scaler'
     truth_val_file:Path = RESULTS/target_to_an/poly_representation_name/file_n
+    truth_val_file = ensure_long_path(truth_val_file)
+    print(truth_val_file.exists())
     fname,_ = get_file_info(truth_val_file)
     draw_single_parity_plot(
         target='log Rg (nm)',
@@ -242,5 +250,6 @@ if __name__ == "__main__":
         poly_representation_name=poly_representation_name,
         # peak_num=0,
         file_name=fname,
-        log_scale=False
+        log_scale=False,
+        score_metrics='r2'
     )

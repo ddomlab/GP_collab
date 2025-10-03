@@ -134,7 +134,7 @@ def generate_training_dataset():
     
 
     dataset_hsp_added_dropped_additives = dataset_hsp_added[dataset_hsp_added['Solid additive'].isna()].reset_index(drop=True) 
-    after_dropping_additives_counts = {t: dataset_hsp_added_dropped_additives[t].notna().sum() for t in targets}
+    after_dropping_additives_counts = [dataset_hsp_added_dropped_additives[t].notna().sum() for t in targets]
 
     dataset_hsp_added_dropped_additives.to_csv(training_dir/'dataset_wo_block_cp_(fp-hsp)_added_additive_dropped.csv',index=False)
     dataset_hsp_added_dropped_additives.to_pickle(training_dir/'dataset_wo_block_cp_(fp-hsp)_added_additive_dropped.pkl')
@@ -142,8 +142,7 @@ def generate_training_dataset():
 
 
 
-    for t in targets:
-        data_summary_monitor['After dropping solid additives'].append(after_dropping_additives_counts[t])
+    data_summary_monitor['After dropping solid additives'].append(after_dropping_additives_counts)
     with open(JSONS/"data_summary_monitor.json", "w") as f:
         json.dump(data_summary_monitor, f, cls=NumpyArrayEncoder, indent=2)
 

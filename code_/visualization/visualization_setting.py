@@ -49,34 +49,6 @@ def set_plot_style(
         "legend.fontsize": legend_size,
     })
 
-    # ax = plt.gca()
-    # fig = plt.gcf()
-    # ax.set_xlabel(x_title, fontsize=label_size, fontweight='bold')
-    # ax.set_ylabel(y_title, fontsize=label_size, fontweight='bold')
-    # fig.suptitle(fig_title, fontsize=title_size, fontweight='bold')
-    # # Local settings for an Axes object
-    # if ax is not None:
-    #     if x_tick_labels is not None:
-    #         ax.set_xticks(range(len(x_tick_labels)))
-    #         ax.set_xticklabels(x_tick_labels, rotation=rotate_xticks, ha="right", fontsize=tick_size)
-
-    #     if y_tick_labels is not None:
-    #         ax.set_yticks(range(len(y_tick_labels)))
-    #         ax.set_yticklabels(y_tick_labels, rotation=rotate_yticks, ha="right", fontsize=tick_size)
-
-    #     if x_title is not None:
-    #         ax.set_xlabel(x_title, fontsize=label_size, fontweight='bold')
-    #     if y_title is not None:
-    #         ax.set_ylabel(y_title, fontsize=label_size, fontweight='bold')
-
-    # if fig_title is not None and fig is not None:
-    #     fig.suptitle(fig_title, fontsize=title_size, fontweight='bold')
-    # elif fig_title is not None:
-    #     plt.title(fig_title, fontsize=title_size, fontweight='bold')
-
-
-
-
 
 def save_img_path(folder_path:Union[str, Path], file_name:str)->None:
     folder_path = Path(folder_path)
@@ -86,4 +58,4 @@ def save_img_path(folder_path:Union[str, Path], file_name:str)->None:
     if os.name == 'nt':  # Only for Windows
         save_path = Path(f"\\\\?\\{save_path.resolve()}")
 
-    plt.savefig(save_path, dpi=600, bbox_inches='tight')
+    plt.savefig(save_path, dpi=800, bbox_inches='tight')

@@ -50,8 +50,7 @@ def main_cleaning(raw_data:pd.DataFrame) -> None:
         m_data[value] = m_data[value].apply(convert_value)
     print('Done with converting to precise values')
 
-    # numreical_feats: list[str] = ["Rh1 (nm)", "Rg1 (nm)", "Lp (nm)",
-    #                 "Lc (nm)", "Temperature SANS/SLS/DLS/SEC (K)"]
+
     for column in main_columns:
         m_data[column] = pd.to_numeric(m_data[column], errors="coerce", )
     
