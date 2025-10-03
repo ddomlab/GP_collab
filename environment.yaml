@@ -1,10 +1,8 @@
-name: Model-Generalizability-and-Uncertainty-for-Predicting-Conjugated-Polymer-Solution-Conformation.git
+name: Mixed GP kernels for Molecular Fingerprints and Continuous Parameters
 
 
 channels:
-  - rapidsai
   - conda-forge
-  - nvidia
   - rdkit
   - bioconda
   - defaults
@@ -12,8 +10,6 @@ channels:
 
 dependencies:
   - python>=3.11.0
-  - rapids=25.04
-  - cuda-version=12.0
   - numpy>=1.20.0
   - pandas>=1.0.3
   - pip>=24.0.2
@@ -28,7 +24,7 @@ dependencies:
   - ngboost
   - mordred>=1.2.0
   - Pandarallel
-  - openpyxl
+  # - openpyxl
   - gpytorch
 
 

@@ -1,8 +1,4 @@
-<img width="1963" height="2020" alt="image" src="https://github.com/user-attachments/assets/1124a05f-6a82-4e87-ad7f-83604d6f76e9" /><br><br>
-
-This repository contains the data, preprocessing workflows, and machine learning pipelines developed for the paper:<br>
-"**Robust Learning from Literature Data: Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation**"
-
+This repository provides code and protocols for combining kernels to train on molecular fingerprints and continuous parameters together.
 
 ## Overview
 The repository is set-up to make the results easy to reproduce. If you get stuck or like to learn more, please feel free to open an issue.
