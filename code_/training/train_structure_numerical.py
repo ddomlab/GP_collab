@@ -236,9 +236,6 @@ if __name__ == "__main__":
     #     cutoff=None,  
     # )
 
-
-
-
     main_structural_numerical(
         dataset=w_data,
         representation="ECFP",
