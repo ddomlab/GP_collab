@@ -3,13 +3,13 @@ import os
 from pathlib import Path
 from types import NoneType
 from typing import Dict, Optional,Tuple
-
+from filter_data import ensure_long_path
 import numpy as np
 import pandas as pd
 from all_factories import radius_to_bits
 
 HERE: Path = Path(__file__).resolve().parent
-ROOT: Path = HERE.parent.parent
+ROOT: Path = HERE.parent.parent / "results"
 
 feature_abbrev: Dict[str, str] = {
     "Lp (nm)":          "Lp",
@@ -116,11 +116,9 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
     print("Filename:", fname_root)
 
     if scores:
-        # cv_indices = get_cv_splits(scores)
-        # print("CV Indices:", cv_indices)
-        scores_file: Path = results_dir / f"{fname_root}_scores.json"
-        with open(scores_file, "w") as f:
-            json.dump(scores, f, cls=NumpyArrayEncoder, indent=2)
+            scores_file = ensure_long_path(results_dir / f"{fname_root}_scores.json")
+            with open(scores_file, "w") as f:
+                json.dump(scores, f, cls=NumpyArrayEncoder, indent=2)
         
         # indices_file: Path = results_dir / f"{fname_root}_indices.json"
         # with open(indices_file, "w") as f:
@@ -128,26 +126,22 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
 
     if predictions is not None:
         if isinstance(predictions, pd.DataFrame):
-            predictions_file: Path = results_dir / f"{fname_root}_predictions.csv"
+            predictions_file = ensure_long_path(results_dir / f"{fname_root}_predictions.csv")
             predictions.to_csv(predictions_file, index=False)
         elif isinstance(predictions, dict):
-            predictions_file: Path = results_dir / f"{fname_root}_predictions.json"
-            
+            predictions_file = ensure_long_path(results_dir / f"{fname_root}_predictions.json")
             with open(predictions_file, "w") as f:
                 json.dump(predictions, f, cls=NumpyArrayEncoder, indent=2)
 
-
     if ground_truth:
-        cluster_ground_truth:Path = results_dir / f"{fname_root}_ClusterTruth.json"
+        cluster_ground_truth = ensure_long_path(results_dir / f"{fname_root}_ClusterTruth.json")
         with open(cluster_ground_truth, "w") as f:
             json.dump(ground_truth, f, cls=NumpyArrayEncoder, indent=2)
-    
+
     if feat_length_scale:
-        feat_ls_file:Path = results_dir / f"{fname_root}_length_scale.json"
+        feat_ls_file = ensure_long_path(results_dir / f"{fname_root}_length_scale.json")
         with open(feat_ls_file, "w") as f:
             json.dump(feat_length_scale, f, cls=NumpyArrayEncoder, indent=2)
-
-    print('Done Saving scores!')
 
 
 def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
@@ -163,7 +157,7 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
                  vector : Optional[str]=None,
                  numerical_feats: Optional[list[str]]=None,
                  imputer: Optional[str] = None,
-                 output_dir_name: str = "results",
+                 output_dir_name: str = "PLS",
                  cutoff: Optional[Dict[str, Tuple[Optional[float], Optional[float]]]] =None,
                  hypop: Optional[bool]=True,
                  transform_type:Optional[str]=None,

@@ -25,7 +25,6 @@ def calculate_mw(df: pd.DataFrame,  # df containing Mw, Mn & PDI columns only
 
 def preprocessing_workflow(imputer: Optional[str]=None,
                            feat_to_impute: Optional[list[str]] = None,
-                           representation: Optional[str] = None,
                            numerical_feat: Optional[list] = None,
                            structural_feat: Optional[list] = None,
                            special_column: Optional[str] = None,
@@ -85,7 +84,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
                 ("numerical_scaling", transforms[scaler], numerical_feat)
                 )
         # elif representation_scaling_factory[representation]['callable']:
-        elif representation:
+        elif structural_feat:
             transformers.append(
                 ("structural_scaling", transforms[scaler], structural_feat)
                 )

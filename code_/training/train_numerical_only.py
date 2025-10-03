@@ -2,22 +2,21 @@ import pandas as pd
 from pathlib import Path
 from training_utils_gp_special import train_regressor
 from all_factories import radius_to_bits,cutoffs
+from filter_data import _get_dataset
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np
-import sys
+import os
 
-
-sys.path.append("../cleaning")
 from argparse import ArgumentParser
 from data_handling import save_results
-from train_structure_numerical import parse_arguments
+# from train_structure_numerical import parse_arguments
 
-HERE: Path = Path(__file__).resolve().parent
-DATASETS: Path = HERE.parent.parent / "datasets"
-RESULTS = Path = HERE.parent.parent / "results"
+HERE = Path(__file__).resolve().parent
+DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
+PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+RESULTS = HERE.parent.parent / "results"
+w_data = _get_dataset(DATASETS / PAPER, "Beyond molecular structure_seifrid_imputed")
 
-training_df_dir: Path = DATASETS/ "training_dataset"/ "Rg data with clusters aging imputed.pkl"
-w_data = pd.read_pickle(training_df_dir)
 TEST = True
 
 def main_numerical_only(
@@ -66,6 +65,7 @@ def main_numerical_only(
                 hypop=hyperparameter_optimization,
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
+                output_dir_name= PAPER,
                 # special_folder_name='hp_RF_differences'
                 # special_file_name='pfo_p3ht',
                 )
@@ -82,7 +82,7 @@ def main_numerical_only(
 
 if __name__ == "__main__":
     # if TEST==False:
-
+    # print('yse')
     #     args = parse_arguments()
     #     main_numerical_only(
     #         dataset=w_data,
@@ -104,17 +104,26 @@ if __name__ == "__main__":
             dataset=w_data,
             regressor_type="RF",
             # kernel= "a_matern",
-            target_features=['log Rg (nm)'],
+            target_features=['calculated PCE (%)'],
             feat_transformer='Standard',
             target_transformer='Standard', 
             hyperparameter_optimization=False,
             numerical_feats=[
-                            'Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
-                            "Temperature SANS/SLS/DLS/SEC (K)", 
-                            "polymer dP", "polymer dD", "polymer dH",
-                            'solvent dP', 'solvent dD', 'solvent dH'
-                             ],
-            )
+                    "HOMO_D (eV)",
+                    "LUMO_D (eV)",
+                    "Eg_D (eV)",
+                    "Ehl_D (eV)",
+                    "HOMO_A (eV)",
+                    "LUMO_A (eV)",
+                    "Eg_A (eV)",
+                    "Ehl_A (eV)",
+                    "D:A ratio (m/m)",
+                    "solvent additive conc. (% v/v)",
+                    "temperature of thermal annealing",
+                    "HTL energy level (eV)",
+                    "ETL energy level (eV)"
+                    ],
+                    )
 
     # columns_to_impute: list[str] = ["PDI","Temperature SANS/SLS/DLS/SEC (K)","Concentration (mg/ml)"]
     # special_column: str = "Mw (g/mol)"

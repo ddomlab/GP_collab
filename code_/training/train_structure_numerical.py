@@ -1,20 +1,20 @@
 import pandas as pd
 from pathlib import Path
+from filter_data import _get_dataset
 from training_utils_gp_special import train_regressor
 from all_factories import radius_to_bits,cutoffs
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np
 import sys
-sys.path.append("../cleaning")
 from argparse import ArgumentParser
 from data_handling import save_results
 
-HERE: Path = Path(__file__).resolve().parent
-DATASETS: Path = HERE.parent.parent / "datasets"
-RESULTS = Path = HERE.parent.parent / "results"
 
-training_df_dir: Path = DATASETS/ "training_dataset"/"Rg data with clusters aging imputed.pkl"
-w_data = pd.read_pickle(training_df_dir)
+HERE = Path(__file__).resolve().parent
+DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
+PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+RESULTS = HERE.parent.parent / "results"
+w_data = _get_dataset(DATASETS / PAPER, "Rg data with clusters aging imputed")
 
 TEST = False
 
@@ -38,7 +38,7 @@ def get_structural_info(fp:str,poly_unit:str,radius:int=None,vector:str=None)->T
                                 "vector_type": vector,
                                 "oligomer_representation": poly_unit,
                                 "col_names": fp_features,
-                            }
+                                }
             return fp_features, unrolling_featurs
         else:
               return None, None
@@ -49,48 +49,49 @@ def main_structural_numerical(
     regressor_type: str,
     target_features: list[str],
     feat_transformer: str,
+    target_transformer:str,
     representation:str,
     oligomer_representation: str,
-    numerical_feats: Optional[list[str]]=None,
-    hyperparameter_optimization: bool=True,
+    hyperparameter_optimization: bool,
+    numerical_feats: Optional[list[str]],
+    columns_to_impute: Optional[list[str]]=None,
+    special_impute: Optional[str]=None,
     radius:int=None,
     vector:str=None,
-    kernel:str = None,
-    cutoff:Optional[str]=None,
-    target_transformer:str=None,
+    imputer:Optional[str]=None,
 ) -> None:
-    
+
     structural_features, unroll_single_feat = get_structural_info(representation,oligomer_representation,radius,vector)
-    scores, predictions,ls  = train_regressor(
-                                                dataset=dataset,
-                                                structural_features=structural_features,
-                                                unroll=unroll_single_feat,
-                                                numerical_feats=numerical_feats,
-                                                target_features=target_features,
-                                                regressor_type=regressor_type,
-                                                kernel=kernel,
-                                                feat_transformer=feat_transformer,
-                                                target_transformer=target_transformer,
-                                                cutoff=cutoff,
-                                                hyperparameter_optimization=hyperparameter_optimization,
-                                                Test=TEST,
-                                                )
+    scores, predictions  =   train_regressor(
+                                            dataset=dataset,
+                                            features_impute=columns_to_impute,
+                                            special_impute=special_impute,
+                                            unroll=unroll_single_feat,
+                                            structural_features=structural_features,
+                                            unroll=unroll_single_feat,
+                                            numerical_feats=numerical_feats,
+                                            target_features=target_features,
+                                            regressor_type=regressor_type,
+                                            target_transformer=target_transformer,
+                                            feat_transformer=feat_transformer,
+                                            hyperparameter_optimization=hyperparameter_optimization,
+                                            imputer=imputer,
+                                            Test=TEST,
+                                            )
+  
     save_results(scores,
                 predictions=predictions,
-                feat_length_scale=ls,
                 representation=representation,
-                pu_type=oligomer_representation,
                 target_features=target_features,
                 regressor_type=regressor_type,
                 numerical_feats=numerical_feats,
                 radius= radius,
                 vector =vector,
-                kernel=kernel,
-                cutoff=cutoff,
-                TEST=TEST,
                 hypop=hyperparameter_optimization,
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
+                TEST=TEST,
+
                 # special_folder_name='hp_RF_differences',
                 # special_file_name='v2_(max_feat_all_leaf_smaller)',
                 )
@@ -100,7 +101,6 @@ def main_structural_numerical(
 def parse_arguments():
     parser = ArgumentParser(description="Process some data for numerical-only regression.")
     
-    # Argument for regressor_type
     parser.add_argument(
         '--target_features',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  

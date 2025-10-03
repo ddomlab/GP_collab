@@ -65,7 +65,6 @@ def train_regressor(
     dataset: pd.DataFrame,
     features_impute: Optional[list[str]],
     special_impute: Optional[str],
-    representation: Optional[str],
     structural_features: Optional[list[str]],
     numerical_feats: Optional[list[str]],
     unroll: Union[dict[str, str], list[dict[str, str]], None],
@@ -87,7 +86,6 @@ def train_regressor(
                                             dataset=dataset,
                                             features_impute= features_impute,
                                             special_impute= special_impute,
-                                            representation=representation,
                                             structural_features=structural_features,
                                             unroll=unroll,
                                             numerical_feats = numerical_feats,
@@ -115,7 +113,6 @@ def _prepare_data(
     regressor_type: str,
     features_impute: Optional[list[str]]=None,
     special_impute: Optional[str]=None,
-    representation: Optional[str]=None,
     structural_features: Optional[list[str]]=None,
     numerical_feats: Optional[list[str]]=None,
     unroll: Union[dict, list, None] = None,
@@ -147,11 +144,11 @@ def _prepare_data(
     # Pipline workflow here and preprocessor
     preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
                                                     feat_to_impute=features_impute,
-                                                    representation = representation,
                                                     numerical_feat=numerical_feats,
-                                                    structural_feat = unrolled_feats,
+                                                    structural_feat=unrolled_feats,
                                                     special_column=special_impute,
-                                                    scaler=transform_type)
+                                                    scaler=transform_type
+                                                    )
     
 
 
@@ -263,12 +260,6 @@ def _prepare_data(
 #                       seed_predictions, orient="columns")
 #     # print(wasserstein_dis)
 #     return seed_scores, seed_predictions
-
-
-
-
-
-
 
 
 def run(

@@ -5,18 +5,9 @@ from typing import Optional, Union, Dict, Tuple
 import pandas as pd
 from unrolling_utils import unrolling_factory
 import numpy as np
-# HERE: Path = Path(__file__).resolve().parent
-# DATASETS: Path = HERE.parent.parent / "datasets"
-
-# with open(HERE / "filters.json", "r") as f:
-#     FILTERS: dict[str, list[str]] = json.load(f)
-
-# with open(HERE / "subsets.json", "r") as f:
-#     SUBSETS: dict[str, list[str]] = json.load(f)
+import os
 
 
-
-# Filtration with optional lower and upper cutoff and resetting index
 def cutoff_filteration(data: pd.DataFrame, lower_cutoff: Optional[float], upper_cutoff: Optional[float], target_feature: str) -> pd.DataFrame:
     if lower_cutoff is not None:
         data = data.drop(data.index[data[target_feature] < lower_cutoff])
@@ -24,11 +15,31 @@ def cutoff_filteration(data: pd.DataFrame, lower_cutoff: Optional[float], upper_
         data = data.drop(data.index[data[target_feature] > upper_cutoff])
     return data.reset_index(drop=True)  # Reset index after filtering
 
+
 def apply_cutoff(data: pd.DataFrame, cutoffs: Dict[str, Tuple[Optional[float], Optional[float]]]) -> pd.DataFrame:
     df = data.copy()
     for feature, (lower_cutoff, upper_cutoff) in cutoffs.items():
         df = cutoff_filteration(data=df, lower_cutoff=lower_cutoff, upper_cutoff=upper_cutoff, target_feature=feature)
     return df
+
+
+def ensure_long_path(path: Path) -> Path:
+    """Ensures Windows handles long paths by adding '\\?\' if needed."""
+    path_str = str(path)
+    if os.name == 'nt' and len(path_str) > 250:
+        return Path(f"\\\\?\\{path_str}")
+    return path
+
+def _get_dataset(dataset_basket: Path, dataset_name: str) -> pd.DataFrame:
+    dataset_path: Path = dataset_basket / f"{dataset_name}.pkl"
+    dataset_path = ensure_long_path(dataset_path)
+
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Dataset {dataset_name} not found in {dataset_basket}")
+
+    return pd.read_pickle(dataset_path)
+
+
 
 
 
