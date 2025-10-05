@@ -18,25 +18,27 @@ w_data = _get_dataset(DATASETS / PAPER, "Rg data with clusters aging imputed")
 
 TEST = False
 
-def get_structural_info(fp:str,poly_unit:str,radius:int=None,vector:str=None)->Tuple:
+def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:
        
         if fp == "Mordred" or fp == "MACCS":
-            fp_features: list[str] = [f"{poly_unit}_{fp}"]
+            fp_features = [f"{unit}_{fp}" for unit in poly_unit_name]
             unrolling_featurs = {"representation": fp,
-                                "oligomer_representation":poly_unit,
+                                "unit_name":poly_unit_name,
                                 "col_names": fp_features}
             return fp_features, unrolling_featurs
         
         if fp == "ECFP":
             n_bits = radius_to_bits[radius]
-            fp_features: list[str] = [
-            f"{poly_unit}_{fp}{2 * radius}_{vector}_{n_bits}bits"]
+            fp_features = [
+                        f"{unit}_{fp}{2 * radius}_{vector}_{n_bits}bits"
+                        for unit in poly_unit_name
+                        ]
             unrolling_featurs = {
                                 "representation": fp,
                                 "radius": radius,
                                 "n_bits": n_bits,
                                 "vector_type": vector,
-                                "oligomer_representation": poly_unit,
+                                "unit_name": poly_unit_name,
                                 "col_names": fp_features,
                                 }
             return fp_features, unrolling_featurs
@@ -52,8 +54,8 @@ def main_structural_numerical(
     target_transformer:str,
     representation:str,
     oligomer_representation: str,
-    hyperparameter_optimization: bool,
     numerical_feats: Optional[list[str]],
+    hyperparameter_optimization: bool=False,
     columns_to_impute: Optional[list[str]]=None,
     special_impute: Optional[str]=None,
     radius:int=None,
@@ -68,7 +70,6 @@ def main_structural_numerical(
                                             special_impute=special_impute,
                                             unroll=unroll_single_feat,
                                             structural_features=structural_features,
-                                            unroll=unroll_single_feat,
                                             numerical_feats=numerical_feats,
                                             target_features=target_features,
                                             regressor_type=regressor_type,
@@ -91,7 +92,6 @@ def main_structural_numerical(
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
                 TEST=TEST,
-
                 # special_folder_name='hp_RF_differences',
                 # special_file_name='v2_(max_feat_all_leaf_smaller)',
                 )

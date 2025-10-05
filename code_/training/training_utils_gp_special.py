@@ -131,7 +131,7 @@ def _prepare_data(
 
 
 
-    X, y, unrolled_feats, _ = filter_dataset(
+    X, y, unrolled_feats = filter_dataset(
                                             raw_dataset=dataset,
                                             structure_feats=structural_features,
                                             scalar_feats=numerical_feats,

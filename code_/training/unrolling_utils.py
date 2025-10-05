@@ -33,28 +33,29 @@ def unroll_lists_to_columns(df: pd.DataFrame, unroll_cols: list[str], new_col_na
     return unrolled_df
 
 
-def unroll_ECFP(df: pd.DataFrame, col_names: list[str], oligomer_representation:str ,
+def unroll_ECFP(df: pd.DataFrame, col_names: list[str], unit_name:str ,
                 vector_type:str ,radius: int = 0, n_bits: int = 0,**kwargs) -> pd.DataFrame:
-    
-    new_ecfp_col_names: list[str] = [f"{oligomer_representation}_ECFP{2 * radius}_{vector_type}_bit{i}" for i in range(n_bits)]
+    new_ecfp_col_names = [
+        f"{uni}_ECFP{2 * radius}_{vector_type}_bit{i}"
+        for uni in unit_name
+        for i in range(n_bits)
+    ]
     new_df: pd.DataFrame = unroll_lists_to_columns(df, col_names, new_ecfp_col_names)
     return new_df
 
 
 
-
-
-def unroll_Mordred_descriptors(df: pd.DataFrame, col_names: list[str], oligomer_representation:str,
+def unroll_Mordred_descriptors(df: pd.DataFrame, col_names: list[str], unit_name:str,
                         **kwargs) -> pd.DataFrame:
     
     descriptors: pd.Series = df[col_names].squeeze()
     mordred_descriptors_urolled: pd.DataFrame = pd.DataFrame.from_records(descriptors)
-    mordred_descriptors: pd.DataFrame = mordred_descriptors_urolled.rename(columns=lambda x: f"{oligomer_representation} Mordred {x}")
+    mordred_descriptors: pd.DataFrame = mordred_descriptors_urolled.rename(columns=lambda x: f"{unit_name} Mordred {x}")
     return mordred_descriptors
 
-def unroll_MACCS(df: pd.DataFrame, col_names: list[str], oligomer_representation:str,
+def unroll_MACCS(df: pd.DataFrame, col_names: list[str], unit_name:str,
                         **kwargs):
-    new_ecfp_col_names: list[str] = [f"{oligomer_representation}_MACCS_bit{i}" for i in range(1,168)]
+    new_ecfp_col_names: list[str] = [f"{unit_name}_MACCS_bit{i}" for i in range(1,168)]
     new_df: pd.DataFrame = unroll_lists_to_columns(df, col_names, new_ecfp_col_names)
     new_df: pd.DataFrame = new_df.astype('uint32')
     return new_df

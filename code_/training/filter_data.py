@@ -152,20 +152,15 @@ def filter_dataset(
 
     # if not (scalars_available and struct_available):
     new_struct_feats: list[str] = structure_features.columns.tolist()
-    new_num_feats: list[str] = scalar_features.columns.tolist()
-    training_test_shape: Dict ={
-                                "targets_shape": targets.shape,
-                                "training_features_shape": training_features.shape
-                                }
-    
+
     if cluster_type:
         if cluster_type == "substructure cluster":
             substructure_labels = dataset[cluster_type].squeeze().to_numpy()
-            side_chian_labels = dataset["Side Chain Cluster"].squeeze().to_numpy()
+            side_chain_labels = dataset["Side Chain Cluster"].squeeze().to_numpy()
             c_labels = {"substructure cluster": substructure_labels,
-                        "Side Chain Cluster": side_chian_labels}
-        else:    
+                        "Side Chain Cluster": side_chain_labels}
+        else:
             c_labels = dataset[cluster_type].squeeze().to_numpy()
-        return training_features, targets, new_struct_feats, c_labels,training_test_shape
-    
-    return training_features, targets, new_struct_feats,training_test_shape
+        return training_features, targets, new_struct_feats, c_labels
+
+    return training_features, targets, new_struct_feats

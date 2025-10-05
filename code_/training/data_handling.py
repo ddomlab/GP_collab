@@ -63,50 +63,61 @@ def ensure_long_path(path):
 
 
 
-def _save(scores: Optional[Dict[int, Dict[str, float]]],
-          predictions: Optional[pd.DataFrame],
-          ground_truth: Optional[Dict],
-          feat_length_scale: Optional[Dict],
-          results_dir: Path,
-          regressor_type: str,
-          imputer: Optional[str],
-          representation: str,
-          pu_type : Optional[str],
-          radius : Optional[int],
-          vector : Optional[str],
-          numerical_feats: Optional[list[str]],
-          hypop: bool=True,
-          transform_type:Optional[str]=None,
-          target_transformer:Optional[str]=None,
-          learning_curve:bool=False,
-          special_file_name:Optional[str]=None,
-          ) -> None:
+def _save(
+        scores: Optional[Dict[int, Dict[str, float]]],
+        predictions: Optional[pd.DataFrame],
+        ground_truth: Optional[Dict],
+        feat_length_scale: Optional[Dict],
+        results_dir: Path,
+        regressor_type: str,
+        imputer: Optional[str],
+        representation: str,
+        #   pu_type : Optional[str],
+        radius : Optional[int],
+        vector : Optional[str],
+        numerical_feats: Optional[list[str]],
+        hypop: bool=True,
+        transform_type:Optional[str]=None,
+        target_transformer:Optional[str]=None,
+        learning_curve:bool=False,
+        special_file_name:Optional[str]=None,
+        special_numerical_group:Optional[str]=None,
+        ) -> None:
     
     results_dir.mkdir(parents=True, exist_ok=True)
-    
-    # just scaler
-    if numerical_feats and pu_type==None:
-        short_num_feats = 'all_num'
-        fname_root = f"({short_num_feats})_{regressor_type}"
-        fname_root = f"{fname_root}_{imputer}" if imputer else fname_root
-    
-    # scaler and structural mixed
-    if numerical_feats and pu_type:
-        short_num_feats = 'all_num'
-        if radius:
-            fname_root = f"({representation}{radius}_{vector}_{radius_to_bits[radius]}-{short_num_feats})_{regressor_type}"
+
+    # === Case 1: numerical-only features ===
+    short_num_feats = f"COUNT{special_numerical_group}" if special_numerical_group else "COUNT"
+    if numerical_feats and representation is None:
         
+        fname_root = f"({short_num_feats})_{regressor_type}"
+        if imputer:
+            fname_root = f"{fname_root}_{imputer}"
+
+    # === Case 2: mixed (numerical + structural) features ===
+    elif numerical_feats and representation:
+        if radius:
+            fname_root = (
+                f"({representation}{radius}_{vector}_"
+                f"{radius_to_bits[radius]}-{short_num_feats})_{regressor_type}"
+            )
         else:
             fname_root = f"({representation}-{short_num_feats})_{regressor_type}"
-            fname_root = f"{fname_root}_{imputer}" if imputer else fname_root
+            if imputer:
+                fname_root = f"{fname_root}_{imputer}"
 
-    #just structural
-    if numerical_feats==None and pu_type: 
+    # === Case 3: structural-only features ===
+    elif numerical_feats is None:
         if radius:
-            fname_root = f"({representation}{radius}_{vector}_{radius_to_bits[radius]})_{regressor_type}"
-
+            fname_root = (
+                f"({representation}{radius}_{vector}_"
+                f"{radius_to_bits[radius]})_{regressor_type}"
+            )
         else:
             fname_root = f"({representation})_{regressor_type}"
+
+    else:
+        raise ValueError("Invalid feature combination for filename generation.")
     
     fname_root =f"{fname_root}_hypOFF" if hypop==False else fname_root
     fname_root =f"{fname_root}_{transform_type}" if transform_type else f"{fname_root}_feat_transformerOFF"
@@ -144,39 +155,41 @@ def _save(scores: Optional[Dict[int, Dict[str, float]]],
             json.dump(feat_length_scale, f, cls=NumpyArrayEncoder, indent=2)
 
 
-def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
-                 predictions: Optional[pd.DataFrame]=None,
-                 ground_truth: Optional[pd.DataFrame]=None,
-                 feat_length_scale:Optional[Dict]=None,
-                 target_features: list=None,
-                 regressor_type: str=None,
-                 TEST : bool =True,
-                 representation: str=None,
-                 pu_type : Optional[str]=None,
-                 radius : Optional[int]=None,
-                 vector : Optional[str]=None,
-                 numerical_feats: Optional[list[str]]=None,
-                 imputer: Optional[str] = None,
-                 output_dir_name: str = "PLS",
-                 cutoff: Optional[Dict[str, Tuple[Optional[float], Optional[float]]]] =None,
-                 hypop: Optional[bool]=True,
-                 transform_type:Optional[str]=None,
-                 target_transformer:Optional[str]=None,
-                 clustering_method:str=None,
-                 learning_curve:bool=False,
-                 special_folder_name:Optional[str]=None,
-                 special_file_name:Optional[str]=None,
+def save_results(
+                scores:Optional[Dict[int, Dict[str, float]]]=None,
+                predictions: Optional[pd.DataFrame]=None,
+                ground_truth: Optional[pd.DataFrame]=None,
+                feat_length_scale:Optional[Dict]=None,
+                target_features: list=None,
+                regressor_type: str=None,
+                representation: str=None,
+            #  pu_type : Optional[str]=None,
+                radius : Optional[int]=None,
+                vector : Optional[str]=None,
+                numerical_feats: Optional[list[str]]=None,
+                imputer: Optional[str] = None,
+                output_dir_name: str = "PLS",
+                cutoff: Optional[Dict[str, Tuple[Optional[float], Optional[float]]]] =None,
+                hypop: Optional[bool]=True,
+                transform_type:Optional[str]=None,
+                target_transformer:Optional[str]=None,
+                clustering_method:str=None,
+                learning_curve:bool=False,
+                special_folder_name:Optional[str]=None,
+                special_file_name:Optional[str]=None,
+                special_numerical_group:Optional[str]=None,
+                TEST : bool =True,
                  ) -> None:
     
     targets_dir: str = "-".join([feature_abbrev.get(target, target) for target in target_features])
     feature_ids = []
     
     
-    if pu_type:
-        feature_ids.append(pu_type)
-    if numerical_feats:
-        feature_ids.append('scaler')
-    features_dir: str = "_".join(feature_ids)
+    # if pu_type:
+    #     feature_ids.append(pu_type)
+    # if numerical_feats:
+    #     feature_ids.append('scaler')
+    # features_dir: str = "_".join(feature_ids)
     if cutoff:
         cutoff_parameter = "-".join(feature_abbrev.get(key,key) for key in cutoff)
     f_root_dir = f"target_{targets_dir}"
@@ -189,9 +202,7 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
     clustering_method= feature_abbrev.get(clustering_method, clustering_method) if clustering_method else None
     results_dir: Path = results_dir / clustering_method if clustering_method else results_dir
     results_dir: Path = results_dir / "test" if TEST else results_dir
-    results_dir: Path = results_dir / features_dir
-    # if subspace_filter:
-    #     results_dir = results_dir / f"subspace_{subspace_filter}"
+
 
     _save(scores=scores,
           predictions=predictions,
@@ -201,7 +212,7 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
           regressor_type=regressor_type,
           imputer=imputer,
           representation=representation,
-          pu_type=pu_type,
+        #   pu_type=pu_type,
           radius=radius,
           vector=vector,
           numerical_feats=numerical_feats,
@@ -210,6 +221,6 @@ def save_results(scores:Optional[Dict[int, Dict[str, float]]]=None,
           target_transformer=target_transformer,
           learning_curve=learning_curve,
           special_file_name=special_file_name,
+          special_numerical_group=special_numerical_group
           )
-    return results_dir
 
