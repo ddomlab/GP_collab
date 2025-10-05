@@ -16,9 +16,8 @@ DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
 w_data = _get_dataset(DATASETS / PAPER, "Beyond molecular structure_seifrid_imputed")
-
 TEST = True
-
+# 
 def main_numerical_only(
     dataset: pd.DataFrame,
     regressor_type: str,
@@ -38,7 +37,6 @@ def main_numerical_only(
                                             dataset=dataset,
                                             features_impute=columns_to_impute,
                                             special_impute=special_impute,
-                                            representation=None,
                                             structural_features=None,
                                             unroll=None,
                                             numerical_feats=numerical_feats,
@@ -56,7 +54,6 @@ def main_numerical_only(
                 predictions=predictions,
                 imputer=imputer,
                 representation= None,
-                pu_type= None,
                 target_features=target_features,
                 regressor_type=regressor_type,
                 numerical_feats=numerical_feats,

@@ -12,11 +12,37 @@ from data_handling import save_results
 
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
-w_data = _get_dataset(DATASETS / PAPER, "Rg data with clusters aging imputed")
+w_data = _get_dataset(DATASETS / PAPER, "Beyond molecular structure_seifrid_imputed")
 
-TEST = False
+TEST = True
+
+
+def get_appropriate_features(PAPER:str):
+     
+    if PAPER == "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices":
+        return [
+                "HOMO_D (eV)", "LUMO_D (eV)", "Eg_D (eV)", "Ehl_D (eV)",
+                "HOMO_A (eV)", "LUMO_A (eV)", "Eg_A (eV)", "Ehl_A (eV)",
+                "D:A ratio (m/m)", "solvent additive conc. (% v/v)", 
+                "temperature of thermal annealing",
+                "HTL energy level (eV)", "ETL energy level (eV)"
+                ]
+
+    
+    if PAPER == "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation":
+        return [
+                'Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
+                "Temperature SANS/SLS/DLS/SEC (K)", 
+                "polymer dP", "polymer dD", "polymer dH",
+                'solvent dP', 'solvent dD', 'solvent dH'
+                ],
+    
+    else:
+        print("No predefined features for this dataset. Please specify numerical features manually.")
+        sys.exit(1)
+
 
 def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:
        
@@ -53,7 +79,7 @@ def main_structural_numerical(
     feat_transformer: str,
     target_transformer:str,
     representation:str,
-    oligomer_representation: str,
+    polymer_unit: str,
     numerical_feats: Optional[list[str]],
     hyperparameter_optimization: bool=False,
     columns_to_impute: Optional[list[str]]=None,
@@ -63,7 +89,7 @@ def main_structural_numerical(
     imputer:Optional[str]=None,
 ) -> None:
 
-    structural_features, unroll_single_feat = get_structural_info(representation,oligomer_representation,radius,vector)
+    structural_features, unroll_single_feat = get_structural_info(representation,polymer_unit,radius,vector)
     scores, predictions  =   train_regressor(
                                             dataset=dataset,
                                             features_impute=columns_to_impute,
@@ -91,7 +117,9 @@ def main_structural_numerical(
                 hypop=hyperparameter_optimization,
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
+                output_dir_name= PAPER,
                 TEST=TEST,
+
                 # special_folder_name='hp_RF_differences',
                 # special_file_name='v2_(max_feat_all_leaf_smaller)',
                 )
@@ -179,7 +207,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        '--oligomer_representation', 
+        '--polymer_unit', 
         type=str, 
         choices=['Monomer', 'Dimer', 'Trimer', 'RRU Monomer', 'RRU Dimer', 'RRU Trimer'], 
         required=None, 
@@ -222,7 +250,7 @@ if __name__ == "__main__":
     #     representation=args.representation,
     #     radius=args.radius,
     #     vector=args.vector,
-    #     oligomer_representation = args.oligomer_representation,
+    #     polymer_unit=args.polymer_unit,
     #     regressor_type=args.regressor_type,
     #     kernel=args.kernel,
     #     target_features=[args.target_features],  
@@ -241,18 +269,13 @@ if __name__ == "__main__":
         representation="ECFP",
         radius=3,
         vector="count",
-        regressor_type="sklearn-GPR",
-        kernel="matern32_j_rbf_mix",
-        oligomer_representation="Monomer",
-        target_features=['log Rg (nm)'],  
+        regressor_type="RF",
+        # kernel="matern32_j_rbf_mix",
+        polymer_unit=["Donor","Acceptor"],
+        target_features=['calculated PCE (%)'],  
         feat_transformer='Standard',
         target_transformer='Standard',
-        numerical_feats=[
-                        'Xn', 'Mw (g/mol)', 'PDI', "Concentration (mg/ml)", 
-                        "Temperature SANS/SLS/DLS/SEC (K)", 
-                        "polymer dP", "polymer dD", "polymer dH",
-                        'solvent dP', 'solvent dD', 'solvent dH'
-                        ],
+        numerical_feats=get_appropriate_features(PAPER),
         hyperparameter_optimization=False,
     )
 

@@ -127,6 +127,7 @@ def _save(
     print("Filename:", fname_root)
 
     if scores:
+            print('yes')
             scores_file = ensure_long_path(results_dir / f"{fname_root}_scores.json")
             with open(scores_file, "w") as f:
                 json.dump(scores, f, cls=NumpyArrayEncoder, indent=2)
@@ -182,7 +183,7 @@ def save_results(
                  ) -> None:
     
     targets_dir: str = "-".join([feature_abbrev.get(target, target) for target in target_features])
-    feature_ids = []
+    # feature_ids = []
     
     
     # if pu_type:
