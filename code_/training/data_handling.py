@@ -127,7 +127,6 @@ def _save(
     print("Filename:", fname_root)
 
     if scores:
-            print('yes')
             scores_file = ensure_long_path(results_dir / f"{fname_root}_scores.json")
             with open(scores_file, "w") as f:
                 json.dump(scores, f, cls=NumpyArrayEncoder, indent=2)

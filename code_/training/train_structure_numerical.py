@@ -9,14 +9,14 @@ import sys
 from argparse import ArgumentParser
 from data_handling import save_results
 
-
+## add feature importance using gini or shap
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
 w_data = _get_dataset(DATASETS / PAPER, "Beyond molecular structure_seifrid_imputed")
 
-TEST = True
+TEST = False
 
 
 def get_appropriate_features(PAPER:str):
