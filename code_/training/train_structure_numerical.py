@@ -11,7 +11,7 @@ from utils import parse_arguments
 ## add feature importance using gini or shap
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+PAPER = "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
 RESULTS = HERE.parent.parent / "results"
 
 TEST = False
@@ -74,7 +74,7 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    w_data,feats = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_pervaporation_membranes_wang")
 
     # args = parse_arguments()
 
@@ -106,31 +106,23 @@ if __name__ == "__main__":
     # 'flux recovery ratio (%) ',
     # 'reversible fouling ratio (%)',
     # 'irreversible fouling ratio(%)',
-    all_targets = [ 
-    # 'water permeability (LMH/bar)',
-    # 'organic compound removal (%)',
-    # 'flux decline ratio (%)',
-    'flux recovery ratio (%)',
-    # 'reversible fouling ratio (%)',
-    # 'irreversible fouling ratio(%)',
-    ]
-    # w_data = w_data.rename(columns={'flux recovery ratio (%) ':'flux recovery ratio (%)'})
+
     for targ in all_targets:
         main_structural_numerical(
             dataset=w_data,
             representation="ECFP",
             radius=3,
             vector="count",
-            regressor_type="RF",
+            regressor_type="XGBR",
             # kernel="matern32_j_rbf_mix",
             polymer_unit=["polymer"],
             target_features=[targ],  
             feat_transformer='Standard',
             target_transformer='Standard',
-            numerical_feats=feats,
+            # numerical_feats=feats,
             hyperparameter_optimization=False,
-            imputer="mean",
-            columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+            # imputer="mean",
+            # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
 
         )
 

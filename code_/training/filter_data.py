@@ -50,6 +50,7 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             "temperature of thermal annealing",
             "HTL energy level (eV)", "ETL energy level (eV)"
         ]
+        target = ['calculated PCE (%)']
 
     elif paper == "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation":
         features = [
@@ -58,6 +59,7 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             "polymer dP", "polymer dD", "polymer dH",
             "solvent dP", "solvent dD", "solvent dH"
         ]
+        target = ['log Rg (nm)']
 
     elif paper == "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery":
         features = [
@@ -72,6 +74,7 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             'Experimental_temperature',
             'Downstream_pressure',
         ]
+        target = ['log (Total flux)', 'log (Separation factor)']
 
     elif paper == "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning":
         features = [
@@ -87,6 +90,25 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             'organic compound size (Da)',
             'foulant concentration (mg/L)',
         ]
+        target = [
+            'water permeability (LMH/bar)',
+            'organic compound removal (%)',
+            'flux decline ratio (%)',
+            'flux recovery ratio (%)',
+            'reversible fouling ratio (%)',
+            'irreversible fouling ratio(%)',
+        ]
+
+    elif paper == "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation":
+        features = [
+            'Contact angle θ （°）',
+            'Thickness ℓ (um)', 
+            'xw (wt%)',
+            'Temperature (°C)',
+            'Permeate pressure (mbar)',
+            'Solvent solubility parameter （MPa1/2）',
+        ]
+        target = ['log (Total flux)', 'log (Separation factor)']
 
     else:
         raise ValueError(
@@ -94,7 +116,7 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             "Please specify numerical features manually."
         )
 
-    return dataset, features
+    return dataset, features, target
 
 
 def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:

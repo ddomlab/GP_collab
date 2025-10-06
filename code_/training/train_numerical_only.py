@@ -13,7 +13,7 @@ from data_handling import save_results
 
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
 RESULTS = HERE.parent.parent / "results"
 TEST = False
 # 
@@ -96,18 +96,25 @@ if __name__ == "__main__":
     #         classification=False
     #     )
     # else:
-        w_data, feats = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
+    # 'water permeability (LMH/bar)',
+    # 'organic compound removal (%)',
+    # 'flux decline ratio (%)',
+    # 'flux recovery ratio (%)',
+    # 'reversible fouling ratio (%)',
+    # 'irreversible fouling ratio(%)',
+        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
 
-        main_numerical_only(
-            dataset=w_data,
-            regressor_type="XGBR",
-            # kernel= "a_matern",
-            target_features=['calculated PCE (%)'],
-            feat_transformer='Standard',
-            target_transformer='Standard', 
-            hyperparameter_optimization=False,
-            numerical_feats=feats
-                    )
+        for targ in all_targets:
+            main_numerical_only(
+                dataset=w_data,
+                regressor_type="XGBR",
+                # kernel= "a_matern",
+                target_features=[targ],
+                feat_transformer='Standard',
+                target_transformer='Standard', 
+                hyperparameter_optimization=False,
+                numerical_feats=feats
+                        )
 
     # columns_to_impute: list[str] = ["PDI","Temperature SANS/SLS/DLS/SEC (K)","Concentration (mg/ml)"]
     # special_column: str = "Mw (g/mol)"
