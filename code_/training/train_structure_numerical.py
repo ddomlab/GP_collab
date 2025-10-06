@@ -107,12 +107,14 @@ if __name__ == "__main__":
     # 'reversible fouling ratio (%)',
     # 'irreversible fouling ratio(%)',
     all_targets = [ 
-    'water permeability (LMH/bar)',
-    'organic compound removal (%)',
-    'flux decline ratio (%)',
-    'flux recovery ratio (%) ',
-    'reversible fouling ratio (%)',
-    'irreversible fouling ratio(%)',]
+    # 'water permeability (LMH/bar)',
+    # 'organic compound removal (%)',
+    # 'flux decline ratio (%)',
+    'flux recovery ratio (%)',
+    # 'reversible fouling ratio (%)',
+    # 'irreversible fouling ratio(%)',
+    ]
+    # w_data = w_data.rename(columns={'flux recovery ratio (%) ':'flux recovery ratio (%)'})
     for targ in all_targets:
         main_structural_numerical(
             dataset=w_data,
