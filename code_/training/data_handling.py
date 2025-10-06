@@ -115,7 +115,6 @@ def _save(
 
     else:
         raise ValueError("Invalid feature combination for filename generation.")
-    print(imputer)
     fname_root = f"{fname_root}_{imputer}" if imputer else fname_root
     fname_root =f"{fname_root}_hypOFF" if hypop==False else fname_root
     fname_root =f"{fname_root}_{transform_type}" if transform_type else f"{fname_root}_feat_transformerOFF"
