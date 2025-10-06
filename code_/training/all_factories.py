@@ -28,7 +28,10 @@ from skopt.space import Integer, Real, Categorical
 from sklearn.gaussian_process import GaussianProcessRegressor
 # from sklearn.gaussian_process.kernels import PairwiseKernel
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
-
+from _custom_kernel import (JaccardKernel, custom_RBF,
+                            custom_Matern, AdditiveRBF,
+                            AdditiveMatern, ProductKernel,
+                            AddKernel, weighted_jaccard)
 
 cutoffs = {
             # "Rh1 (nm)":1000,
@@ -109,7 +112,7 @@ regressor_factory: dict[str, type]={
     "XGBC":XGBClassifier(),
     "RFC": RandomForestClassifier(),
     # "GPR": GPRegressor,
-    "sklearn-GPR":GaussianProcessRegressor,
+    "sklearn-GPR":GaussianProcessRegressor(),
     "MLP": MLPRegressor(),
     'HGBR': HistGradientBoostingRegressor(),
 }
@@ -140,6 +143,59 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
     return None
+
+
+kernel_space = {
+    'matern': custom_Matern,
+    'rbf': custom_RBF,
+    'additive_rbf': AdditiveRBF, #just for count
+    'additive_matern': AdditiveMatern, #just for count
+    'product': ProductKernel,
+    'add': AddKernel,
+    'jaccard': JaccardKernel
+}
+
+
+def _get_gp_kernel(gp_info:dict, idx:Optional[dict[str, list[int]]]=None):
+    if gp_info['mixing'] is None:
+        active_key = next(k for k, v in gp_info['kernel'].items() if v is not None)
+        # kernel_class = kernel_space[active_kernel_name]
+        if active_key is None:
+            raise ValueError("No active kernel found when mixing is off.")
+        
+        if active_key == 'fp':
+            length_scale = np.full(len(idx['fp']), 1.0) if idx else 1.0
+            active_kernel_name = gp_info['kernel']['fP']
+            kernel = kernel_space[active_kernel_name](length_scale=length_scale, metric=weighted_jaccard)
+        else:
+            length_scale = np.full(len(idx['count']), 1.0) if idx else 1.0
+            active_kernel_name = gp_info['kernel']['count']
+            kernel = kernel_space[active_kernel_name](length_scale=length_scale)
+    elif gp_info['mixing'] == 'additive':
+        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx else 1.0
+        length_scale_count = np.full(len(idx['count']), 1.0) if idx else 1.0
+        kernel = AddKernel(
+            kernel_cont=kernel_space[gp_info['kernel']['count']](length_scale=length_scale_count),
+            kernel_fp=kernel_space[gp_info['kernel']['fP']](length_scale=length_scale_fp, metric=weighted_jaccard),
+            cont_idx=idx['count'],
+            fp_idx=idx['fp']
+        )
+    elif gp_info['mixing'] == 'product':
+        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx else 1.0
+        length_scale_count = np.full(len(idx['count']), 1.0) if idx else 1.0
+        kernel = ProductKernel(
+            kernel_cont=kernel_space[gp_info['kernel']['count']](length_scale=length_scale_count),
+            kernel_fp=kernel_space[gp_info['kernel']['fP']](length_scale=length_scale_fp, metric=weighted_jaccard),
+            cont_idx=idx['count'],
+            fp_idx=idx['fp']
+        )
+    else:
+        raise ValueError(f"Unknown mixing method: {gp_info['mixing']}")
+    return kernel
+
+
+
+
 
 def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
     if algortihm == "MLR":

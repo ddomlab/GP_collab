@@ -1,4 +1,14 @@
 import math
+from math import sqrt
+import numpy as np
+from typing import Callable, Union, Optional
+from scipy.spatial.distance import pdist, cdist, squareform
+from scipy.special import kv, gamma
+from sklearn.utils import check_array
+from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
+from sklearn.gaussian_process.kernels import _check_length_scale
+
+
 from sklearn.gaussian_process.kernels import (
                                             Kernel, 
                                             StationaryKernelMixin, 
@@ -8,11 +18,6 @@ from sklearn.gaussian_process.kernels import (
                                             Matern,
                                             RBF,
                                             _check_length_scale)
-import numpy as np
-from scipy.spatial.distance import pdist, cdist, squareform
-from sklearn.utils import check_array
-from scipy.special import kv, gamma
-from math import sqrt
 
 
 
@@ -57,11 +62,12 @@ class JaccardKernel(NormalizedKernelMixin, Kernel):
         return False
 
 
-class Jaccard_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
+class custom_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
-    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
+    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), dist_metric: Union[str, Callable] = "sqeuclidean"):
         self.length_scale = length_scale
         self.length_scale_bounds = length_scale_bounds
+        self.dist_metric = dist_metric
 
     @property
     def anisotropic(self):
@@ -82,7 +88,7 @@ class Jaccard_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         X = np.atleast_2d(X)
         length_scale = _check_length_scale(X, self.length_scale)
         if Y is None:
-            dists = pdist(X / length_scale, metric=weighted_jaccard)
+            dists = pdist(X / length_scale, metric=self.dist_metric)
             K = np.exp(-0.5 * dists)
             # convert from upper-triangular matrix to square matrix
             K = squareform(K)
@@ -90,7 +96,7 @@ class Jaccard_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / length_scale, Y / length_scale, metric=weighted_jaccard)
+            dists = cdist(X / length_scale, Y / length_scale, metric=self.dist_metric)
             K = np.exp(-0.5 * dists)
 
         if eval_gradient:
@@ -123,21 +129,22 @@ class Jaccard_RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 
-class Jaccard_Matern(RBF):
+class custom_Matern(custom_RBF):
 
-    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), nu=1.5):
+    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), nu=1.5, dist_metric: Union[str, Callable] = "euclidean"):
         super().__init__(length_scale, length_scale_bounds)
         self.nu = nu
+        self.dist_metric = dist_metric
 
     def __call__(self, X, Y=None, eval_gradient=False):
         X = np.atleast_2d(X)
         length_scale = _check_length_scale(X, self.length_scale)
         if Y is None:
-            dists = pdist(X / length_scale, metric=weighted_jaccard)
+            dists = pdist(X / length_scale, metric=self.dist_metric)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / length_scale, Y / length_scale, metric=weighted_jaccard)
+            dists = cdist(X / length_scale, Y / length_scale, metric=self.dist_metric)
 
         if self.nu == 0.5:
             K = np.exp(-dists)
@@ -286,13 +293,6 @@ class AdditiveRBF(Kernel):
         return f"AdditiveRBF(length_scale={self.length_scale}, mode={self.mode})"
 
 
-import numpy as np
-from scipy.special import kv, gamma
-from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
-from sklearn.utils.validation import check_array
-from sklearn.gaussian_process.kernels import _check_length_scale
-
-
 class AdditiveMatern(Matern):
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), nu=1.5):
         super().__init__(length_scale=length_scale, length_scale_bounds=length_scale_bounds, nu=nu)
@@ -340,22 +340,45 @@ class AdditiveMatern(Matern):
 
             K += K_d
 
-            if eval_gradient:
-                if self.nu == 1.5:
-                    sqrt3 = np.sqrt(3.0)
-                    grad = 3.0 * (X[:, [d]] - Y[:, [d]].T) ** 2 / length_scale[d]**3
-                    K_gradient[:, :, d] = grad * np.exp(-sqrt3 * dists)
-                elif self.nu == 2.5:
-                    sqrt5 = np.sqrt(5.0)
-                    grad = 5.0 * (X[:, [d]] - Y[:, [d]].T) ** 2 / (3 * length_scale[d]**3)
-                    tmp = sqrt5 * dists
-                    K_gradient[:, :, d] = grad * (tmp + 1) * np.exp(-tmp)
-                elif self.nu == np.inf:
-                    grad = (X[:, [d]] - Y[:, [d]].T) ** 2 / (length_scale[d]**3)
-                    K_gradient[:, :, d] = K_d * grad
-                else:
-                    # general case not supported analytically
-                    return K, _approx_fprime(self.theta, lambda theta: self.clone_with_theta(theta)(X), 1e-10)
+        if eval_gradient:
+            d_abs = np.abs(X[:, [d]] - Y[:, [d]].T)
+            l = length_scale[d]
+
+            # Matérn-1/2 kernel (Exponential Kernel)
+            if self.nu == 0.5:
+                scaled_dist = d_abs / l
+                # Gradient formula: (d/l) * exp(-d/l)
+                grad = scaled_dist * np.exp(-scaled_dist)
+                K_gradient[:, :, d] = grad
+
+            # Matérn-3/2 kernel
+            elif self.nu == 1.5:
+                sqrt3 = np.sqrt(3.0)
+                scaled_dist = sqrt3 * d_abs / l
+                # Gradient formula: (3*d^2/l^2) * exp(-sqrt(3)*d/l)
+                grad = (scaled_dist**2) * np.exp(-scaled_dist)
+                K_gradient[:, :, d] = grad
+
+            # Matérn-5/2 kernel
+            elif self.nu == 2.5:
+                sqrt5 = np.sqrt(5.0)
+                scaled_dist = sqrt5 * d_abs / l
+                # Gradient formula: (5*d^2/(3*l^2) * (1 + sqrt(5)*d/l)) * exp(-sqrt(5)*d/l)
+                grad = (scaled_dist**2 / 3.0) * (1 + scaled_dist) * np.exp(-scaled_dist)
+                K_gradient[:, :, d] = grad
+
+            # RBF kernel (Matérn with nu -> inf)
+            elif self.nu == np.inf:
+                scaled_dist_sq = (d_abs / l) ** 2
+                # Gradient formula: K_d * (d^2/l^2)
+                grad = scaled_dist_sq * K_d
+                K_gradient[:, :, d] = grad
+
+            # Fallback for other nu values using numerical approximation
+            else:
+                return K, _approx_fprime(
+                    self.theta, lambda theta: self.clone_with_theta(theta)(X), 1e-10
+                )
 
         # -------- only change: take average instead of sum --------
         K /= X.shape[1]
@@ -389,14 +412,12 @@ class AdditiveMatern(Matern):
             )
 
 
-
-
-
-import numpy as np
-from sklearn.gaussian_process.kernels import Kernel
-
 class ProductKernel(Kernel):
-    """Product kernel = K_cont * K_fp on disjoint feature groups.
+    """Product kernel K = K_cont * K_fp on disjoint feature groups.
+
+    This kernel computes the final similarity as the product of similarities
+    from two individual kernels, each operating on a separate subset of features.
+    This is useful for modeling interactions between different data types.
 
     Parameters
     ----------
@@ -453,28 +474,39 @@ class ProductKernel(Kernel):
 
     # --- main kernel logic ---
     def __call__(self, X, Y=None, eval_gradient=False):
+        # Slice the data into continuous and fingerprint subsets
         X_cont, X_fp = X[:, self.cont_idx], X[:, self.fp_idx]
         Y_cont = None if Y is None else Y[:, self.cont_idx]
-        Y_fp   = None if Y is None else Y[:, self.fp_idx]
+        Y_fp = None if Y is None else Y[:, self.fp_idx]
 
         if eval_gradient:
+            # Get kernel and gradient for each subset
             Kc, grad_c = self.kernel_cont(X_cont, Y_cont, eval_gradient=True)
             Kf, grad_f = self.kernel_fp(X_fp, Y_fp, eval_gradient=True)
+            
+            # The final kernel is the product of the sub-kernels
             K = Kc * Kf
 
+            # The gradient is calculated using the product rule:
+            # d/dx(f*g) = (df/dx)*g + f*(dg/dx)
             grads = []
             if grad_c.shape[2] > 0:
+                # Gradient of cont kernel * fingerprint kernel
                 grads.append(grad_c * Kf[:, :, np.newaxis])
             if grad_f.shape[2] > 0:
+                # Gradient of fingerprint kernel * cont kernel
                 grads.append(grad_f * Kc[:, :, np.newaxis])
-
+            
+            # Concatenate gradients for all hyperparameters
             grad = (np.concatenate(grads, axis=2)
                     if grads else np.empty((X.shape[0], X.shape[0], 0)))
             return K, grad
         else:
+            # If not evaluating gradient, just return the product
             return self.kernel_cont(X_cont, Y_cont) * self.kernel_fp(X_fp, Y_fp)
 
     def diag(self, X):
+        # The diagonal of a product kernel is the product of the diagonals
         return (self.kernel_cont.diag(X[:, self.cont_idx])
                 * self.kernel_fp.diag(X[:, self.fp_idx]))
 
@@ -491,14 +523,13 @@ class ProductKernel(Kernel):
         return getattr(self.kernel_fp, "length_scale", None)
 
     def __repr__(self):
-        return (f"FeatureGroupProductKernel("
+        return (f"ProductKernel("
                 f"{self.kernel_cont}, {self.kernel_fp}, "
                 f"cont_idx={self.cont_idx}, fp_idx={self.fp_idx})")
 
 
 
-
-class AdditiveKernel(Kernel):
+class AddKernel(Kernel):
     def __init__(self, kernel_cont, kernel_fp, cont_idx, fp_idx):
         self.kernel_cont = kernel_cont
         self.kernel_fp = kernel_fp
@@ -544,7 +575,7 @@ class AdditiveKernel(Kernel):
     def __call__(self, X, Y=None, eval_gradient=False):
         X_cont, X_fp = X[:, self.cont_idx], X[:, self.fp_idx]
         Y_cont = None if Y is None else Y[:, self.cont_idx]
-        Y_fp   = None if Y is None else Y[:, self.fp_idx]
+        Y_fp = None if Y is None else Y[:, self.fp_idx]
 
         if eval_gradient:
             Kc, grad_c = self.kernel_cont(X_cont, Y_cont, eval_gradient=True)
@@ -580,7 +611,7 @@ class AdditiveKernel(Kernel):
         return getattr(self.kernel_fp, "length_scale", None)
 
     def __repr__(self):
-        return (f"FeatureGroupAdditiveKernel("
+        return (f"AdditiveKernel("
                 f"{self.kernel_cont}, {self.kernel_fp}, "
                 f"cont_idx={self.cont_idx}, fp_idx={self.fp_idx})")
 

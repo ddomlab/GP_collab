@@ -12,7 +12,6 @@ from skopt import BayesSearchCV
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.multioutput import MultiOutputRegressor,MultiOutputClassifier
 # from optuna.integration import OptunaSearchCV
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
 from scipy.stats import invgamma
 
 # from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
@@ -22,8 +21,8 @@ from all_factories import (
                             regressor_factory,
                             # regressor_search_space,
                             transforms,
-                            construct_kernel,
-                            get_regressor_search_space)
+                            get_regressor_search_space,
+                            _get_gp_kernel)
 from all_factories import optimized_models
 
 from imputation_normalization import preprocessing_workflow
@@ -33,17 +32,6 @@ from scoring import (
     _average_ls
 )
 
-from _custom_kernel import (AdditiveContinuousKernel, 
-                            AdditiveMatern, 
-                            AdditiveRBF, 
-                            HybridKernel, 
-                            Jaccard_Matern, 
-                            JaccardKernel, 
-                            ProductKernel,
-                            Jaccard_RBF,
-                            AdditiveKernel,
-                            map_optimizer
-                            )
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -153,9 +141,19 @@ def _prepare_data(
 
 
     preprocessor.set_output(transform="pandas")
+    if isinstance(regressor_type, dict):
+        feat_idx = {
+            'fp': [X.columns.get_loc(c) for c in unrolled_feats] if unrolled_feats else None,
+            'count': [X.columns.get_loc(c) for c in numerical_feats] if numerical_feats else None
+        }
+
+    else:
+        feat_idx = None
+   
     score,predication = run(
                             X,
                             y,
+                            features_idx=feat_idx,
                             preprocessor=preprocessor,
                             second_transformer=second_transformer,
                             regressor_type=regressor_type,
@@ -169,101 +167,9 @@ def _prepare_data(
     return score, combined_prediction_ground_truth
 
 
-
-# def _regular_run(
-#     X, y, preprocessor: Union[ColumnTransformer, Pipeline], 
-#     second_transformer:str, 
-#     regressor_type: str,
-#     transform_type: str,
-#     hyperparameter_optimization: bool = True,
-#     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
-    
-#     # wasserstein_dis : dict[int, dict[str, float]] = {}
-#     seed_scores: dict[int, dict[str, float]] = {}
-#     seed_predictions: dict[int, np.ndarray] = {}
-#     # if 'Rh (IW avg log)' in target_features:
-#     #     y = np.log10(y)
-#     search_space = get_regressor_search_space(regressor_type)
-
-#     for seed in SEEDS:
-#         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-#         y_transform = get_target_transformer(transform_type,second_transformer)
-
-                    
-
-#         skop_scoring = "neg_root_mean_squared_error"
-#         if y.shape[1] > 1:
-#             y_transform_regressor = TransformedTargetRegressor(
-#             regressor = MultiOutputRegressor(
-#             estimator=regressor_factory[regressor_type](kernel=kernel) if kernel is not None
-#             else regressor_factory[regressor_type]
-#             ),
-#             transformer=y_transform,
-#             )
-            
-#             search_space = {
-#             f"regressor__regressor__estimator__{key.split('__')[-1]}": value
-#             for key, value in search_space.items()
-#                 }
-#         else:
-#             y_transform_regressor = TransformedTargetRegressor(
-#                     regressor=regressor_factory[regressor_type](kernel=kernel) if kernel!=None
-#                             else regressor_factory[regressor_type],
-#                     transformer=y_transform,
-#             )
-#         new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
-#         regressor :Pipeline= Pipeline(steps=[
-#                     ("preprocessor", new_preprocessor),
-#                     ("regressor", y_transform_regressor),
-#                         ])
-
-#         regressor.set_output(transform="pandas")
-#         if hyperparameter_optimization:
-#                 cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,classification=classification,random_state=seed)
-#                 best_estimator, regressor_params = _optimize_hyperparams(
-#                     X,
-#                     y,
-#                     cv_outer=cv_outer,
-#                     cv_in=cv_in,
-#                     n_iter=BO_ITER,
-#                     seed=seed,
-#                     regressor_type=regressor_type,
-#                     search_space=search_space,
-#                     regressor=regressor,
-#                     scoring=skop_scoring,
-#                     classification=classification
-#                 )
-#                 scores, predictions = cross_validate_regressor(
-#                     best_estimator, X, y, cv_outer,classification=classification
-#                 )
-#                 scores["best_params"] = regressor_params
-
-
-#         else:
-#                 scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer)
-        
-#     #   wd_list = []
-#     #   for tr_dis, te_dis in cv_outer.split(X, y):
-#     #         sd_caler = StandardScaler()
-#     #         X_scaled = sd_caler.fit_transform(X)
-#     #         X_tr_dis, X_te_dis = split_for_training(X_scaled, tr_dis), split_for_training(X_scaled, te_dis)
-#     #         wd = wasserstein_distance_nd(X_tr_dis, X_te_dis)
-#     #         wd_list.append(wd)
-#     #         print(len(X_tr_dis), len(X_te_dis))
-
-#     #   wasserstein_dis[seed] = {"mean": np.mean(wd_list),
-#     #                             "std": np.std(wd_list)}
-#         seed_scores[seed] = scores
-#         seed_predictions[seed] = predictions.flatten()
-
-#     seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
-#                       seed_predictions, orient="columns")
-#     # print(wasserstein_dis)
-#     return seed_scores, seed_predictions
-
-
 def run(
     X, y, 
+    features_idx: Optional[dict[str, list[int]]],
     preprocessor: Union[ColumnTransformer, Pipeline], 
     second_transformer:str, 
     regressor_type: str,
@@ -289,7 +195,7 @@ def run(
                 estimator= regressor_factory[regressor_type]
                 ),
                 transformer=y_transform,
-                    )
+                )
                 
                 search_space = {
                 f"regressor__regressor__estimator__{key.split('__')[-1]}": value
@@ -329,7 +235,11 @@ def run(
 
 
         else:
-            model = optimized_models(regressor_type)
+            if isinstance(regressor_type, dict):
+                kernel = _get_gp_kernel(regressor_type, idx=features_idx)
+                model = optimized_models(regressor_type['model'], kernel=kernel)
+            else:
+                model = optimized_models(regressor_type)
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
                         transformer=y_transform,

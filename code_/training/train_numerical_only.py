@@ -13,7 +13,7 @@ from data_handling import save_results
 
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
 RESULTS = HERE.parent.parent / "results"
 TEST = False
 # 
@@ -102,12 +102,16 @@ if __name__ == "__main__":
     # 'flux recovery ratio (%)',
     # 'reversible fouling ratio (%)',
     # 'irreversible fouling ratio(%)',
-        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
+        model = {'model': 'sklearn-GPR',
+            'kernel': {'fP': None, 'count': 'matern'},
+            'mixing': None}
+    
+        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "separation_data_imputed")
 
         for targ in all_targets:
             main_numerical_only(
                 dataset=w_data,
-                regressor_type="XGBR",
+                regressor_type=model,
                 # kernel= "a_matern",
                 target_features=[targ],
                 feat_transformer='Standard',

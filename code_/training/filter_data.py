@@ -74,7 +74,10 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             'Experimental_temperature',
             'Downstream_pressure',
         ]
-        target = ['log (Total flux)', 'log (Separation factor)']
+        if dataset_name == "separation_data_imputed":
+            target = ['log (Separation factor)']
+        else:
+            target = ['log (Total flux)']
 
     elif paper == "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning":
         features = [
