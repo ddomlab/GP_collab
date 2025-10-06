@@ -88,11 +88,9 @@ def _save(
 
     # === Case 1: numerical-only features ===
     short_num_feats = f"COUNT{special_numerical_group}" if special_numerical_group else "COUNT"
+
     if numerical_feats and representation is None:
-        
         fname_root = f"({short_num_feats})_{regressor_type}"
-        if imputer:
-            fname_root = f"{fname_root}_{imputer}"
 
     # === Case 2: mixed (numerical + structural) features ===
     elif numerical_feats and representation:
@@ -103,8 +101,7 @@ def _save(
             )
         else:
             fname_root = f"({representation}-{short_num_feats})_{regressor_type}"
-            if imputer:
-                fname_root = f"{fname_root}_{imputer}"
+
 
     # === Case 3: structural-only features ===
     elif numerical_feats is None:
@@ -118,7 +115,8 @@ def _save(
 
     else:
         raise ValueError("Invalid feature combination for filename generation.")
-    
+    print(imputer)
+    fname_root = f"{fname_root}_{imputer}" if imputer else fname_root
     fname_root =f"{fname_root}_hypOFF" if hypop==False else fname_root
     fname_root =f"{fname_root}_{transform_type}" if transform_type else f"{fname_root}_feat_transformerOFF"
     fname_root = f"{fname_root}_{target_transformer}" if target_transformer else f"{fname_root}_target_transformerOFF"

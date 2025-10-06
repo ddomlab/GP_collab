@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
+import sys
 from typing import Optional, Union, Dict, Tuple
-
+from all_factories import radius_to_bits,cutoffs
 import pandas as pd
 from unrolling_utils import unrolling_factory
 import numpy as np
@@ -30,17 +31,98 @@ def ensure_long_path(path: Path) -> Path:
         return Path(f"\\\\?\\{path_str}")
     return path
 
-def _get_dataset(dataset_basket: Path, dataset_name: str) -> pd.DataFrame:
-    dataset_path: Path = dataset_basket / f"{dataset_name}.pkl"
+
+def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
+
+    dataset_path = dataset_basket / paper / f"{dataset_name}.pkl"
     dataset_path = ensure_long_path(dataset_path)
 
     if not dataset_path.exists():
-        raise FileNotFoundError(f"Dataset {dataset_name} not found in {dataset_basket}")
+        raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
 
-    return pd.read_pickle(dataset_path)
+    dataset = pd.read_pickle(dataset_path)
+
+    if paper == "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices":
+        features = [
+            "HOMO_D (eV)", "LUMO_D (eV)", "Eg_D (eV)", "Ehl_D (eV)",
+            "HOMO_A (eV)", "LUMO_A (eV)", "Eg_A (eV)", "Ehl_A (eV)",
+            "D:A ratio (m/m)", "solvent additive conc. (% v/v)",
+            "temperature of thermal annealing",
+            "HTL energy level (eV)", "ETL energy level (eV)"
+        ]
+
+    elif paper == "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation":
+        features = [
+            "Xn", "Mw (g/mol)", "PDI", "Concentration (mg/ml)",
+            "Temperature SANS/SLS/DLS/SEC (K)",
+            "polymer dP", "polymer dD", "polymer dH",
+            "solvent dP", "solvent dD", "solvent dH"
+        ]
+
+    elif paper == "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery":
+        features = [
+            'Selective_layer_thickness',
+            'Filler_size',
+            'Filler_concentration',
+            'Crosslinker_concentration',
+            'Organic_Hildebrand_solubility_parameter',
+            'Organic_molecular_volume',
+            'Effective_area',
+            'Mass_ratio(A/B)',
+            'Experimental_temperature',
+            'Downstream_pressure',
+        ]
+
+    elif paper == "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning":
+        features = [
+            'P_MW',
+            'surface tension (mN/m)',
+            'P_wt%',
+            'pore maker molecular weight (Da)',
+            'pore maker wt% (pore maker to total weight)',
+            'additive wt% (additive to polymer)',
+            'solubility parameter (MPa1/2)',
+            'TMP (bar)',
+            'oraganic compound concentration (mg/L)',
+            'organic compound size (Da)',
+            'foulant concentration (mg/L)',
+        ]
+
+    else:
+        raise ValueError(
+            f"No predefined features found for paper: '{paper}'. "
+            "Please specify numerical features manually."
+        )
+
+    return dataset, features
 
 
-
+def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:
+       
+        if fp == "Mordred" or fp == "MACCS":
+            fp_features = [f"{unit}_{fp}" for unit in poly_unit_name]
+            unrolling_featurs = {"representation": fp,
+                                "unit_name":poly_unit_name,
+                                "col_names": fp_features}
+            return fp_features, unrolling_featurs
+        
+        if fp == "ECFP":
+            n_bits = radius_to_bits[radius]
+            fp_features = [
+                        f"{unit}_{fp}{2 * radius}_{vector}_{n_bits}bits"
+                        for unit in poly_unit_name
+                        ]
+            unrolling_featurs = {
+                                "representation": fp,
+                                "radius": radius,
+                                "n_bits": n_bits,
+                                "vector_type": vector,
+                                "unit_name": poly_unit_name,
+                                "col_names": fp_features,
+                                }
+            return fp_features, unrolling_featurs
+        else:
+              return None, None
 
 
 def sanitize_dataset(

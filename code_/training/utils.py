@@ -2,39 +2,22 @@ import glob
 import numpy as np
 import random
 import scipy.stats
-
-import rdkit.Chem.AllChem as Chem
-import mordred
-import mordred.descriptors
-
-import torch
+from argparse import ArgumentParser
+# import torch
 
 from sklearn.decomposition import PCA 
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
 
 
 
-def get_features(smi, feature_type = 'fp'):
-    # get desired feature from smiles
-    mol = Chem.MolFromSmiles(smi)
-    if feature_type == 'fp':
-        feat = np.array(Chem.GetMorganFingerprintAsBitVect(mol, radius=3, nBits=512))
-    elif feature_type in ['mordred', 'pca_mordred']:
-        calc = mordred.Calculator(mordred.descriptors, ignore_3D=True)
-        vals = calc(mol)._values
-        feat = np.array([float(v) for v in vals])
 
-    else:
-        raise NotImplementedError('No such feature.')
-    return feat
 
-def set_seed(seed = 22):
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
+# def set_seed(seed = 22):
+#     np.random.seed(seed)
+#     torch.manual_seed(seed)
+#     random.seed(seed)
 
 def get_cv_splits(x, n_splits=5, val_split = 0.2):
     # return dictionary with the indices of tvt splits
@@ -103,5 +86,118 @@ def calculate_metric(metric, y_pred, y_true):
         raise ValueError('Invalid metric')
 
 
-def drop_columns(df:pd.DataFrame, columns_to_drop: List):
-    return df.drop(columns=columns_to_drop)
+def parse_arguments():
+    parser = ArgumentParser(description="Process some data for numerical-only regression.")
+    
+    parser.add_argument(
+        '--target_features',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=True,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
+        '--regressor_type', 
+        type=str, 
+        choices=['RF', 'DT', 'MLR', 'SVR', 'XGBR','KNN', 'GPR', 'NGB', 'sklearn-GPR', 'MLP'], 
+        required=True, 
+        help="Regressor type required"
+    )
+
+    parser.add_argument(
+        '--numerical_feats',
+        type=str,
+        choices=['Xn','Mn (g/mol)', 'Mw (g/mol)', 'PDI', 'Temperature SANS/SLS/DLS/SEC (K)',
+                  'Concentration (mg/ml)','solvent dP',	'polymer dP',	'solvent dD',	'polymer dD',	'solvent dH',	'polymer dH', 'Ra',
+                  "abs(solvent dD - polymer dD)", "abs(solvent dP - polymer dP)", "abs(solvent dH - polymer dH)"],
+
+        nargs='+',  # Allows multiple choices
+        required=None,
+        help="Numerical features: choose"
+    )
+    
+    parser.add_argument(
+        '--columns_to_impute',
+        type=str,
+        choices=['Xn','Mn (g/mol)', 'Mw (g/mol)', 'PDI', 'Temperature SANS/SLS/DLS/SEC (K)',
+                  'Concentration (mg/ml)','solvent dP',	'polymer dP',	'solvent dD',	'polymer dD',	'solvent dH',	'polymer dH', 'Ra'],
+
+        nargs='*',  # This allows 0 or more values
+        default=None,  
+        help="imputation features: choose"
+    )
+
+    parser.add_argument(
+        '--imputer',
+        choices=['mean', 'median', 'most_frequent',"distance KNN", None],  
+        nargs='?',  # This allows the argument to be optional
+        default=None,  
+        help="Specify the imputation strategy or leave it as None."
+    )
+
+    parser.add_argument(
+        '--special_impute',
+        choices=['Mw (g/mol)', None],  
+        nargs='?',  # This allows the argument to be optional
+        default=None,  # Set the default value to None
+        help="Specify the imputation strategy or leave it as None."
+    )
+
+    parser.add_argument(
+        "--feat_transformer", 
+        type=str, 
+        choices=["Standard", "Robust Scaler"], 
+        default= "Standard", 
+        help="transform type required"
+    )
+
+    parser.add_argument(
+        "--kernel", 
+        type=str,
+        default=None,
+        help='kernel for GP is optinal'
+    )
+
+    parser.add_argument(
+        '--representation', 
+        type=str, 
+        choices=['ECFP', 'MACCS', 'Mordred'], 
+        required=None, 
+        help="Fingerprint required"
+    )
+
+    parser.add_argument(
+        '--polymer_unit', 
+        type=str, 
+        choices=['Monomer', 'Dimer', 'Trimer', 'RRU Monomer', 'RRU Dimer', 'RRU Trimer'], 
+        required=None, 
+        help="Fingerprint required"
+    )
+
+    parser.add_argument(
+        '--radius',
+        type=int,
+        choices=[3, 4, 5, 6],
+        nargs='?',  # This allows the argument to be optional
+        default=None,  # Set the default value to None
+        help='Radius for ECFP'
+    )
+
+    parser.add_argument(
+        '--vector',
+        type=str,
+        choices=['count', 'binary'],
+        nargs='?',  # This allows the argument to be optional
+        default='count',  # Set the default value to None
+        help='Type of vector (default: count)'
+    )
+
+    parser.add_argument(
+        '--clustering_method',
+        type=str,
+        nargs='?',
+        help='Type of clustering method'
+    )
+
+    return parser.parse_args()
+

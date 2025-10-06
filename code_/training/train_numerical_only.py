@@ -2,12 +2,12 @@ import pandas as pd
 from pathlib import Path
 from training_utils_gp_special import train_regressor
 from all_factories import radius_to_bits,cutoffs
-from filter_data import _get_dataset
+from filter_data import _get_dataset_features
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np
 import os
 
-from argparse import ArgumentParser
+from utils import parse_arguments
 from data_handling import save_results
 # from train_structure_numerical import parse_arguments
 
@@ -15,8 +15,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
-w_data = _get_dataset(DATASETS / PAPER, "Beyond molecular structure_seifrid_imputed")
-TEST = True
+TEST = False
 # 
 def main_numerical_only(
     dataset: pd.DataFrame,
@@ -97,29 +96,17 @@ if __name__ == "__main__":
     #         classification=False
     #     )
     # else:
+        w_data, feats = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
+
         main_numerical_only(
             dataset=w_data,
-            regressor_type="RF",
+            regressor_type="XGBR",
             # kernel= "a_matern",
             target_features=['calculated PCE (%)'],
             feat_transformer='Standard',
             target_transformer='Standard', 
             hyperparameter_optimization=False,
-            numerical_feats=[
-                    "HOMO_D (eV)",
-                    "LUMO_D (eV)",
-                    "Eg_D (eV)",
-                    "Ehl_D (eV)",
-                    "HOMO_A (eV)",
-                    "LUMO_A (eV)",
-                    "Eg_A (eV)",
-                    "Ehl_A (eV)",
-                    "D:A ratio (m/m)",
-                    "solvent additive conc. (% v/v)",
-                    "temperature of thermal annealing",
-                    "HTL energy level (eV)",
-                    "ETL energy level (eV)"
-                    ],
+            numerical_feats=feats
                     )
 
     # columns_to_impute: list[str] = ["PDI","Temperature SANS/SLS/DLS/SEC (K)","Concentration (mg/ml)"]
