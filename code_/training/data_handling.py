@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 from types import NoneType
-from typing import Dict, Optional,Tuple
+from typing import Dict, Optional,Tuple, Union
 from filter_data import ensure_long_path
 import numpy as np
 import pandas as pd
@@ -62,6 +62,29 @@ def ensure_long_path(path):
         return path
 
 
+def get_model_name(model_info) -> str:
+
+    if isinstance(model_info, str):
+        return model_info
+
+    if isinstance(model_info, dict):
+        name = model_info.get('model', 'unknown-model')
+        kernel_info = model_info.get('kernel', {})
+        kernel_fp = kernel_info.get('fP', None)
+        kernel_count = kernel_info.get('count', None)
+        mixing = model_info.get('mixing', None)
+
+        if mixing is None:
+            active = 'fp' if kernel_fp else 'count'
+            kernel_name = kernel_fp or kernel_count
+            return f"{name}_{active}-{kernel_name}"
+
+        return f"{name}_{mixing}-mix_{kernel_fp}-{kernel_count}"
+
+    raise TypeError(f"Unsupported model_info type: {type(model_info)}")
+
+
+
 
 def _save(
         scores: Optional[Dict[int, Dict[str, float]]],
@@ -69,12 +92,12 @@ def _save(
         ground_truth: Optional[Dict],
         feat_length_scale: Optional[Dict],
         results_dir: Path,
-        regressor_type: str,
+        regressor_type: Union[str, Dict],
         imputer: Optional[str],
         representation: str,
         #   pu_type : Optional[str],
-        radius : Optional[int],
-        vector : Optional[str],
+        radius: Optional[int],
+        vector: Optional[str],
         numerical_feats: Optional[list[str]],
         hypop: bool=True,
         transform_type:Optional[str]=None,
@@ -88,7 +111,7 @@ def _save(
 
     # === Case 1: numerical-only features ===
     short_num_feats = f"COUNT{special_numerical_group}" if special_numerical_group else "COUNT"
-
+    regressor_type = get_model_name(regressor_type)
     if numerical_feats and representation is None:
         fname_root = f"({short_num_feats})_{regressor_type}"
 

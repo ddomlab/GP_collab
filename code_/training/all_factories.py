@@ -156,42 +156,78 @@ kernel_space = {
 }
 
 
-def _get_gp_kernel(gp_info:dict, idx:Optional[dict[str, list[int]]]=None):
+def _parse_kernel(kernel_name: str):
+    """Return (base_name, kwargs) — e.g. ('matern', {'nu': 2.5})"""
+    if kernel_name is None:
+        return None, {}
+    # Detect Matern with nu suffix
+    if kernel_name.lower().startswith("matern"):
+        # Try to extract numeric part after 'matern'
+        try:
+            nu_val = float(kernel_name.lower().replace("matern", ""))
+            return "matern", {"nu": nu_val}
+        except ValueError:
+            return "matern", {}
+    return kernel_name, {}
+
+
+def _get_gp_kernel(gp_info: dict, idx: Optional[dict[str, list[int]]] = None):
+    """
+    Build GP kernel based on gp_info and feature index dictionary.
+    """
+
+    # --- Mixing is OFF ---
     if gp_info['mixing'] is None:
-        active_key = next(k for k, v in gp_info['kernel'].items() if v is not None)
-        # kernel_class = kernel_space[active_kernel_name]
+        active_key = next((k for k, v in gp_info['kernel'].items() if v is not None), None)
         if active_key is None:
             raise ValueError("No active kernel found when mixing is off.")
-        
+
         if active_key == 'fp':
-            length_scale = np.full(len(idx['fp']), 1.0) if idx else 1.0
-            active_kernel_name = gp_info['kernel']['fP']
-            kernel = kernel_space[active_kernel_name](length_scale=length_scale, metric=weighted_jaccard)
+            length_scale = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
+            active_kernel_name, extra_args = _parse_kernel(gp_info['kernel']['fP'])
+            kernel_class = kernel_space[active_kernel_name]
+            kernel = kernel_class(length_scale=length_scale, metric=weighted_jaccard, **extra_args)
         else:
-            length_scale = np.full(len(idx['count']), 1.0) if idx else 1.0
-            active_kernel_name = gp_info['kernel']['count']
-            kernel = kernel_space[active_kernel_name](length_scale=length_scale)
+            length_scale = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
+            active_kernel_name, extra_args = _parse_kernel(gp_info['kernel']['count'])
+            kernel_class = kernel_space[active_kernel_name]
+            kernel = kernel_class(length_scale=length_scale, **extra_args)
+
+    # --- Additive Mixing ---
     elif gp_info['mixing'] == 'additive':
-        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx else 1.0
-        length_scale_count = np.full(len(idx['count']), 1.0) if idx else 1.0
+        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
+        length_scale_count = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
+
+        fp_name, fp_args = _parse_kernel(gp_info['kernel']['fP'])
+        count_name, count_args = _parse_kernel(gp_info['kernel']['count'])
+
         kernel = AddKernel(
-            kernel_cont=kernel_space[gp_info['kernel']['count']](length_scale=length_scale_count),
-            kernel_fp=kernel_space[gp_info['kernel']['fP']](length_scale=length_scale_fp, metric=weighted_jaccard),
+            kernel_cont=kernel_space[count_name](length_scale=length_scale_count, **count_args),
+            kernel_fp=kernel_space[fp_name](length_scale=length_scale_fp, metric=weighted_jaccard, **fp_args),
             cont_idx=idx['count'],
             fp_idx=idx['fp']
         )
+
+    # --- Product Mixing ---
     elif gp_info['mixing'] == 'product':
-        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx else 1.0
-        length_scale_count = np.full(len(idx['count']), 1.0) if idx else 1.0
+        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
+        length_scale_count = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
+
+        fp_name, fp_args = _parse_kernel(gp_info['kernel']['fP'])
+        count_name, count_args = _parse_kernel(gp_info['kernel']['count'])
+
         kernel = ProductKernel(
-            kernel_cont=kernel_space[gp_info['kernel']['count']](length_scale=length_scale_count),
-            kernel_fp=kernel_space[gp_info['kernel']['fP']](length_scale=length_scale_fp, metric=weighted_jaccard),
+            kernel_cont=kernel_space[count_name](length_scale=length_scale_count, **count_args),
+            kernel_fp=kernel_space[fp_name](length_scale=length_scale_fp, metric=weighted_jaccard, **fp_args),
             cont_idx=idx['count'],
             fp_idx=idx['fp']
         )
+
     else:
         raise ValueError(f"Unknown mixing method: {gp_info['mixing']}")
+
     return kernel
+
 
 
 

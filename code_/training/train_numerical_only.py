@@ -13,7 +13,7 @@ from data_handling import save_results
 
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
 RESULTS = HERE.parent.parent / "results"
 TEST = False
 # 
@@ -63,7 +63,7 @@ def main_numerical_only(
                 target_transformer=target_transformer,
                 output_dir_name= PAPER,
                 # special_folder_name='hp_RF_differences'
-                # special_file_name='pfo_p3ht',
+                # special_file_name='dropped_nans',
                 )
 
 
@@ -102,23 +102,24 @@ if __name__ == "__main__":
     # 'flux recovery ratio (%)',
     # 'reversible fouling ratio (%)',
     # 'irreversible fouling ratio(%)',
-        model = {'model': 'sklearn-GPR',
-            'kernel': {'fP': None, 'count': 'matern'},
-            'mixing': None}
+        # model = {'model': 'sklearn-GPR',
+        #     'kernel': {'fP': None, 'count': 'matern2.5'},
+        #     'mixing': None}
     
-        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "separation_data_imputed")
-
+        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
         for targ in all_targets:
             main_numerical_only(
                 dataset=w_data,
-                regressor_type=model,
+                regressor_type='RF',
                 # kernel= "a_matern",
                 target_features=[targ],
                 feat_transformer='Standard',
                 target_transformer='Standard', 
                 hyperparameter_optimization=False,
-                numerical_feats=feats
-                        )
+                numerical_feats=feats,
+                imputer='mean',
+                columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )   
 
     # columns_to_impute: list[str] = ["PDI","Temperature SANS/SLS/DLS/SEC (K)","Concentration (mg/ml)"]
     # special_column: str = "Mw (g/mol)"
