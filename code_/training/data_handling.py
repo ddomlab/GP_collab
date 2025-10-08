@@ -54,13 +54,6 @@ def get_cv_splits(score_for_indices):
             indices[seed] = values["indices"]
     return indices
 
-def ensure_long_path(path):
-        """Ensures Windows handles long paths by adding '\\?\' if needed."""
-        path_str = str(path)
-        if os.name == 'nt' and len(path_str) > 250:  
-            return Path(f"\\\\?\\{path_str}")
-        return path
-
 
 def get_model_name(model_info) -> str:
 
