@@ -11,7 +11,6 @@ from utils import parse_arguments
 ## add feature importance using gini or shap
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
 
 TEST = False
@@ -74,6 +73,7 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
+    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
     w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
 
     # args = parse_arguments()
