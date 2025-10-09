@@ -10,14 +10,14 @@ import pandas as pd
 import seaborn as sns
 # from matplotlib import rc
 from visualization_setting import set_plot_style, save_img_path
-print('yes')
+set_plot_style()
 
 HERE = Path(__file__).resolve().parent
 # DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
 
-
+# 
 #----------- Helper functions for heatmap visualization -----------#
 def ensure_long_path(path: Path) -> Path:
     """Ensures Windows handles long paths by adding '\\?\' if needed."""
@@ -141,9 +141,9 @@ def plot_manual_heatmap(
     cbar.ax.tick_params(labelsize=kwargs['fontsize'])
 
     visualization_folder_path = root_dir / "heatmap"
-    os.makedirs(visualization_folder_path, exist_ok=True)
+    # os.makedirs(visualization_folder_path, exist_ok=True)
     plt.tight_layout()
-    plt.savefig(visualization_folder_path / f"{fname}.png", dpi=800)
+    save_img_path(visualization_folder_path, fname)
     plt.show()
     plt.close()
 
