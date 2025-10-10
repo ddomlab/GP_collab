@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 # from matplotlib import rc
-from visualization_setting import set_plot_style, save_img_path
+from visualization_setting import set_plot_style, save_img_path, ensure_long_path
 set_plot_style()
 
 HERE = Path(__file__).resolve().parent
@@ -19,14 +19,6 @@ RESULTS = HERE.parent.parent / "results"
 
 # 
 #----------- Helper functions for heatmap visualization -----------#
-def ensure_long_path(path: Path) -> Path:
-    """Ensures Windows handles long paths by adding '\\?\' if needed."""
-    path_str = str(path)
-    if os.name == 'nt' and len(path_str) > 250:
-        return Path(f"\\\\?\\{path_str}")
-    return path
-
-
 def generate_annotations(num: float) -> str:
     """
     Args:
@@ -156,9 +148,17 @@ def _parse_property_string(file_name: str):
     feature_str = feat_match.group(1)
     features = re.sub(r"[-]+", "+", feature_str)  # replace '-' with '+'
 
+
     # extract model name (e.g. RF, XGBR, sklearn-GPR, etc.)
     model_match = re.search(r"\)_(.*?)_", file_name)
     model = model_match.group(1) if model_match else None
+
+    imp_match = re.search(rf"{model}_(\w+)_hypOFF", file_name)
+    imputation = imp_match.group(1) if imp_match else None
+
+    # Exclude false matches like 'hypOFF' itself
+    if imputation and imputation.lower() not in ["hypoff"]:
+        features = f"{features} ({imputation} imp)"
 
     return features, model
 
@@ -188,7 +188,6 @@ def get_results_from_file(
     else:
         features, model = _parse_property_string(file_path.name)
          # Read JSON file
-
        
         with open(file_path, "r") as f:
             data = json.load(f)
@@ -215,14 +214,16 @@ def _get_count_fp_comparison(
     # for value in comparison_value:
     # value_folder = os.path.join(target_folder, value)
     score_files = list(Path(target_folder).rglob(pattern))
-
     for score_path in score_files:
-        if "generalizability" in score_path.name or "test" in score_path.name or 'lc_scores' in score_path.name:
+        if "generalizability" in score_path.name or "test" in score_path.parts or 'lc_scores' in score_path.name:
             continue
 
         feats, model, av, std = get_results_from_file(file_path=score_path, score_metric=scoring_metric)
         # Only keep selected features
-        if feats not in features_to_draw and features_to_draw is not None:
+        if features_to_draw is None:
+            # draw all features
+            pass
+        elif feats not in features_to_draw:
             continue
 
         if model not in selected_models and selected_models is not None:
@@ -251,44 +252,58 @@ def creat_count_fp_heatmap(
                                                             selected_models=models_to_draw,
                                                             features_to_draw=features_to_draw
                                                             )
+    print(scores_to_show)
     fname= f"model vs features ({score_metric})"
     if score_metric == "r2":
-        vmax= .9
-        vmin= .1
-        n_cbar_tick = 9  
+        vmax= 1
+        vmin= 0
+        n_cbar_tick = 6 
     elif score_metric == "mae":
         vmax= .5
         vmin= 0.1
         n_cbar_tick = 5  
     elif score_metric == "rmse":
-        vmax= .6
-        vmin= 0.2 
-        n_cbar_tick = 4 
+        vmax= 20
+        vmin= 0
+        n_cbar_tick = 6 
     plot_manual_heatmap(root_dir=target_dir/"comparison heatmap for polymer properties",
                         score_metric=score_metric,
                         score_to_show=scores_to_show,
-                        figsize=(6, 6),
+                        figsize=(7, 7),
                         fig_title=f" \n ",
-                        x_title="Feature Space",
-                        y_title="Models",
+                        x_title="Models",
+                        y_title="",
                         fname=fname,
                         vmin=vmin,
                         vmax=vmax,
                         # feature_order=,
                         # model_order=['RF','DT','MLR'],
                         num_ticks=n_cbar_tick,
+                        fontsize=16,
                         )
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-    TARGETS = [
-                # 'target_log Rg (nm)',
-                # 'target_log (Total flux)'
-                'calculated PCE (%)',
-               ]
-    for target in TARGETS:
-        creat_count_fp_heatmap(
-                                target_dir=RESULTS/PAPER/f'target_{target}',
-                                score='r2',
-                                # comparison_value=['scaler', 'Trimer_scaler'],
-                                )
+
+    PAPER = {
+            # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+            # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+            # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+            # "target_flux decline ratio (%)",
+            # "target_flux recovery ratio (%)",
+            # "target_irreversible fouling ratio(%)",
+            # "target_organic compound removal (%)",
+            "target_reversible fouling ratio (%)",
+            # r"target_water permeability (LMH\bar)",
+            ],
+            }
+    
+
+    for paper_name, target_list in PAPER.items():
+        for target in target_list:
+            print(paper_name, target)
+            creat_count_fp_heatmap(
+                                    target_dir=RESULTS/paper_name/target,
+                                    score_metric='rmse',
+                                    # comparison_value=['scaler', 'Trimer_scaler'],
+                                    )

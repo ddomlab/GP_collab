@@ -50,12 +50,18 @@ def set_plot_style(
     })
 
 
-def save_img_path(folder_path:Union[str, Path], file_name:str)->None:
-    folder_path = Path(folder_path)
+def ensure_long_path(path: Path) -> Path:
+    """Ensures Windows handles long paths by adding '\\\\?\\' if needed."""
+    path_str = str(path)
+    if os.name == 'nt' and len(path_str) > 250 and not path_str.startswith('\\\\?\\'):
+        return Path(f"\\\\?\\{path_str}")
+    return path
+
+
+def save_img_path(folder_path: Union[str, Path], file_name: str) -> None:
+    """Creates the folder (with long path support) and saves a plot image safely."""
+    folder_path = ensure_long_path(Path(folder_path))
     os.makedirs(folder_path, exist_ok=True)
 
-    save_path = folder_path / file_name
-    if os.name == 'nt':  # Only for Windows
-        save_path = Path(f"\\\\?\\{save_path.resolve()}")
-
+    save_path = ensure_long_path(folder_path / file_name)
     plt.savefig(save_path, dpi=800, bbox_inches='tight')
