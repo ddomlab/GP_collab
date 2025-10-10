@@ -263,7 +263,7 @@ def creat_count_fp_heatmap(
         vmin= 0.1
         n_cbar_tick = 5  
     elif score_metric == "rmse":
-        vmax= 20
+        vmax= 1
         vmin= 0
         n_cbar_tick = 6 
     plot_manual_heatmap(root_dir=target_dir/"comparison heatmap for polymer properties",
@@ -286,16 +286,16 @@ if __name__ == "__main__":
 
     PAPER = {
             # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-            # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-            "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+            # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
             # "target_flux decline ratio (%)",
             # "target_flux recovery ratio (%)",
             # "target_irreversible fouling ratio(%)",
             # "target_organic compound removal (%)",
-            "target_reversible fouling ratio (%)",
+            # "target_reversible fouling ratio (%)",
             # r"target_water permeability (LMH\bar)",
-            ],
+            # ],
             }
     
 
@@ -304,6 +304,6 @@ if __name__ == "__main__":
             print(paper_name, target)
             creat_count_fp_heatmap(
                                     target_dir=RESULTS/paper_name/target,
-                                    score_metric='rmse',
+                                    score_metric='r2',
                                     # comparison_value=['scaler', 'Trimer_scaler'],
                                     )
