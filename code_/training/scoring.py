@@ -9,6 +9,7 @@ from sklearn.metrics._scorer import r2_scorer
 from sklearn.model_selection import cross_val_predict, cross_validate
 from sklearn.model_selection import learning_curve
 from _validation import multioutput_cross_validate 
+import shap
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
@@ -345,13 +346,44 @@ def process_learning_score(score: dict[int, dict[str, np.ndarray]]):
         "test_scores_mean": test_scores_mean / num_seeds,
         "test_scores_std": test_scores_std / num_seeds,
     }
-
     return score
 
 
 
+def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) -> Dict[str, List[Dict[str, float]]]:
+    all_model_importances = []
+    all_shap_importances = []
+
+    first_est = score["estimator"][0]
+    preprocessor = first_est.named_steps["preprocessor"]
+    feature_names = preprocessor.get_feature_names_out()
+
+    for est in score["estimator"]:
+        model = est.named_steps["regressor"].regressor_
+
+        # --- Model-based importances ---
+        fi_model = model.feature_importances_
+        all_model_importances.append(dict(zip(feature_names, fi_model)))
+
+        # --- SHAP importances ---
+        if X is not None:
+            X_transformed = preprocessor.transform(X)
+            try:
+                explainer = shap.Explainer(model, X_transformed)
+            except Exception:
+                explainer = shap.TreeExplainer(model)
+            shap_values = explainer(X_transformed, check_additivity=False)
+            fi_shap = np.abs(shap_values.values).mean(axis=0)
+            all_shap_importances.append(dict(zip(feature_names, fi_shap)))
+
+    score["feature_importance_model"] = all_model_importances
+    if all_shap_importances:
+        score["feature_importance_SHAP"] = all_shap_importances
+
+
+
 def cross_validate_regressor(
-    regressor, X, y, cv,
+    regressor, X, y, cv, return_importance: bool = False, use_shap: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
@@ -394,6 +426,7 @@ def cross_validate_regressor(
                 n_jobs=-1,
                 # return_indices=True,
                 )
+            
 
         predictions: np.ndarray = cross_val_predict(
             regressor,
@@ -402,6 +435,9 @@ def cross_validate_regressor(
             cv=cv,
             n_jobs=-1,
         )
+        if return_importance:
+            get_feature_importances_from_cv(score, X=X)
+
         return score, predictions
 
 

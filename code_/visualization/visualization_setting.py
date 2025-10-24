@@ -64,4 +64,4 @@ def save_img_path(folder_path: Union[str, Path], file_name: str) -> None:
     os.makedirs(folder_path, exist_ok=True)
 
     save_path = ensure_long_path(folder_path / file_name)
-    plt.savefig(save_path, dpi=800, bbox_inches='tight')
+    plt.savefig(save_path, dpi=1200, bbox_inches='tight')

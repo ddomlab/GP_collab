@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 import os 
 import re
+
 # import cmcrameri.cm as cmc
 import matplotlib.pyplot as plt
 import numpy as np
@@ -282,11 +283,134 @@ def creat_count_fp_heatmap(
                         fontsize=16,
                         )
 
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+from typing import Dict, Any, List
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+from typing import Dict, Any, List
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+from typing import Dict, Any, List
+
+
+def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path, model: str, figsize: tuple=(10,6)) -> None:
+    all_model_fi: List[Dict[str, float]] = []
+    all_shap_fi: List[Dict[str, float]] = []
+
+    # Collect model importances
+    if isinstance(scores_data.get("feature_importance_model"), list):
+        all_model_fi.extend(scores_data["feature_importance_model"])
+    else:
+        for value in scores_data.values():
+            if isinstance(value, dict) and isinstance(value.get("feature_importance_model"), list):
+                all_model_fi.extend(value["feature_importance_model"])
+
+    # Collect SHAP importances
+    if isinstance(scores_data.get("feature_importance_SHAP"), list):
+        all_shap_fi.extend(scores_data["feature_importance_SHAP"])
+    else:
+        for value in scores_data.values():
+            if isinstance(value, dict) and isinstance(value.get("feature_importance_SHAP"), list):
+                all_shap_fi.extend(value["feature_importance_SHAP"])
+
+    # Build DataFrames
+    df_model = pd.DataFrame(all_model_fi) if all_model_fi else pd.DataFrame()
+    df_shap = pd.DataFrame(all_shap_fi) if all_shap_fi else pd.DataFrame()
+
+    if df_model.empty and df_shap.empty:
+        raise ValueError("No feature importance data found in scores_data.")
+
+    # Compute means and stds, aligning features
+    mean_model, std_model, mean_shap, std_shap = None, None, None, None
+    if not df_model.empty:
+        mean_model = df_model.mean()
+        std_model = df_model.std()
+    if not df_shap.empty:
+        mean_shap = df_shap.mean()
+        std_shap = df_shap.std()
+
+    # Determine feature order (prefer model)
+    if mean_model is not None:
+        features = mean_model.sort_values(ascending=False).index
+    else:
+        features = mean_shap.sort_values(ascending=False).index
+
+    # Align both importances by same feature list
+    if mean_model is not None:
+        mean_model = mean_model.reindex(features, fill_value=0)
+        std_model = std_model.reindex(features, fill_value=0)
+    if mean_shap is not None:
+        mean_shap = mean_shap.reindex(features, fill_value=0)
+        std_shap = std_shap.reindex(features, fill_value=0)
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=figsize)
+    bar_width = 0.4
+    x = np.arange(len(features))
+
+    # Plot model importances (red)
+    if mean_model is not None:
+        ax.bar(
+            x - bar_width / 2,
+            mean_model.values,
+            bar_width,
+            yerr=std_model.values,
+            capsize=3,
+            color="#BB3A5A",
+            alpha=0.9,
+            label="Model Importance",
+        )
+
+    # Plot SHAP importances (blue)
+    if mean_shap is not None:
+        ax.bar(
+            x + bar_width / 2,
+            mean_shap.values,
+            bar_width,
+            yerr=std_shap.values,
+            capsize=3,
+            color="#1f77b4",
+            alpha=0.9,
+            label="SHAP Importance",
+        )
+
+    # Finalize formatting
+    ax.set_xticks(x)
+    ax.set_xticklabels(features, rotation=75, ha="right")
+    ax.set_ylabel("Mean Feature Importance")
+    ax.set_xlabel("Features")
+    ax.legend(frameon=True)
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+    plt.tight_layout()
+    save_img_path(save_loc / "feature importance", f"feature_importance_{model}.png")
+    plt.show()
+    plt.close()
+
+
+
+
+
+
 if __name__ == "__main__":
 
     PAPER = {
+            "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
             # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-            "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+            # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
             # "target_flux decline ratio (%)",
@@ -301,9 +425,21 @@ if __name__ == "__main__":
 
     for paper_name, target_list in PAPER.items():
         for target in target_list:
-            print(paper_name, target)
-            creat_count_fp_heatmap(
-                                    target_dir=RESULTS/paper_name/target,
-                                    score_metric='r2',
-                                    # comparison_value=['scaler', 'Trimer_scaler'],
-                                    )
+    #         print(paper_name, target)
+    #         creat_count_fp_heatmap(
+    #                                 target_dir=RESULTS/paper_name/target,
+    #                                 score_metric='r2',
+    #                                 # comparison_value=['scaler', 'Trimer_scaler'],
+    #                                 )
+
+            paper_loc: Path = RESULTS / paper_name / target
+
+            score_path = ensure_long_path(paper_loc / "(COUNT)_RF_hypOFF_Standard_Standard_scores.json")
+            with open(score_path, "r") as f:
+                scores = json.load(f)
+
+            plot_average_feature_importances(scores_data=scores,
+                                            save_loc=paper_loc,
+                                            model='RF',
+                                            figsize=(7,7)
+                                            )

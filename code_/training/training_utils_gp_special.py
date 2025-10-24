@@ -252,7 +252,7 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer)
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, use_shap=True)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
