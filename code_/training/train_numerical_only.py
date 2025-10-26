@@ -106,7 +106,8 @@ if __name__ == "__main__":
         #     'kernel': {'fP': None, 'count': 'matern2.5'},
         #     'mixing': None}
     
-        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
+        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "non_imputed_dropped_nan_Rg_data")
+        print(w_data)
         for targ in all_targets:
             main_numerical_only(
                 dataset=w_data,

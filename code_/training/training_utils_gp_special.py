@@ -178,6 +178,7 @@ def run(
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
+    # seed_indices: dict[int, np.ndarray] = {}
 
     for seed in SEEDS:
 
@@ -252,9 +253,10 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, use_shap=True)
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, use_shap=True, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
+        
         # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
         seed_predictions[seed] = predictions.flatten()
 

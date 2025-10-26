@@ -383,7 +383,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 def cross_validate_regressor(
-    regressor, X, y, cv, return_importance: bool = False, use_shap: bool = False
+    regressor, X, y, cv, return_importance: bool = False, use_shap: bool = False,return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
@@ -424,10 +424,8 @@ def cross_validate_regressor(
                 scoring=scorers,
                 return_estimator=True,
                 n_jobs=-1,
-                # return_indices=True,
+                return_indices=return_indices,
                 )
-            
-
         predictions: np.ndarray = cross_val_predict(
             regressor,
             X,
@@ -438,7 +436,11 @@ def cross_validate_regressor(
         if return_importance:
             get_feature_importances_from_cv(score, X=X)
 
+        if return_indices:
+            indexes = score.pop("indices")
+            return score, predictions, indexes
         return score, predictions
+
 
 
 def get_incremental_split(
