@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Callable, Optional, Union, Dict, Tuple
 
@@ -178,7 +179,7 @@ def run(
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
-    # seed_indices: dict[int, np.ndarray] = {}
+    seed_indices: dict[int, np.ndarray] = {}
 
     for seed in SEEDS:
 
@@ -253,18 +254,37 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, use_shap=True, return_indices=False)
+            scores, predictions, indices = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, use_shap=False, return_indices=True)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
-        
+        seed_indices[seed] = indices
         # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
         seed_predictions[seed] = predictions.flatten()
 
         seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
                         seed_predictions, orient="columns")
-        
+    # seed_indices_full_dropped_nans.json
+    
+    save_folder = Path(r"C:\Users\sdehgha2\Desktop\phd-code\gp_collab\GP_collab\results\Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation\target_log Rg (nm)")
+    with open(save_folder / "seed_indices_full_dropped_nans.json", "w") as f:
+        json.dump(seed_indices, f, cls=NumpyArrayEncoder, indent=2)
+
     return seed_scores, seed_predictions
 
+
+
+class NumpyArrayEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, tuple):
+            return list(obj)
+        else:
+            return super(NumpyArrayEncoder, self).default(obj)
 
 def _optimize_hyperparams(
     X, y, 
