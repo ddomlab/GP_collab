@@ -73,8 +73,8 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "flux_data_imputed")
+    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
 
     # args = parse_arguments()
 
@@ -113,17 +113,16 @@ if __name__ == "__main__":
             representation="ECFP",
             radius=3,
             vector="count",
-            regressor_type="XGBR",
+            regressor_type="RF",
             # kernel="matern32_j_rbf_mix",
-            polymer_unit=["polymers"],
+            polymer_unit=["Donor","Acceptor"],
             target_features=[targ],  
             feat_transformer='Standard',
             target_transformer='Standard',
-            # numerical_feats=feats,
+            numerical_feats=feats,
             hyperparameter_optimization=False,
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-
         )
 
 

@@ -333,7 +333,7 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     if df_model.empty and df_shap.empty:
         raise ValueError("No feature importance data found in scores_data.")
 
-    # Compute means and stds, aligning features
+    # Compute means and stds
     mean_model, std_model, mean_shap, std_shap = None, None, None, None
     if not df_model.empty:
         mean_model = df_model.mean()
@@ -342,19 +342,37 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
         mean_shap = df_shap.mean()
         std_shap = df_shap.std()
 
-    # Determine feature order (prefer model)
+    # Determine feature order (prefer model if available)
     if mean_model is not None:
         features = mean_model.sort_values(ascending=False).index
     else:
         features = mean_shap.sort_values(ascending=False).index
 
-    # Align both importances by same feature list
+    # Align both importances
     if mean_model is not None:
         mean_model = mean_model.reindex(features, fill_value=0)
         std_model = std_model.reindex(features, fill_value=0)
     if mean_shap is not None:
         mean_shap = mean_shap.reindex(features, fill_value=0)
         std_shap = std_shap.reindex(features, fill_value=0)
+
+    # ---- NEW SECTION: Select top 15 most important features ----
+    if mean_model is not None and mean_shap is not None:
+        combined_mean = (mean_model + mean_shap) / 2
+    elif mean_model is not None:
+        combined_mean = mean_model
+    else:
+        combined_mean = mean_shap
+
+    top_features = combined_mean.sort_values(ascending=False).head(15).index
+
+    # Restrict to top 15
+    mean_model = mean_model[top_features] if mean_model is not None else None
+    std_model = std_model[top_features] if std_model is not None else None
+    mean_shap = mean_shap[top_features] if mean_shap is not None else None
+    std_shap = std_shap[top_features] if std_shap is not None else None
+    features = top_features
+    # ------------------------------------------------------------
 
     # Create figure
     fig, ax = plt.subplots(figsize=figsize)
@@ -391,14 +409,15 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     ax.set_xticks(x)
     ax.set_xticklabels(features, rotation=75, ha="right")
     ax.set_ylabel("Mean Feature Importance")
-    ax.set_xlabel("Features")
+    ax.set_xlabel("Top 15 Features")
     ax.legend(frameon=True)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
 
     plt.tight_layout()
-    save_img_path(save_loc / "feature importance", f"feature_importance_{model}.png")
+    save_img_path(save_loc / "feature importance", f"feature_importance_{model}_top15.png")
     plt.show()
     plt.close()
+
 
 
 
@@ -408,8 +427,8 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 if __name__ == "__main__":
 
     PAPER = {
-            "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-            # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+            # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
+            "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
             # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
@@ -434,7 +453,7 @@ if __name__ == "__main__":
 
             paper_loc: Path = RESULTS / paper_name / target
 
-            score_path = ensure_long_path(paper_loc / "(COUNT)_RF_hypOFF_Standard_Standard_scores.json")
+            score_path = ensure_long_path(paper_loc / "(ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard_scores.json")
             with open(score_path, "r") as f:
                 scores = json.load(f)
 

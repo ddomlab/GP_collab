@@ -13,7 +13,7 @@ from data_handling import save_results
 
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
-PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 RESULTS = HERE.parent.parent / "results"
 TEST = False
 # 
@@ -106,12 +106,12 @@ if __name__ == "__main__":
         #     'kernel': {'fP': None, 'count': 'matern2.5'},
         #     'mixing': None}
     
-        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "non_imputed_dropped_nan_Rg_data")
+        w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, "calculated PCE (%)")
         print(w_data)
         for targ in all_targets:
             main_numerical_only(
                 dataset=w_data,
-                regressor_type='RF',
+                regressor_type='XGBR',
                 # kernel= "a_matern",
                 target_features=[targ],
                 feat_transformer='Standard',
