@@ -427,8 +427,8 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 if __name__ == "__main__":
 
     PAPER = {
-            # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-            "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+            "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
+            # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
             # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
             # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
@@ -453,12 +453,12 @@ if __name__ == "__main__":
 
             paper_loc: Path = RESULTS / paper_name / target
 
-            score_path = ensure_long_path(paper_loc / "(ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard_scores.json")
+            score_path = ensure_long_path(paper_loc / "(ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard_scores.json")
             with open(score_path, "r") as f:
                 scores = json.load(f)
 
             plot_average_feature_importances(scores_data=scores,
                                             save_loc=paper_loc,
-                                            model='RF',
+                                            model='XGBR',
                                             figsize=(7,7)
                                             )

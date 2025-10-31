@@ -67,14 +67,14 @@ def main_structural_numerical(
                 TEST=TEST,
 
                 # special_folder_name='hp_RF_differences',
-                # special_file_name='v2_(max_feat_all_leaf_smaller)',
+                special_file_name='drropped_nans',
                 )
 
 
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
+    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "non_imputed_dropped_nan_Rg_data")
 
     # args = parse_arguments()
 
@@ -115,7 +115,7 @@ if __name__ == "__main__":
             vector="count",
             regressor_type="RF",
             # kernel="matern32_j_rbf_mix",
-            polymer_unit=["Donor","Acceptor"],
+            polymer_unit=["Monomer"],
             target_features=[targ],  
             feat_transformer='Standard',
             target_transformer='Standard',
