@@ -33,7 +33,7 @@ from scoring import (
     _average_ls
 )
 
-from _custom_kernel import (AdditiveContinuousKernel, 
+from code_.training.Sklearn_kernel_mix import (AdditiveContinuousKernel, 
                             AdditiveMatern, 
                             AdditiveRBF, 
                             HybridKernel, 

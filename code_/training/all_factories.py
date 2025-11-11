@@ -28,7 +28,7 @@ from skopt.space import Integer, Real, Categorical
 from sklearn.gaussian_process import GaussianProcessRegressor
 # from sklearn.gaussian_process.kernels import PairwiseKernel
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
-from _custom_kernel import (JaccardKernel, custom_RBF,
+from code_.training.Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
                             custom_Matern, AdditiveRBF,
                             AdditiveMatern, ProductKernel,
                             AddKernel, weighted_jaccard)
