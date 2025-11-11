@@ -5,6 +5,13 @@ import torch
 # import torch.nn as nn
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
+from torch.utils import benchmark
+from gpytorch.constraints import Positive
+from gpytorch.kernels import Kernel
+from gpytorch.kernels.rbf_kernel import postprocess_rbf
+from gpytorch.priors import NormalPrior
+from torch.distributions import InverseGamma
+from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
 
@@ -27,244 +34,200 @@ def binary_batch_tanimoto_sim(
             eps + x1_sum + torch.transpose(x2_sum, -1, -2) - dot_prod
     )
 
-def weighted_batch_tanimoto_similarity(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
-) -> torch.Tensor:
-    """
-    Weighted Tanimoto similarity (generalized Jaccard similarity) between two batched tensors across the last 2 dimensions.
-    eps argument ensures numerical stability to avoid division by zero.
-    """
+
+def weighted_batch_tanimoto_similarity(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
     assert x1.ndim >= 2 and x2.ndim >= 2, "Input tensors must have at least 2 dimensions."
 
-    pairwise_min = torch.min(x1.unsqueeze(-2), x2.unsqueeze(-3))  
-    min_sum = torch.sum(pairwise_min, dim=-1, keepdims=True)  
+    pairwise_min = torch.min(x1.unsqueeze(-2), x2.unsqueeze(-3))
+    pairwise_max = torch.max(x1.unsqueeze(-2), x2.unsqueeze(-3))
 
-    pairwise_max = torch.max(x1.unsqueeze(-2), x2.unsqueeze(-3))  
-    max_sum = torch.sum(pairwise_max, dim=-1, keepdims=True)  
+    min_sum = torch.sum(pairwise_min, dim=-1)
+    max_sum = torch.sum(pairwise_max, dim=-1)
+    similarity = torch.where(max_sum == 0, torch.zeros_like(max_sum), min_sum / max_sum)
 
-    # Weighted Tanimoto similarity
-    similarity = (min_sum + eps) / (max_sum + eps)
     return similarity
     
 
 
-class TanimotoDistance(torch.nn.Module):
-    r"""
-    Distance module for bit vector test_kernels.
+def _weighted_tanimoto_similarity(x1, x2):
     """
+    Compute 1 - Tanimoto similarity between x1 and x2.
+    Supports batched inputs.
+    """
+    x1 = x1.unsqueeze(-2)  # (..., N, 1, D)
+    x2 = x2.unsqueeze(-3)  # (..., 1, M, D)
 
-    def __init__(self, postprocess_script=lambda x: x):
-        super().__init__()
-        self._postprocess = postprocess_script
-
-    def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="binary tanimoto"):
-        r"""
-        Computes the similarity between x1 and x2
-        Args:
-            :attr: `x1`: (Tensor `n x d` or `b x n x d`):
-                First set of data where b is a batch dimension
-            :attr: `x2`: (Tensor `m x d` or `b x m x d`):
-                Second set of data where b is a batch dimension
-            :attr: `postprocess` (bool):
-                Whether to apply a postprocess script (default is none)
-            :attr: `x1_eq_x2` (bool):
-                Is x1 equal to x2
-            :attr: `metric` (str):
-                String specifying the similarity metric. One of ['tanimoto']
-        Returns:
-            (:class:`Tensor`, :class:`Tensor) corresponding to the similarity matrix between `x1` and `x2`
-        """
-
-        # Branch for Tanimoto metric
-        if metric == "binary tanimoto":
-            res = binary_batch_tanimoto_sim(x1, x2)
-            res.clamp_min_(0)  # zero out negative values
-            return self._postprocess(res) if postprocess else res
-        if metric == "weighted tanimoto":
-            res = weighted_batch_tanimoto_similarity(x1, x2)
-            res.clamp_min_(0)  # zero out negative values
-            return self._postprocess(res) if postprocess else res
-        else:
-            raise RuntimeError(
-                "Similarity metric not supported. Available options are 'tanimoto'"
-            )
+    numerator = torch.min(x1, x2).sum(dim=-1)
+    denominator = torch.max(x1, x2).sum(dim=-1)
+    tanimoto_sim = torch.where(denominator == 0, torch.zeros_like(denominator), numerator / denominator)
+    tanimoto_dist = 1.0 - tanimoto_sim
+    return tanimoto_dist
 
 
-class TanimotoKernel(gpytorch.kernels.Kernel):
-    ''' Tanimoto kernel from GAUCHE
-    https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py
-    '''
 
-    def __init__(self, metric="tanimoto", **kwargs):
-        super(TanimotoKernel, self).__init__(**kwargs)
-        self.metric = metric
+class TanimotoRBF(Kernel):
+    has_lengthscale = True
 
-    def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            dist_postprocess_func=lambda x: x,
-            postprocess=True,
-            **params,
-    ):
-        r"""
-        This is a helper method for computing the bit vector similarity between
-        all pairs of points in x1 and x2.
-        Args:
-            :attr:`x1` (Tensor `n x d` or `b1 x ... x bk x n x d`):
-                First set of data.
-            :attr:`x2` (Tensor `m x d` or `b1 x ... x bk x m x d`):
-                Second set of data.
-            :attr:`last_dim_is_batch` (tuple, optional):
-                Is the last dimension of the data a batch dimension or not?
-        Returns:
-            (:class:`Tensor`, :class:`Tensor) corresponding to the distance matrix between `x1` and `x2`.
-            The shape depends on the kernel's mode
-            * `diag=False`
-            * `diag=False` and `last_dim_is_batch=True`: (`b x d x n x n`)
-            * `diag=True`
-            * `diag=True` and `last_dim_is_batch=True`: (`b x d x n`)
-        """
-        if last_dim_is_batch:
-            x1 = x1.transpose(-1, -2).unsqueeze(-1)
-            x2 = x2.transpose(-1, -2).unsqueeze(-1)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        x1_eq_x2 = torch.equal(x1, x2)
-
-        # torch scripts expect tensors
-        postprocess = torch.tensor(postprocess)
-
-        res = None
-
-        # Cache the Distance object or else JIT will recompile every time
-        if (
-                not self.distance_module
-                or self.distance_module._postprocess != dist_postprocess_func
-        ):
-            self.distance_module = TanimotoDistance(dist_postprocess_func)
-
-        res = self.distance_module._sim(
-            x1, x2, postprocess, x1_eq_x2, self.metric
-        )
-
-        return res
 
     def forward(self, x1, x2, diag=False, **params):
+        """
+        Standard RBF structure: exp(-0.5 * D^2 / lengthscale^2),
+        but using Tanimoto distance instead of Euclidean.
+        """
         if diag:
-            assert x1.size() == x2.size() and torch.equal(x1, x2)
-            return torch.ones(
-                *x1.shape[:-2], x1.shape[-2], dtype=x1.dtype, device=x1.device
-            )
+            return x1.new_ones(x1.shape[:-1])  # diagonal is 1
+
+        # Normalize by lengthscale (same as RBFKernel)
+        x1_ = x1.div(self.lengthscale)
+        x2_ = x2.div(self.lengthscale)
+
+        # Compute Tanimoto distance
+        tanimoto_dist = _weighted_tanimoto_similarity(x1_, x2_)
+
+        # Apply RBF exponentiation (same as postprocess_rbf)
+        covar = postprocess_rbf(tanimoto_dist)
+
+        return covar
+
+
+
+
+class MixingKernel(Kernel):
+    """
+    Product of TanimotoRBF (for fingerprint features)
+    and Matern(3/2) (for continuous features).
+    All lengthscales are learnable with priors.
+    """
+
+    def __init__(self, feat_idx: dict, **kwargs):
+        """
+        feat_idx: dict with keys 'fp' and 'count', each a list of column indices.
+                  Example: {'fp': [0,1,2,3], 'count': [4,5,6]}
+        """
+        super().__init__(**kwargs)
+
+        self.feat_idx = feat_idx
+
+        # --- Priors ---
+        l_prior = InverseGamma(5.0, 5.0)
+        sigma_prior = NormalPrior(0.0, 1.0)
+        sigma_noise_prior = NormalPrior(0.0, 1.0)
+
+        # --- Fingerprint kernel (TanimotoRBF) ---
+        self.fp_kernel = ScaleKernel(
+            TanimotoRBF(ard_num_dims=len(feat_idx.get('fp', []))),
+            outputscale_prior=sigma_prior,
+        )
+        self.fp_kernel.base_kernel.register_prior(
+            "lengthscale_prior", l_prior, "lengthscale"
+        )
+
+        # --- Continuous kernel (Matern 3/2) ---
+        self.cont_kernel = ScaleKernel(
+            MaternKernel(nu=1.5, ard_num_dims=len(feat_idx.get('count', []))),
+            outputscale_prior=sigma_prior,
+        )
+        self.cont_kernel.base_kernel.register_prior(
+            "lengthscale_prior", l_prior, "lengthscale"
+        )
+
+        # Store priors for convenience if used later in model
+        self.sigma_noise_prior = sigma_noise_prior
+
+    def forward(self, x1, x2, diag=False, **params):
+        """
+        Compute product kernel between subsets of x1/x2.
+        """
+        fp_idx = self.feat_idx.get('fp', [])
+        cont_idx = self.feat_idx.get('count', [])
+
+        x1_fp = x1[..., fp_idx] if fp_idx else None
+        x2_fp = x2[..., fp_idx] if fp_idx else None
+        x1_cont = x1[..., cont_idx] if cont_idx else None
+        x2_cont = x2[..., cont_idx] if cont_idx else None
+
+        # Compute product only on available parts
+        if x1_fp is not None and x1_cont is not None:
+            return self.fp_kernel(x1_fp, x2_fp, diag=diag) * self.cont_kernel(x1_cont, x2_cont, diag=diag)
+        elif x1_fp is not None:
+            return self.fp_kernel(x1_fp, x2_fp, diag=diag)
+        elif x1_cont is not None:
+            return self.cont_kernel(x1_cont, x2_cont, diag=diag)
         else:
-            return self.covar_dist(x1, x2, **params)
+            raise ValueError("No valid feature indices found in feat_idx.")
 
 
-class GP(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, **kwargs):
-        super(GP, self).__init__(train_x, train_y, likelihood)
+class GPMix(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood, feat_idx):
+        super(GPMix, self).__init__(train_x, train_y, likelihood, feat_idx)
         self.mean_module = gpytorch.means.ZeroMean()
-        # print(kwargs['kernel'])
-        if kwargs['kernel'] == 'rbf':
-            # for numerical
-            self.covar_module = gpytorch.kernels.ScaleKernel(
-                gpytorch.kernels.RBFKernel(ard_num_dims=train_x.shape[-1],**kwargs)
-            )
-            # self.covar_module.base_kernel.lengthscale = kwargs['lengthscale']
-        elif kwargs['kernel'] == 'tanimoto':
-            # for ECFP
-            self.covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
-        elif kwargs['kernel'] == 'RQ':
-            # for numerical 
-            self.covar_module = gpytorch.kernels.ScaleKernel(
-                gpytorch.kernels.RQKernel(ard_num_dims=train_x.shape[-1])
-                )
-        elif kwargs['kernel'] == 'matern':
-            # for numeical
-            # nu = kwargs.get('nu', 2.5)
-            self.covar_module = gpytorch.kernels.ScaleKernel(
-                gpytorch.kernels.MaternKernel(ard_num_dims=train_x.shape[-1],**kwargs)
-                )
-        else:
-            raise ValueError('Invalid kernel')
+        self.covar_module = MixingKernel(feat_idx=feat_idx)
+
+        def forward(self, x):
+            mean_x = self.mean_module(x)
+            covar_x = self.covar_module(x)
+            return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+        
+
+
+
+class GPMixRegressor(BaseEstimator):
+    
+
+
+
+
+
+
+
+
+
+class SimpleSincKernel(gpytorch.kernels.Kernel):
+    has_lengthscale = True
+
+    # this is the kernel function
+    def forward(self, x1, x2, **params):
+        # apply lengthscale
+        x1_ = x1.div(self.lengthscale)
+        x2_ = x2.div(self.lengthscale)
+        # calculate the distance between inputs
+        diff = self.covar_dist(x1_, x2_, **params)
+        # prevent divide by 0 errors
+        diff.where(diff == 0, torch.as_tensor(1e-20))
+        # return sinc(diff) = sin(diff) / diff
+        return torch.sin(diff).div(diff)
+
+
+
+# gpytorch.kernels.RBFKernel()
+
+class SimpleSincGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super().__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = SimpleSincKernel()
 
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
+# initialize the new model
+model = SimpleSincGPModel(train_x, train_y, likelihood)
 
-class GPRegressor(BaseEstimator):
+# set to training mode and train
+model.train()
+likelihood.train()
+train(model, likelihood)
 
-    def __init__(
-            self,
-            kernel,
-            # length_scale=None,
-            lr=1e-2,
-            n_epoch=100,
-            lengthscale=1,
-            nu=2.5,
+# Get into evaluation (predictive posterior) mode and predict
+model.eval()
+likelihood.eval()
+observed_pred = predict(model, likelihood)
 
-    ):
-        self.ll = gpytorch.likelihoods.GaussianLikelihood()
-        self.kernel = kernel
-        self.lr = lr
-        self.n_epoch = n_epoch
-        self.lengthscale = lengthscale 
-        self.nu = nu
-
-
-
-    def fit(self, X_train, Y_train):
-
-        if isinstance(X_train, pd.DataFrame):
-            X_train = X_train.to_numpy()
-
-        X_train = torch.tensor(X_train, dtype=torch.float)
-        Y_train = torch.tensor(Y_train.ravel(), dtype=torch.float)
-        self.model = GP(X_train, Y_train.ravel(),
-                        self.ll, 
-                        kernel=self.kernel,
-                        lengthscale=self.lengthscale,
-                        nu = self.nu)
-        # gpytorch.settings.cholesky_jitter(1e-3)               
-        # train return loss (minimize)
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.ll, self.model)
-
-        if torch.cuda.is_available():
-            X_train = X_train.cuda()
-            Y_train = Y_train.cuda()
-            self.model = self.model.cuda()
-            mll = mll.cuda()
-
-        self.model.train()
-        self.ll.train()
-        for _ in range(self.n_epoch):
-            optimizer.zero_grad()
-            y_pred = self.model(X_train)
-            loss = -mll(y_pred, Y_train.ravel())
-            # print(f'LOSS: {loss.item()}', end='\r')
-            loss.backward()
-            optimizer.step()
-
-    def predict(self, X_test):
-        if isinstance(X_test, pd.DataFrame):
-            X_test = X_test.to_numpy()
-
-        X_test = torch.tensor(X_test, dtype=torch.float)
-
-        if torch.cuda.is_available():
-            X_test = X_test.cuda()
-            self.model = self.model.cuda()
-            self.ll = self.ll.cuda()
-
-        self.model.eval()
-        self.ll.eval()
-        with torch.no_grad():
-            y_pred = self.ll(self.model(X_test)).mean.cpu().numpy()
-
-        return y_pred
 
 
 
