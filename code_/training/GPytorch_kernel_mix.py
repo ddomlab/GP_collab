@@ -51,48 +51,47 @@ def weighted_batch_tanimoto_similarity(x1: torch.Tensor, x2: torch.Tensor) -> to
     
 
 
-def _weighted_tanimoto_similarity(x1, x2):
-    """
-    Compute 1 - Tanimoto similarity between x1 and x2.
-    Supports batched inputs.
-    """
-    x1 = x1.unsqueeze(-2)  # (..., N, 1, D)
-    x2 = x2.unsqueeze(-3)  # (..., 1, M, D)
+def _weighted_tanimoto_distance(x1, x2):
+    # (..., N, 1, D)
+    x1_expanded = x1.unsqueeze(-2) 
+    # (..., 1, M, D)
+    x2_expanded = x2.unsqueeze(-3) 
 
-    numerator = torch.min(x1, x2).sum(dim=-1)
-    denominator = torch.max(x1, x2).sum(dim=-1)
-    tanimoto_sim = torch.where(denominator == 0, torch.zeros_like(denominator), numerator / denominator)
-    tanimoto_dist = 1.0 - tanimoto_sim
-    return tanimoto_dist
+    # Intersection: min(x1, x2)
+    numerator = torch.min(x1_expanded, x2_expanded).sum(dim=-1)
+    # Union: max(x1, x2)
+    denominator = torch.max(x1_expanded, x2_expanded).sum(dim=-1)
+
+    # If denominator is 0 (both vectors are zero), set S_T to 0, matching the R code.
+    tanimoto_sim = torch.where(
+        denominator == 0, 
+        torch.zeros_like(denominator, dtype=x1.dtype),  # S_T = 0
+        numerator / denominator
+    )
+    
+    tanimoto_dist = tanimoto_sim
+    
+    return torch.clamp(tanimoto_dist, min=0.0)
 
 
 
-class TanimotoRBF(Kernel):
-    has_lengthscale = True
+class TanimotoRBF(gpytorch.kernels.Kernel):
+
+    is_stationary = False  # MUST be non-stationary
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        # makes lengthscale a learnable parameter
+        super().__init__(has_lengthscale=True, **kwargs)
 
+    def forward(self, x1, x2, **params):
+        # compute Tanimoto distance (NOT scaled)
+        dist = _weighted_tanimoto_distance(x1, x2)
 
-    def forward(self, x1, x2, diag=False, **params):
-        """
-        Standard RBF structure: exp(-0.5 * D^2 / lengthscale^2),
-        but using Tanimoto distance instead of Euclidean.
-        """
-        if diag:
-            return x1.new_ones(x1.shape[:-1])  # diagonal is 1
+        # RBF-style scaling with learnable lengthscale:
+        # k = exp( -0.5 * d / ell^2 )
+        scaled_dist = dist / (self.lengthscale ** 2)
 
-        # Normalize by lengthscale (same as RBFKernel)
-        x1_ = x1.div(self.lengthscale)
-        x2_ = x2.div(self.lengthscale)
-
-        # Compute Tanimoto distance
-        tanimoto_dist = _weighted_tanimoto_similarity(x1_, x2_)
-
-        # Apply RBF exponentiation (same as postprocess_rbf)
-        covar = postprocess_rbf(tanimoto_dist)
-
-        return covar
+        return torch.exp(-0.5 * scaled_dist)
 
 
 
@@ -105,73 +104,95 @@ class MixingKernel(Kernel):
     """
 
     def __init__(
-        self,
-        feat_idx: dict,
-        l_prior= None,
-        sigma_prior= None,
-        sigma_noise_prior= None,
-        **kwargs,
-    ):
-        """
-        feat_idx: dict with keys 'fp' and 'count', each a list of column indices.
-                  Example: {'fp': [0,1,2,3], 'count': [4,5,6]}
-        l_prior: optional prior for kernel lengthscales
-        sigma_prior: optional prior for kernel outputscales
-        sigma_noise_prior: optional prior for noise (stored for later use)
-        """
+            self,
+            feat_idx: dict,
+            l_prior=None,
+            sigma_prior=None,
+            **kwargs,
+        ):
+
         super().__init__(**kwargs)
 
-        self.feat_idx = feat_idx
-        self.sigma_noise_prior = sigma_noise_prior  # just stored for model use
+        # Normalize None values → []
+        fp_idx = feat_idx.get("fp") or []
+        cont_idx = feat_idx.get("count") or []
 
-        # --- Fingerprint kernel (TanimotoRBF) ---
-        self.fp_kernel = ScaleKernel(
-            TanimotoRBF(ard_num_dims=len(feat_idx.get('fp', []))),
-            outputscale_prior=sigma_prior,
-        )
-        if l_prior is not None:
-            self.fp_kernel.base_kernel.register_prior(
-                "lengthscale_prior", l_prior, "lengthscale"
-            )
+        self.feat_idx = {"fp": fp_idx, "count": cont_idx}
 
-        # --- Continuous kernel (Matern 3/2) ---
-        self.cont_kernel = ScaleKernel(
-            MaternKernel(nu=1.5, ard_num_dims=len(feat_idx.get('count', []))),
-            outputscale_prior=sigma_prior,
-        )
-        if l_prior is not None:
-            self.cont_kernel.base_kernel.register_prior(
-                "lengthscale_prior", l_prior, "lengthscale"
+        # --- Fingerprint kernel (only if fp features exist) ---
+        if len(fp_idx) > 0:
+            self.fp_kernel = ScaleKernel(
+                TanimotoRBF(
+                    ard_num_dims=len(fp_idx),
+                    # lengthscale_constraint=Positive()
+                ),
+                outputscale_prior=sigma_prior,
             )
+            if l_prior is not None:
+                self.fp_kernel.base_kernel.register_prior(
+                    "lengthscale_prior", l_prior, "lengthscale"
+                )
+        else:
+            self.fp_kernel = None
+
+        # --- Continuous kernel (only if count features exist) ---
+        if len(cont_idx) > 0:
+            self.cont_kernel = ScaleKernel(
+                MaternKernel(
+                    nu=1.5,
+                    ard_num_dims=len(cont_idx),
+                ),
+                outputscale_prior=sigma_prior,
+            )
+            if l_prior is not None:
+                self.cont_kernel.base_kernel.register_prior(
+                    "lengthscale_prior", l_prior, "lengthscale"
+                )
+        else:
+            self.cont_kernel = None
 
     def forward(self, x1, x2, diag=False, **params):
-        """
-        Compute product kernel between subsets of x1/x2.
-        """
-        fp_idx = self.feat_idx.get('fp', [])
-        cont_idx = self.feat_idx.get('count', [])
+
+        fp_idx = self.feat_idx["fp"]
+        cont_idx = self.feat_idx["count"]
 
         x1_fp = x1[..., fp_idx] if fp_idx else None
         x2_fp = x2[..., fp_idx] if fp_idx else None
+
         x1_cont = x1[..., cont_idx] if cont_idx else None
         x2_cont = x2[..., cont_idx] if cont_idx else None
 
-        if x1_fp is not None and x1_cont is not None:
+        # Both exist → product kernel
+        if self.fp_kernel is not None and self.cont_kernel is not None:
             return self.fp_kernel(x1_fp, x2_fp, diag=diag) * self.cont_kernel(x1_cont, x2_cont, diag=diag)
-        elif x1_fp is not None:
+
+        # Only FP
+        if self.fp_kernel is not None:
             return self.fp_kernel(x1_fp, x2_fp, diag=diag)
-        elif x1_cont is not None:
+
+        # Only count
+        if self.cont_kernel is not None:
             return self.cont_kernel(x1_cont, x2_cont, diag=diag)
-        else:
-            raise ValueError("No valid feature indices found in feat_idx.")
+
+        raise ValueError("Both fp and count feature lists are empty.")
         
 
 class GPMix(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, feat_idx):
+    def __init__(self, train_x, train_y, likelihood, feat_idx, l_prior=None, sigma_prior=None):
         super(GPMix, self).__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ZeroMean()
-        self.covar_module = MixingKernel(feat_idx=feat_idx)
-
+        
+        # Pass priors to the kernel at initialization
+        self.covar_module = MixingKernel(
+            feat_idx=feat_idx, 
+            l_prior=l_prior, 
+            sigma_prior=sigma_prior
+        )
+        # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel(),
+        #                                                  outputscale_prior=sigma_prior)
+        # self.covar_module.base_kernel.register_prior(
+        #             "lengthscale_prior", l_prior, "lengthscale"
+        #         )
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
@@ -179,108 +200,98 @@ class GPMix(gpytorch.models.ExactGP):
         
 
 
-
 class GPMixRegressor(BaseEstimator):
     def __init__(
         self,
-        feat_idx,
-        num_samples=100,
-        warmup_steps=100,
+        feat_idx=None,
+        learning_rate=0.1,
+        num_epochs=100,
         use_cuda=False,
-        smoke_test=False,
     ):
         self.feat_idx = feat_idx
-        self.num_samples = 2 if smoke_test else num_samples
-        self.warmup_steps = 2 if smoke_test else warmup_steps
+        self.learning_rate = learning_rate
+        self.num_epochs = num_epochs
         self.use_cuda = use_cuda and torch.cuda.is_available()
 
     def fit(self, X_train, Y_train):
-        # --- Convert input to torch tensors safely ---
         if isinstance(X_train, pd.DataFrame):
-            X_train = X_train.to_numpy(dtype=np.float32)
-        elif isinstance(X_train, np.ndarray):
-            X_train = X_train.astype(np.float32)
-        X_train = torch.tensor(X_train, dtype=torch.float)
+            X_train = X_train.to_numpy()
+        if isinstance(Y_train, pd.DataFrame):
+            Y_train = Y_train.to_numpy()
 
-        if isinstance(Y_train, (pd.Series, pd.DataFrame)):
-            Y_train = Y_train.to_numpy(dtype=np.float32).ravel()
-        elif isinstance(Y_train, np.ndarray):
-            Y_train = Y_train.astype(np.float32).ravel()
+        X_train = torch.tensor(X_train, dtype=torch.float)
         Y_train = torch.tensor(Y_train, dtype=torch.float)
 
         if self.use_cuda:
             X_train = X_train.cuda()
             Y_train = Y_train.cuda()
-        # --- Priors (as you specified) ---
+
         l_prior = GammaPrior(5.0, 5.0)
         sigma_prior = NormalPrior(0.0, 1.0)
         sigma_noise_prior = NormalPrior(0.0, 1.0)
 
-        # --- Likelihood and model ---
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        self.model = GPMix(X_train, Y_train, self.likelihood, self.feat_idx)
-
-        # assign priors to the model components
-        self.model.covar_module.fp_kernel.base_kernel.register_prior(
-            "lengthscale_prior", l_prior, "lengthscale"
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
+            noise_prior=sigma_noise_prior
         )
-        self.model.covar_module.cont_kernel.base_kernel.register_prior(
-            "lengthscale_prior", l_prior, "lengthscale"
+        self.model = GPMix(
+            X_train, 
+            Y_train, 
+            self.likelihood, 
+            self.feat_idx,
+            l_prior=l_prior,
+            sigma_prior=sigma_prior
         )
-        self.model.covar_module.fp_kernel.register_prior(
-            "outputscale_prior", sigma_prior, "outputscale"
-        )
-        self.model.covar_module.cont_kernel.register_prior(
-            "outputscale_prior", sigma_prior, "outputscale"
-        )
-        self.likelihood.register_prior("noise_prior", sigma_noise_prior, "noise")
+        
+        if self.use_cuda:
+            self.model = self.model.cuda()
+            self.likelihood = self.likelihood.cuda()
 
-        # --- Pyro MCMC model ---
-        def pyro_model(x, y):
-            with gpytorch.settings.fast_computations(False, False, False):
-                sampled_model = self.model.pyro_sample_from_prior()
-                output = sampled_model.likelihood(sampled_model(x))
-                pyro.sample("obs", output, obs=y)
-            return y
+        self.model.train()
+        self.likelihood.train()
 
-        nuts_kernel = NUTS(pyro_model)
-        mcmc = MCMC(
-            nuts_kernel,
-            num_samples=self.num_samples,
-            warmup_steps=self.warmup_steps,
-            disable_progbar=True
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
-        print(f"Running NUTS with {self.num_samples} samples, {self.warmup_steps} warmup...")
-        mcmc.run(X_train, Y_train)
-        self.mcmc_samples = mcmc.get_samples()
-        print("Sampling complete. Posterior hyperparameters stored.")
+        self.mll =  gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
 
+        # print(f"Running MAP optimization for {self.num_epochs} epochs...")
+        
+        for i in range(self.num_epochs):
+            self.optimizer.zero_grad()
+            output = self.model(X_train)
+            
+            loss = -self.mll(output, Y_train)
+            
+            loss.backward()
+            
+            # if (i + 1) % 10 == 0:
+            #     print(f"Epoch {i+1}/{self.num_epochs} - Loss: {loss.item():.3f} "
+            #           f"Noise: {self.model.likelihood.noise.item():.3f}")
+            
+            self.optimizer.step()
+
+        # print("Optimization complete. Model is trained (fitted).")
+        
         self.train_x = X_train
         self.train_y = Y_train
         return self
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def predict(self, X_test):
-        if isinstance(X_test, (pd.DataFrame, np.ndarray)):
-            X_test = torch.tensor(X_test, dtype=torch.float)
+        if isinstance(X_test, pd.DataFrame):
+            X_test = X_test.to_numpy()
+        X_test = torch.tensor(X_test, dtype=torch.float)
 
         if self.use_cuda:
             X_test = X_test.cuda()
-            self.model = self.model.cuda()
-            self.likelihood = self.likelihood.cuda()
 
         self.model.eval()
         self.likelihood.eval()
 
-        preds = []
-        for i in range(self.num_samples):
-            sample_state = {k: v[i] for k, v in self.mcmc_samples.items()}
-            self.model.load_state_dict(sample_state, strict=False)
-            pred = self.likelihood(self.model(X_test)).mean.detach().cpu().numpy()
-            preds.append(pred)
+        with torch.no_grad():
+            pred_distribution = self.likelihood(self.model(X_test))
 
-        mean_pred = np.mean(preds, axis=0)
+        mean_pred = pred_distribution.mean.detach().cpu().numpy()
+        
         return mean_pred
 
 
@@ -289,71 +300,171 @@ class GPMixRegressor(BaseEstimator):
 
 
 
-n_samples = 100
-n_fp = 8         # fingerprint features (binary)
-n_cont = 3       # continuous features
 
-# fingerprints (binary molecular-like descriptors)
-fp_feats = np.random.randint(0, 2, size=(n_samples, n_fp))
 
-# continuous features
-cont_feats = np.random.randn(n_samples, n_cont)
 
-# combine all features
-X = np.concatenate([fp_feats, cont_feats], axis=1)
 
-# true function (nonlinear in continuous features)
-y_true = np.sin(cont_feats[:, 0]) + 0.3 * cont_feats[:, 1]**2 + (fp_feats[:, 0] * 0.5)
-y = y_true + 0.1 * np.random.randn(n_samples)  # add noise
 
-# pandas DataFrame for column-based indexing
-columns = [f"fp{i}" for i in range(n_fp)] + [f"cont{i}" for i in range(n_cont)]
-X_df = pd.DataFrame(X, columns=columns)
 
-# feature index mapping for the kernel
-feat_idx = {
-    'fp': [X_df.columns.get_loc(c) for c in X_df.columns if "fp" in c],
-    'count': [X_df.columns.get_loc(c) for c in X_df.columns if "cont" in c],
-}
+# class GPMixRegressor(BaseEstimator):
+#     def __init__(
+#         self,
+#         feat_idx=None,
+#         num_samples=100,
+#         warmup_steps=100,
+#         use_cuda=False,
+#     ):
+#         self.feat_idx = feat_idx
+#         self.num_samples = num_samples
+#         self.warmup_steps = warmup_steps
+#         self.use_cuda = use_cuda and torch.cuda.is_available()
 
-# split data
-X_train, X_test, y_train, y_test = train_test_split(X_df, y, test_size=0.2, random_state=42)
+#     # --- NEW: Helper method for X data ---
 
-# -------------------------------------------------------
-# 2️⃣  Initialize and train the model
-# -------------------------------------------------------
+#     def fit(self, X_train, Y_train):
+#         # --- Convert input to torch tensors safely ---
+#         if isinstance(X_train, pd.DataFrame):
+#             X_train = X_train.to_numpy()
 
-model = GPMixRegressor(
-    feat_idx=feat_idx,
-    num_samples=20,     # fewer samples for demo speed
-    warmup_steps=20,
-    use_cuda=False,     # set True if GPU available
-)
+#         if isinstance(Y_train, pd.DataFrame):
+#             Y_train = Y_train.to_numpy()
 
-print("Fitting model (this will run NUTS sampling)...")
-model.fit(X_train, y_train)
+#         X_train = torch.tensor(X_train, dtype=torch.float)
+#         Y_train = torch.tensor(Y_train.ravel(), dtype=torch.float)
+#         # --- Priors (as you specified) ---
+#         l_prior = GammaPrior(5.0, 5.0)
+#         sigma_prior = NormalPrior(0.0, 1.0)
+#         sigma_noise_prior = NormalPrior(0.0, 1.0)
 
-# -------------------------------------------------------
-# 3️⃣  Predict on test set
-# -------------------------------------------------------
+#         # --- Likelihood and model ---
+#         self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        
+#         # Pass priors to the model (from previous refactor)
+#         self.model = GPMix(
+#             X_train, 
+#             Y_train, 
+#             self.likelihood, 
+#             self.feat_idx,
+#             l_prior=l_prior,
+#             sigma_prior=sigma_prior
+#         )
+#         self.likelihood.register_prior("noise_prior", sigma_noise_prior, "noise")
 
-print("Predicting...")
-y_pred = model.predict(X_test)
+#         def pyro_model(x, y):
+#             with gpytorch.settings.fast_computations(False, False, False):
+#                 sampled_model = self.model.pyro_sample_from_prior()
+#                 output = sampled_model.likelihood(sampled_model(x))
+#                 pyro.sample("obs", output, obs=y)
+#             return y
 
-# -------------------------------------------------------
-# 4️⃣  Evaluate and visualize
-# -------------------------------------------------------
-import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score
+#         nuts_kernel = NUTS(pyro_model)
+#         mcmc = MCMC(
+#             nuts_kernel,
+#             num_samples=self.num_samples,
+#             warmup_steps=self.warmup_steps,
+#             disable_progbar=True
+#         )
 
-r2 = r2_score(y_test, y_pred)
-print(f"R² on test data: {r2:.3f}")
+#         print(f"Running NUTS with {self.num_samples} samples, {self.warmup_steps} warmup...")
+#         mcmc.run(X_train, Y_train)
+#         self.mcmc_samples = mcmc.get_samples()
+#         print("Sampling complete. Posterior hyperparameters stored.")
 
-plt.figure(figsize=(6, 6))
-plt.scatter(y_test, y_pred, alpha=0.7)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
-plt.xlabel("True y")
-plt.ylabel("Predicted y")
-plt.title(f"GP-Mix Regressor (R² = {r2:.3f})")
-plt.show()
+#         self.train_x = X_train
+#         self.train_y = Y_train
+#         return self
 
+#     @torch.no_grad()
+#     def predict(self, X_test):
+#         # --- Convert test data to tensor ---
+#         if isinstance(X_test, pd.DataFrame):
+#             X_test = X_test.to_numpy()
+#         X_test = torch.tensor(X_test, dtype=torch.float)
+#         if self.use_cuda:
+#             self.model = self.model.cuda()
+#             self.likelihood = self.likelihood.cuda()
+
+#         self.model.eval()
+#         self.likelihood.eval()
+
+#         preds = []
+#         for i in range(self.num_samples):
+#             sample_state = {k: v[i] for k, v in self.mcmc_samples.items()}
+#             self.model.load_state_dict(sample_state, strict=False)
+#             pred = self.likelihood(self.model(X_test)).mean.detach().cpu().numpy()
+#             preds.append(pred)
+
+#         mean_pred = np.mean(preds, axis=0)
+#         return mean_pred
+
+
+
+
+
+
+# if __name__ == "__main__":
+    
+#     # --- 1. Define Data Shape ---
+#     N_train = 20
+#     N_test = 5
+#     D_fp = 10     # 10 fingerprint features (integer counts)
+#     D_cont = 100  # 100 continuous features
+    
+#     # --- 2. Define Feature Indices ---
+#     # This is critical for the kernel
+#     feat_idx = {
+#         'fp': list(range(D_fp)),                   # Cols 0-9
+#         'count': list(range(D_fp, D_fp + D_cont))  # Cols 10-109
+#     }
+    
+#     # --- 3. Generate Synthetic Data ---
+#     # Fingerprint data (integer counts: 1 to 14) <-- MODIFIED HERE
+#     X_fp_train = np.random.randint(1, 15, size=(N_train, D_fp))
+#     X_fp_test = np.random.randint(1, 15, size=(N_test, D_fp))
+
+#     # Continuous data (float)
+#     X_cont_train = np.random.randn(N_train, D_cont)
+#     X_cont_test = np.random.randn(N_test, D_cont)
+
+#     # Combine data
+#     X_train_np = np.hstack([X_fp_train, X_cont_train])
+#     X_test_np = np.hstack([X_fp_test, X_cont_test])
+    
+#     # Create a synthetic target (Y)
+#     # Y = 2 * (sum of 1st cont feature) - 0.5 * (sum of fp features) + noise
+#     Y_train_np = (
+#         2.0 * X_cont_train[:, 0] + 
+#         -0.5 * X_fp_train.sum(axis=1) + 
+#         np.random.randn(N_train) * 0.1
+#     )
+
+#     # --- 4. Convert to Pandas (to test data handlers) ---
+#     columns = [f"fp_{i}" for i in range(D_fp)] + [f"cont_{i}" for i in range(D_cont)]
+    
+#     X_train_df = pd.DataFrame(X_train_np, columns=columns)
+#     Y_train_series = pd.Series(Y_train_np, name="target")
+#     X_test_df = pd.DataFrame(X_test_np, columns=columns)
+    
+#     print("--- Generated Training Data (Head) ---")
+#     print(X_train_df.head())
+    
+#     # --- 5. Initialize and Run Model ---
+#     print("\n--- Initializing Model ---")
+#     gp_model = GPMixRegressor(
+#         feat_idx=feat_idx,
+#         num_samples=50,
+#         warmup_steps=50,
+#         use_cuda=False
+#     )
+
+#     print("\n--- Fitting Model ---")
+#     # Assuming GPMixRegressor, GPMix, and MixingKernel classes are defined above this block
+#     gp_model.fit(X_train_df, Y_train_series)
+    
+#     # --- 6. Make Predictions ---
+#     print("\n--- Predicting ---")
+#     predictions = gp_model.predict(X_test_df)
+    
+#     print("\n--- Test Predictions ---")
+#     print(predictions)
+#     print(f"\nPredicted {len(predictions)} values.")

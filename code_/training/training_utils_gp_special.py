@@ -142,14 +142,14 @@ def _prepare_data(
 
 
     preprocessor.set_output(transform="pandas")
-    if isinstance(regressor_type, dict):
-        feat_idx = {
-            'fp': [X.columns.get_loc(c) for c in unrolled_feats] if unrolled_feats else None,
-            'count': [X.columns.get_loc(c) for c in numerical_feats] if numerical_feats else None
-        }
+    # if isinstance(regressor_type, dict):
+    feat_idx = {
+        'fp': [X.columns.get_loc(c) for c in unrolled_feats] if unrolled_feats else None,
+        'count': [X.columns.get_loc(c) for c in numerical_feats] if numerical_feats else None
+    }
 
-    else:
-        feat_idx = None
+    # else:
+    #     feat_idx = None
    
     score,predication = run(
                             X,
@@ -237,11 +237,13 @@ def run(
 
 
         else:
+            print("No hyperparameter optimization")
             if isinstance(regressor_type, dict):
                 kernel = _get_gp_kernel(regressor_type, idx=features_idx)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type)
+                model = optimized_models(regressor_type, feat_idx=features_idx)
+
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
                         transformer=y_transform,
@@ -254,7 +256,8 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, use_shap=True, return_indices=False)
+            
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
@@ -273,6 +276,25 @@ def run(
 
 
 
+import torch
+def _to_torch_tensor(data):
+    """
+    Converts feature data (X) from DataFrame/NumPy to a float tensor
+    and moves it to CUDA if self.use_cuda is True.
+    """
+    if isinstance(data, pd.DataFrame):
+        data = data.to_numpy(dtype=np.float32)
+    elif isinstance(data, np.ndarray):
+        data = data.astype(np.float32)
+    
+    # Convert to tensor
+    tensor = torch.tensor(data, dtype=torch.float)
+    
+    # Move to device
+    return tensor
+
+
+
 class NumpyArrayEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -285,6 +307,7 @@ class NumpyArrayEncoder(json.JSONEncoder):
             return list(obj)
         else:
             return super(NumpyArrayEncoder, self).default(obj)
+
 
 def _optimize_hyperparams(
     X, y, 

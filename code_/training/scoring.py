@@ -383,7 +383,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 def cross_validate_regressor(
-    regressor, X, y, cv, return_importance: bool = False, use_shap: bool = False,return_indices: bool = False
+    regressor, X, y, cv, return_importance: bool = False, return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 

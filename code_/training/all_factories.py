@@ -8,6 +8,7 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
+from GPytorch_kernel_mix import GPMixRegressor
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import FunctionTransformer
@@ -28,7 +29,7 @@ from skopt.space import Integer, Real, Categorical
 from sklearn.gaussian_process import GaussianProcessRegressor
 # from sklearn.gaussian_process.kernels import PairwiseKernel
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
-from code_.training.Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
+from Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
                             custom_Matern, AdditiveRBF,
                             AdditiveMatern, ProductKernel,
                             AddKernel, weighted_jaccard)
@@ -114,7 +115,8 @@ regressor_factory: dict[str, type]={
     # "GPR": GPRegressor,
     "sklearn-GPR":GaussianProcessRegressor(),
     "MLP": MLPRegressor(),
-    'HGBR': HistGradientBoostingRegressor(),
+    "HGBR": HistGradientBoostingRegressor(),
+    "GPMixR": GPMixRegressor(),
 }
 
 def optimized_models(model_name:str,random_state:int=42, **kwargs):
@@ -127,7 +129,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     
     if 'RF'==model_name:
         return RandomForestRegressor(n_estimators=100, max_depth=None, 
-                                        random_state=None, n_jobs=-1,**kwargs,
+                                        random_state=None, n_jobs=-1,
                                         max_features="sqrt"
                                         )
     if 'HGBR'==model_name:
@@ -141,6 +143,9 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'sklearn-GPR'==model_name:
         # kernel = kwargs.get('kernel')
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
+    
+    if "GPMixR" == model_name:
+        return GPMixRegressor(**kwargs)
     
     return None
 

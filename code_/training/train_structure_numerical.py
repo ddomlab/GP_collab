@@ -67,14 +67,15 @@ def main_structural_numerical(
                 TEST=TEST,
 
                 # special_folder_name='hp_RF_differences',
-                special_file_name='drropped_nans',
+                # special_file_name='drropped_nans',
                 )
 
 
 
 if __name__ == "__main__":
     PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "non_imputed_dropped_nan_Rg_data")
+    #non_imputed_dropped_nan_Rg_data
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
 
     # args = parse_arguments()
 
@@ -106,20 +107,22 @@ if __name__ == "__main__":
     # 'flux recovery ratio (%) ',
     # 'reversible fouling ratio (%)',
     # 'irreversible fouling ratio(%)',
-
+    # import torch
+    # train_x = torch.linspace(0, 1, 4)
+    # print(train_x)
     for targ in all_targets:
         main_structural_numerical(
             dataset=w_data,
             representation="ECFP",
             radius=3,
             vector="count",
-            regressor_type="RF",
+            regressor_type="GPMixR",
             # kernel="matern32_j_rbf_mix",
             polymer_unit=["Monomer"],
             target_features=[targ],  
             feat_transformer='Standard',
             target_transformer='Standard',
-            numerical_feats=feats,
+            # numerical_feats=feats,
             hyperparameter_optimization=False,
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
