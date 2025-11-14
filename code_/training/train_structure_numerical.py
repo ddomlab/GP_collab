@@ -122,7 +122,7 @@ if __name__ == "__main__":
             target_features=[targ],  
             feat_transformer='Standard',
             target_transformer='Standard',
-            # numerical_feats=feats,
+            numerical_feats=feats,
             hyperparameter_optimization=False,
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]

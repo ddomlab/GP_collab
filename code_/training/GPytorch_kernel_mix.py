@@ -51,48 +51,54 @@ def weighted_batch_tanimoto_similarity(x1: torch.Tensor, x2: torch.Tensor) -> to
     
 
 
-def _weighted_tanimoto_distance(x1, x2):
-    # (..., N, 1, D)
+def _weighted_tanimoto_distance(x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     x1_expanded = x1.unsqueeze(-2) 
-    # (..., 1, M, D)
     x2_expanded = x2.unsqueeze(-3) 
 
-    # Intersection: min(x1, x2)
     numerator = torch.min(x1_expanded, x2_expanded).sum(dim=-1)
-    # Union: max(x1, x2)
     denominator = torch.max(x1_expanded, x2_expanded).sum(dim=-1)
 
-    # If denominator is 0 (both vectors are zero), set S_T to 0, matching the R code.
-    tanimoto_sim = torch.where(
-        denominator == 0, 
-        torch.zeros_like(denominator, dtype=x1.dtype),  # S_T = 0
-        numerator / denominator
-    )
+    tanimoto_sim = (numerator + eps) / (denominator + eps)
     
-    tanimoto_dist = tanimoto_sim
+    tanimoto_dist = 1.0 - tanimoto_sim
     
-    return torch.clamp(tanimoto_dist, min=0.0)
+    return torch.clamp(tanimoto_dist, min=1e-6)
 
 
+# --- THIS IS THE CORRECTED CLASS ---
 
-class TanimotoRBF(gpytorch.kernels.Kernel):
+class TanimotoRBF(Kernel):
+    """
+    Implements the Exponential Kernel using Tanimoto distance.
+    This is often what is meant by "Tanimoto RBF".
+    
+    Kernel formula: 
+    k(x1, x2) = exp( -0.5 * D_T(x1 / l, x2 / l) )
+    """
+    has_lengthscale = True
 
-    is_stationary = False  # MUST be non-stationary
+    def __init__(self, eps: float = 1e-6, **kwargs):
+        super().__init__(**kwargs)
+        self.eps = eps
 
-    def __init__(self, **kwargs):
-        # makes lengthscale a learnable parameter
-        super().__init__(has_lengthscale=True, **kwargs)
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
+        
+        if diag:
+            # D_T(x/l, x/l) = 0. exp(0) = 1.
+            return x1.new_ones(x1.shape[:-1])
 
-    def forward(self, x1, x2, **params):
-        # compute Tanimoto distance (NOT scaled)
-        dist = _weighted_tanimoto_distance(x1, x2)
+        # Apply ARD lengthscales to inputs
+        x1_ = x1.div(self.lengthscale)
+        x2_ = x2.div(self.lengthscale)
 
-        # RBF-style scaling with learnable lengthscale:
-        # k = exp( -0.5 * d / ell^2 )
-        scaled_dist = dist / (self.lengthscale ** 2)
+        # Compute Tanimoto distance D_T on the scaled inputs
+        tanimoto_dist = _weighted_tanimoto_distance(x1_, x2_, eps=self.eps)
 
-        return torch.exp(-0.5 * scaled_dist)
+        # Apply the Exponential Kernel formula: exp(-0.5 * D_T)
+        # We DO NOT square the distance. This resolves the NotPSDError.
+        covar = torch.exp(-0.5 * (tanimoto_dist**2))
 
+        return covar
 
 
 
@@ -253,9 +259,9 @@ class GPMixRegressor(BaseEstimator):
 
         self.mll =  gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
 
-        # print(f"Running MAP optimization for {self.num_epochs} epochs...")
-        
+        # with gpytorch.settings.cholesky_jitter(1e-2):
         for i in range(self.num_epochs):
+            # print(f"Epoch {i+1}/{self.num_epochs}")
             self.optimizer.zero_grad()
             output = self.model(X_train)
             
@@ -275,7 +281,7 @@ class GPMixRegressor(BaseEstimator):
         self.train_y = Y_train
         return self
 
-    # @torch.no_grad()
+    @torch.no_grad()
     def predict(self, X_test):
         if isinstance(X_test, pd.DataFrame):
             X_test = X_test.to_numpy()
@@ -287,8 +293,8 @@ class GPMixRegressor(BaseEstimator):
         self.model.eval()
         self.likelihood.eval()
 
-        with torch.no_grad():
-            pred_distribution = self.likelihood(self.model(X_test))
+        # with torch.no_grad():
+        pred_distribution = self.likelihood(self.model(X_test))
 
         mean_pred = pred_distribution.mean.detach().cpu().numpy()
         
