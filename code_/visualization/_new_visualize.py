@@ -306,7 +306,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 
-def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path, model: str, figsize: tuple=(10,6)) -> None:
+def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path, file_extension: str, figsize: tuple=(10,7)) -> None:
     all_model_fi: List[Dict[str, float]] = []
     all_shap_fi: List[Dict[str, float]] = []
 
@@ -356,7 +356,7 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
         mean_shap = mean_shap.reindex(features, fill_value=0)
         std_shap = std_shap.reindex(features, fill_value=0)
 
-    # ---- NEW SECTION: Select top 15 most important features ----
+    # ---- Select top 15 most important features ----
     if mean_model is not None and mean_shap is not None:
         combined_mean = (mean_model + mean_shap) / 2
     elif mean_model is not None:
@@ -374,52 +374,70 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     features = top_features
     # ------------------------------------------------------------
 
-    # Create figure
+    # ----- NEW VIOLIN + SWARM PLOT SECTION -----
     fig, ax = plt.subplots(figsize=figsize)
-    bar_width = 0.4
-    x = np.arange(len(features))
 
-    # Plot model importances (red)
-    if mean_model is not None:
-        ax.bar(
-            x - bar_width / 2,
-            mean_model.values,
-            bar_width,
-            yerr=std_model.values,
-            capsize=3,
-            color="#BB3A5A",
-            alpha=0.9,
-            label="Model Importance",
-        )
+    # Build long-format dataframe
+    plot_data = []
 
-    # Plot SHAP importances (blue)
-    if mean_shap is not None:
-        ax.bar(
-            x + bar_width / 2,
-            mean_shap.values,
-            bar_width,
-            yerr=std_shap.values,
-            capsize=3,
-            color="#1f77b4",
-            alpha=0.9,
-            label="SHAP Importance",
-        )
+    if not df_model.empty:
+        for feat in features:
+            for val in df_model[feat].dropna().values:
+                plot_data.append([feat, val, "Model Importance"])
 
-    # Finalize formatting
-    ax.set_xticks(x)
+    if not df_shap.empty:
+        for feat in features:
+            for val in df_shap[feat].dropna().values:
+                plot_data.append([feat, val, "SHAP Importance"])
+
+    plot_df = pd.DataFrame(plot_data, columns=["Feature", "Value", "Type"])
+
+    # Colors: red for model, blue for shap
+    palette = {
+        "Model Importance": "#BB3A5A",  # red
+        "SHAP Importance": "#1f77b4",   # blue
+    }
+
+    # VIOLIN PLOTS (side-by-side)
+    sns.violinplot(
+        data=plot_df,
+        x="Feature",
+        y="Value",
+        hue="Type",
+        palette=palette,
+        inner=None,
+        linewidth=1.2,
+        cut=0,
+        dodge=True,
+        ax=ax,
+    )
+
+    # SWARMPLOTS
+    sns.swarmplot(
+        data=plot_df,
+        x="Feature",
+        y="Value",
+        hue="Type",
+        dodge=True,
+        palette=palette, 
+        size=3,
+        alpha=0.7,
+        ax=ax,
+    )
+
+    # Fix duplicate legends (remove swarm's entries)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[:2], labels[:2], frameon=False)
+
     ax.set_xticklabels(features, rotation=75, ha="right")
-    ax.set_ylabel("Mean Feature Importance")
+    ax.set_ylabel("Feature Importance")
     ax.set_xlabel("Top 15 Features")
-    ax.legend(frameon=True)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
 
     plt.tight_layout()
-    save_img_path(save_loc / "feature importance", f"feature_importance_{model}_top15.png")
+    save_img_path(save_loc / "feature importance", f"feature_importance_top15_{file_extension}.png")
     plt.show()
     plt.close()
-
-
-
 
 
 
@@ -452,13 +470,13 @@ if __name__ == "__main__":
     #                                 )
 
             paper_loc: Path = RESULTS / paper_name / target
-
-            score_path = ensure_long_path(paper_loc / "(ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard_scores.json")
+            file_name = "(ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard_scores"
+            score_path = ensure_long_path(paper_loc / f"{file_name}.json")
             with open(score_path, "r") as f:
                 scores = json.load(f)
 
             plot_average_feature_importances(scores_data=scores,
                                             save_loc=paper_loc,
-                                            model='XGBR',
-                                            figsize=(7,7)
+                                            file_extension=file_name,
+                                            figsize=(8,7.5)
                                             )
