@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-# from matplotlib import rc
+
+import krippendorff
+
 from visualization_setting import set_plot_style, save_img_path, ensure_long_path
+
 set_plot_style()
 
 HERE = Path(__file__).resolve().parent
@@ -285,27 +288,6 @@ def creat_count_fp_heatmap(
 
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from pathlib import Path
-from typing import Dict, Any, List
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from pathlib import Path
-from typing import Dict, Any, List
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from pathlib import Path
-from typing import Dict, Any, List
-
-
 def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path, file_extension: str, figsize: tuple=(10,7)) -> None:
     all_model_fi: List[Dict[str, float]] = []
     all_shap_fi: List[Dict[str, float]] = []
@@ -329,7 +311,6 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     # Build DataFrames
     df_model = pd.DataFrame(all_model_fi) if all_model_fi else pd.DataFrame()
     df_shap = pd.DataFrame(all_shap_fi) if all_shap_fi else pd.DataFrame()
-
     if df_model.empty and df_shap.empty:
         raise ValueError("No feature importance data found in scores_data.")
 
@@ -436,8 +417,63 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 
     plt.tight_layout()
     save_img_path(save_loc / "feature importance", f"feature_importance_top15_{file_extension}.png")
-    plt.show()
+    # plt.show()
     plt.close()
+    return df_model, df_shap
+
+
+
+
+
+
+
+def krippendorff_alpha_by_feature(df, save_loc, file_extension, n_seeds=7, folds_per_seed=5, figsize=(12,6)):
+    total_needed = n_seeds * folds_per_seed
+
+    if len(df) < total_needed:
+        raise ValueError(f"Not enough rows: need {total_needed}, but got {len(df)}")
+
+    # Ensure we use exactly N rows (or you can shuffle before slicing)
+    df_cut = df.iloc[:total_needed]
+
+    alphas = {}
+
+    # Loop over all features
+    for feature in df_cut.columns:
+        values = df_cut[feature].values
+
+        # Reshape rows into (n_seeds × folds_per_seed)
+        ratings = values.reshape(n_seeds, folds_per_seed)
+
+        # Compute alpha
+        try:
+            alpha = krippendorff.alpha(
+                reliability_data=ratings,
+                level_of_measurement='interval'
+            )
+        except Exception:
+            alpha = np.nan
+
+        alphas[feature] = alpha
+
+    # Convert to DataFrame
+    alphas_df = pd.DataFrame({
+        "Feature": list(alphas.keys()),
+        "Alpha": list(alphas.values())
+    }).sort_values("Alpha", ascending=False)
+
+    # ---- Plot bar chart ----
+    plt.figure(figsize=figsize)
+    plt.bar(alphas_df["Feature"], alphas_df["Alpha"], color="#0b81a5")
+    plt.xticks(rotation=45, ha="right")
+    plt.ylabel("Krippendorff’s α")
+    # plt.title("Krippendorff’s Alpha for Each Feature")
+    plt.tight_layout()
+    save_img_path(save_loc / "feature importance", f"feature_krippendorff_stability_{file_extension}.png")
+    # plt.show()
+    plt.close()
+    return alphas_df
+
 
 
 
@@ -475,8 +511,28 @@ if __name__ == "__main__":
             with open(score_path, "r") as f:
                 scores = json.load(f)
 
-            plot_average_feature_importances(scores_data=scores,
+            rf_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
                                             save_loc=paper_loc,
                                             file_extension=file_name,
                                             figsize=(8,7.5)
                                             )
+            feature_means = shap_imp.abs().mean()
+
+            top15_features = feature_means.sort_values(ascending=False).head(15).index
+
+            # 3. Filter the DataFrame to these 15 features
+            df_top15 = shap_imp[top15_features]
+            # print(df_top15)
+            # plot_top15_feature_stability(
+            #                     scores_data=scores,
+            #                     # save_loc=paper_loc,
+            #                     # file_extension=file_name,
+            #                     # top_n=15,
+            #                     # figsize=(8,6)
+            #                     )
+            krippendorff_alpha_by_feature(
+                                        df=df_top15,             
+                                        save_loc=paper_loc,
+                                        file_extension=file_name,
+                                        figsize=(9,6)
+                                        )
