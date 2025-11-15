@@ -19,6 +19,7 @@ from pyro.distributions import inverse_gamma as InvGammaPrior
 
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
+import torch.nn as nn
 
 def binary_batch_tanimoto_sim(
         x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
@@ -49,7 +50,7 @@ def weighted_batch_tanimoto_similarity(x1: torch.Tensor, x2: torch.Tensor) -> to
 
     return similarity
     
-
+import torch.nn as nn
 
 def _weighted_tanimoto_distance(x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     x1_expanded = x1.unsqueeze(-2) 
@@ -87,17 +88,16 @@ class TanimotoRBF(Kernel):
             # D_T(x/l, x/l) = 0. exp(0) = 1.
             return x1.new_ones(x1.shape[:-1])
 
-        # Apply ARD lengthscales to inputs
-        x1_ = x1.div(self.lengthscale)
-        x2_ = x2.div(self.lengthscale)
-
         # Compute Tanimoto distance D_T on the scaled inputs
-        tanimoto_dist = _weighted_tanimoto_distance(x1_, x2_, eps=self.eps)
+        tanimoto_dist = _weighted_tanimoto_distance(x1, x2, eps=self.eps)
 
         # Apply the Exponential Kernel formula: exp(-0.5 * D_T)
         # We DO NOT square the distance. This resolves the NotPSDError.
-        covar = torch.exp(-0.5 * (tanimoto_dist**2))
-
+        # self.lengthscale = nn.Parameter(torch.tensor(1.0))
+        print("sahpe of x", x1.shape, x2.shape)
+        print('here',self.lengthscale.shape)
+        print(tanimoto_dist.shape)
+        covar = torch.exp(-0.5 * (tanimoto_dist/self.lengthscale)**2)
         return covar
 
 
@@ -136,7 +136,10 @@ class MixingKernel(Kernel):
             )
             if l_prior is not None:
                 self.fp_kernel.base_kernel.register_prior(
-                    "lengthscale_prior", l_prior, "lengthscale"
+                    "lengthscale_prior",
+                    l_prior,
+                    lambda m: m.raw_lengthscale,
+                    lambda m, v: m._set_lengthscale(v),
                 )
         else:
             self.fp_kernel = None
