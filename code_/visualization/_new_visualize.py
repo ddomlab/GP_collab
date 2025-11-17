@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 
 import krippendorff
-
+import pingouin as pg
 from visualization_setting import set_plot_style, save_img_path, ensure_long_path
 
 set_plot_style()
@@ -475,6 +475,34 @@ def krippendorff_alpha_by_feature(df, save_loc, file_extension, n_seeds=7, folds
     return alphas_df
 
 
+def calculate_kendalls_w(df_input):
+    m = len(df_input)
+    n = len(df_input.columns)
+    
+    df_ranked = df_input.rank(axis=1, ascending=False, method='average')
+    
+    R = df_ranked.sum(axis=0)
+    
+    R_bar_expected = m * (n + 1) / 2
+    
+    S = np.sum((R - R_bar_expected)**2)
+    
+    S_max = (m**2 * (n**3 - n)) / 12
+    
+    W = S / S_max
+    
+    Chi_sq = m * (n - 1) * W
+    df_chi_sq = n - 1
+    
+    return {
+        "m (Runs)": m,
+        "n (Features)": n,
+        "S": S,
+        "S_max": S_max,
+        "Kendall's W": W,
+        "Chi-square": Chi_sq,
+        "Degrees of Freedom": df_chi_sq
+    }
 
 
 
@@ -495,7 +523,8 @@ if __name__ == "__main__":
             # ],
             }
     
-
+    models = ["RF","XGBR"]
+    model_stats = {}
     for paper_name, target_list in PAPER.items():
         for target in target_list:
     #         print(paper_name, target)
@@ -504,35 +533,44 @@ if __name__ == "__main__":
     #                                 score_metric='r2',
     #                                 # comparison_value=['scaler', 'Trimer_scaler'],
     #                                 )
+            for model in models:
+                paper_loc: Path = RESULTS / paper_name / target
+                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores"
+                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                with open(score_path, "r") as f:
+                    scores = json.load(f)
 
-            paper_loc: Path = RESULTS / paper_name / target
-            file_name = "(ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard_scores"
-            score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            with open(score_path, "r") as f:
-                scores = json.load(f)
+                MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
+                                                save_loc=paper_loc,
+                                                file_extension=file_name,
+                                                figsize=(8,7.5)
+                                                )
+                shap_feature_means = shap_imp.abs().mean()
+                df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
 
-            rf_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
-                                            save_loc=paper_loc,
-                                            file_extension=file_name,
-                                            figsize=(8,7.5)
-                                            )
-            feature_means = shap_imp.abs().mean()
+                mdi_feature_means = MDI_imp.mean()
+                df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
 
-            top15_features = feature_means.sort_values(ascending=False).head(15).index
+                # 3. Filter the DataFrame to these 15 features
+                # print(df_top15)
+                # plot_top15_feature_stability(
+                #                     scores_data=scores,
+                #                     # save_loc=paper_loc,
+                #                     # file_extension=file_name,
+                #                     # top_n=15,
+                #                     # figsize=(8,6)
+                #                     )
+                # print(df_top15)
+                # krippendorff_alpha_by_feature(
+                #                             df=df_top15,             
+                #                             save_loc=paper_loc,
+                #                             file_extension=file_name,
+                #                             figsize=(9,6)
+                #                             )
+                # print(calculate_kendalls_w(df_top15))
+                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["SHAP"] = calculate_kendalls_w(df_top15_shap_features)
+                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
+                # print(pg.friedman(df_top15))
 
-            # 3. Filter the DataFrame to these 15 features
-            df_top15 = shap_imp[top15_features]
-            # print(df_top15)
-            # plot_top15_feature_stability(
-            #                     scores_data=scores,
-            #                     # save_loc=paper_loc,
-            #                     # file_extension=file_name,
-            #                     # top_n=15,
-            #                     # figsize=(8,6)
-            #                     )
-            krippendorff_alpha_by_feature(
-                                        df=df_top15,             
-                                        save_loc=paper_loc,
-                                        file_extension=file_name,
-                                        figsize=(9,6)
-                                        )
+    with open(RESULTS / "model_stats" / "model_stability.json", "w") as f:
+        json.dump(model_stats, f, indent=2)

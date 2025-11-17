@@ -1,0 +1,46 @@
+{
+  "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": {
+    "target_log Rg (nm)": {
+      "RF": {
+        "SHAP": {
+          "m (Runs)": 35,
+          "n (Features)": 15,
+          "S": 294852.0,
+          "S_max": 343000.0,
+          "Kendall's W": 0.8596268221574344,
+          "Chi-square": 421.21714285714285,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 35,
+          "n (Features)": 15,
+          "S": 304770.0,
+          "S_max": 343000.0,
+          "Kendall's W": 0.8885422740524781,
+          "Chi-square": 435.38571428571424,
+          "Degrees of Freedom": 14
+        }
+      },
+      "XGBR": {
+        "SHAP": {
+          "m (Runs)": 35,
+          "n (Features)": 15,
+          "S": 222675.5,
+          "S_max": 343000.0,
+          "Kendall's W": 0.6491997084548105,
+          "Chi-square": 318.10785714285714,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 35,
+          "n (Features)": 15,
+          "S": 156072.0,
+          "S_max": 343000.0,
+          "Kendall's W": 0.45502040816326533,
+          "Chi-square": 222.96,
+          "Degrees of Freedom": 14
+        }
+      }
+    }
+  }
+}
