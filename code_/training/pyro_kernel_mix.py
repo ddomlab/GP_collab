@@ -83,19 +83,19 @@ class GPMixPyro:
     def model(self):
         # priors
         # dist.InverseGamma
-        outputscale = pyro.sample("outputscale", dist.Normal(0.0, 1.0))
-        obs_noise   = pyro.sample("obs_noise",   dist.Normal(0.0, 1.0))
+        outputscale = pyro.sample("outputscale", dist.LogNormal(-1.0, 0.3))
+        obs_noise   = pyro.sample("obs_noise",   dist.LogNormal(-3.0, 0.5))
 
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
                 "fp_lengthscale",
-                dist.InverseGamma(5.0, 5.0).expand([self.fp_dim]).to_event(1)
+                dist.LogNormal(0.0, 0.5).expand([self.fp_dim]).to_event(1)
             )
 
         if self.cont_dim > 0:
             cont_ls = pyro.sample(
                 "cont_lengthscale",
-                dist.InverseGamma(5.0, 5.0).expand([self.cont_dim]).to_event(1)
+                dist.LogNormal(0.0, 0.5).expand([self.cont_dim]).to_event(1)
             )
 
         # build fresh kernel
