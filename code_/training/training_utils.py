@@ -83,19 +83,18 @@ def train_regressor(
             #seed scores and seed prediction
         set_globals(Test)
         scores, predictions, ls = _prepare_data(
-                                                    dataset=dataset,
-                                                    structural_features=structural_features,
-                                                    unroll=unroll,
-                                                    numerical_feats=numerical_feats,
-                                                    target_features=target_features,
-                                                    regressor_type=regressor_type,
-                                                    transform_type=feat_transformer,
-                                                    second_transformer=target_transformer,
-                                
-                                                    cutoff=cutoff,
-                                                    hyperparameter_optimization=hyperparameter_optimization,
-                                                    kernel=kernel,
-                                                    classification=classification,
+                                                dataset=dataset,
+                                                structural_features=structural_features,
+                                                unroll=unroll,
+                                                numerical_feats=numerical_feats,
+                                                target_features=target_features,
+                                                regressor_type=regressor_type,
+                                                transform_type=feat_transformer,
+                                                second_transformer=target_transformer,
+                                                cutoff=cutoff,
+                                                hyperparameter_optimization=hyperparameter_optimization,
+                                                kernel=kernel,
+                                                classification=classification,
                                                     )
         scores = process_scores(scores,classification)
 
@@ -145,7 +144,7 @@ def _prepare_data(
                                     numerical_feat=numerical_feats,
                                     structural_feat=unrolled_structural_feats,
                                     scaler=transform_type
-                                )
+                                    )
     
 
 
