@@ -24,38 +24,27 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 
 
 class TanimotoRBF(pk.Kernel):
-    def __init__(self, input_dim, lengthscale=None, eps=1e-6, active_dims=None):
+    def __init__(self, input_dim, eps=1e-6, active_dims=None):
         super().__init__(input_dim=input_dim, active_dims=active_dims)
         self.eps = eps
-        
-        if lengthscale is None:
-            # ARD: one lengthscale per dimension
-            lengthscale = torch.ones(input_dim)
-        self.lengthscale = torch.nn.Parameter(lengthscale)
+        self.lengthscale = None  # will be set from model() via pyro.sample
 
     def forward(self, X, Z=None, diag=False):
         X = self._slice_input(X)
-        Z = self._slice_input(Z) if Z is not None else None
-        
-        if Z is None:
-            Z = X
+        Z = self._slice_input(Z) if Z is not None else X
 
-        if diag is True:
-            return X.new_ones(X.size(0))
+        if diag:
+            return X.new_ones(X.shape[0])
 
-        # Compute Tanimoto distance matrix
         D = weighted_tanimoto_distance(X, Z, eps=self.eps)
 
-        # RBF on that distance
-        ls = self.lengthscale.mean()  # Pyro kernels use scalar LS; match your code
-        K = torch.exp(-0.5 * (D / ls)**2)
-        return K
+        # kernel requires lengthscale to be set before usage
+        ls = torch.clamp(self.lengthscale.mean(), min=1e-6)
+
+        return torch.exp(-0.5 * (D / ls)**2)
     
 
 class MixingKernelPyro:
-    """
-    Builds a Pyro kernel that matches your GPyTorch MixingKernel
-    """
     def __init__(self, feat_idx):
         self.fp_idx = feat_idx.get("fp") or []
         self.cont_idx = feat_idx.get("count") or []
@@ -63,23 +52,19 @@ class MixingKernelPyro:
     def build(self):
         kernels = []
 
-        # FP block
         if len(self.fp_idx) > 0:
             k_fp = TanimotoRBF(input_dim=len(self.fp_idx))
             kernels.append(k_fp)
 
-        # Continuous block
         if len(self.cont_idx) > 0:
             k_cont = pk.Matern32(
-                input_dim=len(self.cont_idx),
-                lengthscale=torch.ones(len(self.cont_idx))  # ARD for cont dims
+                input_dim=len(self.cont_idx)
             )
             kernels.append(k_cont)
 
         if not kernels:
-            raise ValueError("Both FP and CONT feature lists are empty")
+            raise ValueError("Both feature groups empty")
 
-        # Product of kernels
         k = kernels[0]
         for other in kernels[1:]:
             k = pk.Product(k, other)
@@ -91,18 +76,41 @@ class GPMixPyro:
     def __init__(self, X, y, feat_idx):
         self.X = X
         self.y = y
+        self.fp_dim = len(feat_idx.get("fp") or [])
+        self.cont_dim = len(feat_idx.get("count") or [])
         self.kernel_builder = MixingKernelPyro(feat_idx)
 
     def model(self):
-        # priors on hyperparameters
+        # priors
         outputscale = pyro.sample("outputscale", dist.LogNormal(0.0, 1.0))
-        obs_noise = pyro.sample("obs_noise", dist.LogNormal(0.0, 1.0))
+        obs_noise   = pyro.sample("obs_noise",   dist.LogNormal(0.0, 1.0))
 
-        # build a new kernel for each model call
+        if self.fp_dim > 0:
+            fp_ls = pyro.sample(
+                "fp_lengthscale",
+                dist.LogNormal(0.0, 1.0).expand([self.fp_dim]).to_event(1)
+            )
+
+        if self.cont_dim > 0:
+            cont_ls = pyro.sample(
+                "cont_lengthscale",
+                dist.LogNormal(0.0, 1.0).expand([self.cont_dim]).to_event(1)
+            )
+
+        # build fresh kernel
         kernel = self.kernel_builder.build()
+
+        # assign sampled params
+        if self.fp_dim > 0:
+            kernel.kern0.lengthscale = fp_ls   # FP kernel is kern0
+
+        if self.cont_dim > 0:
+            # automatically kern1 for Product(Tanimoto, Matern)
+            kernel.kern1.lengthscale = cont_ls  
+
         kernel.variance = outputscale
 
-        # GPRegression model
+        # GPRegression
         gpmodel = gp.models.GPRegression(
             self.X,
             self.y,
@@ -143,20 +151,42 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
     mean_list = []
     var_list = []
 
-    # ensure X_test is 2D
+    # Ensure 2D test input
     if isinstance(X_test, torch.Tensor) and X_test.ndim == 1:
         X_test = X_test.unsqueeze(0)
 
     num_draws = samples["outputscale"].shape[0]
 
+    # Determine dimensions from kernel builder
+    fp_dim = len(kernel_builder.fp_idx)
+    cont_dim = len(kernel_builder.cont_idx)
+
     for i in range(num_draws):
         oscale = samples["outputscale"][i]
         noise = samples["obs_noise"][i]
 
-        # fresh kernel
+        # Fresh kernel for each posterior draw
         kernel = kernel_builder.build()
+
+        # If fingerprint kernel exists, assign sampled fp lengthscales
+        if fp_dim > 0:
+            fp_ls = samples["fp_lengthscale"][i]
+            kernel.kern0.lengthscale = fp_ls
+
+        # If continuous kernel exists, assign sampled cont lengthscales
+        if cont_dim > 0:
+            if fp_dim > 0:
+                cont_ls = samples["cont_lengthscale"][i]
+                kernel.kern1.lengthscale = cont_ls
+            else:
+                # case when only continuous kernel exists
+                cont_ls = samples["cont_lengthscale"][i]
+                kernel.kern0.lengthscale = cont_ls
+
+        # Assign outputscale
         kernel.variance = oscale
 
+        # Build per-sample GP model
         gpmodel = gp.models.GPRegression(
             X_train,
             y_train,
@@ -166,7 +196,7 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
 
         f_dist = gpmodel(X_test, full_cov=False)
 
-        # f_dist might be a tuple (mean, var)
+        # Pyro may return a tuple (mean, var)
         if isinstance(f_dist, tuple):
             mean, var = f_dist
         else:
@@ -183,6 +213,7 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
     std_pred = var_stack.mean(dim=0).sqrt()
 
     return mean_pred, std_pred
+
 
 
 # ----------------------------------------------------------------------
@@ -246,6 +277,9 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
 
+        if X_t.ndim == 1:
+            X_t = X_t.unsqueeze(0)
+
         if self.use_cuda and torch.cuda.is_available():
             X_t = X_t.cuda()
 
@@ -258,4 +292,5 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         )
 
         return mean_pred.detach().cpu().numpy()
+
 
