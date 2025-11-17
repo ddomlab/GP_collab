@@ -129,30 +129,39 @@ def run_inference(gpmodel):
 
 
 def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
-    K_list = []
     mean_list = []
+    var_list = []
 
-    for i in range(samples["outputscale"].shape[0]):
-        noise = samples["noise"][i]
+    num_draws = samples["outputscale"].shape[0]
+
+    for i in range(num_draws):
+        # pull sample-specific hyperparameters
         oscale = samples["outputscale"][i]
+        noise = samples["obs_noise"][i]   # fixed
 
-        # build kernel with sampled hyperparameters
+        # build a fresh kernel for this sample
         kernel = kernel_builder.build()
-        kernel = pk.Scale(kernel, outputscale=oscale)
+        kernel.variance = oscale          # Pyro equivalent of ScaleKernel
 
-        # GP regression object
+        # GP regression model for this posterior sample
         gpmodel = gp.models.GPRegression(
-            X_train, y_train, kernel, noise=noise
+            X_train,
+            y_train,
+            kernel,
+            noise=noise
         )
 
-        # manually compute predictive mean and covariance
-        posterior = gpmodel(X_test, full_cov=False)
-        mean_list.append(posterior.mean)
-        K_list.append(posterior.variance)
+        # predictive distribution (mean and variance)
+        f_dist = gpmodel(X_test, full_cov=False)
 
+        mean_list.append(f_dist.mean)
+        var_list.append(f_dist.variance)
+
+    # stack posterior samples
     mean_stack = torch.stack(mean_list)
-    var_stack = torch.stack(K_list)
+    var_stack = torch.stack(var_list)
 
+    # posterior predictive mean and std
     mean_pred = mean_stack.mean(dim=0)
     std_pred = var_stack.mean(dim=0).sqrt()
 
