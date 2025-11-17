@@ -8,7 +8,7 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
-from GPytorch_kernel_mix import GPMixRegressor
+from GPytorch_kernel_mix import GPMixMCMCRegressor, GPMixRegressor
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import FunctionTransformer
@@ -77,7 +77,7 @@ transforms: dict[str, Callable] = {
                                                     check_inverse=True, validate=False),
     "MinMax":               MinMaxScaler(),
     "Standard":             StandardScaler(),
-    "Robust Scaler":        RobustScaler(),
+    "RobustScaler":        RobustScaler(),
     "Uniform Quantile":     QuantileTransformer(),
 }
 
@@ -146,6 +146,9 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     
     if "GPMixR" == model_name:
         return GPMixRegressor(**kwargs)
+    
+    if "GPMixMCMC" == model_name:
+        return GPMixMCMCRegressor(**kwargs)
     
     return None
 

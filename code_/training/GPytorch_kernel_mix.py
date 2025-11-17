@@ -13,6 +13,7 @@ from gpytorch.priors import NormalPrior, GammaPrior
 from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
 from pyro.infer.mcmc import NUTS, MCMC
 import pyro
+from gpytorch.models import PyroGP # <-- Import PyroGP
 from pyro.distributions import inverse_gamma as InvGammaPrior
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
@@ -20,22 +21,8 @@ from pyro.distributions import inverse_gamma as InvGammaPrior
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
 import torch.nn as nn
+import math
 
-def binary_batch_tanimoto_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
-) -> torch.Tensor:
-    """
-    Tanimoto between two batched tensors, across last 2 dimensions.
-    eps argument ensures numerical stability if all zero tensors are added.
-    """
-    # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
-    assert x1.ndim >= 2 and x2.ndim >= 2
-    dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
-    x1_sum = torch.sum(x1 ** 2, dim=-1, keepdims=True)
-    x2_sum = torch.sum(x2 ** 2, dim=-1, keepdims=True)
-    return (dot_prod + eps) / (
-            eps + x1_sum + torch.transpose(x2_sum, -1, -2) - dot_prod
-    )
 
 
 def weighted_batch_tanimoto_similarity(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
@@ -63,18 +50,19 @@ def _weighted_tanimoto_distance(x1: torch.Tensor, x2: torch.Tensor, eps: float =
     
     tanimoto_dist = 1.0 - tanimoto_sim
     
-    return torch.clamp(tanimoto_dist, min=1e-6)
+    return torch.clamp(tanimoto_dist, min=0)
 
 
 # --- THIS IS THE CORRECTED CLASS ---
 
 class TanimotoRBF(Kernel):
     """
-    Implements the Exponential Kernel using Tanimoto distance.
-    This is often what is meant by "Tanimoto RBF".
+    Implements the RBF Kernel on Tanimoto distances.
     
     Kernel formula: 
-    k(x1, x2) = exp( -0.5 * D_T(x1 / l, x2 / l) )
+    k(x1, x2) = exp( -0.5 * (D_T(x1, x2) / l)^2 )
+    
+    This matches Stan FP_CODE == 1.
     """
     has_lengthscale = True
 
@@ -85,83 +73,102 @@ class TanimotoRBF(Kernel):
     def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
         
         if diag:
-            # D_T(x/l, x/l) = 0. exp(0) = 1.
+            # The distance from a point to itself is 0.
+            # exp(-0.5 * (0 / l)^2) = exp(0) = 1.
             return x1.new_ones(x1.shape[:-1])
 
-        # Compute Tanimoto distance D_T on the scaled inputs
+        # Compute Tanimoto distance D_T(x1, x2)
         tanimoto_dist = _weighted_tanimoto_distance(x1, x2, eps=self.eps)
 
-        # Apply the Exponential Kernel formula: exp(-0.5 * D_T)
-        # We DO NOT square the distance. This resolves the NotPSDError.
-        # self.lengthscale = nn.Parameter(torch.tensor(1.0))
-        print("sahpe of x", x1.shape, x2.shape)
-        print('here',self.lengthscale.shape)
-        print(tanimoto_dist.shape)
-        covar = torch.exp(-0.5 * (tanimoto_dist/self.lengthscale)**2)
+        # Apply the RBF Kernel formula using the single lengthscale
+        # This is equivalent to: exp( -square(D_T) / (2 * square(l)) )
+        # print(self.lengthscale)
+        covar = torch.exp(-0.5 * (tanimoto_dist / self.lengthscale)**2)
+        return covar
+    
+def _euclidean_distance(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+    """
+    Computes the pairwise Euclidean (L2) distance matrix.
+    """
+    # torch.cdist computes pairwise distances
+    # p=2 specifies Euclidean distance
+    return torch.cdist(x1, x2, p=2)
+
+class TanimotoMatern32(Kernel):
+    """
+    Implements the Matern-3/2 Kernel on Tanimoto distances.
+    
+    Kernel formula: 
+    k(x1, x2) = (1 + sqrt(3)*R) * exp(-sqrt(3)*R)
+    where R = D_T(x1, x2) / l
+    
+    This matches Stan FP_CODE == 2 and is guaranteed PSD.
+    """
+    has_lengthscale = True
+
+    def __init__(self, eps: float = 1e-6, **kwargs):
+        super().__init__(**kwargs)
+        self.eps = eps
+        self.sqrt_3 = math.sqrt(3)
+
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
+        
+        if diag:
+            # R = 0. (1+0)*exp(0) = 1.
+            return x1.new_ones(x1.shape[:-1])
+
+        # Compute Tanimoto distance D_T(x1, x2)
+        tanimoto_dist = _weighted_tanimoto_distance(x1, x2, eps=self.eps)
+
+        # R = D_T / l
+        r = tanimoto_dist / self.lengthscale
+        
+        covar = (1 + self.sqrt_3 * r) * torch.exp(-self.sqrt_3 * r)
+        
         return covar
 
-
-
 class MixingKernel(Kernel):
-    """
-    Product of TanimotoRBF (for fingerprint features)
-    and Matern(3/2) (for continuous features).
-    Priors and hyperparameters can be passed from outside.
-    """
-
     def __init__(
             self,
             feat_idx: dict,
             l_prior=None,
-            sigma_prior=None,
             **kwargs,
         ):
 
         super().__init__(**kwargs)
 
-        # Normalize None values → []
         fp_idx = feat_idx.get("fp") or []
         cont_idx = feat_idx.get("count") or []
 
         self.feat_idx = {"fp": fp_idx, "count": cont_idx}
 
-        # --- Fingerprint kernel (only if fp features exist) ---
         if len(fp_idx) > 0:
-            self.fp_kernel = ScaleKernel(
-                TanimotoRBF(
-                    ard_num_dims=len(fp_idx),
-                    # lengthscale_constraint=Positive()
-                ),
-                outputscale_prior=sigma_prior,
-            )
+            # self.fp_kernel = TanimotoMatern32()
+            self.fp_kernel = TanimotoRBF()
+            self.fp_kernel.initialize(lengthscale=1)
             if l_prior is not None:
-                self.fp_kernel.base_kernel.register_prior(
-                    "lengthscale_prior",
-                    l_prior,
-                    lambda m: m.raw_lengthscale,
-                    lambda m, v: m._set_lengthscale(v),
+                self.fp_kernel.register_prior(
+                    "lengthscale_prior", l_prior, "lengthscale"
                 )
         else:
             self.fp_kernel = None
 
-        # --- Continuous kernel (only if count features exist) ---
         if len(cont_idx) > 0:
-            self.cont_kernel = ScaleKernel(
-                MaternKernel(
+            self.cont_kernel = MaternKernel(
                     nu=1.5,
                     ard_num_dims=len(cont_idx),
-                ),
-                outputscale_prior=sigma_prior,
-            )
+                )
+            init_vec = torch.full((len(cont_idx),), float(2))
+            self.cont_kernel.initialize(lengthscale=init_vec)
             if l_prior is not None:
-                self.cont_kernel.base_kernel.register_prior(
-                    "lengthscale_prior", l_prior, "lengthscale"
+                self.cont_kernel.register_prior(
+                    "lengthscale_prior", l_prior, "lengthscale",
+                    
                 )
         else:
             self.cont_kernel = None
 
     def forward(self, x1, x2, diag=False, **params):
-
         fp_idx = self.feat_idx["fp"]
         cont_idx = self.feat_idx["count"]
 
@@ -171,19 +178,19 @@ class MixingKernel(Kernel):
         x1_cont = x1[..., cont_idx] if cont_idx else None
         x2_cont = x2[..., cont_idx] if cont_idx else None
 
-        # Both exist → product kernel
-        if self.fp_kernel is not None and self.cont_kernel is not None:
-            return self.fp_kernel(x1_fp, x2_fp, diag=diag) * self.cont_kernel(x1_cont, x2_cont, diag=diag)
+        k_fp = x1.new_ones(x1.shape[:-1]) if diag else x1.new_ones(x1.shape[:-2] + (x1.shape[-2], x2.shape[-2]))
+        k_cont = k_fp.clone() 
 
-        # Only FP
         if self.fp_kernel is not None:
-            return self.fp_kernel(x1_fp, x2_fp, diag=diag)
+            k_fp = self.fp_kernel(x1_fp, x2_fp, diag=diag)
 
-        # Only count
         if self.cont_kernel is not None:
-            return self.cont_kernel(x1_cont, x2_cont, diag=diag)
+            k_cont = self.cont_kernel(x1_cont, x2_cont, diag=diag)
+            
+        if self.fp_kernel is None and self.cont_kernel is None:
+             raise ValueError("Both fp and count feature lists are empty.")
 
-        raise ValueError("Both fp and count feature lists are empty.")
+        return k_fp * k_cont
         
 
 class GPMix(gpytorch.models.ExactGP):
@@ -191,17 +198,16 @@ class GPMix(gpytorch.models.ExactGP):
         super(GPMix, self).__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ZeroMean()
         
-        # Pass priors to the kernel at initialization
-        self.covar_module = MixingKernel(
+        core_kernel = MixingKernel(
             feat_idx=feat_idx, 
-            l_prior=l_prior, 
-            sigma_prior=sigma_prior
+            l_prior=l_prior
         )
-        # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel(),
-        #                                                  outputscale_prior=sigma_prior)
-        # self.covar_module.base_kernel.register_prior(
-        #             "lengthscale_prior", l_prior, "lengthscale"
-        #         )
+        
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            core_kernel,
+            outputscale_prior=sigma_prior
+        )
+
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
@@ -213,8 +219,8 @@ class GPMixRegressor(BaseEstimator):
     def __init__(
         self,
         feat_idx=None,
-        learning_rate=0.1,
-        num_epochs=100,
+        learning_rate=0.01,
+        num_epochs=200,
         use_cuda=False,
     ):
         self.feat_idx = feat_idx
@@ -304,9 +310,141 @@ class GPMixRegressor(BaseEstimator):
         return mean_pred
 
 
+# (Assume MixingKernel, TanimotoExponential, etc., are defined above)
+
+class GPMixMCMC(PyroGP): # <-- 1. MUST inherit from PyroGP, not ExactGP
+    def __init__(self, train_x, train_y, likelihood, feat_idx, l_prior=None, sigma_prior=None):
+        
+        # 2. This super().__init__() call is CRITICAL.
+        # It initializes the PyroGP parent, which gives 
+        # your model the .pyro_observe() method.
+        super().__init__(train_x, train_y, likelihood) 
+        
+        self.mean_module = gpytorch.means.ZeroMean()
+        
+        core_kernel = MixingKernel(
+            feat_idx=feat_idx, 
+            l_prior=l_prior
+        )
+        
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            core_kernel,
+            outputscale_prior=sigma_prior
+        )
+
+    def model(self, x, y):
+        """This method is required by PyroGP for MCMC."""
+        self.pyro_sample_from_prior() 
+        output = self.forward(x)
+        
+        # This line will now work because super().__init__() was called
+        self.pyro_observe(output, y)
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
+class GPMixMCMCRegressor(BaseEstimator):
+    def __init__(
+        self,
+        feat_idx=None,
+        num_samples=2000,
+        warmup_steps=1000,
+        use_cuda=False,
+    ):
+        self.feat_idx = feat_idx
+        self.num_samples = num_samples
+        self.warmup_steps = warmup_steps
+        self.use_cuda = use_cuda and torch.cuda.is_available()
 
+    def fit(self, X_train, Y_train):
+        if isinstance(X_train, pd.DataFrame):
+            X_train = X_train.to_numpy()
+        if isinstance(Y_train, pd.DataFrame):
+            Y_train = Y_train.to_numpy()
+
+        X_train = torch.tensor(X_train, dtype=torch.float)
+        Y_train = torch.tensor(Y_train, dtype=torch.float).squeeze(-1)
+
+        if self.use_cuda:
+            X_train = X_train.cuda()
+            Y_train = Y_train.cuda()
+
+        # --- Priors ---
+        l_prior = GammaPrior(5.0, 5.0)
+        sigma_prior = NormalPrior(0.0, 1.0)
+        sigma_noise_prior = NormalPrior(0.0, 1.0)
+
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
+            noise_prior=sigma_noise_prior
+        )
+        self.model = GPMix(
+            X_train, 
+            Y_train, 
+            self.likelihood, 
+            self.feat_idx,
+            l_prior=l_prior,
+            sigma_prior=sigma_prior
+        )
+        
+        if self.use_cuda:
+            self.model = self.model.cuda()
+            self.likelihood = self.likelihood.cuda()
+
+        self.model.train()
+        self.likelihood.train()
+
+        # --- MCMC Setup (following your example) ---
+        
+        # 1. Define the pyro_model function locally
+        def pyro_model(x, y):
+            with gpytorch.settings.fast_computations(False, False, False):
+                # Sample parameters from their priors
+                sampled_model = self.model.pyro_sample_from_prior()
+                # Get the model output (and sample from likelihood)
+                output = sampled_model.likelihood(sampled_model(x))
+                # Observe the data
+                pyro.sample("obs", output, obs=y)
+            return y
+
+        # 2. Set up NUTS and MCMC
+        nuts_kernel = NUTS(pyro_model)
+        mcmc_run = MCMC(
+            nuts_kernel,
+            num_samples=self.num_samples,
+            warmup_steps=self.warmup_steps,
+        )
+        
+        # 3. Run the sampler
+        mcmc_run.run(X_train, Y_train)
+
+        # 4. Load the samples into the model
+        samples = mcmc_run.get_samples()
+        self.model.pyro_load_from_samples(samples)
+        
+        self.train_x = X_train
+        self.train_y = Y_train
+        return self
+
+    @torch.no_grad()
+    def predict(self, X_test):
+        if isinstance(X_test, pd.DataFrame):
+            X_test = X_test.to_numpy()
+        X_test = torch.tensor(X_test, dtype=torch.float)
+
+        if self.use_cuda:
+            X_test = X_test.cuda()
+
+        self.model.eval()
+        self.likelihood.eval()
+
+        pred_distribution = self.likelihood(self.model(X_test))
+
+        mean_pred = pred_distribution.mean.detach().cpu().numpy()
+        
+        return mean_pred
 
 
 

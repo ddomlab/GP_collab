@@ -257,7 +257,7 @@ def run(
             # y = y.ravel()
             y = y.flatten()
             
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, return_indices=False)
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
