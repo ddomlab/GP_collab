@@ -116,7 +116,7 @@ if __name__ == "__main__":
             representation="ECFP",
             radius=3,
             vector="count",
-            regressor_type="GPMixR",
+            regressor_type="GPMixMCMC",
             # kernel="matern32_j_rbf_mix",
             polymer_unit=["Monomer"],
             target_features=[targ],  

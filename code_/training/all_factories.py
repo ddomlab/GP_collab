@@ -8,7 +8,7 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
-from GPytorch_kernel_mix import GPMixMCMCRegressor, GPMixRegressor
+from GPytorch_kernel_mix import GPMixRegressor
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import FunctionTransformer

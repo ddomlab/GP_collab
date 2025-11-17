@@ -312,7 +312,7 @@ class GPMixRegressor(BaseEstimator):
 
 # (Assume MixingKernel, TanimotoExponential, etc., are defined above)
 
-class GPMixMCMC(PyroGP): # <-- 1. MUST inherit from PyroGP, not ExactGP
+class GPMixMCMC(BaseEstimator): # <-- 1. MUST inherit from PyroGP, not ExactGP
     def __init__(self, train_x, train_y, likelihood, feat_idx, l_prior=None, sigma_prior=None):
         
         # 2. This super().__init__() call is CRITICAL.
@@ -410,7 +410,7 @@ class GPMixMCMCRegressor(BaseEstimator):
             return y
 
         # 2. Set up NUTS and MCMC
-        nuts_kernel = NUTS(pyro_model)
+        nuts_kernel = NUTS(pyro_model, jit_compile=True)
         mcmc_run = MCMC(
             nuts_kernel,
             num_samples=self.num_samples,
@@ -445,7 +445,6 @@ class GPMixMCMCRegressor(BaseEstimator):
         mean_pred = pred_distribution.mean.detach().cpu().numpy()
         
         return mean_pred
-
 
 
 
