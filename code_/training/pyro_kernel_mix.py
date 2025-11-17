@@ -154,7 +154,7 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
     return mean_pred, std_pred
 
 
-class GPMixRegressorPyro():
+class GPMixMCMCRegressor():
     def __init__(self, feat_idx):
         self.feat_idx = feat_idx
 
