@@ -225,8 +225,8 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_idx=None,
-        num_samples=200,
-        warmup_steps=100,
+        num_samples=300,
+        warmup_steps=200,
         num_chains=1,
         use_cuda=False,
         random_state=None,
