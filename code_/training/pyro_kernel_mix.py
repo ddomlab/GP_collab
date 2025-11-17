@@ -6,7 +6,9 @@ import pyro
 import pyro.distributions as dist
 import pyro.contrib.gp as gp
 from pyro.infer import MCMC, NUTS
-
+from sklearn.base import BaseEstimator, RegressorMixin
+import pandas as pd
+import numpy as np
 
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
@@ -89,24 +91,27 @@ class GPMixPyro:
     def __init__(self, X, y, feat_idx):
         self.X = X
         self.y = y
-
         self.kernel_builder = MixingKernelPyro(feat_idx)
-        self.core_kernel = self.kernel_builder.build()
 
     def model(self):
-        # outputscale prior for ScaleKernel
+        # sample hyperparameters
         outputscale = pyro.sample("outputscale", dist.LogNormal(0.0, 1.0))
+        obs_noise = pyro.sample("obs_noise", dist.LogNormal(0.0, 1.0))
 
-        # noise prior
-        noise = pyro.sample("noise", dist.LogNormal(0.0, 1.0))
+        # build a completely new kernel each time
+        kernel = self.kernel_builder.build()
+        kernel.variance = outputscale
 
-        # scale kernel
-        kernel = pk.Scale(self.core_kernel, outputscale=outputscale)
-
+        # instantiate GPRegression fresh each time
         gpmodel = gp.models.GPRegression(
-            self.X, self.y, kernel, noise=noise
+            self.X,
+            self.y,
+            kernel,
+            noise=obs_noise
         )
+
         gpmodel.model()
+
 
 
 
@@ -154,30 +159,69 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
     return mean_pred, std_pred
 
 
-class GPMixMCMCRegressor():
-    def __init__(self, feat_idx):
+class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
+    def __init__(
+        self,
+        feat_idx=None,
+        num_samples=300,
+        warmup_steps=200,
+        num_chains=1,
+        use_cuda=False,
+        random_state=None,
+    ):
+        # store all hyperparameters exactly as provided
         self.feat_idx = feat_idx
+        self.num_samples = num_samples
+        self.warmup_steps = warmup_steps
+        self.num_chains = num_chains
+        self.use_cuda = use_cuda
+        self.random_state = random_state
 
     def fit(self, X_train, y_train):
-        X = torch.tensor(X_train, dtype=torch.float32)
-        y = torch.tensor(y_train, dtype=torch.float32)
 
-        self.X_train = X
-        self.y_train = y
+        # convert DataFrame to numpy
+        if isinstance(X_train, pd.DataFrame):
+            X_train = X_train.to_numpy()
+        if isinstance(y_train, pd.DataFrame):
+            y_train = y_train.to_numpy()
 
-        self.gpmodel = GPMixPyro(X, y, self.feat_idx)
+        # convert to tensors
+        X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
+        y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
 
-        self.samples = run_inference(self.gpmodel)
 
+
+        self._X_train = X_t
+        self._y_train = y_t
+
+        self._gp_model = GPMixPyro(X_t, y_t, self.feat_idx)
+
+        self._samples = run_inference(
+            self._gp_model,
+            # num_samples=self.num_samples,
+            # warmup_steps=self.warmup_steps,
+            # num_chains=self.num_chains,
+            # random_state=self.random_state,
+        )
+
+        self._is_fitted = True
         return self
 
     def predict(self, X_test):
-        X_test = torch.tensor(X_test, dtype=torch.float32)
-        mean, std = predict_posterior(
-            self.X_train,
-            self.y_train,
-            X_test,
-            self.samples,
-            self.gpmodel.kernel_builder
+
+        if isinstance(X_test, pd.DataFrame):
+            X_test = X_test.to_numpy()
+
+        X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
+
+
+        mean_pred, std_pred = predict_posterior(
+            self._X_train,
+            self._y_train,
+            X_t,
+            self._samples,
+            self._gp_model.kernel_builder,
         )
-        return mean.detach().numpy()
+
+        return mean_pred.detach().cpu().numpy()
+
