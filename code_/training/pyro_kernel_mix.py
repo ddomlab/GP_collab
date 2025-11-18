@@ -131,7 +131,7 @@ def run_inference(
                 num_samples=300,
                 warmup_steps=200,
                 num_chains=1, 
-                num_drawn_samples=500,
+                num_drawn_samples=100,
                 random_state=None):
     pyro.clear_param_store()
     if random_state is not None:
@@ -235,7 +235,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         feat_idx=None,
         num_samples=2000,
         warmup_steps=1000,
-        num_chains=1,
+        num_chains=4,
         num_drawn_samples=500,
         use_cuda=False,
         random_state=42,
