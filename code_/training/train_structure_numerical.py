@@ -8,12 +8,12 @@ import sys
 from data_handling import save_results
 from utils import parse_arguments
 
-import sys
+# import sys
 
-sys.modules.setdefault("numpy._core",         np.core)
-sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+# sys.modules.setdefault("numpy._core",         np.core)
+# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -82,9 +82,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
 
     # args = parse_arguments()
 
@@ -120,7 +120,8 @@ if __name__ == "__main__":
     # train_x = torch.linspace(0, 1, 4)
     # print(train_x)
     for targ in all_targets:
-        for model in ["XGBR", "RF"]:
+        # GPMixMCMC
+        for model in ["GPMixMCMC"]:
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP",
@@ -128,7 +129,7 @@ if __name__ == "__main__":
                 vector="count",
                 regressor_type=model,
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["polymer"],
+                polymer_unit=["Monomer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',

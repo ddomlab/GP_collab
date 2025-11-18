@@ -242,7 +242,7 @@ def run(
                 kernel = _get_gp_kernel(regressor_type, idx=features_idx)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type)
+                model = optimized_models(regressor_type, feat_idx=features_idx)
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -257,7 +257,7 @@ def run(
             # y = y.ravel()
             y = y.flatten()
             
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, return_indices=False)
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
