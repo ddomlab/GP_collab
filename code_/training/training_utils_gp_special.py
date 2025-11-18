@@ -242,7 +242,7 @@ def run(
                 kernel = _get_gp_kernel(regressor_type, idx=features_idx)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type, feat_idx=features_idx)
+                model = optimized_models(regressor_type)
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,

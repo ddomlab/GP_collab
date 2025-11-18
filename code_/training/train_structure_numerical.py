@@ -82,9 +82,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
 
     # args = parse_arguments()
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # train_x = torch.linspace(0, 1, 4)
     # print(train_x)
     for targ in all_targets:
-        for model in ["RF", "XGBR"]:
+        for model in ["XGBR", "RF"]:
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP",
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 vector="count",
                 regressor_type=model,
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Donor", "Acceptor"],
+                polymer_unit=["polymer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',

@@ -83,19 +83,19 @@ class GPMixPyro:
     def model(self):
         # priors
         # dist.InverseGamma
-        outputscale = pyro.sample("outputscale", dist.LogNormal(-1.0, 0.3))
-        obs_noise   = pyro.sample("obs_noise",   dist.LogNormal(-3.0, 0.5))
+        outputscale = pyro.sample("outputscale", dist.Normal(0, 1))
+        obs_noise   = pyro.sample("obs_noise",   dist.Normal(0, 1))
 
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
                 "fp_lengthscale",
-                dist.LogNormal(0.0, 0.5).expand([self.fp_dim]).to_event(1)
+                dist.InverseGamma(5, 5).expand([self.fp_dim]).to_event(1)
             )
 
         if self.cont_dim > 0:
             cont_ls = pyro.sample(
                 "cont_lengthscale",
-                dist.LogNormal(0.0, 0.5).expand([self.cont_dim]).to_event(1)
+                dist.InverseGamma(5, 5).expand([self.cont_dim]).to_event(1)
             )
 
         # build fresh kernel
@@ -126,12 +126,20 @@ class GPMixPyro:
 # Inference Routine
 # ----------------------------------------------------------------------
 
-def run_inference(gp_model, num_samples=300, warmup_steps=200, num_chains=1, random_state=None):
+def run_inference(
+                gp_model, 
+                num_samples=300,
+                warmup_steps=200,
+                num_chains=1, 
+                num_drawn_samples=500,
+                random_state=None):
     pyro.clear_param_store()
     if random_state is not None:
         pyro.set_rng_seed(random_state)
 
-    nuts_kernel = NUTS(gp_model.model)
+    nuts_kernel = NUTS(gp_model.model,
+                       ignore_jit_warnings=True,
+                       jit_compile=True)
 
     mcmc = MCMC(
         nuts_kernel,
@@ -141,7 +149,7 @@ def run_inference(gp_model, num_samples=300, warmup_steps=200, num_chains=1, ran
     )
 
     mcmc.run()
-    return mcmc.get_samples()
+    return mcmc.get_samples(num_samples=num_drawn_samples)
 
 
 # ----------------------------------------------------------------------
@@ -225,11 +233,12 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_idx=None,
-        num_samples=300,
-        warmup_steps=200,
-        num_chains=1,
+        num_samples=2000,
+        warmup_steps=1000,
+        num_chains=4,
+        num_drawn_samples=500,
         use_cuda=False,
-        random_state=None,
+        random_state=42,
     ):
         # store all parameters exactly as sklearn expects
         self.feat_idx = feat_idx
@@ -238,6 +247,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.num_chains = num_chains
         self.use_cuda = use_cuda
         self.random_state = random_state
+        self.num_drawn_samples = num_drawn_samples
 
     def fit(self, X_train, y_train):
         # convert DataFrame to numpy
@@ -266,7 +276,8 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
             num_samples=self.num_samples,
             warmup_steps=self.warmup_steps,
             num_chains=self.num_chains,
-            random_state=self.random_state
+            random_state=self.random_state,
+            num_drawn_samples=self.num_drawn_samples
         )
 
         self._is_fitted = True
