@@ -30,8 +30,11 @@ from imputation_normalization import preprocessing_workflow
 from scoring import (
     cross_validate_regressor,
     process_scores,
-    _average_ls
+    _average_ls,
+    pyro_cross_validate_regressor
 )
+
+from utils import split_for_training
 
 
 HERE: Path = Path(__file__).resolve().parent
@@ -258,6 +261,7 @@ def run(
             y = y.flatten()
             
             scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
+            # scores, predictions = pyro_cross_validate_regressor(regressor, X, y, cv_outer)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
@@ -360,19 +364,6 @@ def _optimize_hyperparams(
 
     return best_estimator, regressor_params
 
-
-def split_for_training(
-    data: Union[pd.DataFrame, np.ndarray,pd.Series], indices: np.ndarray
-) -> Union[pd.DataFrame, np.ndarray, pd.Series]:
-    if isinstance(data, pd.DataFrame):
-        split_data = data.iloc[indices]
-    elif isinstance(data, np.ndarray):
-        split_data = data[indices]
-    elif isinstance(data, pd.Series):
-        split_data = data.iloc[indices]
-    else:
-        raise ValueError("Data must be either a pandas DataFrame, Series, or a numpy array.")
-    return split_data
 
 
 def _pd_to_np(data):

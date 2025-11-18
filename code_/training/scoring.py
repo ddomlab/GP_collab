@@ -9,7 +9,9 @@ from sklearn.metrics._scorer import r2_scorer
 from sklearn.model_selection import cross_val_predict, cross_validate
 from sklearn.model_selection import learning_curve
 from _validation import multioutput_cross_validate 
+from utils import split_for_training
 import shap
+from sklearn.base import clone
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
@@ -379,6 +381,111 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
     score["feature_importance_model"] = all_model_importances
     if all_shap_importances:
         score["feature_importance_SHAP"] = all_shap_importances
+
+
+
+
+def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
+    """
+    Runs inside a parallel worker:
+    - clone estimator
+    - fit on train
+    - predict on test
+    - compute scores with provided scorers
+    """
+
+    model = clone(estimator)
+
+    # Use safe row selector for all data types
+    X_train = split_for_training(X, train_idx)
+    X_test  = split_for_training(X, test_idx)
+    y_train = split_for_training(y, train_idx)
+    y_test  = split_for_training(y, test_idx)
+
+    # Fit model (with Pyro MCMC)
+    model.fit(X_train, y_train)
+
+    # Predict
+    y_pred = model.predict(X_test)
+
+    # Compute scoring: scoring[name] is a scorer from make_scorer
+    fold_scores = {}
+    for name, scorer in scoring.items():
+        fold_scores[name] = scorer(y_test, y_pred)
+
+    # Optional: GP lengthscale summary
+    ls_summary = getattr(model, "lengthscale_summary_", None)
+
+    return test_idx, y_pred, fold_scores, ls_summary
+
+
+def pyro_cross_validate(
+    estimator,
+    X,
+    y,
+    cv,
+    scoring,
+    n_jobs=-1,
+    return_ls: bool = False,
+):
+    """
+    Custom CV routine compatible with Pyro MCMC:
+    ✔ Parallel across folds with joblib
+    ✔ scoring: dict of sklearn scorers
+    ✔ Returns per-fold scores, predictions, and optional lengthscale summaries
+    """
+
+    predictions = np.zeros_like(y, dtype=float)
+    fold_summaries = []
+    all_fold_scores = []
+
+    # Run folds in thread-parallel (no pickling issues)
+    results = Parallel(n_jobs=n_jobs, backend="threading")(
+        delayed(_fit_predict_score)(
+            estimator, X, y, train_idx, test_idx, scoring
+        )
+        for train_idx, test_idx in cv.split(X, y)
+    )
+
+    # Collect results from each fold
+    for test_idx, y_pred, fold_scores, ls_summary in results:
+        predictions[test_idx] = y_pred
+        all_fold_scores.append(fold_scores)
+        fold_summaries.append(ls_summary)
+
+    # Build scores dict like sklearn.cross_validate: "test_<scorer>" -> [per fold]
+    scores = {}
+    for name in scoring.keys():
+        key = f"test_{name}"
+        scores[key] = [fold[name] for fold in all_fold_scores]
+
+    if return_ls:
+        return scores, predictions, fold_summaries
+
+    return scores, predictions
+
+
+def pyro_cross_validate_regressor(
+    regressor, X, y, cv, return_ls: bool = False
+    ) -> tuple[dict[str, float], np.ndarray]:
+
+        scorers = {
+            "spearman_r": spearman_scorer,
+            "rmse": rmse_scorer,
+            "mae": mae_scorer,
+            "r2": r2_scorer,
+        }
+
+        score, predictions = pyro_cross_validate(
+            regressor,
+            X,
+            y,
+            cv=cv,
+            scoring=scorers,
+            n_jobs=-1,
+            return_ls=return_ls
+            )
+        return score, predictions
 
 
 

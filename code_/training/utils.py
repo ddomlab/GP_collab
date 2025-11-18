@@ -1,6 +1,8 @@
 import glob
 import numpy as np
+import pandas as pd
 import random
+from pyparsing import Union
 import scipy.stats
 from argparse import ArgumentParser
 # import torch
@@ -9,6 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
+import torch
 
 
 
@@ -201,3 +204,30 @@ def parse_arguments():
 
     return parser.parse_args()
 
+
+
+def split_for_training(
+    data: Union[pd.DataFrame, np.ndarray, pd.Series, torch.Tensor],
+    indices: np.ndarray
+) -> Union[pd.DataFrame, np.ndarray, pd.Series, torch.Tensor]:
+
+    # ensure numpy index array
+    indices = np.asarray(indices)
+    # pandas DataFrame
+    if isinstance(data, pd.DataFrame):
+        return data.iloc[indices].copy()
+    # pandas Series
+    elif isinstance(data, pd.Series):
+        return data.iloc[indices].copy()
+
+    # numpy array
+    elif isinstance(data, np.ndarray):
+        return data[indices]
+    # torch tensor
+    elif isinstance(data, torch.Tensor):
+        return data[indices]
+    else:
+        raise ValueError(
+            f"Unsupported data type {type(data)}. "
+            "Must be DataFrame, Series, numpy array, or torch Tensor."
+        )

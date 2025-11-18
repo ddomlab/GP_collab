@@ -235,7 +235,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         feat_idx=None,
         num_samples=2000,
         warmup_steps=1000,
-        num_chains=4,
+        num_chains=1,
         num_drawn_samples=500,
         use_cuda=False,
         random_state=42,
@@ -249,22 +249,6 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.random_state = random_state
         self.num_drawn_samples = num_drawn_samples
 
-
-    def get_lengthscale_summary(self):
-        summary = {}
-
-        if "fp_lengthscale" in self._samples:
-            fp = self._samples["fp_lengthscale"]
-            summary["fp_mean"] = fp.mean(dim=0).cpu().numpy()
-            summary["fp_std"]  = fp.std(dim=0).cpu().numpy()
-
-        if "cont_lengthscale" in self._samples:
-            cont = self._samples["cont_lengthscale"]
-            summary["cont_mean"] = cont.mean(dim=0).cpu().numpy()
-            summary["cont_std"]  = cont.std(dim=0).cpu().numpy()
-
-        return summary
-    
 
     def fit(self, X_train, y_train):
         # convert DataFrame to numpy
