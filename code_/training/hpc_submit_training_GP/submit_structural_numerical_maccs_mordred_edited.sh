@@ -10,7 +10,7 @@ bsub <<EOT
 #BSUB -n 6
 #BSUB -W 04:00
 #BSUB -R span[hosts=1]
-#BSUB -R "rusage[mem=16GB]"
+#BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
 #BSUB -o "${output_dir}/structure_numerical${model}_${DATE}.out"
 #BSUB -e "${output_dir}/structure_numerical${model}_${DATE}.err"

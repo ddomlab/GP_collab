@@ -83,8 +83,8 @@ class GPMixPyro:
     def model(self):
         # priors
         # dist.InverseGamma
-        outputscale = pyro.sample("outputscale", dist.Normal(0, 1))
-        obs_noise   = pyro.sample("obs_noise",   dist.Normal(0, 1))
+        outputscale = pyro.sample("outputscale", dist.LogNormal(0.0, 1.0))
+        obs_noise   = pyro.sample("obs_noise",   dist.LogNormal(-3.0, 0.5))
 
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
@@ -116,7 +116,8 @@ class GPMixPyro:
             self.X,
             self.y,
             kernel,
-            noise=obs_noise
+            noise=obs_noise,
+            jitter=1e-4
         )
 
         gpmodel.model()
