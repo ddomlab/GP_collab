@@ -11,12 +11,12 @@ bsub <<EOT
 #BSUB -W 04:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=16GB]"
-#BSUB -J "numerical_only_${DATE}"
-#BSUB -o "${output_dir}/numerical_only_${DATE}.out"
-#BSUB -e "${output_dir}/numerical_only_${DATE}.err"
+#BSUB -J "structure_numerical_${DATE}"
+#BSUB -o "${output_dir}/structure_numerical_${DATE}.out"
+#BSUB -e "${output_dir}/structure_numerical_${DATE}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
-python ../train_numerical_only.py
+python ../train_structure_numerical.py
 
 EOT
