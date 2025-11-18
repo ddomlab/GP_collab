@@ -17,6 +17,6 @@ bsub <<EOT
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
-python ../train_structure_numerical.py
+python ../train_numerical_only.py
 
 EOT

@@ -113,7 +113,7 @@ if __name__ == "__main__":
         for targ in all_targets:
             main_numerical_only(
                 dataset=w_data,
-                regressor_type='GPMixMCMC',
+                regressor_type='RF',
                 # kernel= "a_matern",
                 target_features=[targ],
                 feat_transformer='Standard',
