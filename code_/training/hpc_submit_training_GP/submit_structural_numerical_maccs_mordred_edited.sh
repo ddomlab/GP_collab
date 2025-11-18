@@ -16,7 +16,7 @@ bsub <<EOT
 #BSUB -e "${output_dir}/structural_numerical_${DATE}.err"
 
 source ~/.bashrc
-conda activate /share/ddomlab/sdehgha2/working-space/main/_colab_GP/torch_cpu
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/pls-dataset-env
 python ../train_structure_numerical.py
 
 EOT

@@ -510,17 +510,17 @@ if __name__ == "__main__":
 
     PAPER = {
             "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-            # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-            # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
-            # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-            # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
-            # "target_flux decline ratio (%)",
-            # "target_flux recovery ratio (%)",
-            # "target_irreversible fouling ratio(%)",
-            # "target_organic compound removal (%)",
-            # "target_reversible fouling ratio (%)",
-            # r"target_water permeability (LMH\bar)",
-            # ],
+            "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+            "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+            "target_flux decline ratio (%)",
+            "target_flux recovery ratio (%)",
+            "target_irreversible fouling ratio(%)",
+            "target_organic compound removal (%)",
+            "target_reversible fouling ratio (%)",
+            r"target_water permeability (LMH\bar)",
+            ],
             }
     
     models = ["RF","XGBR"]
