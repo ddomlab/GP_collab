@@ -1,0 +1,130 @@
+Warmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s]
+
+
+
+
+Warmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s]
+
+
+
+
+Warmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s]
+
+
+
+
+Warmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s]
+
+
+
+
+Warmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/3000 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/3000 [00:00, ?it/s]
+
+
+
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 125, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 47, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 74, in train_regressor
+    scores, predictions = _prepare_data(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 154, in _prepare_data
+    score,predication = run(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 260, in run
+    scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/scoring.py", line 419, in cross_validate_regressor
+    score: dict[str, float] = cross_validate(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/utils/_param_validation.py", line 218, in wrapper
+    return func(*args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/model_selection/_validation.py", line 419, in cross_validate
+    _warn_or_raise_about_fit_failures(results, error_score)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/model_selection/_validation.py", line 505, in _warn_or_raise_about_fit_failures
+    raise ValueError(all_fits_failed_message)
+ValueError: 
+All the 5 fits failed.
+It is very likely that your model is misconfigured.
+You can try to debug the error by setting error_score='raise'.
+
+Below are more details about the failures:
+--------------------------------------------------------------------------------
+5 fits failed with the following error:
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/model_selection/_validation.py", line 859, in _fit_and_score
+    estimator.fit(X_train, y_train, **fit_params)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/pipeline.py", line 663, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/pyro_kernel_mix.py", line 291, in fit
+    self._samples = run_inference(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/pyro_kernel_mix.py", line 151, in run_inference
+    mcmc.run()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    return fn(*args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pyro/infer/mcmc/api.py", line 565, in run
+    for x, chain_id in self.sampler.run(*args, **kwargs):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pyro/infer/mcmc/api.py", line 335, in run
+    w.start()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/multiprocessing/context.py", line 224, in _Popen
+    return _default_context.get_context().Process._Popen(process_obj)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/backend/process.py", line 45, in _Popen
+    return Popen(process_obj)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/backend/popen_loky_posix.py", line 48, in __init__
+    self._launch(process_obj)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/backend/popen_loky_posix.py", line 128, in _launch
+    pid = fork_exec(cmd_python, self._fds, env=process_obj.env)
+AttributeError: 'Process' object has no attribute 'env'
+

@@ -1,0 +1,72 @@
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 69
+No hyperparameter optimization
+Running seed: 420
+No hyperparameter optimization
+Running seed: 1234567890
+No hyperparameter optimization
+Running seed: 473129
+No hyperparameter optimization
+Average scores:	 rmse: 0.2±0.05	 r2: 0.89±0.05
+Filename: (COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n05>
+Subject: Job 501922: <numerical_only_20251118> in cluster <Hazel> Done
+
+Job <numerical_only_20251118> was submitted from host <c207n11> by user <sdehgha2> in cluster <Hazel> at Tue Nov 18 10:58:00 2025
+Job was executed on host(s) <6*c207n05>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Nov 18 10:58:00 2025
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Nov 18 10:58:00 2025
+Terminated at Tue Nov 18 10:58:36 2025
+Results reported at Tue Nov 18 10:58:36 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 04:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "numerical_only_20251118"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/numerical_only_20251118.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/numerical_only_20251118.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_numerical_only.py
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   108.24 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               13.00 GB
+    Max Swap :                                   -
+    Max Processes :                              26
+    Max Threads :                                29
+    Run time :                                   46 sec.
+    Turnaround time :                            36 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/numerical_only_20251118.err> for stderr output of this job.
+

@@ -1,0 +1,269 @@
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 69
+No hyperparameter optimization
+Running seed: 420
+No hyperparameter optimization
+Running seed: 1234567890
+No hyperparameter optimization
+Running seed: 473129
+No hyperparameter optimization
+Average scores:	 rmse: 0.27±0.06	 r2: 0.78±0.1
+Filename: (ECFP3_count_512-COUNT)_GPMixMCMC_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n05>
+Subject: Job 502266: <structure_numerical_20251118> in cluster <Hazel> Done
+
+Job <structure_numerical_20251118> was submitted from host <c207n11> by user <sdehgha2> in cluster <Hazel> at Tue Nov 18 12:05:01 2025
+Job was executed on host(s) <6*c207n05>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Nov 18 12:05:01 2025
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Nov 18 12:05:01 2025
+Terminated at Tue Nov 18 13:06:50 2025
+Results reported at Tue Nov 18 13:06:50 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 04:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20251118"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   17816.48 sec.
+    Max Memory :                                 24 GB
+    Average Memory :                             13.63 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -8.00 GB
+    Max Swap :                                   -
+    Max Processes :                              26
+    Max Threads :                                39
+    Run time :                                   3719 sec.
+    Turnaround time :                            3709 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n03>
+Subject: Job 503369: <structure_numerical_20251118> in cluster <Hazel> Exited
+
+Job <structure_numerical_20251118> was submitted from host <c207n05> by user <sdehgha2> in cluster <Hazel> at Tue Nov 18 13:39:48 2025
+Job was executed on host(s) <6*c207n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Nov 18 13:39:48 2025
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Nov 18 13:39:48 2025
+Terminated at Tue Nov 18 13:40:19 2025
+Results reported at Tue Nov 18 13:40:19 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 04:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20251118"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   18.66 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   32 sec.
+    Turnaround time :                            31 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 69
+No hyperparameter optimization
+Running seed: 420
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n09>
+Subject: Job 504101: <structure_numerical_20251118> in cluster <Hazel> Exited
+
+Job <structure_numerical_20251118> was submitted from host <c207n03> by user <sdehgha2> in cluster <Hazel> at Tue Nov 18 15:05:19 2025
+Job was executed on host(s) <6*c207n09>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Nov 18 15:07:09 2025
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Nov 18 15:07:09 2025
+Terminated at Tue Nov 18 19:07:17 2025
+Results reported at Tue Nov 18 19:07:17 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 04:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20251118"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   50155.00 sec.
+    Max Memory :                                 13 GB
+    Average Memory :                             3.13 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               19.00 GB
+    Max Swap :                                   -
+    Max Processes :                              8
+    Max Threads :                                23
+    Run time :                                   14427 sec.
+    Turnaround time :                            14518 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 69
+No hyperparameter optimization
+Running seed: 420
+No hyperparameter optimization
+Running seed: 1234567890
+No hyperparameter optimization
+Running seed: 473129
+No hyperparameter optimization
+Average scores:	 rmse: 0.27±0.07	 r2: 0.79±0.11
+Filename: (ECFP3_count_512-COUNT)_GPMixMCMC_hypOFF_Standard_Standard_chain4
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n05>
+Subject: Job 505245: <structure_numerical_20251118> in cluster <Hazel> Done
+
+Job <structure_numerical_20251118> was submitted from host <c207n05> by user <sdehgha2> in cluster <Hazel> at Tue Nov 18 20:06:20 2025
+Job was executed on host(s) <6*c207n05>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Nov 18 20:08:09 2025
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Nov 18 20:08:09 2025
+Terminated at Wed Nov 19 02:00:10 2025
+Results reported at Wed Nov 19 02:00:10 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 20:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20251118"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   73428.10 sec.
+    Max Memory :                                 13 GB
+    Average Memory :                             3.30 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               19.00 GB
+    Max Swap :                                   -
+    Max Processes :                              8
+    Max Threads :                                23
+    Run time :                                   21129 sec.
+    Turnaround time :                            21230 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20251118/structure_numericalGPMixMCMC_20251118.err> for stderr output of this job.
+
