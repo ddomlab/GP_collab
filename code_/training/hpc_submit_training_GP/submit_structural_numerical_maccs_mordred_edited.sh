@@ -8,7 +8,7 @@ mkdir -p "$output_dir"
 bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 04:00
+#BSUB -W 20:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
