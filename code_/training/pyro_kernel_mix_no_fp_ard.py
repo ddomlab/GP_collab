@@ -24,10 +24,12 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 
 
 class TanimotoRBF(pk.Kernel):
-    def __init__(self, input_dim, eps=1e-6, active_dims=None):
-        super().__init__(input_dim=input_dim, active_dims=active_dims)
+    def __init__(self, active_dims, eps=1e-6):
+        super().__init__(input_dim=len(active_dims), active_dims=active_dims)
         self.eps = eps
-        self.lengthscale = None  # will be set from model() via pyro.sample
+
+        # plain PyTorch tensor placeholder (no pyro.param)
+        self.lengthscale = torch.tensor(1.0)
 
     def forward(self, X, Z=None, diag=False):
         X = self._slice_input(X)
@@ -38,10 +40,9 @@ class TanimotoRBF(pk.Kernel):
 
         D = weighted_tanimoto_distance(X, Z, eps=self.eps)
 
-        # kernel requires lengthscale to be set before usage
-        ls = torch.clamp(self.lengthscale.mean(), min=1e-6)
-
+        ls = torch.clamp(self.lengthscale, min=1e-6)
         return torch.exp(-0.5 * (D / ls)**2)
+
     
     
 class MixingKernelPyro:
@@ -52,31 +53,30 @@ class MixingKernelPyro:
     def build(self):
         kernels = []
 
-        # FP block
+        # FP kernel: one shared LS
         if len(self.fp_idx) > 0:
             k_fp = TanimotoRBF(
-                input_dim=len(self.fp_idx),
-                active_dims=self.fp_idx,
+                active_dims=self.fp_idx  # use full fp block but single LS
             )
             kernels.append(k_fp)
 
-        # Continuous block
+        # Continuous kernel still ARD
         if len(self.cont_idx) > 0:
             k_cont = pk.Matern32(
                 input_dim=len(self.cont_idx),
-                active_dims=self.cont_idx,
+                active_dims=self.cont_idx
             )
             kernels.append(k_cont)
 
         if not kernels:
             raise ValueError("Both feature groups empty")
 
-        # Product of kernels using Pyro's Combination/Product
         k = kernels[0]
         for other in kernels[1:]:
             k = pk.Product(k, other)
 
         return k
+
 
 
 
@@ -97,13 +97,13 @@ class GPMixPyro:
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
                 "fp_lengthscale",
-                dist.InverseGamma(5, 5).expand([self.fp_dim]).to_event(1)
+                dist.LogNormal(0.0, 1.0)
             )
 
         if self.cont_dim > 0:
             cont_ls = pyro.sample(
                 "cont_lengthscale",
-                dist.InverseGamma(5, 5).expand([self.cont_dim]).to_event(1)
+                dist.LogNormal(0.0, 1.0).expand([self.cont_dim]).to_event(1)
             )
 
         # build fresh kernel
@@ -290,18 +290,18 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
             num_drawn_samples=self.num_drawn_samples
         )
 
-        summary = {}
-        if "fp_lengthscale" in self._samples:
-            fp = self._samples["fp_lengthscale"]
-            summary["fp_mean"] = fp.mean(dim=0).cpu().numpy()
-            summary["fp_std"] = fp.std(dim=0).cpu().numpy()
+        # summary = {}
+        # if "fp_lengthscale" in self._samples:
+        #     fp = self._samples["fp_lengthscale"]
+        #     summary["fp_mean"] = fp.mean(dim=0).cpu().numpy()
+        #     summary["fp_std"] = fp.std(dim=0).cpu().numpy()
 
-        if "cont_lengthscale" in self._samples:
-            cont = self._samples["cont_lengthscale"]
-            summary["cont_mean"] = cont.mean(dim=0).cpu().numpy()
-            summary["cont_std"] = cont.std(dim=0).cpu().numpy()
+        # if "cont_lengthscale" in self._samples:
+        #     cont = self._samples["cont_lengthscale"]
+        #     summary["cont_mean"] = cont.mean(dim=0).cpu().numpy()
+        #     summary["cont_std"] = cont.std(dim=0).cpu().numpy()
 
-        self.lengthscale_summary_ = summary
+        # self.lengthscale_summary_ = summary
 
         self._is_fitted = True
         return self

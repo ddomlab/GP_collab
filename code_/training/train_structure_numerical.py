@@ -76,7 +76,7 @@ def main_structural_numerical(
                 TEST=TEST,
 
                 # special_folder_name='hp_RF_differences',
-                special_file_name='chain4',
+                special_file_name='chain1',
                 )
 
 
