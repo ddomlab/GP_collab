@@ -166,7 +166,7 @@ class GPMixPyro:
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
                 "fp_lengthscale",
-                dist.InverseGamma(5, 5).expand([self.fp_dim]).to_event(1)
+                dist.InverseGamma(5, 5)
             )
 
         if self.cont_dim > 0:
@@ -262,12 +262,11 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
 
         # If continuous kernel exists, assign sampled cont lengthscales
         if cont_dim > 0:
+            cont_ls = samples["cont_lengthscale"][i]
+            # Only FP+CONT product case
             if fp_dim > 0:
-                cont_ls = samples["cont_lengthscale"][i]
                 kernel.kern1.lengthscale = cont_ls
             else:
-                # case when only continuous kernel exists
-                cont_ls = samples["cont_lengthscale"][i]
                 kernel.kern0.lengthscale = cont_ls
 
         # Assign outputscale
@@ -361,14 +360,14 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         summary = {}
         if "fp_lengthscale" in self._samples:
-            fp = self._samples["fp_lengthscale"]
-            summary["fp_mean"] = fp.mean(dim=0).cpu().numpy()
-            summary["fp_std"] = fp.std(dim=0).cpu().numpy()
+            fp = self._samples["fp_lengthscale"]    # shape: (S,) scalar
+            summary["fp_mean"] = fp.mean().cpu().numpy()
+            summary["fp_std"]  = fp.std().cpu().numpy()
 
         if "cont_lengthscale" in self._samples:
-            cont = self._samples["cont_lengthscale"]
+            cont = self._samples["cont_lengthscale"]   # shape: (S, cont_dim)
             summary["cont_mean"] = cont.mean(dim=0).cpu().numpy()
-            summary["cont_std"] = cont.std(dim=0).cpu().numpy()
+            summary["cont_std"]  = cont.std(dim=0).cpu().numpy()
 
         self.lengthscale_summary_ = summary
 
