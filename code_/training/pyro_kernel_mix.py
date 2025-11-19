@@ -23,53 +23,130 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 
 
 
+# class TanimotoRBF(pk.Kernel):
+#     def __init__(self, input_dim, eps=1e-6, active_dims=None):
+#         super().__init__(input_dim=input_dim, active_dims=active_dims)
+#         self.eps = eps
+#         self.lengthscale = None  # will be set from model() via pyro.sample
+
+#     def forward(self, X, Z=None, diag=False):
+#         X = self._slice_input(X)
+#         Z = self._slice_input(Z) if Z is not None else X
+
+#         if diag:
+#             return X.new_ones(X.shape[0])
+
+#         D = weighted_tanimoto_distance(X, Z, eps=self.eps)
+
+#         # kernel requires lengthscale to be set before usage
+#         ls = torch.clamp(self.lengthscale.mean(), min=1e-6)
+
+#         return torch.exp(-0.5 * (D / ls)**2)
+
 class TanimotoRBF(pk.Kernel):
-    def __init__(self, input_dim, eps=1e-6, active_dims=None):
-        super().__init__(input_dim=input_dim, active_dims=active_dims)
+    """
+    RBF kernel applied to Tanimoto distances with ONE scalar lengthscale
+    (matches R code exactly).
+    """
+    def __init__(self, eps=1e-6):
+        super().__init__(input_dim=1)  # dummy dim, not used
         self.eps = eps
-        self.lengthscale = None  # will be set from model() via pyro.sample
+        self.lengthscale = None  # scalar set by pyro.sample
 
     def forward(self, X, Z=None, diag=False):
-        X = self._slice_input(X)
-        Z = self._slice_input(Z) if Z is not None else X
-
         if diag:
-            return X.new_ones(X.shape[0])
+            return X.new_ones(X.size(0))
 
+        if Z is None:
+            Z = X
+
+        # compute full NxN Tanimoto distance
         D = weighted_tanimoto_distance(X, Z, eps=self.eps)
 
-        # kernel requires lengthscale to be set before usage
-        ls = torch.clamp(self.lengthscale.mean(), min=1e-6)
+        # scalar lengthscale (R code behavior)
+        ls = torch.clamp(self.lengthscale, min=1e-9)
 
         return torch.exp(-0.5 * (D / ls)**2)
     
 
+# class MixingKernelPyro:
+#     def __init__(self, feat_idx):
+#         self.fp_idx = feat_idx.get("fp") or []
+#         self.cont_idx = feat_idx.get("count") or []
+
+#     def build(self):
+#         kernels = []
+
+#         if len(self.fp_idx) > 0:
+#             k_fp = TanimotoRBF(input_dim=len(self.fp_idx))
+#             kernels.append(k_fp)
+
+#         if len(self.cont_idx) > 0:
+#             k_cont = pk.Matern32(
+#                 input_dim=len(self.cont_idx)
+#             )
+#             kernels.append(k_cont)
+
+#         if not kernels:
+#             raise ValueError("Both feature groups empty")
+
+#         k = kernels[0]
+#         for other in kernels[1:]:
+#             k = pk.Product(k, other)
+
+#         return k
 class MixingKernelPyro:
     def __init__(self, feat_idx):
-        self.fp_idx = feat_idx.get("fp") or []
+        self.fp_idx   = feat_idx.get("fp") or []
         self.cont_idx = feat_idx.get("count") or []
+        self.fp_dim   = len(self.fp_idx)
+        self.cont_dim = len(self.cont_idx)
 
     def build(self):
         kernels = []
 
-        if len(self.fp_idx) > 0:
-            k_fp = TanimotoRBF(input_dim=len(self.fp_idx))
-            kernels.append(k_fp)
+        # -------------------------------------------
+        # FP kernel — scalar LS only (R behavior)
+        # -------------------------------------------
+        if self.fp_dim > 0:
+            fp_idx = self.fp_idx
+            base_fp = TanimotoRBF()
 
-        if len(self.cont_idx) > 0:
-            k_cont = pk.Matern32(
-                input_dim=len(self.cont_idx)
-            )
-            kernels.append(k_cont)
+            def fp_forward(X, Z=None, diag=False, base=base_fp, idx=fp_idx):
+                Xs = X[:, idx]            # slice FP bits
+                Zs = Z[:, idx] if Z is not None else None
+                return base(Xs, Zs, diag=diag)
 
+            base_fp.forward = fp_forward
+            kernels.append(base_fp)
+
+        # -------------------------------------------
+        # CONT kernel — use ARD (vector lengthscales)
+        # same as R build_Kc_perdim_R()
+        # -------------------------------------------
+        if self.cont_dim > 0:
+            cont_idx = self.cont_idx
+            base_cont = pk.Matern32(input_dim=self.cont_dim)
+
+            def cont_forward(X, Z=None, diag=False, base=base_cont, idx=cont_idx):
+                Xs = X[:, idx]
+                Zs = Z[:, idx] if Z is not None else None
+                return base(Xs, Zs, diag=diag)
+
+            base_cont.forward = cont_forward
+            kernels.append(base_cont)
+
+        # -------------------------------------------
+        # Multiply kernels
+        # -------------------------------------------
         if not kernels:
-            raise ValueError("Both feature groups empty")
+            raise ValueError("Empty feature groups")
 
-        k = kernels[0]
-        for other in kernels[1:]:
-            k = pk.Product(k, other)
+        kernel = kernels[0]
+        for k in kernels[1:]:
+            kernel = pk.Product(kernel, k)
 
-        return k
+        return kernel
 
 
 class GPMixPyro:
