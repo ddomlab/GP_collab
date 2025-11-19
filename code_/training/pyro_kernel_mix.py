@@ -43,19 +43,7 @@ class TanimotoRBF(pk.Kernel):
 
         return torch.exp(-0.5 * (D / ls)**2)
     
-class FeatureKernel(pk.Kernel):
-    """Wraps a kernel and applies it only to selected feature columns."""
-    def __init__(self, base_kernel, active_dims):
-        super().__init__()
-        self.base = base_kernel
-        self.active_dims = active_dims
-
-    def forward(self, X, Z=None, diag=False):
-        Xs = X[:, self.active_dims]
-        Zs = Z[:, self.active_dims] if Z is not None else None
-        return self.base(Xs, Zs, diag=diag)
-
-
+    
 class MixingKernelPyro:
     def __init__(self, feat_idx):
         self.fp_idx = feat_idx.get("fp") or []
@@ -66,25 +54,30 @@ class MixingKernelPyro:
 
         # FP block
         if len(self.fp_idx) > 0:
-            base_fp = TanimotoRBF(input_dim=len(self.fp_idx))
-            k_fp = FeatureKernel(base_fp, self.fp_idx)
+            k_fp = TanimotoRBF(
+                input_dim=len(self.fp_idx),
+                active_dims=self.fp_idx,
+            )
             kernels.append(k_fp)
 
-        # continuous block
+        # Continuous block
         if len(self.cont_idx) > 0:
-            base_cont = pk.Matern32(input_dim=len(self.cont_idx))
-            k_cont = FeatureKernel(base_cont, self.cont_idx)
+            k_cont = pk.Matern32(
+                input_dim=len(self.cont_idx),
+                active_dims=self.cont_idx,
+            )
             kernels.append(k_cont)
 
         if not kernels:
-            raise ValueError("Both FP and CONT feature lists are empty")
+            raise ValueError("Both feature groups empty")
 
-        # product of kernels
+        # Product of kernels using Pyro's Combination/Product
         k = kernels[0]
         for other in kernels[1:]:
             k = pk.Product(k, other)
 
         return k
+
 
 
 class GPMixPyro:
