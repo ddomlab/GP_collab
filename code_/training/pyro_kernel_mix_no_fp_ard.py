@@ -99,13 +99,13 @@ class GPMixPyro:
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
                 "fp_lengthscale",
-                dist.LogNormal(0.0, 1.0)
+                dist.InverseGamma(5, 5)
             )
 
         if self.cont_dim > 0:
             cont_ls = pyro.sample(
                 "cont_lengthscale",
-                dist.LogNormal(0.0, 1.0).expand([self.cont_dim]).to_event(1)
+                dist.InverseGamma(5, 5).expand([self.cont_dim]).to_event(1)
             )
 
         # build fresh kernel
@@ -126,10 +126,9 @@ class GPMixPyro:
             self.X,
             self.y,
             kernel,
-            # noise=obs_noise_variance,
+            noise=obs_noise_variance,
             jitter=1e-4
         )
-        gpmodel.set_prior("noise", dist.LogNormal(0.0, 1.0))
 
         gpmodel.model()
 
