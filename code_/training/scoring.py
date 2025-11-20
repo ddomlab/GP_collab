@@ -488,7 +488,7 @@ def pyro_cross_validate_regressor(
         return score, predictions
 
 
-
+from joblib import parallel_backend
 def cross_validate_regressor(
     regressor, X, y, cv, return_importance: bool = False, return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
@@ -522,24 +522,25 @@ def cross_validate_regressor(
                 "mae": mae_scorer,
                 "r2": r2_scorer,
             }
-
-            score: dict[str, float] = cross_validate(
+            with parallel_backend("threading"):
+                score: dict[str, float] = cross_validate(
+                    regressor,
+                    X,
+                    y,
+                    cv=cv,
+                    scoring=scorers,
+                    return_estimator=True,
+                    n_jobs=-1,
+                    return_indices=return_indices,
+                    )
+        with parallel_backend("threading"):
+            predictions: np.ndarray = cross_val_predict(
                 regressor,
                 X,
                 y,
                 cv=cv,
-                scoring=scorers,
-                return_estimator=True,
                 n_jobs=-1,
-                return_indices=return_indices,
-                )
-        predictions: np.ndarray = cross_val_predict(
-            regressor,
-            X,
-            y,
-            cv=cv,
-            n_jobs=-1,
-        )
+            )
         if return_importance:
             get_feature_importances_from_cv(score, X=X)
 

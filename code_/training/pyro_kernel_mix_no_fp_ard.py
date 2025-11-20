@@ -5,10 +5,12 @@ import torch
 import pyro
 import pyro.distributions as dist
 import pyro.contrib.gp as gp
-from pyro.infer import MCMC, NUTS
+# from numpyro.infer import MCMC, NUTS
+from pyro.infer import MCMC
 from sklearn.base import BaseEstimator, RegressorMixin
 import pandas as pd
 import numpy as np
+import numpyro
 
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
