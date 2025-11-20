@@ -29,7 +29,7 @@ class TanimotoRBF(pk.Kernel):
         self.eps = eps
 
         # plain PyTorch tensor placeholder (no pyro.param)
-        self.lengthscale = torch.tensor(1.0)
+        # self.lengthscale = torch.tensor(1.0)
 
     def forward(self, X, Z=None, diag=False):
         X = self._slice_input(X)
@@ -91,8 +91,10 @@ class GPMixPyro:
     def model(self):
         # priors
         # dist.InverseGamma
-        outputscale = pyro.sample("outputscale", dist.LogNormal(0.0, 1.0))
-        obs_noise   = pyro.sample("obs_noise",   dist.LogNormal(-3.0, 0.5))
+        sigma_signal = pyro.sample("sigma_signal", dist.LogNormal(0,1.0))
+        outputscale_variance = sigma_signal.pow(2)
+        sigma_noise = pyro.sample("obs_noise_std", dist.LogNormal(0,1.0))
+        obs_noise_variance = sigma_noise.pow(2)
 
         if self.fp_dim > 0:
             fp_ls = pyro.sample(
@@ -117,16 +119,17 @@ class GPMixPyro:
             # automatically kern1 for Product(Tanimoto, Matern)
             kernel.kern1.lengthscale = cont_ls  
 
-        kernel.variance = outputscale
-
+        # kernel.variance = outputscale
+        kernel.variance = outputscale_variance
         # GPRegression
         gpmodel = gp.models.GPRegression(
             self.X,
             self.y,
             kernel,
-            noise=obs_noise,
+            # noise=obs_noise_variance,
             jitter=1e-4
         )
+        gpmodel.set_prior("noise", dist.LogNormal(0.0, 1.0))
 
         gpmodel.model()
 
@@ -167,54 +170,48 @@ def run_inference(
 
 def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
     mean_list = []
-    var_list = []
+    std_list = []
 
-    # Ensure 2D test input
     if isinstance(X_test, torch.Tensor) and X_test.ndim == 1:
         X_test = X_test.unsqueeze(0)
 
-    num_draws = samples["outputscale"].shape[0]
+    num_draws = samples["sigma_signal"].shape[0]
 
-    # Determine dimensions from kernel builder
     fp_dim = len(kernel_builder.fp_idx)
     cont_dim = len(kernel_builder.cont_idx)
 
     for i in range(num_draws):
-        oscale = samples["outputscale"][i]
-        noise = samples["obs_noise"][i]
+        sig_signal = samples["sigma_signal"][i]
+        outputscale_variance = sig_signal.pow(2)
 
-        # Fresh kernel for each posterior draw
+        sig_noise = samples["obs_noise_std"][i]
+        obs_noise_variance = sig_noise.pow(2)
+
         kernel = kernel_builder.build()
 
-        # If fingerprint kernel exists, assign sampled fp lengthscales
         if fp_dim > 0:
             fp_ls = samples["fp_lengthscale"][i]
             kernel.kern0.lengthscale = fp_ls
 
-        # If continuous kernel exists, assign sampled cont lengthscales
         if cont_dim > 0:
             if fp_dim > 0:
                 cont_ls = samples["cont_lengthscale"][i]
                 kernel.kern1.lengthscale = cont_ls
             else:
-                # case when only continuous kernel exists
                 cont_ls = samples["cont_lengthscale"][i]
                 kernel.kern0.lengthscale = cont_ls
 
-        # Assign outputscale
-        kernel.variance = oscale
+        kernel.variance = outputscale_variance
 
-        # Build per-sample GP model
         gpmodel = gp.models.GPRegression(
             X_train,
             y_train,
             kernel,
-            noise=noise
+            noise=obs_noise_variance
         )
 
         f_dist = gpmodel(X_test, full_cov=False)
 
-        # Pyro may return a tuple (mean, var)
         if isinstance(f_dist, tuple):
             mean, var = f_dist
         else:
@@ -222,16 +219,15 @@ def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
             var = f_dist.variance
 
         mean_list.append(mean)
-        var_list.append(var)
+        std_list.append(var.sqrt())
 
     mean_stack = torch.stack(mean_list)
-    var_stack = torch.stack(var_list)
+    std_stack = torch.stack(std_list)
 
     mean_pred = mean_stack.mean(dim=0)
-    std_pred = var_stack.mean(dim=0).sqrt()
+    std_pred = std_stack.mean(dim=0)
 
     return mean_pred, std_pred
-
 
 
 # ----------------------------------------------------------------------
@@ -242,7 +238,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_idx=None,
-        num_samples=2000,
+        num_samples=1000,
         warmup_steps=1000,
         num_chains=1,
         num_drawn_samples=500,
