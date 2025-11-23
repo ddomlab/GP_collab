@@ -488,7 +488,7 @@ def pyro_cross_validate_regressor(
         return score, predictions
 
 
-
+from joblib import parallel_backend
 def cross_validate_regressor(
     regressor, X, y, cv, return_importance: bool = False, return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
