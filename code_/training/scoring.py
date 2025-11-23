@@ -530,7 +530,7 @@ def cross_validate_regressor(
                 cv=cv,
                 scoring=scorers,
                 return_estimator=True,
-                n_jobs=-1,
+                n_jobs=1,
                 return_indices=return_indices,
                 )
         predictions: np.ndarray = cross_val_predict(
@@ -538,7 +538,7 @@ def cross_validate_regressor(
             X,
             y,
             cv=cv,
-            n_jobs=-1,
+            n_jobs=1,
         )
         if return_importance:
             get_feature_importances_from_cv(score, X=X)
