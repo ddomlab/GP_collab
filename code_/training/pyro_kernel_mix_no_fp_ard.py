@@ -6,11 +6,11 @@ import pyro
 import pyro.distributions as dist
 import pyro.contrib.gp as gp
 # from numpyro.infer import MCMC, NUTS
-from pyro.infer import MCMC
+from pyro.infer import MCMC, NUTS
 from sklearn.base import BaseEstimator, RegressorMixin
 import pandas as pd
 import numpy as np
-import numpyro
+# import numpyro
 
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
@@ -241,7 +241,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         feat_idx=None,
         num_samples=1000,
         warmup_steps=1000,
-        num_chains=4,
+        num_chains=1,
         num_drawn_samples=500,
         use_cuda=False,
         random_state=42,

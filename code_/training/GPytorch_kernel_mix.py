@@ -214,7 +214,6 @@ class GPMix(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
         
 
-
 class GPMixRegressor(BaseEstimator):
     def __init__(
         self,

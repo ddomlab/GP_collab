@@ -240,10 +240,6 @@ def _get_gp_kernel(gp_info: dict, idx: Optional[dict[str, list[int]]] = None):
     return kernel
 
 
-
-
-
-
 def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
     if algortihm == "MLR":
         return {

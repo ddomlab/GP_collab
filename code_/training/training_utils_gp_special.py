@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import time
 from typing import Callable, Optional, Union, Dict, Tuple
 
 import numpy as np
@@ -43,7 +44,7 @@ HERE: Path = Path(__file__).resolve().parent
 def set_globals(Test: bool=False) -> None:
     global SEEDS, N_FOLDS, BO_ITER
     if not Test:
-        SEEDS = [6, 13, 42, 69, 420, 1234567890, 473129]
+        SEEDS = [6, 13, 42]
         N_FOLDS = 5
         BO_ITER = 42
     else:
@@ -74,6 +75,7 @@ def train_regressor(
         """
             #seed scores and seed prediction
         set_globals(Test)
+        start = time.time()
         scores, predictions = _prepare_data(
                                             dataset=dataset,
                                             features_impute= features_impute,
@@ -90,7 +92,8 @@ def train_regressor(
                                             hyperparameter_optimization=hyperparameter_optimization,
                                             )
         scores = process_scores(scores)
-
+        end = time.time()
+        scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
         # if ls is not None:
         #     ls = _average_ls(ls)
   
@@ -245,7 +248,7 @@ def run(
                 kernel = _get_gp_kernel(regressor_type, idx=features_idx)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type, feat_idx=features_idx)
+                model = optimized_models(regressor_type)
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -259,8 +262,8 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=False, return_indices=False)
+            return_importance = False if "GP" in regressor_type else True
+            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=return_importance, return_indices=False)
             # scores, predictions = pyro_cross_validate_regressor(regressor, X, y, cv_outer)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
