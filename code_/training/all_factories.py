@@ -8,7 +8,7 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
-from GPytorch_kernel_mix import GPMixRegressor
+from GPytorch_kernel_mix import GPytorchMixMCMCRegressor
 # from pyro_kernel_mix import GPMixMCMCRegressor
 from pyro_kernel_mix_no_fp_ard import GPMixMCMCRegressor
 
@@ -119,7 +119,7 @@ regressor_factory: dict[str, type]={
     "sklearn-GPR":GaussianProcessRegressor(),
     "MLP": MLPRegressor(),
     "HGBR": HistGradientBoostingRegressor(),
-    "GPMixR": GPMixRegressor(),
+    # "GPMixR": GPMixRegressor(),
 }
 
 def optimized_models(model_name:str,random_state:int=42, **kwargs):
@@ -147,8 +147,8 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
         # kernel = kwargs.get('kernel')
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
-    if "GPMixR" == model_name:
-        return GPMixRegressor(**kwargs)
+    if "GPytorchMixMCMC" == model_name:
+        return GPytorchMixMCMCRegressor(**kwargs)
     
     if "GPMixMCMC" == model_name:
         return GPMixMCMCRegressor(**kwargs)

@@ -8,12 +8,12 @@ import sys
 from data_handling import save_results
 from utils import parse_arguments
 
-# import sys
+import sys
 
-# sys.modules.setdefault("numpy._core",         np.core)
-# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+sys.modules.setdefault("numpy._core",         np.core)
+sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -81,9 +81,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
 
     # args = parse_arguments()
 
@@ -120,16 +120,16 @@ if __name__ == "__main__":
     # print(train_x)
     for targ in all_targets:
         # GPMixMCMC
-        for model in ["RF", "XGBR", "NGB"]:
+        # for model in ["RF", "XGBR", "NGB"]:
             
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP",
                 radius=3,
                 vector="count",
-                regressor_type=model,
+                regressor_type="GPytorchMixMCMC",
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["polymer"],
+                polymer_unit=["Monomer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                 hyperparameter_optimization=False,
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-            )
+                )
 
 
 
