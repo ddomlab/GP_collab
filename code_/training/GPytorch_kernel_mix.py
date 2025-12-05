@@ -127,7 +127,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             )
             k_fp.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(5, 5),  
+                gpytorch.priors.GammaPrior(concentration=2.0, rate=0.5), 
                 "lengthscale"
             )
             kernels.append(k_fp)
@@ -141,7 +141,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             )
             k_cont.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(5, 5), 
+                gpytorch.priors.GammaPrior(concentration=2.0, rate=0.5), 
                 "lengthscale"
             )
             kernels.append(k_cont)
@@ -161,7 +161,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
         
         self.mean_module.register_prior(
             "mean_prior",
-            gpytorch.priors.LogNormalPrior(0.0, 1.0),
+            gpytorch.priors.NormalPrior(0.0, 1.0),
             "constant"
         )
 
@@ -209,10 +209,12 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.train_x = X
         self.train_y = y
 
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
+            noise_constraint=gpytorch.constraints.GreaterThan(1e-6)
+        )
         self.likelihood.register_prior(
             "noise_prior", 
-            gpytorch.priors.LogNormalPrior(0.0, 1.0), 
+            gpytorch.priors.GammaPrior(concentration=2.0, rate=1.0), 
             "noise"
         )
 
@@ -291,3 +293,4 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         
         return mean_prediction.cpu().numpy()
     
+
