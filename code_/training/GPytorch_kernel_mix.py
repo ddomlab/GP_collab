@@ -123,7 +123,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             k_fp = TanimotoRBF(
                 active_dims=torch.tensor(fp_idx, dtype=torch.long),
                 batch_shape=torch.Size([]),
-                lengthscale_constraint=safe_constraint,
+                # lengthscale_constraint=safe_constraint,
             )
             k_fp.register_prior(
                 "lengthscale_prior", 
@@ -137,7 +137,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
                 nu=1.5,
                 ard_num_dims=len(cont_idx),
                 active_dims=torch.tensor(cont_idx, dtype=torch.long),
-                lengthscale_constraint=safe_constraint,
+                # lengthscale_constraint=safe_constraint,
             )
             k_cont.register_prior(
                 "lengthscale_prior", 
