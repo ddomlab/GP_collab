@@ -87,27 +87,24 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 #         return covar
 
     
-class TanimotoRBF(Kernel):
-    def __init__(self, eps: float = 1e-6,**kwargs):
+class TanimotoRBF(gpytorch.kernels.Kernel):
+    is_stationary = False
+    has_lengthscale = True
+
+    def __init__(self, eps=1e-6, **kwargs):
         super().__init__(**kwargs)
         self.eps = eps
 
-
-    has_lengthscale = True
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
-        
+    def forward(self, x1, x2, diag=False, **params):
         if diag:
-            # The distance from a point to itself is 0.
-            # exp(-0.5 * (0 / l)^2) = exp(0) = 1.
-            return x1.new_ones(x1.shape[:-1])
+            zero_dist = torch.zeros(x1.shape[:-1], device=x1.device, dtype=x1.dtype)
+            scaled_dist = zero_dist.unsqueeze(-1).div(self.lengthscale).squeeze(-1)
+            return torch.exp(-scaled_dist)
 
-        # Compute Tanimoto distance D_T(x1, x2)
-        tanimoto_dist = weighted_tanimoto_distance(x1, x2, eps=self.eps)
-
-        # Apply the RBF Kernel formula using the single lengthscale
-        # This is equivalent to: exp( -square(D_T) / (2 * square(l)) )
-        covar = torch.exp(-0.5 * (tanimoto_dist / self.lengthscale)**2)
-        return covar
+        dist = weighted_tanimoto_distance(x1, x2, eps=self.eps)
+        exp_component = dist.div(self.lengthscale).pow(2).mul(-0.5)
+        
+        return exp_component.exp()
 
 
 
@@ -121,7 +118,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
         cont_idx = feat_idx.get("count") or []
         
         kernels = []
-        
+        safe_constraint = gpytorch.constraints.GreaterThan(1e-6)
         if len(fp_idx) > 0:
             k_fp = TanimotoRBF(
                 active_dims=torch.tensor(fp_idx, dtype=torch.long),
