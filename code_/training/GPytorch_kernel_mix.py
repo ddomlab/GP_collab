@@ -175,7 +175,13 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
 
 
 class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, feat_idx=None, num_samples=300, warmup_steps=100, num_chains=1, use_cuda=False):
+    def __init__(self, feat_idx=None, 
+                num_samples=1000,
+                warmup_steps=1000,
+                num_chains=1,
+                use_cuda=False
+        ):
+        
         self.feat_idx = feat_idx
         self.num_samples = num_samples
         self.warmup_steps = warmup_steps
