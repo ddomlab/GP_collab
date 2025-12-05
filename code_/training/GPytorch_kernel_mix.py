@@ -17,7 +17,7 @@ from gpytorch.models import PyroGP # <-- Import PyroGP
 from pyro.distributions import inverse_gamma as InvGammaPrior
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
-
+import gc
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
 
