@@ -173,6 +173,127 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
 
 
 
+# class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
+#     def __init__(self, feat_idx=None, 
+#                 num_samples=1000,
+#                 warmup_steps=1000,
+#                 num_chains=1,
+#                 use_cuda=False
+#         ):
+        
+#         self.feat_idx = feat_idx
+#         self.num_samples = num_samples
+#         self.warmup_steps = warmup_steps
+#         self.num_chains = num_chains
+#         self.use_cuda = use_cuda
+#         self.model = None
+#         self.likelihood = None
+#         self.mcmc_samples = None
+
+#     def fit(self, X, y):
+#         if self.feat_idx is None:
+#              raise ValueError("feat_idx must be provided")
+
+#         if isinstance(X, pd.DataFrame):
+#             X = X.values
+#         if isinstance(y, (pd.DataFrame, pd.Series)):
+#             y = y.values
+
+#         X = torch.as_tensor(X, dtype=torch.float32)
+#         y = torch.as_tensor(y, dtype=torch.float32).view(-1)
+
+#         if self.use_cuda and torch.cuda.is_available():
+#             X = X.cuda()
+#             y = y.cuda()
+
+#         self.train_x = X
+#         self.train_y = y
+
+#         self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
+#             # noise_constraint=gpytorch.constraints.GreaterThan(1e-6)
+#         )
+#         self.likelihood.register_prior(
+#             "noise_prior", 
+#             gpytorch.priors.GammaPrior(concentration=2.0, rate=1.0), 
+#             "noise"
+#         )
+
+#         self.model = GPMixGPyTorch(X, y, self.likelihood, self.feat_idx)
+
+#         if self.use_cuda and torch.cuda.is_available():
+#             self.model = self.model.cuda()
+#             self.likelihood = self.likelihood.cuda()
+
+#         self.model.train()
+#         self.likelihood.train()
+
+#         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
+
+#         def pyro_model(x, y):
+#             self.model.pyro_sample_from_prior()
+#             output = self.model(x)
+#             loss = mll(output, y)
+#             pyro.factor("gp_mll", loss)
+
+#         nuts_kernel = NUTS(pyro_model)
+#         mcmc = MCMC(
+#             nuts_kernel, 
+#             num_samples=self.num_samples, 
+#             warmup_steps=self.warmup_steps, 
+#             num_chains=self.num_chains
+#         )
+
+#         mcmc.run(X, y)
+#         self.mcmc_samples = mcmc.get_samples()
+#         return self
+
+#     def predict(self, X_test, return_std=False):
+#         if isinstance(X_test, pd.DataFrame):
+#             X_test = X_test.values
+
+#         X_test = torch.as_tensor(X_test, dtype=torch.float32)
+#         if self.use_cuda and torch.cuda.is_available():
+#             X_test = X_test.cuda()
+
+#         self.model.eval()
+#         self.likelihood.eval()
+
+#         # 1. Load ALL samples at once. 
+#         # This converts the model into a "Batch Model" (e.g. 300 internal models)
+#         self.model.pyro_load_from_samples(self.mcmc_samples)
+
+#         # 2. Get the batch size (Num_Samples)
+#         # We check the first sample to find the number of MCMC draws
+#         num_samples = list(self.mcmc_samples.values())[0].shape[0]
+
+#         # 3. Expand the Test Data to match the batch size
+#         # Input shape: (N_test, D) -> Expanded: (Num_Samples, N_test, D)
+#         expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
+
+#         with torch.no_grad():
+#             # 4. Forward pass
+#             # The model is now a batch model, so it returns a batch of MultivariateNormals
+#             output = self.model(expanded_test_x)
+#             observed_output = self.likelihood(output) # Adds noise variance
+
+#             # 5. Extract statistics
+#             # means shape: (Num_Samples, N_test)
+#             means = observed_output.mean
+#             # variances shape: (Num_Samples, N_test)
+#             variances = observed_output.variance
+
+#             # 6. Aggregate
+#             mean_prediction = means.mean(0) # Average over samples
+            
+#             # Total Variance = Mean(Variances) + Variance(Means)
+#             total_variance = variances.mean(0) + means.var(0)
+
+#         if return_std:
+#             return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
+        
+#         return mean_prediction.cpu().numpy()
+    
+
 class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, feat_idx=None, 
                 num_samples=1000,
@@ -209,9 +330,7 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.train_x = X
         self.train_y = y
 
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            # noise_constraint=gpytorch.constraints.GreaterThan(1e-6)
-        )
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
         self.likelihood.register_prior(
             "noise_prior", 
             gpytorch.priors.GammaPrior(concentration=2.0, rate=1.0), 
@@ -244,7 +363,17 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         )
 
         mcmc.run(X, y)
-        self.mcmc_samples = mcmc.get_samples()
+        
+        samples = mcmc.get_samples()
+        self.mcmc_samples = {k: v.cpu() for k, v in samples.items()}
+        
+        del mcmc
+        del nuts_kernel
+        gc.collect()
+        
+        if self.use_cuda and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         return self
 
     def predict(self, X_test, return_std=False):
@@ -258,39 +387,32 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.model.eval()
         self.likelihood.eval()
 
-        # 1. Load ALL samples at once. 
-        # This converts the model into a "Batch Model" (e.g. 300 internal models)
-        self.model.pyro_load_from_samples(self.mcmc_samples)
+        device = X_test.device
+        samples_device = {k: v.to(device) for k, v in self.mcmc_samples.items()}
+        
+        self.model.pyro_load_from_samples(samples_device)
 
-        # 2. Get the batch size (Num_Samples)
-        # We check the first sample to find the number of MCMC draws
-        num_samples = list(self.mcmc_samples.values())[0].shape[0]
-
-        # 3. Expand the Test Data to match the batch size
-        # Input shape: (N_test, D) -> Expanded: (Num_Samples, N_test, D)
+        num_samples = list(samples_device.values())[0].shape[0]
         expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
 
-        with torch.no_grad():
-            # 4. Forward pass
-            # The model is now a batch model, so it returns a batch of MultivariateNormals
+        with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.max_root_decomposition_size(30):
             output = self.model(expanded_test_x)
-            observed_output = self.likelihood(output) # Adds noise variance
+            observed_output = self.likelihood(output)
 
-            # 5. Extract statistics
-            # means shape: (Num_Samples, N_test)
             means = observed_output.mean
-            # variances shape: (Num_Samples, N_test)
             variances = observed_output.variance
 
-            # 6. Aggregate
-            mean_prediction = means.mean(0) # Average over samples
-            
-            # Total Variance = Mean(Variances) + Variance(Means)
+            mean_prediction = means.mean(0)
             total_variance = variances.mean(0) + means.var(0)
+
+        del samples_device
+        del expanded_test_x
+        del output
+        del observed_output
+        if self.use_cuda:
+            torch.cuda.empty_cache()
 
         if return_std:
             return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
         
         return mean_prediction.cpu().numpy()
-    
-
