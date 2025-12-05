@@ -20,10 +20,6 @@ from pyro.distributions import inverse_gamma as InvGammaPrior
 
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
-import torch.nn as nn
-import math
-
-
 
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
@@ -36,28 +32,56 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     dist = 1.0 - sim
     return torch.clamp(dist, min=0.)
 
+class TanimotoRBF(gpytorch.kernels.Kernel):
+    has_lengthscale = True
 
-class TanimotoRBF(Kernel):
-    def __init__(self, eps: float = 1e-6,**kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, eps=1e-6, **kwargs):
+        super().__init__(has_lengthscale=True, **kwargs)
         self.eps = eps
 
+    def forward(self, x1, x2, diag=False, **params):
+        batch_shape = self.batch_shape  # e.g. torch.Size([1, 1]) in your error
 
-    has_lengthscale = True
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
-        
         if diag:
-            # The distance from a point to itself is 0.
-            # exp(-0.5 * (0 / l)^2) = exp(0) = 1.
-            return x1.new_ones(x1.shape[:-1])
+            # We need shape batch_shape + (n,)
+            n = x1.size(-2) if x1.dim() > 1 else x1.size(0)
+            diag_covar = x1.new_ones(*batch_shape, n)
+            return diag_covar
 
-        # Compute Tanimoto distance D_T(x1, x2)
-        tanimoto_dist = weighted_tanimoto_distance(x1, x2, eps=self.eps)
+        # ---------------------------------------------------------
+        # 1. Compute pairwise Tanimoto distance without batch dims
+        # ---------------------------------------------------------
+        # x1: n x d, x2: m x d (or possibly have extra data batch dims)
+        # You can use your helper here if you like
+        x1e = x1.unsqueeze(-2)  # ... x n x 1 x d
+        x2e = x2.unsqueeze(-3)  # ... x 1 x m x d
 
-        # Apply the RBF Kernel formula using the single lengthscale
-        # This is equivalent to: exp( -square(D_T) / (2 * square(l)) )
-        covar = torch.exp(-0.5 * (tanimoto_dist / self.lengthscale)**2)
+        numerator = torch.min(x1e, x2e).sum(dim=-1)
+        denominator = torch.max(x1e, x2e).sum(dim=-1)
+
+        sim = (numerator + self.eps) / (denominator + self.eps)
+        dist = torch.clamp(1.0 - sim, min=0.0)  # shape: ... x n x m
+
+        # ---------------------------------------------------------
+        # 2. Add *parameter* batch dims so shape matches batch_shape
+        # ---------------------------------------------------------
+        # Right now dist has shape:   (...data_batch..., n, m)
+        # We need:                    (*batch_shape, n, m)
+        # so we add leading singleton dims until there are enough.
+        while dist.dim() < len(batch_shape) + 2:
+            dist = dist.unsqueeze(0)
+
+        # Now dist should have shape batch_shape + (n, m),
+        # or something that broadcasts to it.
+
+        # ---------------------------------------------------------
+        # 3. Apply lengthscale with correct broadcasting
+        # ---------------------------------------------------------
+        ls = self.lengthscale  # shape: batch_shape + (1, 1)
+
+        covar = torch.exp(-0.5 * (dist / ls) ** 2)
         return covar
+
     
 
 
@@ -74,11 +98,12 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
         
         if len(fp_idx) > 0:
             k_fp = TanimotoRBF(
-                active_dims=torch.tensor(fp_idx, dtype=torch.long)
+                active_dims=torch.tensor(fp_idx, dtype=torch.long),
+                batch_shape=torch.Size([]),
             )
             k_fp.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(concentration=5.0, rate=5.0),
+                gpytorch.priors.LogNormalPrior(0.0, 1.0), 
                 "lengthscale"
             )
             kernels.append(k_fp)
@@ -91,7 +116,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             )
             k_cont.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(5.0, 5.0), 
+                gpytorch.priors.LogNormalPrior(0.0, 1.0), 
                 "lengthscale"
             )
             kernels.append(k_cont)
@@ -99,9 +124,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
         if not kernels:
             raise ValueError("No features provided")
             
-        combined_kernel = kernels[0]
-        for k in kernels[1:]:
-            combined_kernel = combined_kernel * k
+        combined_kernel = gpytorch.kernels.ProductKernel(*kernels)
             
         self.covar_module = gpytorch.kernels.ScaleKernel(combined_kernel)
         
