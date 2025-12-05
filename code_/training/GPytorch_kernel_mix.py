@@ -21,6 +21,10 @@ from pyro.distributions import inverse_gamma as InvGammaPrior
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
 
+
+    
+
+
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
     x2e = x2.unsqueeze(-3)
@@ -32,57 +36,79 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     dist = 1.0 - sim
     return torch.clamp(dist, min=0.)
 
-class TanimotoRBF(gpytorch.kernels.Kernel):
-    has_lengthscale = True
+# class TanimotoRBF(gpytorch.kernels.Kernel):
+#     has_lengthscale = True
 
-    def __init__(self, eps=1e-6, **kwargs):
-        super().__init__(has_lengthscale=True, **kwargs)
-        self.eps = eps
+#     def __init__(self, eps=1e-6, **kwargs):
+#         super().__init__(has_lengthscale=True, **kwargs)
+#         self.eps = eps
 
-    def forward(self, x1, x2, diag=False, **params):
-        batch_shape = self.batch_shape  # e.g. torch.Size([1, 1]) in your error
+#     def forward(self, x1, x2, diag=False, **params):
+#         batch_shape = self.batch_shape  # e.g. torch.Size([1, 1]) in your error
 
-        if diag:
-            # We need shape batch_shape + (n,)
-            n = x1.size(-2) if x1.dim() > 1 else x1.size(0)
-            diag_covar = x1.new_ones(*batch_shape, n)
-            return diag_covar
+#         if diag:
+#             # We need shape batch_shape + (n,)
+#             n = x1.size(-2) if x1.dim() > 1 else x1.size(0)
+#             diag_covar = x1.new_ones(*batch_shape, n)
+#             return diag_covar
 
-        # ---------------------------------------------------------
-        # 1. Compute pairwise Tanimoto distance without batch dims
-        # ---------------------------------------------------------
-        # x1: n x d, x2: m x d (or possibly have extra data batch dims)
-        # You can use your helper here if you like
-        x1e = x1.unsqueeze(-2)  # ... x n x 1 x d
-        x2e = x2.unsqueeze(-3)  # ... x 1 x m x d
+#         # ---------------------------------------------------------
+#         # 1. Compute pairwise Tanimoto distance without batch dims
+#         # ---------------------------------------------------------
+#         # x1: n x d, x2: m x d (or possibly have extra data batch dims)
+#         # You can use your helper here if you like
+#         x1e = x1.unsqueeze(-2)  # ... x n x 1 x d
+#         x2e = x2.unsqueeze(-3)  # ... x 1 x m x d
 
-        numerator = torch.min(x1e, x2e).sum(dim=-1)
-        denominator = torch.max(x1e, x2e).sum(dim=-1)
+#         numerator = torch.min(x1e, x2e).sum(dim=-1)
+#         denominator = torch.max(x1e, x2e).sum(dim=-1)
 
-        sim = (numerator + self.eps) / (denominator + self.eps)
-        dist = torch.clamp(1.0 - sim, min=0.0)  # shape: ... x n x m
+#         sim = (numerator + self.eps) / (denominator + self.eps)
+#         dist = torch.clamp(1.0 - sim, min=0.0)  # shape: ... x n x m
 
-        # ---------------------------------------------------------
-        # 2. Add *parameter* batch dims so shape matches batch_shape
-        # ---------------------------------------------------------
-        # Right now dist has shape:   (...data_batch..., n, m)
-        # We need:                    (*batch_shape, n, m)
-        # so we add leading singleton dims until there are enough.
-        while dist.dim() < len(batch_shape) + 2:
-            dist = dist.unsqueeze(0)
+#         # ---------------------------------------------------------
+#         # 2. Add *parameter* batch dims so shape matches batch_shape
+#         # ---------------------------------------------------------
+#         # Right now dist has shape:   (...data_batch..., n, m)
+#         # We need:                    (*batch_shape, n, m)
+#         # so we add leading singleton dims until there are enough.
+#         while dist.dim() < len(batch_shape) + 2:
+#             dist = dist.unsqueeze(0)
 
-        # Now dist should have shape batch_shape + (n, m),
-        # or something that broadcasts to it.
+#         # Now dist should have shape batch_shape + (n, m),
+#         # or something that broadcasts to it.
 
-        # ---------------------------------------------------------
-        # 3. Apply lengthscale with correct broadcasting
-        # ---------------------------------------------------------
-        ls = self.lengthscale  # shape: batch_shape + (1, 1)
+#         # ---------------------------------------------------------
+#         # 3. Apply lengthscale with correct broadcasting
+#         # ---------------------------------------------------------
+#         ls = self.lengthscale  # shape: batch_shape + (1, 1)
 
-        covar = torch.exp(-0.5 * (dist / ls) ** 2)
-        return covar
+#         covar = torch.exp(-0.5 * (dist / ls) ** 2)
+#         return covar
 
     
+class TanimotoRBF(Kernel):
+    def __init__(self, eps: float = 1e-6,**kwargs):
+        super().__init__(**kwargs)
+        self.eps = eps
+
+
+    has_lengthscale = True
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
+        
+        if diag:
+            # The distance from a point to itself is 0.
+            # exp(-0.5 * (0 / l)^2) = exp(0) = 1.
+            return x1.new_ones(x1.shape[:-1])
+
+        # Compute Tanimoto distance D_T(x1, x2)
+        tanimoto_dist = weighted_tanimoto_distance(x1, x2, eps=self.eps)
+
+        # Apply the RBF Kernel formula using the single lengthscale
+        # This is equivalent to: exp( -square(D_T) / (2 * square(l)) )
+        covar = torch.exp(-0.5 * (tanimoto_dist / self.lengthscale)**2)
+        return covar
+
 
 
 class GPMixGPyTorch(gpytorch.models.ExactGP):
@@ -214,7 +240,7 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.mcmc_samples = mcmc.get_samples()
         return self
 
-    def predict(self, X_test):
+    def predict(self, X_test, return_std=False):
         if isinstance(X_test, pd.DataFrame):
             X_test = X_test.values
 
@@ -225,28 +251,41 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.model.eval()
         self.likelihood.eval()
 
-        means = []
-        variances = []
+        # 1. Load ALL samples at once. 
+        # This converts the model into a "Batch Model" (e.g. 300 internal models)
+        self.model.pyro_load_from_samples(self.mcmc_samples)
 
-        num_samples = len(next(iter(self.mcmc_samples.values())))
+        # 2. Get the batch size (Num_Samples)
+        # We check the first sample to find the number of MCMC draws
+        num_samples = list(self.mcmc_samples.values())[0].shape[0]
+
+        # 3. Expand the Test Data to match the batch size
+        # Input shape: (N_test, D) -> Expanded: (Num_Samples, N_test, D)
+        expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
 
         with torch.no_grad():
-            for i in range(num_samples):
-                state_dict = {}
-                for k, v in self.mcmc_samples.items():
-                    state_dict[k] = v[i]
-                
-                self.model.load_strict_shapes(False) 
-                self.model.pyro_load_from_samples(state_dict)
-                
-                output = self.model(X_test)
-                means.append(output.mean)
-                variances.append(output.variance)
-        
-        mean_stack = torch.stack(means)
-        mean_prediction = mean_stack.mean(0)
+            # 4. Forward pass
+            # The model is now a batch model, so it returns a batch of MultivariateNormals
+            output = self.model(expanded_test_x)
+            observed_output = self.likelihood(output) # Adds noise variance
+
+            # 5. Extract statistics
+            # means shape: (Num_Samples, N_test)
+            means = observed_output.mean
+            # variances shape: (Num_Samples, N_test)
+            variances = observed_output.variance
+
+            # 6. Aggregate
+            mean_prediction = means.mean(0) # Average over samples
+            
+            # Total Variance = Mean(Variances) + Variance(Means)
+            total_variance = variances.mean(0) + means.var(0)
+
+        if return_std:
+            return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
         
         return mean_prediction.cpu().numpy()
+    
 
 # class MixingKernel(Kernel):
 #     def __init__(
