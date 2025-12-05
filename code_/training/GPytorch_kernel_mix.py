@@ -210,7 +210,7 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.train_y = y
 
         self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_constraint=gpytorch.constraints.GreaterThan(1e-6)
+            # noise_constraint=gpytorch.constraints.GreaterThan(1e-6)
         )
         self.likelihood.register_prior(
             "noise_prior", 
