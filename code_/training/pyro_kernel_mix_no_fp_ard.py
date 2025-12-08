@@ -80,8 +80,12 @@ class MixingKernelPyro:
         
         # FP kernel: one shared LS
         if len(self.fp_idx) > 0:
-            k_fp = TanimotoRBF(
-                active_dims=self.fp_idx  # use full fp block but single LS
+            # k_fp = TanimotoRBF(
+            #     active_dims=self.fp_idx  # use full fp block but single LS
+            # )
+            k_fp = pk.RBF(
+                input_dim=len(self.fp_idx),
+                active_dims=self.fp_idx
             )
 
         # Continuous kernel still ARD
@@ -99,18 +103,18 @@ class GPMixPyro(gp.models.GPRegression):
         self.cont_dim = len(feat_idx.get("count") or [])
         self.kernel_builder = MixingKernelPyro(feat_idx)
         kernel = self.kernel_builder.build()
-        super().__init__(X, y, kernel, jitter=1e-2)
+        super().__init__(X, y, kernel, jitter=1e-6)
 
         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
         if self.fp_dim > 0 and self.cont_dim > 0:
             # fp block (scalar or 1-d)
             self.kernel.kern0.lengthscale = PyroSample(
-                dist.LogNormal(0, 1.0)
+                dist.InverseGamma(5.0, 5.0)
             )
             # continuous block, ARD
             self.kernel.kern1.lengthscale = PyroSample(
-                dist.LogNormal(0, 1.0)
+                dist.InverseGamma(5.0, 5.0)
                 .expand([self.cont_dim])
                 .to_event(1)
             )
