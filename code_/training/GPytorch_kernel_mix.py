@@ -128,7 +128,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             )
             k_fp.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.LogNormalPrior(0,1), 
+                gpytorch.priors.GammaPrior(3,6), 
                 "lengthscale"
             )
             kernels.append(k_fp)
