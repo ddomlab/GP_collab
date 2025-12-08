@@ -100,7 +100,6 @@ class TanimotoRBF(gpytorch.kernels.Kernel):
             zero_dist = torch.zeros(x1.shape[:-1], device=x1.device, dtype=x1.dtype)
             scaled_dist = zero_dist.unsqueeze(-1).div(self.lengthscale).squeeze(-1)
             return torch.exp(-scaled_dist)
-
         dist = weighted_tanimoto_distance(x1, x2, eps=self.eps)
         exp_component = dist.div(self.lengthscale).pow(2).mul(-0.5)
         
@@ -112,7 +111,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood, feat_idx):
         super().__init__(train_x, train_y, likelihood)
         
-        self.mean_module = gpytorch.means.ConstantMean()
+        self.mean_module = gpytorch.means.ZeroMean()
         
         fp_idx = feat_idx.get("fp") or []
         cont_idx = feat_idx.get("count") or []
@@ -122,12 +121,14 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
         if len(fp_idx) > 0:
             k_fp = TanimotoRBF(
                 active_dims=torch.tensor(fp_idx, dtype=torch.long),
+                # ard_num_dims=1,
                 batch_shape=torch.Size([]),
+
                 # lengthscale_constraint=safe_constraint,
             )
             k_fp.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(concentration=2.0, rate=0.5), 
+                gpytorch.priors.LogNormalPrior(0,1), 
                 "lengthscale"
             )
             kernels.append(k_fp)
@@ -141,7 +142,7 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             )
             k_cont.register_prior(
                 "lengthscale_prior", 
-                gpytorch.priors.GammaPrior(concentration=2.0, rate=0.5), 
+                gpytorch.priors.GammaPrior(3,6), 
                 "lengthscale"
             )
             kernels.append(k_cont)
@@ -159,12 +160,6 @@ class GPMixGPyTorch(gpytorch.models.ExactGP):
             "outputscale"
         )
         
-        self.mean_module.register_prior(
-            "mean_prior",
-            gpytorch.priors.NormalPrior(0.0, 1.0),
-            "constant"
-        )
-
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
@@ -207,31 +202,30 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.train_x = X
         self.train_y = y
 
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
+        self.model = GPMixGPyTorch(X, y, self.likelihood, self.feat_idx)
         self.likelihood.register_prior(
             "noise_prior", 
-            gpytorch.priors.GammaPrior(concentration=2.0, rate=1.0), 
+            gpytorch.priors.GammaPrior(concentration=0.5, rate=0.5), 
             "noise"
         )
-
-        self.model = GPMixGPyTorch(X, y, self.likelihood, self.feat_idx)
-
+        
         if self.use_cuda and torch.cuda.is_available():
             self.model = self.model.cuda()
             self.likelihood = self.likelihood.cuda()
 
-        self.model.train()
-        self.likelihood.train()
 
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
 
         def pyro_model(x, y):
-            self.model.pyro_sample_from_prior()
-            output = self.model(x)
-            loss = mll(output, y)
-            pyro.factor("gp_mll", loss)
-
-        nuts_kernel = NUTS(pyro_model)
+            with gpytorch.settings.fast_computations(False, False, False):
+                with gpytorch.settings.cholesky_jitter(1e-8):
+                    sampled_model = self.model.pyro_sample_from_prior()
+                    output = sampled_model.likelihood(sampled_model(x))
+                    pyro.sample("obs", output, obs=y)
+            return y
+        
+        nuts_kernel = NUTS(pyro_model, jit_compile=False)
         mcmc = MCMC(
             nuts_kernel, 
             num_samples=self.num_samples, 
@@ -252,12 +246,11 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
             X_test = X_test.cuda()
 
         self.model.eval()
-        self.likelihood.eval()
+        # self.likelihood.eval()
 
         self.model.pyro_load_from_samples(self.mcmc_samples)
 
         num_samples = list(self.mcmc_samples.values())[0].shape[0]
-
         expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
 
         with torch.no_grad():
@@ -265,137 +258,14 @@ class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
             observed_output = self.likelihood(output) 
 
             means = observed_output.mean
-            variances = observed_output.variance
+            # variances = observed_output.variance
 
             mean_prediction = means.mean(0) 
-            total_variance = variances.mean(0) + means.var(0)
+            # total_variance = variances.mean(0) + means.var(0)
 
-        if return_std:
-            return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
+        # if return_std:
+        #     return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
         
         return mean_prediction.cpu().numpy()
     
     
-## cash clean
-# class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
-#     def __init__(self, feat_idx=None, 
-#                 num_samples=1000,
-#                 warmup_steps=1000,
-#                 num_chains=1,
-#                 use_cuda=False
-#         ):
-        
-#         self.feat_idx = feat_idx
-#         self.num_samples = num_samples
-#         self.warmup_steps = warmup_steps
-#         self.num_chains = num_chains
-#         self.use_cuda = use_cuda
-#         self.model = None
-#         self.likelihood = None
-#         self.mcmc_samples = None
-
-#     def fit(self, X, y):
-#         if self.feat_idx is None:
-#              raise ValueError("feat_idx must be provided")
-
-#         if isinstance(X, pd.DataFrame):
-#             X = X.values
-#         if isinstance(y, (pd.DataFrame, pd.Series)):
-#             y = y.values
-
-#         X = torch.as_tensor(X, dtype=torch.float32)
-#         y = torch.as_tensor(y, dtype=torch.float32).view(-1)
-
-#         if self.use_cuda and torch.cuda.is_available():
-#             X = X.cuda()
-#             y = y.cuda()
-
-#         self.train_x = X
-#         self.train_y = y
-
-#         self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
-#         self.likelihood.register_prior(
-#             "noise_prior", 
-#             gpytorch.priors.GammaPrior(concentration=2.0, rate=1.0), 
-#             "noise"
-#         )
-
-#         self.model = GPMixGPyTorch(X, y, self.likelihood, self.feat_idx)
-
-#         if self.use_cuda and torch.cuda.is_available():
-#             self.model = self.model.cuda()
-#             self.likelihood = self.likelihood.cuda()
-
-#         self.model.train()
-#         self.likelihood.train()
-
-#         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
-
-#         def pyro_model(x, y):
-#             self.model.pyro_sample_from_prior()
-#             output = self.model(x)
-#             loss = mll(output, y)
-#             pyro.factor("gp_mll", loss)
-
-#         nuts_kernel = NUTS(pyro_model)
-#         mcmc = MCMC(
-#             nuts_kernel, 
-#             num_samples=self.num_samples, 
-#             warmup_steps=self.warmup_steps, 
-#             num_chains=self.num_chains
-#         )
-
-#         mcmc.run(X, y)
-        
-#         samples = mcmc.get_samples()
-#         self.mcmc_samples = {k: v.cpu() for k, v in samples.items()}
-        
-#         del mcmc
-#         del nuts_kernel
-#         gc.collect()
-        
-#         if self.use_cuda and torch.cuda.is_available():
-#             torch.cuda.empty_cache()
-
-#         return self
-
-#     def predict(self, X_test, return_std=False):
-#         if isinstance(X_test, pd.DataFrame):
-#             X_test = X_test.values
-
-#         X_test = torch.as_tensor(X_test, dtype=torch.float32)
-#         if self.use_cuda and torch.cuda.is_available():
-#             X_test = X_test.cuda()
-
-#         self.model.eval()
-#         self.likelihood.eval()
-
-#         device = X_test.device
-#         samples_device = {k: v.to(device) for k, v in self.mcmc_samples.items()}
-        
-#         self.model.pyro_load_from_samples(samples_device)
-
-#         num_samples = list(samples_device.values())[0].shape[0]
-#         expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
-
-#         with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.max_root_decomposition_size(30):
-#             output = self.model(expanded_test_x)
-#             observed_output = self.likelihood(output)
-
-#             means = observed_output.mean
-#             variances = observed_output.variance
-
-#             mean_prediction = means.mean(0)
-#             total_variance = variances.mean(0) + means.var(0)
-
-#         del samples_device
-#         del expanded_test_x
-#         del output
-#         del observed_output
-#         if self.use_cuda:
-#             torch.cuda.empty_cache()
-
-#         if return_std:
-#             return mean_prediction.cpu().numpy(), total_variance.sqrt().cpu().numpy()
-        
-#         return mean_prediction.cpu().numpy()

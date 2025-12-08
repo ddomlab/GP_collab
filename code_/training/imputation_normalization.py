@@ -79,18 +79,19 @@ def preprocessing_workflow(imputer: Optional[str]=None,
     if scaler:
         transformers = []
         if numerical_feat:
-
             transformers.append(
                 ("numerical_scaling", transforms[scaler], numerical_feat)
-                )
+            )
         # elif representation_scaling_factory[representation]['callable']:
-        elif structural_feat:
+        if structural_feat:
             transformers.append(
                 ("structural_scaling", "passthrough", structural_feat)
                 )
             
         scaling = ("scaling features",
-                ColumnTransformer(transformers=[*transformers], remainder="passthrough", verbose_feature_names_out=False)
+                ColumnTransformer(transformers=[*transformers],
+                                remainder="passthrough",
+                                verbose_feature_names_out=False)
                 )
         steps.append(scaling)
     return Pipeline(steps)

@@ -128,6 +128,8 @@ if __name__ == "__main__":
                 radius=3,
                 vector="count",
                 regressor_type="GPMixMCMC",
+                # GPytorchMixMCMC
+                # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
                 polymer_unit=["Monomer"],
                 target_features=[targ],  
