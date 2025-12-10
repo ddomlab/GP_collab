@@ -370,17 +370,9 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         # make sure samples live on the same device as the model
         self._samples = {k: v.to(device) for k, v in samples.items()}
-
-
         # Build Predictive object that will plug in posterior parameter samples
-        self._predictive = Predictive(
-                    self._predictive_strategy,
-                    posterior_samples=self._samples,
-                    return_sites=("y_pred",),
-                    parallel=False,
-                )
-
         self._is_fitted = True
+        
         return self
     
 
@@ -415,10 +407,15 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         device = next(self._gp_model.parameters()).device
         X_t = X_t.to(device)
-
+        predictive = Predictive(
+            self._predictive_strategy,
+            posterior_samples=self._samples,
+            return_sites=("y_pred",),
+            parallel=False,
+        )
         # draw predictive samples
         with torch.no_grad():
-            samples_pred = self._predictive(X_t)
+            samples_pred = predictive(X_t)
             y_samples = samples_pred["y_pred"]  # shape [S, N] or [S, N, 1]
 
         if y_samples.ndim == 3:
