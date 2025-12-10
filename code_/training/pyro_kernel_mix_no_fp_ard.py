@@ -426,3 +426,11 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         # std_pred = y_samples.std(dim=0)
 
         return mean_pred.detach().cpu().numpy()
+
+
+    def _get_latent_values(self, var_names):
+        if isinstance(var_names, str):
+            var_names = [var_names]
+
+        return {k: self._samples.get(k) for k in var_names}
+    

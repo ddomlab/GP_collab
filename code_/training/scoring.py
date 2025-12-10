@@ -387,7 +387,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 
-def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
+def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool):
     """
     Runs inside a parallel worker:
     - clone estimator
@@ -409,61 +409,58 @@ def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
 
     # Predict
     y_pred = model.predict(X_test)
-
+    if return_ls: 
+        scores["lengthscale"] = model.regressor.regressor._get_latent_values(["kernel.kern0.lengthscale",
+                                                        "kernel.kern1.lengthscale",])
     # Compute scoring: scoring[name] is a scorer from make_scorer
-    fold_scores = {}
+    scores = {}
     for name, scorer in scoring.items():
-        fold_scores[name] = scorer(y_test, y_pred)
+        scores[name] = scorer(y_test, y_pred)
 
     # Optional: GP lengthscale summary
-    ls_summary = getattr(model, "lengthscale_summary_", None)
 
-    return test_idx, y_pred, fold_scores, ls_summary
+    return test_idx, y_pred, scores
 
 
-def pyro_cross_validate(
+def gp_cross_validate(
     estimator,
     X,
     y,
     cv,
     scoring,
     n_jobs=-1,
-    return_ls: bool = False,
+    return_ls=False,
 ):
     """
-    Custom CV routine compatible with Pyro MCMC:
-    ✔ Parallel across folds with joblib
-    ✔ scoring: dict of sklearn scorers
-    ✔ Returns per-fold scores, predictions, and optional lengthscale summaries
+    Returns:
+        scores (dict): Dictionary of lists (metrics and lengthscales).
+        predictions_all (np.ndarray): A single array of shape (n_samples,) containing 
+                                      the prediction for each sample when it was in the test set.
     """
-
-    predictions = np.zeros_like(y, dtype=float)
-    fold_summaries = []
-    all_fold_scores = []
-
-    # Run folds in thread-parallel (no pickling issues)
-    results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+    
+    # 1. Run Parallel Folds
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
         delayed(_fit_predict_score)(
-            estimator, X, y, train_idx, test_idx, scoring
+            estimator, X, y, train_idx, test_idx, scoring, return_ls
         )
         for train_idx, test_idx in cv.split(X, y)
     )
 
-    # Collect results from each fold
-    for test_idx, y_pred, fold_scores, ls_summary in results:
+    scores = defaultdict(list)
+    n_samples = len(y)
+    predictions = np.full(n_samples, np.nan)
+
+    for test_idx, y_pred, fold_scores in parallel_results:
         predictions[test_idx] = y_pred
-        all_fold_scores.append(fold_scores)
-        fold_summaries.append(ls_summary)
 
-    # Build scores dict like sklearn.cross_validate: "test_<scorer>" -> [per fold]
-    scores = {}
-    for name in scoring.keys():
-        key = f"test_{name}"
-        scores[key] = [fold[name] for fold in all_fold_scores]
+        for key, val in fold_scores.items():
+            if key == "lengthscale":
+                for ls_name, ls_val in val.items():
+                    scores[f"test_lengthscale_{ls_name}"].append(ls_val)
+            else:
+                scores[f"test_{key}"].append(val)
 
-    if return_ls:
-        return scores, predictions, fold_summaries
-
+    # Return: (Scores Dict, Single Prediction Array)
     return scores, predictions
 
 
