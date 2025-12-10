@@ -315,10 +315,10 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_idx=None,
-        num_samples=1000,
-        warmup_steps=1000,
+        num_samples=200,
+        warmup_steps=200,
         num_chains=1,
-        num_drawn_samples=500,
+        num_drawn_samples=100,
         use_cuda=False,
         random_state=42,
     ):
@@ -371,31 +371,36 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         # make sure samples live on the same device as the model
         self._samples = {k: v.to(device) for k, v in samples.items()}
 
-        # define a small predictive model that uses the GP forward
-        # and a new likelihood site "y_pred"
-        def _predictive_model(X_new):
-            # gp forward uses stored training data and sampled hyperparameters
-            # full_cov=False, noiseless=False gives predictive mean and variance of y
-            f_loc, f_var = self._gp_model(X_new, full_cov=False, noiseless=False)
-
-            # sample predictive observations given f_loc, f_var
-            # shape [N] or [N, 1] so we use to_event(1)
-            pyro.sample(
-                "y_pred",
-                dist.Normal(f_loc, f_var.sqrt()).to_event(1),
-            )
 
         # Build Predictive object that will plug in posterior parameter samples
         self._predictive = Predictive(
-            _predictive_model,
-            posterior_samples=self._samples,
-            return_sites=("y_pred",),
-            parallel=False,
-        )
+                    self._predictive_strategy,
+                    posterior_samples=self._samples,
+                    return_sites=("y_pred",),
+                    parallel=False,
+                )
 
         self._is_fitted = True
         return self
+    
 
+    def _predictive_strategy(self, X_new):
+            """
+            Method used by Pyro's Predictive class. 
+            Must be a method of the class to allow pickling.
+            """
+            # GP forward returns predictive mean and variance (including noise if noiseless=False)
+            f_loc, f_var = self._gp_model(X_new, full_cov=False, noiseless=False)
+            
+            # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
+            f_scale = f_var.clamp(min=1e-6).sqrt()
+
+            # Sample observations
+            pyro.sample(
+                "y_pred",
+                dist.Normal(f_loc, f_scale).to_event(1),
+            )
+            
     def predict(self, X_test):
         if not self._is_fitted:
             raise RuntimeError("Call fit before predict.")
