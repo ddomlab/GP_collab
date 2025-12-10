@@ -442,7 +442,7 @@ def pyro_cross_validate(
     all_fold_scores = []
 
     # Run folds in thread-parallel (no pickling issues)
-    results = Parallel(n_jobs=n_jobs, backend="threading")(
+    results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
         delayed(_fit_predict_score)(
             estimator, X, y, train_idx, test_idx, scoring
         )
