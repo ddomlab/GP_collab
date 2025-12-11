@@ -456,6 +456,7 @@ def gp_cross_validate(
         for key, val in fold_scores.items():
             if key == "lengthscale":
                 for ls_name, ls_val in val.items():
+
                     scores[f"test_lengthscale_{ls_name}"].append(ls_val)
             else:
                 scores[f"test_{key}"].append(val)
@@ -475,7 +476,7 @@ def pyro_cross_validate_regressor(
             "r2": r2_scorer,
         }
 
-        score, predictions = pyro_cross_validate(
+        score, predictions = gp_cross_validate(
             regressor,
             X,
             y,
