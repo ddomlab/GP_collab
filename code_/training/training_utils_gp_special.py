@@ -32,7 +32,7 @@ from scoring import (
     cross_validate_regressor,
     process_scores,
     _average_ls,
-    pyro_cross_validate_regressor
+    gp_cross_validate_regressor
 )
 
 from utils import split_for_training
@@ -149,9 +149,9 @@ def _prepare_data(
 
     preprocessor.set_output(transform="pandas")
     # if isinstance(regressor_type, dict):
-    feat_idx = {
-        'fp': [X.columns.get_loc(c) for c in unrolled_feats] if unrolled_feats else None,
-        'count': [X.columns.get_loc(c) for c in numerical_feats] if numerical_feats else None
+    feat_group = {
+        'fp':  unrolled_feats if unrolled_feats else None,
+        'count': numerical_feats if numerical_feats else None
     }
 
     # else:
@@ -160,7 +160,7 @@ def _prepare_data(
     score,predication = run(
                             X,
                             y,
-                            features_idx=feat_idx,
+                            features_group=feat_group,
                             preprocessor=preprocessor,
                             second_transformer=second_transformer,
                             regressor_type=regressor_type,
@@ -176,7 +176,7 @@ def _prepare_data(
 
 def run(
     X, y, 
-    features_idx: Optional[dict[str, list[int]]],
+    features_group: Optional[dict[str, list[int]]],
     preprocessor: Union[ColumnTransformer, Pipeline], 
     second_transformer:str, 
     regressor_type: str,
@@ -245,10 +245,10 @@ def run(
         else:
             print("No hyperparameter optimization")
             if isinstance(regressor_type, dict):
-                kernel = _get_gp_kernel(regressor_type, idx=features_idx)
+                kernel = _get_gp_kernel(regressor_type, idx=features_group)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type, feat_idx=features_idx)
+                model = optimized_models(regressor_type, feat_group=features_group)
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -263,8 +263,8 @@ def run(
             # y = y.ravel()
             y = y.flatten()
             return_importance = False if "GP" in regressor_type else True
-            scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=return_importance, return_indices=False)
-            # scores, predictions = pyro_cross_validate_regressor(regressor, X, y, cv_outer)
+            # scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=return_importance, return_indices=False)
+            scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices

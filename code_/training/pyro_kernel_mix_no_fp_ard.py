@@ -314,7 +314,7 @@ def run_inference(gp_model,
 class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
-        feat_idx=None,
+        feat_group=None,
         num_samples=200,
         warmup_steps=200,
         num_chains=1,
@@ -322,7 +322,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         use_cuda=False,
         random_state=42,
     ):
-        self.feat_idx = feat_idx
+        self.feat_group = feat_group
         self.num_samples = num_samples
         self.warmup_steps = warmup_steps
         self.num_chains = num_chains
@@ -334,9 +334,14 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self._gp_model = None
         self._samples = None
         self._predictive = None
-
     def fit(self, X_train, y_train):
         if isinstance(X_train, pd.DataFrame):
+            self.feat_idx = {
+                        'fp': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp")] if self.feat_group.get("fp") else None,
+                        'count': [X_train.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
+                    }
+
+            self.count_feat_name_idx = {c: X_train.columns.get_loc(c) for c in self.feat_group.get("count")} if self.feat_group.get("count") else {}
             X_train = X_train.to_numpy()
         if isinstance(y_train, (pd.DataFrame, pd.Series)):
             y_train = y_train.to_numpy()
@@ -385,7 +390,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
             f_loc, f_var = self._gp_model(X_new, full_cov=False, noiseless=False)
             
             # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
-            f_scale = f_var.clamp(min=1e-6).sqrt()
+            f_scale = f_var.sqrt()
 
             # Sample observations
             pyro.sample(
@@ -434,3 +439,32 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         return {k: self._samples.get(k) for k in var_names}
     
+    def _get_lengthscale(self):
+        summary = {}
+
+        if "kernel.kern1.lengthscale" in self._samples:
+            ls_count = (
+                self._samples["kernel.kern1.lengthscale"]
+                .float()
+                .cpu()
+                .numpy()
+            ) 
+
+            assert self.count_feat_name_idx is not None, "Feature indices not captured during fit."
+            assert len(self.count_feat_name_idx) == ls_count.shape[1], \
+                f"Count feature size mismatch: {len(self.count_feat_name_idx)} names vs {ls_count.shape[1]} dims."
+
+            for name, idx in self.count_feat_name_idx.items():
+                summary[name] = ls_count[:, idx]
+
+        if "kernel.kern0.lengthscale" in self._samples:
+            summary["fp"] = (
+                self._samples["kernel.kern0.lengthscale"]
+                .float()
+                .cpu()
+                .numpy()
+            )
+        else:
+            summary["fp"] = None
+
+        return summary

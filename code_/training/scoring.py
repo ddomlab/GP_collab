@@ -134,59 +134,55 @@ precision_scorer = make_scorer(precision_score, greater_is_better=True)
 
 def process_scores(
     scores: dict[int, dict[str, float]],
-    ) -> dict[Union[int, str], dict[str, float]]:
-        # print(scores)
-        # 'test_roc_auc'
-        first_key = list(scores.keys())[0]
-        score_types: list[str] = [
-                key for key in scores[first_key].keys() if key.startswith("test_")
-            ]
+) -> dict[Union[int, str], dict[str, float]]:
+    
+    first_key = list(scores.keys())[0]
+    
+    score_types: list[str] = [
+        key for key in scores[first_key].keys() 
+        if key.startswith("test_") and "lengthscale" not in key
+    ]
 
-        arr = np.array(scores[42]["test_r2"])
-        if arr.ndim > 1 and arr.shape[1] > 1:
-
-            avg_r2 = np.round(np.mean(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
-            stdev_r2 = np.round(np.std(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
-            print("Average scores:\t",
-                # f"r: {avg_r}±{stdev_r}\t",
-                f"r2: {avg_r2}±{stdev_r2}")
-            
-            avgs: list[float] = [
-                np.mean(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-            ]
-            stdevs: list[float] = [
-                np.std(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
-            ]
-            # print(avgs)
-        else:
-            avg_rmse = round(np.mean([seed["test_rmse"] for seed in scores.values()]), 2)
-            stdev_rmse = round(np.std([seed["test_rmse"] for seed in scores.values()]), 2)
-            avg_r2 = round(np.mean([seed["test_r2"] for seed in scores.values()]), 2)
-            stdev_r2 = round(np.std([seed["test_r2"] for seed in scores.values()]), 2)
-            print("Average scores:\t",
-                f"rmse: {-avg_rmse}±{stdev_rmse}\t",
-                f"r2: {avg_r2}±{stdev_r2}")
-
-
-            avgs: list[float] = [
-                np.mean([seed[score] for seed in scores.values()]) for score in score_types
-            ]
-            stdevs: list[float] = [
-                np.std([seed[score] for seed in scores.values()]) for score in score_types
-            ]
-
-
-        score_types: list[str] = [score.replace("test_", "") for score in score_types]
-        for score, avg, stdev in zip(score_types, avgs, stdevs ):
-            scores[f"{score}_avg"] = abs(avg) if score in ["rmse", "mae"] else avg
-            scores[f"{score}_stdev"] = stdev
+    arr = np.array(scores[first_key]["test_r2"])
+    
+    if arr.ndim > 1 and arr.shape[1] > 1:
+        avg_r2 = np.round(np.mean(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
+        stdev_r2 = np.round(np.std(np.vstack([arr for seed in scores.values() for arr in seed["test_r2"]]), axis=0), 3)
+        print("Average scores:\t", f"r2: {avg_r2}±{stdev_r2}")
         
-        if arr.ndim > 1 and arr.shape[1] > 1:
-            for score in score_types:
-                scores[f"{score}_avg_aggregate"] = np.mean(scores[f"{score}_avg"])
-                scores[f"{score}_stdev_aggregate"] = np.mean(scores[f"{score}_stdev"])
+        avgs: list[float] = [
+            np.mean(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
+        ]
+        stdevs: list[float] = [
+            np.std(np.vstack([arr for seed in scores.values() for arr in seed[score]]), axis=0) for score in score_types
+        ]
+    else:
+        avg_rmse = round(np.mean([seed["test_rmse"] for seed in scores.values()]), 2)
+        stdev_rmse = round(np.std([seed["test_rmse"] for seed in scores.values()]), 2)
+        avg_r2 = round(np.mean([seed["test_r2"] for seed in scores.values()]), 2)
+        stdev_r2 = round(np.std([seed["test_r2"] for seed in scores.values()]), 2)
+        print("Average scores:\t",
+            f"rmse: {abs(avg_rmse)}±{stdev_rmse}\t",
+            f"r2: {avg_r2}±{stdev_r2}")
 
-        return scores
+        avgs: list[float] = [
+            np.mean([seed[score] for seed in scores.values()]) for score in score_types
+        ]
+        stdevs: list[float] = [
+            np.std([seed[score] for seed in scores.values()]) for score in score_types
+        ]
+
+    clean_score_types: list[str] = [score.replace("test_", "") for score in score_types]
+    for score, avg, stdev in zip(clean_score_types, avgs, stdevs):
+        scores[f"{score}_avg"] = abs(avg) if score in ["rmse", "mae"] else avg
+        scores[f"{score}_stdev"] = stdev
+    
+    if arr.ndim > 1 and arr.shape[1] > 1:
+        for score in clean_score_types:
+            scores[f"{score}_avg_aggregate"] = np.mean(scores[f"{score}_avg"])
+            scores[f"{score}_stdev_aggregate"] = np.mean(scores[f"{score}_stdev"])
+
+    return scores
 
 
 def _average_ls(ls_data: Dict) -> None:
@@ -409,15 +405,12 @@ def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls:
 
     # Predict
     y_pred = model.predict(X_test)
-    if return_ls: 
-        scores["lengthscale"] = model.regressor.regressor._get_latent_values(["kernel.kern0.lengthscale",
-                                                        "kernel.kern1.lengthscale",])
-    # Compute scoring: scoring[name] is a scorer from make_scorer
     scores = {}
+    if return_ls: 
+        scores["lengthscale"] = model.named_steps["regressor"].regressor_._get_lengthscale()
+    # Compute scoring: scoring[name] is a scorer from make_scorer
     for name, scorer in scoring.items():
         scores[name] = scorer(y_test, y_pred)
-
-    # Optional: GP lengthscale summary
 
     return test_idx, y_pred, scores
 
@@ -454,28 +447,30 @@ def gp_cross_validate(
         predictions[test_idx] = y_pred
 
         for key, val in fold_scores.items():
+            # print(val)
             if key == "lengthscale":
-                for ls_name, ls_val in val.items():
-
-                    scores[f"test_lengthscale_{ls_name}"].append(ls_val)
+                scores[f"test_lengthscale"].append(val)
             else:
                 scores[f"test_{key}"].append(val)
-
+                
     # Return: (Scores Dict, Single Prediction Array)
+    print("style of score",scores["test_r2"])
+    print("style of score",scores["test_rmse"])
+    print("style of score",scores["test_mae"])
     return scores, predictions
 
 
-def pyro_cross_validate_regressor(
+def gp_cross_validate_regressor(
     regressor, X, y, cv, return_ls: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
-        scorers = {
-            "spearman_r": spearman_scorer,
-            "rmse": rmse_scorer,
-            "mae": mae_scorer,
-            "r2": r2_scorer,
-        }
 
+        scorers = {
+            "rmse": root_mean_squared_error,
+            "mae": mean_absolute_error,
+            "r2": r2_score,
+            }
+            
         score, predictions = gp_cross_validate(
             regressor,
             X,
@@ -631,6 +626,5 @@ def get_prediction_scores(y_true, y_pred, score_set:str='test'):
         # f"{score_set}_kendall_r": kendalltau(y_test, y_pred)[0],
         # f"{score_set}_kendall_p_value": kendalltau(y_test, y_pred)[1],
     }
-
 
 
