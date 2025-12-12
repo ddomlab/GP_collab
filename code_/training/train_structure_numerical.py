@@ -131,7 +131,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Monomer"],
+                polymer_unit=["polymers"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
