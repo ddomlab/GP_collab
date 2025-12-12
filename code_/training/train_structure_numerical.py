@@ -83,7 +83,7 @@ def main_structural_numerical(
 if __name__ == "__main__":
     PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_pervaporation_membranes_wang")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "flux_data_imputed")
 
     # args = parse_arguments()
 
