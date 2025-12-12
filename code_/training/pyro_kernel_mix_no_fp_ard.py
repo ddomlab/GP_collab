@@ -155,7 +155,8 @@ def run_inference(gp_model,
         nuts_kernel,
         num_samples=num_samples,
         warmup_steps=warmup_steps,
-        num_chains=num_chains
+        num_chains=num_chains,
+        disable_progbar=True
     )
 
     mcmc.run()
