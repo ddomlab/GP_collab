@@ -120,7 +120,7 @@ class SumMultipleWithVariance(pk.Kernel):
 
 class MixingKernelPyro:
     def __init__(self, feat_idx, variance=None):
-        self.fp_idx = feat_idx.get("fp") or []
+        self.fp_idx = feat_idx.get("fp1") or []
         self.cont_idx = feat_idx.get("count") or []
         self.variance = variance
 
@@ -147,7 +147,7 @@ class MixingKernelPyro:
 
 class GPMixPyro(gp.models.GPRegression):
     def __init__(self, X, y, feat_idx):
-        self.fp_dim = len(feat_idx.get("fp") or [])
+        self.fp_dim = len(feat_idx.get("fp1") or [])
         self.cont_dim = len(feat_idx.get("count") or [])
         self.kernel_builder = MixingKernelPyro(feat_idx)
         kernel = self.kernel_builder.build()
@@ -238,7 +238,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def fit(self, X_train, y_train):
         if isinstance(X_train, pd.DataFrame):
             self.feat_idx = {
-                        'fp': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp")] if self.feat_group.get("fp") else None,
+                        'fp1': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp1")] if self.feat_group.get("fp1") else None,
                         'count': [X_train.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
                     }
 
@@ -359,13 +359,13 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
                 summary[name] = ls_count[:, idx]
 
         if "kernel.kern0.lengthscale" in self._samples:
-            summary["fp"] = (
+            summary["fp1"] = (
                 self._samples["kernel.kern0.lengthscale"]
                 .float()
                 .cpu()
                 .numpy()
             )
         else:
-            summary["fp"] = None
+            summary["fp1"] = None
 
         return summary
