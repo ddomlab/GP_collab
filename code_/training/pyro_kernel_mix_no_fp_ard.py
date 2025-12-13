@@ -69,6 +69,17 @@ class ProductWithVariance(pk.Product):
         return self.variance * base_val
 
 
+class SumWithVariance(pk.Sum):
+    def __init__(self, kern0, kern1, variance=None):
+        super().__init__(kern0=kern0, kern1=kern1)
+
+        variance = torch.tensor(1.0) if variance is None else variance
+        self.variance = PyroParam(variance, constraints.positive)
+
+    def forward(self, X, Z=None, diag=False):
+        base_val = super().forward(X, Z, diag)
+        return self.variance * base_val
+
 
 class MixingKernelPyro:
     def __init__(self, feat_idx, variance=None):
@@ -94,7 +105,7 @@ class MixingKernelPyro:
                 input_dim=len(self.cont_idx),
                 active_dims=self.cont_idx
             )
-        return ProductWithVariance(k_fp, k_cont, variance=self.variance)
+        return SumWithVariance(k_fp, k_cont, variance=self.variance)
 
 
 class GPMixPyro(gp.models.GPRegression):
@@ -162,154 +173,6 @@ def run_inference(gp_model,
     mcmc.run()
     return mcmc.get_samples(num_samples=num_drawn_samples)
 
-
-# ----------------------------------------------------------------------
-# Posterior Prediction
-# ----------------------------------------------------------------------
-
-# def predict_posterior(X_train, y_train, X_test, samples, kernel_builder):
-#     mean_list = []
-#     std_list = []
-
-#     if isinstance(X_test, torch.Tensor) and X_test.ndim == 1:
-#         X_test = X_test.unsqueeze(0)
-
-#     num_draws = samples["sigma_signal"].shape[0] if "sigma_signal" in samples else len(next(iter(samples.values())))
-
-#     fp_dim = len(kernel_builder.fp_idx)
-#     cont_dim = len(kernel_builder.cont_idx)
-
-#     for i in range(num_draws):
-#         # Note: If using set_prior, param names match kernel structure
-#         # e.g. "kernel.variance", "noise", "kernel.kern0.lengthscale"
-        
-#         # Handling different naming conventions based on how samples were returned
-#         if "kernel.variance" in samples:
-#             outputscale_variance = samples["kernel.variance"][i]
-#         else:
-#             sigma_signal = samples.get("sigma_signal", None)
-#             if sigma_signal is not None:
-#                 outputscale_variance = sigma_signal[i].pow(2)
-#             else:
-#                 outputscale_variance = torch.tensor(1.0)
-
-#         if "noise" in samples:
-#             obs_noise_variance = samples["noise"][i]
-#         else:
-#             obs_noise_variance = samples.get("obs_noise_std", torch.tensor(0.1))[i].pow(2)
-
-#         kernel = kernel_builder.build()
-#         kernel.variance = outputscale_variance
-
-#         if fp_dim > 0 and cont_dim > 0:
-#             kernel.kern0.lengthscale = samples["kernel.kern0.lengthscale"][i]
-#             kernel.kern1.lengthscale = samples["kernel.kern1.lengthscale"][i]
-#         elif fp_dim > 0:
-#             kernel.lengthscale = samples["kernel.lengthscale"][i]
-#         elif cont_dim > 0:
-#             kernel.lengthscale = samples["kernel.lengthscale"][i]
-
-#         gpmodel = gp.models.GPRegression(
-#             X_train,
-#             y_train,
-#             kernel,
-#             noise=obs_noise_variance
-#         )
-
-#         f_dist = gpmodel(X_test, full_cov=False)
-
-#         if isinstance(f_dist, tuple):
-#             mean, var = f_dist
-#         else:
-#             mean = f_dist.mean
-#             var = f_dist.variance
-
-#         mean_list.append(mean)
-#         std_list.append(var.sqrt())
-
-#     mean_stack = torch.stack(mean_list)
-#     std_stack = torch.stack(std_list)
-
-#     mean_pred = mean_stack.mean(dim=0)
-#     std_pred = std_stack.mean(dim=0)
-
-#     return mean_pred, std_pred
-
-# ----------------------------------------------------------------------
-# Sklearn Wrapper
-# ----------------------------------------------------------------------
-
-# class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
-#     def __init__(
-#         self,
-#         feat_idx=None,
-#         num_samples=500,
-#         warmup_steps=500,
-#         num_chains=1,
-#         num_drawn_samples=500,
-#         use_cuda=False,
-#         random_state=42,
-#     ):
-#         self.feat_idx = feat_idx
-#         self.num_samples = num_samples
-#         self.warmup_steps = warmup_steps
-#         self.num_chains = num_chains
-#         self.use_cuda = use_cuda
-#         self.random_state = random_state
-#         self.num_drawn_samples = num_drawn_samples
-
-#     def fit(self, X_train, y_train):
-#         if isinstance(X_train, pd.DataFrame):
-#             X_train = X_train.to_numpy()
-#         if isinstance(y_train, pd.DataFrame):
-#             y_train = y_train.to_numpy()
-
-#         X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
-#         y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
-
-#         if self.use_cuda and torch.cuda.is_available():
-#             X_t = X_t.cuda()
-#             y_t = y_t.cuda()
-
-#         self._X_train = X_t
-#         self._y_train = y_t
-
-#         self._gp_model = GPMixPyro(X_t, y_t, self.feat_idx)
-
-#         self._samples = run_inference(
-#             self._gp_model,
-#             num_samples=self.num_samples,
-#             warmup_steps=self.warmup_steps,
-#             num_chains=self.num_chains,
-#             random_state=self.random_state,
-#             num_drawn_samples=self.num_drawn_samples
-#         )
-
-#         self._is_fitted = True
-#         return self
-    
-#     def predict(self, X_test):
-#         if isinstance(X_test, pd.DataFrame):
-#             X_test = X_test.to_numpy()
-
-#         X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
-
-#         if X_t.ndim == 1:
-#             X_t = X_t.unsqueeze(0)
-
-#         if self.use_cuda and torch.cuda.is_available():
-#             X_t = X_t.cuda()
-
-#         mean_pred, std_pred = predict_posterior(
-#             self._X_train,
-#             self._y_train,
-#             X_t,
-#             self._samples,
-#             self._gp_model.kernel_builder
-#         )
-
-#         return mean_pred.detach().cpu().numpy()
-    
 
 
 class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
