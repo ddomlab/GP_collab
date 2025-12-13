@@ -81,6 +81,43 @@ class SumWithVariance(pk.Sum):
         return self.variance * base_val
 
 
+class SumMultipleWithVariance(pk.Kernel):
+    """
+    Sum of multiple kernels with a single shared variance,
+    in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
+    """
+    def __init__(self, *kernels, variance=None):
+        if len(kernels) < 2:
+            raise ValueError("At least two kernels are required")
+
+        # type checks
+        for k in kernels:
+            if not isinstance(k, pk.Kernel):
+                raise TypeError("All components must be Kernel instances")
+
+        # combine active_dims
+        active_dims = set()
+        for k in kernels:
+            active_dims |= set(k.active_dims)
+        active_dims = sorted(active_dims)
+
+        input_dim = len(active_dims)
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
+
+        for i, k in enumerate(kernels):
+            setattr(self, f"kern{i}", k)
+        self._kernels = kernels  # store in a list too
+
+        variance = torch.tensor(1.0) if variance is None else variance
+        self.variance = PyroParam(variance, constraints.positive)
+
+    def forward(self, X, Z=None, diag=False):
+        val = 0.0
+        for k in self._kernels:
+            val = val + k(X, Z, diag=diag)
+        return self.variance * val
+
+
 class MixingKernelPyro:
     def __init__(self, feat_idx, variance=None):
         self.fp_idx = feat_idx.get("fp") or []
@@ -105,7 +142,7 @@ class MixingKernelPyro:
                 input_dim=len(self.cont_idx),
                 active_dims=self.cont_idx
             )
-        return SumWithVariance(k_fp, k_cont, variance=self.variance)
+        return SumMultipleWithVariance(k_fp, k_cont, variance=self.variance)
 
 
 class GPMixPyro(gp.models.GPRegression):
