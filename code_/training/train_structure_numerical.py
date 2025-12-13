@@ -81,9 +81,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+    PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "flux_data_imputed")
 
     # args = parse_arguments()
 
