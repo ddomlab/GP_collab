@@ -68,17 +68,52 @@ class ProductWithVariance(pk.Product):
         base_val = super().forward(X, Z, diag)
         return self.variance * base_val
 
+class ProductMultipleWithVariance(pk.Kernel):
+    """
+    product of multiple kernels with a single shared variance,
+    in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
+    """
+    def __init__(self, *kernels, variance=None):
+        if len(kernels) < 2:
+            raise ValueError("At least two kernels are required")
 
-class SumWithVariance(pk.Sum):
-    def __init__(self, kern0, kern1, variance=None):
-        super().__init__(kern0=kern0, kern1=kern1)
+        # type checks
+        for k in kernels:
+            if not isinstance(k, pk.Kernel):
+                raise TypeError("All components must be Kernel instances")
+
+        # combine active_dims
+        active_dims = set()
+        for k in kernels:
+            active_dims |= set(k.active_dims)
+        active_dims = sorted(active_dims)
+
+        input_dim = len(active_dims)
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
+
+        for i, k in enumerate(kernels):
+            setattr(self, f"kern{i}", k)
+        self._kernels = kernels  # store in a list too
 
         variance = torch.tensor(1.0) if variance is None else variance
         self.variance = PyroParam(variance, constraints.positive)
 
     def forward(self, X, Z=None, diag=False):
-        base_val = super().forward(X, Z, diag)
-        return self.variance * base_val
+        val = 1.0
+        for k in self._kernels:
+            val = val * k(X, Z, diag=diag)
+        return self.variance * val
+
+# class SumWithVariance(pk.Sum):
+#     def __init__(self, kern0, kern1, variance=None):
+#         super().__init__(kern0=kern0, kern1=kern1)
+
+#         variance = torch.tensor(1.0) if variance is None else variance
+#         self.variance = PyroParam(variance, constraints.positive)
+
+#     def forward(self, X, Z=None, diag=False):
+#         base_val = super().forward(X, Z, diag)
+#         return self.variance * base_val
 
 
 class SumMultipleWithVariance(pk.Kernel):
@@ -173,7 +208,7 @@ class MixingKernelPyro:
             )
             kernels.append(k_cont)
             
-        return SumMultipleWithVariance(*kernels, variance=self.variance)
+        return ProductMultipleWithVariance(*kernels, variance=self.variance)
 
 # class GPMixPyro(gp.models.GPRegression):
 #     def __init__(self, X, y, feat_idx):
