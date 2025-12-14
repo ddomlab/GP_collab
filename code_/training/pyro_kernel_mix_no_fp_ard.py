@@ -208,7 +208,7 @@ class MixingKernelPyro:
             )
             kernels.append(k_cont)
             
-        return ProductMultipleWithVariance(*kernels, variance=self.variance)
+        return SumMultipleWithVariance(*kernels, variance=self.variance)
 
 # class GPMixPyro(gp.models.GPRegression):
 #     def __init__(self, X, y, feat_idx):
