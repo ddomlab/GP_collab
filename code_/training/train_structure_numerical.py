@@ -81,9 +81,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_pervaporation_membranes_wang")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
 
     # args = parse_arguments()
 
@@ -137,8 +137,8 @@ if __name__ == "__main__":
                 target_transformer='Standard',
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                # imputer="mean",
-                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                imputer="mean",
+                columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                 )
 
 
