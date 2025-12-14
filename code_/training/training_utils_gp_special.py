@@ -100,12 +100,37 @@ def train_regressor(
         return scores, predictions
         
 
+# def create_feature_groups(
+#     unrolled_feats: Optional[list[str]], 
+#     unroll_info: Union[dict, list, None], 
+#     numerical_feats: Optional[list[str]]
+# ) -> dict[str, list[str]]:
+#     feat_group = {}
+#     if unrolled_feats and unroll_info:
+#         units = []
+#         if isinstance(unroll_info, dict):
+#             units = unroll_info.get("unit_name", [])
+#         elif isinstance(unroll_info, list):
+#             for d in unroll_info:
+#                 u = d.get("unit_name", [])
+#                 units.extend(u) if isinstance(u, list) else units.append(u)
+
+#         for i, unit in enumerate(units, start=1):
+#             unit_cols = [col for col in unrolled_feats if col.startswith(f"{unit}_")]
+#             if unit_cols:
+#                 feat_group[f'fp{i}'] = unit_cols
+
+#     if numerical_feats:
+#         feat_group['count'] = numerical_feats
+#     return feat_group
+
 def create_feature_groups(
     unrolled_feats: Optional[list[str]], 
     unroll_info: Union[dict, list, None], 
     numerical_feats: Optional[list[str]]
 ) -> dict[str, list[str]]:
     feat_group = {}
+
     if unrolled_feats and unroll_info:
         units = []
         if isinstance(unroll_info, dict):
@@ -113,15 +138,19 @@ def create_feature_groups(
         elif isinstance(unroll_info, list):
             for d in unroll_info:
                 u = d.get("unit_name", [])
-                units.extend(u) if isinstance(u, list) else units.append(u)
+                if isinstance(u, list):
+                    units.extend(u)
+                else:
+                    units.append(u)
 
-        for i, unit in enumerate(units, start=1):
+        for unit in units:
             unit_cols = [col for col in unrolled_feats if col.startswith(f"{unit}_")]
             if unit_cols:
-                feat_group[f'fp{i}'] = unit_cols
+                feat_group[f'fp_{unit}'] = unit_cols
 
     if numerical_feats:
         feat_group['count'] = numerical_feats
+
     return feat_group
 
 

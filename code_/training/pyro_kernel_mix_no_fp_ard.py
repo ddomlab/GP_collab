@@ -118,69 +118,124 @@ class SumMultipleWithVariance(pk.Kernel):
         return self.variance * val
 
 
+# class MixingKernelPyro:
+#     def __init__(self, feat_idx, variance=None):
+#         self.fp_idx = feat_idx.get("fp1") or []
+#         self.cont_idx = feat_idx.get("count") or []
+#         self.variance = variance
+
+#     def build(self):
+        
+#         # FP kernel: one shared LS
+#         if len(self.fp_idx) > 0:
+#             # k_fp = TanimotoRBF(
+#             #     active_dims=self.fp_idx  # use full fp block but single LS
+#             # )
+#             k_fp = pk.RBF(
+#                 input_dim=len(self.fp_idx),
+#                 active_dims=self.fp_idx
+#             )
+
+#         # Continuous kernel still ARD
+#         if len(self.cont_idx) > 0:
+#             k_cont = pk.Matern32(
+#                 input_dim=len(self.cont_idx),
+#                 active_dims=self.cont_idx
+#             )
+#         return SumMultipleWithVariance(k_fp, k_cont, variance=self.variance)
+
 class MixingKernelPyro:
     def __init__(self, feat_idx, variance=None):
-        self.fp_idx = feat_idx.get("fp1") or []
-        self.cont_idx = feat_idx.get("count") or []
+        self.feat_idx = feat_idx
         self.variance = variance
 
     def build(self):
+        kernels = []
+        # Dynamically find all keys starting with fp_
+        fp_keys = [k for k in self.feat_idx.keys() if k.startswith("fp_")]
         
-        # FP kernel: one shared LS
-        if len(self.fp_idx) > 0:
-            # k_fp = TanimotoRBF(
-            #     active_dims=self.fp_idx  # use full fp block but single LS
-            # )
-            k_fp = pk.RBF(
-                input_dim=len(self.fp_idx),
-                active_dims=self.fp_idx
-            )
+        for key in fp_keys:
+            idx = self.feat_idx[key]
+            if idx:
+                # Using TanimotoRBF or RBF as per your preference
+                k_fp = pk.RBF(
+                    input_dim=len(idx),
+                    active_dims=idx
+                )
+                kernels.append(k_fp)
 
-        # Continuous kernel still ARD
-        if len(self.cont_idx) > 0:
+        # Add continuous kernel
+        cont_idx = self.feat_idx.get("count")
+        if cont_idx:
             k_cont = pk.Matern32(
-                input_dim=len(self.cont_idx),
-                active_dims=self.cont_idx
+                input_dim=len(cont_idx),
+                active_dims=cont_idx
             )
-        return SumMultipleWithVariance(k_fp, k_cont, variance=self.variance)
+            kernels.append(k_cont)
+            
+        return SumMultipleWithVariance(*kernels, variance=self.variance)
 
+# class GPMixPyro(gp.models.GPRegression):
+#     def __init__(self, X, y, feat_idx):
+#         self.fp_dim = len(feat_idx.get("fp1") or [])
+#         self.cont_dim = len(feat_idx.get("count") or [])
+#         self.kernel_builder = MixingKernelPyro(feat_idx)
+#         kernel = self.kernel_builder.build()
+#         super().__init__(X, y, kernel, jitter=1e-6)
 
+#         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
+#         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
+#         if self.fp_dim > 0 and self.cont_dim > 0:
+#             # fp block (scalar or 1-d)
+#             self.kernel.kern0.lengthscale = PyroSample(
+#                 dist.InverseGamma(5.0, 5.0)
+#             )
+#             # continuous block, ARD
+#             self.kernel.kern1.lengthscale = PyroSample(
+#                 dist.InverseGamma(5.0, 5.0)
+#                 .expand([self.cont_dim])
+#                 .to_event(1)
+#             )
+
+#         elif self.fp_dim > 0:
+#             # only fp kernel, one LS
+#             self.kernel.lengthscale = PyroSample(
+#                 dist.InverseGamma(5.0, 5.0)
+#             )
+
+#         elif self.cont_dim > 0:
+#             # only cont kernel, ARD over cont_dim
+#             self.kernel.lengthscale = PyroSample(
+#                 dist.InverseGamma(5.0, 5.0)
+#                 .expand([self.cont_dim])
+#                 .to_event(1)
+#             )
 class GPMixPyro(gp.models.GPRegression):
     def __init__(self, X, y, feat_idx):
-        self.fp_dim = len(feat_idx.get("fp1") or [])
-        self.cont_dim = len(feat_idx.get("count") or [])
+        self.feat_idx = feat_idx
         self.kernel_builder = MixingKernelPyro(feat_idx)
         kernel = self.kernel_builder.build()
         super().__init__(X, y, kernel, jitter=1e-6)
 
         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
-        if self.fp_dim > 0 and self.cont_dim > 0:
-            # fp block (scalar or 1-d)
-            self.kernel.kern0.lengthscale = PyroSample(
-                dist.InverseGamma(5.0, 5.0)
-            )
-            # continuous block, ARD
-            self.kernel.kern1.lengthscale = PyroSample(
-                dist.InverseGamma(5.0, 5.0)
-                .expand([self.cont_dim])
-                .to_event(1)
-            )
 
-        elif self.fp_dim > 0:
-            # only fp kernel, one LS
-            self.kernel.lengthscale = PyroSample(
-                dist.InverseGamma(5.0, 5.0)
-            )
-
-        elif self.cont_dim > 0:
-            # only cont kernel, ARD over cont_dim
-            self.kernel.lengthscale = PyroSample(
-                dist.InverseGamma(5.0, 5.0)
-                .expand([self.cont_dim])
-                .to_event(1)
-            )
-
+        # Dynamically assign lengthscales to all sub-kernels
+        fp_keys = [k for k in feat_idx.keys() if k.startswith("fp_")]
+        
+        for i, k_obj in enumerate(self.kernel._kernels):
+            target_kern = getattr(self.kernel, f"kern{i}")
+            
+            # Check if this kernel corresponds to one of the FP groups
+            if i < len(fp_keys):
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+            else:
+                # This is the 'count' kernel (last one added)
+                cont_dim = len(feat_idx.get("count") or [])
+                if cont_dim > 0:
+                    target_kern.lengthscale = PyroSample(
+                        dist.InverseGamma(5.0, 5.0).expand([cont_dim]).to_event(1)
+                    )
 
 # ----------------------------------------------------------------------
 # Inference Routine
@@ -236,14 +291,27 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self._samples = None
         self._predictive = None
     def fit(self, X_train, y_train):
-        if isinstance(X_train, pd.DataFrame):
-            self.feat_idx = {
-                        'fp1': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp1")] if self.feat_group.get("fp1") else None,
-                        'count': [X_train.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
-                    }
+        # if isinstance(X_train, pd.DataFrame):
+        #     self.feat_idx = {
+        #                 'fp1': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp1")] if self.feat_group.get("fp1") else None,
+        #                 'count': [X_train.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
+        #             }
 
-            self.count_feat_name_idx = {c: X_train.columns.get_loc(c) for c in self.feat_group.get("count")} if self.feat_group.get("count") else {}
+        #     self.count_feat_name_idx = {c: X_train.columns.get_loc(c) for c in self.feat_group.get("count")} if self.feat_group.get("count") else {}
+        #     X_train = X_train.to_numpy()
+        if isinstance(X_train, pd.DataFrame):
+            # Map all fp_{unit} and count to integer indices
+            self.feat_idx = {}
+            for key, cols in self.feat_group.items():
+                if cols:
+                    self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
+            
+            self.count_feat_name_idx = {
+                c: X_train.columns.get_loc(c) 
+                for c in self.feat_group.get("count", [])
+            }
             X_train = X_train.to_numpy()
+
         if isinstance(y_train, (pd.DataFrame, pd.Series)):
             y_train = y_train.to_numpy()
 
@@ -340,32 +408,51 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         return {k: self._samples.get(k) for k in var_names}
     
+    # def _get_lengthscale(self):
+    #     summary = {}
+
+    #     if "kernel.kern1.lengthscale" in self._samples:
+    #         ls_count = (
+    #             self._samples["kernel.kern1.lengthscale"]
+    #             .float()
+    #             .cpu()
+    #             .numpy()
+    #         ) 
+
+    #         assert self.count_feat_name_idx is not None, "Feature indices not captured during fit."
+    #         assert len(self.count_feat_name_idx) == ls_count.shape[1], \
+    #             f"Count feature size mismatch: {len(self.count_feat_name_idx)} names vs {ls_count.shape[1]} dims."
+
+    #         for name, idx in self.count_feat_name_idx.items():
+    #             summary[name] = ls_count[:, idx]
+
+    #     if "kernel.kern0.lengthscale" in self._samples:
+    #         summary["fp1"] = (
+    #             self._samples["kernel.kern0.lengthscale"]
+    #             .float()
+    #             .cpu()
+    #             .numpy()
+    #         )
+    #     else:
+    #         summary["fp1"] = None
+
+    #     return summary
     def _get_lengthscale(self):
-        summary = {}
+            summary = {}
+            fp_keys = [k for k in self.feat_idx.keys() if k.startswith("fp_")]
+            
+            # Extract FP lengthscales using their specific unit names
+            for i, key in enumerate(fp_keys):
+                param_name = f"kernel.kern{i}.lengthscale"
+                if param_name in self._samples:
+                    summary[key] = self._samples[param_name].float().cpu().numpy()
 
-        if "kernel.kern1.lengthscale" in self._samples:
-            ls_count = (
-                self._samples["kernel.kern1.lengthscale"]
-                .float()
-                .cpu()
-                .numpy()
-            ) 
+            # Extract continuous lengthscales
+            cont_kern_idx = len(fp_keys)
+            cont_param_name = f"kernel.kern{cont_kern_idx}.lengthscale"
+            if cont_param_name in self._samples:
+                ls_count = self._samples[cont_param_name].float().cpu().numpy()
+                for name, idx in self.count_feat_name_idx.items():
+                    summary[name] = ls_count[:, idx]
 
-            assert self.count_feat_name_idx is not None, "Feature indices not captured during fit."
-            assert len(self.count_feat_name_idx) == ls_count.shape[1], \
-                f"Count feature size mismatch: {len(self.count_feat_name_idx)} names vs {ls_count.shape[1]} dims."
-
-            for name, idx in self.count_feat_name_idx.items():
-                summary[name] = ls_count[:, idx]
-
-        if "kernel.kern0.lengthscale" in self._samples:
-            summary["fp1"] = (
-                self._samples["kernel.kern0.lengthscale"]
-                .float()
-                .cpu()
-                .numpy()
-            )
-        else:
-            summary["fp1"] = None
-
-        return summary
+            return summary
