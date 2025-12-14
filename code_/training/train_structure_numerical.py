@@ -81,9 +81,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+    PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "flux_data_imputed")
 
     # args = parse_arguments()
 
