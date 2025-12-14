@@ -81,9 +81,9 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Rg data with clusters aging imputed")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "Beyond molecular structure_seifrid_imputed")
 
     # args = parse_arguments()
 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Monomer"],
+                polymer_unit=["Donor", "Acceptor"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
