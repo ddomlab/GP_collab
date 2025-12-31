@@ -143,7 +143,7 @@ if __name__ == "__main__":
                 hyperparameter_optimization=False,
                 kernel_type={"fp":"TanimotoRBF",
                              "count":"RBF"},
-                kernel_mixing_method="product",
+                kernel_mixing_method="sum",
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                 )

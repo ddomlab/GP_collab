@@ -178,6 +178,8 @@ mixing_factory: dict = {
 
 kernel_factory: dict = {
     "TanimotoRBF": TanimotoRBF,
+    # "TanimotoMatern32": ,
+    # "TanimotoMatern52": ,
     "Tanimoto": Tanimoto,
     "RBF": pk.RBF,
     "Matern32": pk.Matern32,
