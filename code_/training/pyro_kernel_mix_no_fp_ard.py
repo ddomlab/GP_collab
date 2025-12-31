@@ -60,8 +60,8 @@ class TanimotoRBF(pk.Kernel):
 
 
 class Tanimoto(pk.Kernel):
-    def __init__(self, active_dims=None):
-        super().__init__(input_dim=len(active_dims), active_dims=active_dims)
+    def __init__(self, input_dim=None, active_dims=None):
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
 
     def _diag(self, X):
         """
