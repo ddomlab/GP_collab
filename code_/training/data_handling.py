@@ -55,26 +55,27 @@ def get_cv_splits(score_for_indices):
     return indices
 
 
-def get_model_name(model_info) -> str:
+def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str) -> str:
 
-    if isinstance(model_info, str):
+    if isinstance(regressor_name, str):
+        model_info = f'({regressor_name}_{kernel_type["fp"]}-{kernel_type["count"]}_{kernel_mixing_method})' if kernel_mixing_method else regressor_name
         return model_info
 
-    if isinstance(model_info, dict):
-        name = model_info.get('model', 'unknown-model')
-        kernel_info = model_info.get('kernel', {})
-        kernel_fp = kernel_info.get('fP', None)
-        kernel_count = kernel_info.get('count', None)
-        mixing = model_info.get('mixing', None)
+    # if isinstance(model_info, dict):
+    #     name = model_info.get('model', 'unknown-model')
+    #     kernel_info = model_info.get('kernel', {})
+    #     kernel_fp = kernel_info.get('fP', None)
+    #     kernel_count = kernel_info.get('count', None)
+    #     mixing = model_info.get('mixing', None)
 
-        if mixing is None:
-            active = 'fp' if kernel_fp else 'count'
-            kernel_name = kernel_fp or kernel_count
-            return f"{name}_{active}-{kernel_name}"
+    #     if mixing is None:
+    #         active = 'fp' if kernel_fp else 'count'
+    #         kernel_name = kernel_fp or kernel_count
+    #         return f"{name}_{active}-{kernel_name}"
 
-        return f"{name}_{mixing}-mix_{kernel_fp}-{kernel_count}"
+    #     return f"{name}_{mixing}-mix_{kernel_fp}-{kernel_count}"
 
-    raise TypeError(f"Unsupported model_info type: {type(model_info)}")
+    # raise TypeError(f"Unsupported model_info type: {type(model_info)}")
 
 
 
@@ -98,13 +99,14 @@ def _save(
         learning_curve:bool=False,
         special_file_name:Optional[str]=None,
         special_numerical_group:Optional[str]=None,
+        **kwargs,
         ) -> None:
     
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # === Case 1: numerical-only features ===
     short_num_feats = f"COUNT{special_numerical_group}" if special_numerical_group else "COUNT"
-    regressor_type = get_model_name(regressor_type)
+    regressor_type = get_model_name(regressor_type, kernel_type=kwargs.get("kernel_type", None), kernel_mixing_method=kwargs.get("kernel_mixing_method", None))
     if numerical_feats and representation is None:
         fname_root = f"({short_num_feats})_{regressor_type}"
 
@@ -192,6 +194,7 @@ def save_results(
                 special_file_name:Optional[str]=None,
                 special_numerical_group:Optional[str]=None,
                 TEST : bool =True,
+                **kwargs,
                  ) -> None:
     
     targets_dir: str = "-".join([feature_abbrev.get(target, target) for target in target_features])
@@ -217,23 +220,25 @@ def save_results(
     results_dir: Path = results_dir / "test" if TEST else results_dir
 
 
-    _save(scores=scores,
-          predictions=predictions,
-          ground_truth=ground_truth,
-          results_dir=results_dir,
-          feat_length_scale=feat_length_scale,
-          regressor_type=regressor_type,
-          imputer=imputer,
-          representation=representation,
-        #   pu_type=pu_type,
-          radius=radius,
-          vector=vector,
-          numerical_feats=numerical_feats,
-          hypop=hypop,
-          transform_type=transform_type,
-          target_transformer=target_transformer,
-          learning_curve=learning_curve,
-          special_file_name=special_file_name,
-          special_numerical_group=special_numerical_group
+    _save(
+        scores=scores,
+        predictions=predictions,
+        ground_truth=ground_truth,
+        results_dir=results_dir,
+        feat_length_scale=feat_length_scale,
+        regressor_type=regressor_type,
+        imputer=imputer,
+        representation=representation,
+    #   pu_type=pu_type,
+        radius=radius,
+        vector=vector,
+        numerical_feats=numerical_feats,
+        hypop=hypop,
+        transform_type=transform_type,
+        target_transformer=target_transformer,
+        learning_curve=learning_curve,
+        special_file_name=special_file_name,
+        special_numerical_group=special_numerical_group,
+        **kwargs
           )
 

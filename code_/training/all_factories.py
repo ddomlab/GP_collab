@@ -150,7 +150,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if "GPytorchMixMCMC" == model_name:
         return GPytorchMixMCMCRegressor(**kwargs)
     
-    if "GPMixMCMC" == model_name:
+    if "GpyroMCMC" == model_name:
         return GPMixMCMCRegressor(**kwargs)
     
     return None

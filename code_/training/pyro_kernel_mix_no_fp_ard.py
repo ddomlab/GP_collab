@@ -15,6 +15,8 @@ from pyro.nn import PyroSample
 from pyro.nn.module import PyroParam
 from torch.distributions import constraints
 
+
+
 def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     x1e = x1.unsqueeze(-2)
     x2e = x2.unsqueeze(-3)
@@ -29,8 +31,8 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 
 
 class TanimotoRBF(pk.Kernel):
-    def __init__(self, variance=None, lengthscale=None, active_dims=None):
-        super().__init__(input_dim=len(active_dims), active_dims=active_dims)
+    def __init__(self, variance=None, lengthscale=None, input_dim=None, active_dims=None):
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
         
         variance = torch.tensor(1.0) if variance is None else variance
         self.variance = PyroParam(variance, constraints.positive)
@@ -57,6 +59,32 @@ class TanimotoRBF(pk.Kernel):
         return  self.variance * torch.exp(-0.5 * (D / self.lengthscale)**2)
 
 
+class Tanimoto(pk.Kernel):
+    def __init__(self, active_dims=None):
+        super().__init__(input_dim=len(active_dims), active_dims=active_dims)
+
+    def _diag(self, X):
+        """
+        Calculates the diagonal part of covariance matrix on active features.
+        """
+        return torch.ones(X.size(0))
+
+    def forward(self, X, Z=None, diag=False):
+        if diag:
+            return self._diag(X)
+        if Z is None:
+            Z = X
+        X = self._slice_input(X)
+        Z = self._slice_input(Z)
+        if X.size(1) != Z.size(1):
+            raise ValueError("Inputs must have the same number of features.")
+
+        D = 1- weighted_tanimoto_distance(X, Z, eps=1e-6)
+        D.clamp_min_(0)
+        return  D
+
+
+
 class ProductWithVariance(pk.Product):
     def __init__(self, kern0, kern1, variance=None):
         super().__init__(kern0=kern0, kern1=kern1)
@@ -67,6 +95,7 @@ class ProductWithVariance(pk.Product):
     def forward(self, X, Z=None, diag=False):
         base_val = super().forward(X, Z, diag)
         return self.variance * base_val
+
 
 class ProductMultipleWithVariance(pk.Kernel):
     """
@@ -103,17 +132,6 @@ class ProductMultipleWithVariance(pk.Kernel):
         for k in self._kernels:
             val = val * k(X, Z, diag=diag)
         return self.variance * val
-
-# class SumWithVariance(pk.Sum):
-#     def __init__(self, kern0, kern1, variance=None):
-#         super().__init__(kern0=kern0, kern1=kern1)
-
-#         variance = torch.tensor(1.0) if variance is None else variance
-#         self.variance = PyroParam(variance, constraints.positive)
-
-#     def forward(self, X, Z=None, diag=False):
-#         base_val = super().forward(X, Z, diag)
-#         return self.variance * base_val
 
 
 class SumMultipleWithVariance(pk.Kernel):
@@ -153,36 +171,25 @@ class SumMultipleWithVariance(pk.Kernel):
         return self.variance * val
 
 
-# class MixingKernelPyro:
-#     def __init__(self, feat_idx, variance=None):
-#         self.fp_idx = feat_idx.get("fp1") or []
-#         self.cont_idx = feat_idx.get("count") or []
-#         self.variance = variance
+mixing_factory: dict = {
+    "product": ProductMultipleWithVariance,
+    "sum": SumMultipleWithVariance,
+} 
 
-#     def build(self):
-        
-#         # FP kernel: one shared LS
-#         if len(self.fp_idx) > 0:
-#             # k_fp = TanimotoRBF(
-#             #     active_dims=self.fp_idx  # use full fp block but single LS
-#             # )
-#             k_fp = pk.RBF(
-#                 input_dim=len(self.fp_idx),
-#                 active_dims=self.fp_idx
-#             )
-
-#         # Continuous kernel still ARD
-#         if len(self.cont_idx) > 0:
-#             k_cont = pk.Matern32(
-#                 input_dim=len(self.cont_idx),
-#                 active_dims=self.cont_idx
-#             )
-#         return SumMultipleWithVariance(k_fp, k_cont, variance=self.variance)
+kernel_factory: dict = {
+    "TanimotoRBF": TanimotoRBF,
+    "Tanimoto": Tanimoto,
+    "RBF": pk.RBF,
+    "Matern32": pk.Matern32,
+    "Matern52": pk.Matern52,
+}
 
 class MixingKernelPyro:
-    def __init__(self, feat_idx, variance=None):
+    def __init__(self, feat_idx, mixing_method:str, kerenl_method:dict, variance=None):
         self.feat_idx = feat_idx
         self.variance = variance
+        self.mixing_method = mixing_method
+        self.kerenl_method = kerenl_method
 
     def build(self):
         kernels = []
@@ -193,7 +200,7 @@ class MixingKernelPyro:
             idx = self.feat_idx[key]
             if idx:
                 # Using TanimotoRBF or RBF as per your preference
-                k_fp = pk.RBF(
+                k_fp = kernel_factory[self.kerenl_method["fp"]](
                     input_dim=len(idx),
                     active_dims=idx
                 )
@@ -202,53 +209,20 @@ class MixingKernelPyro:
         # Add continuous kernel
         cont_idx = self.feat_idx.get("count")
         if cont_idx:
-            k_cont = pk.Matern32(
+            k_cont = kernel_factory[self.kerenl_method["count"]](
                 input_dim=len(cont_idx),
                 active_dims=cont_idx
             )
             kernels.append(k_cont)
             
-        return ProductMultipleWithVariance(*kernels, variance=self.variance)
+        return mixing_factory[self.mixing_method](*kernels, variance=self.variance)
 
-# class GPMixPyro(gp.models.GPRegression):
-#     def __init__(self, X, y, feat_idx):
-#         self.fp_dim = len(feat_idx.get("fp1") or [])
-#         self.cont_dim = len(feat_idx.get("count") or [])
-#         self.kernel_builder = MixingKernelPyro(feat_idx)
-#         kernel = self.kernel_builder.build()
-#         super().__init__(X, y, kernel, jitter=1e-6)
 
-#         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
-#         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
-#         if self.fp_dim > 0 and self.cont_dim > 0:
-#             # fp block (scalar or 1-d)
-#             self.kernel.kern0.lengthscale = PyroSample(
-#                 dist.InverseGamma(5.0, 5.0)
-#             )
-#             # continuous block, ARD
-#             self.kernel.kern1.lengthscale = PyroSample(
-#                 dist.InverseGamma(5.0, 5.0)
-#                 .expand([self.cont_dim])
-#                 .to_event(1)
-#             )
-
-#         elif self.fp_dim > 0:
-#             # only fp kernel, one LS
-#             self.kernel.lengthscale = PyroSample(
-#                 dist.InverseGamma(5.0, 5.0)
-#             )
-
-#         elif self.cont_dim > 0:
-#             # only cont kernel, ARD over cont_dim
-#             self.kernel.lengthscale = PyroSample(
-#                 dist.InverseGamma(5.0, 5.0)
-#                 .expand([self.cont_dim])
-#                 .to_event(1)
-#             )
 class GPMixPyro(gp.models.GPRegression):
-    def __init__(self, X, y, feat_idx):
+    def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict):
         self.feat_idx = feat_idx
-        self.kernel_builder = MixingKernelPyro(feat_idx)
+        self.kernel_method = kernel_method
+        self.kernel_builder = MixingKernelPyro(feat_idx, mixing_method, self.kernel_method)
         kernel = self.kernel_builder.build()
         super().__init__(X, y, kernel, jitter=1e-6)
 
@@ -263,7 +237,10 @@ class GPMixPyro(gp.models.GPRegression):
             
             # Check if this kernel corresponds to one of the FP groups
             if i < len(fp_keys):
-                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+                if self.kernel_method["fp"].lower() == "tanimoto":
+                    continue
+                else:
+                    target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
             else:
                 # This is the 'count' kernel (last one added)
                 cont_dim = len(feat_idx.get("count") or [])
@@ -294,7 +271,7 @@ def run_inference(gp_model,
         num_samples=num_samples,
         warmup_steps=warmup_steps,
         num_chains=num_chains,
-        disable_progbar=True
+        disable_progbar=False
     )
 
     mcmc.run()
@@ -305,13 +282,15 @@ def run_inference(gp_model,
 class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
-        feat_group=None,
+        feat_group:dict,
         num_samples=200,
         warmup_steps=200,
         num_chains=1,
         num_drawn_samples=100,
         use_cuda=False,
         random_state=42,
+        kernel_mixing_method:str="product",
+        kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -320,20 +299,15 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         self.use_cuda = use_cuda
         self.random_state = random_state
         self.num_drawn_samples = num_drawn_samples
+        self.kernel_mixing_method = kernel_mixing_method
+        self.kernel_type = kernel_type
 
         self._is_fitted = False
         self._gp_model = None
         self._samples = None
         self._predictive = None
-    def fit(self, X_train, y_train):
-        # if isinstance(X_train, pd.DataFrame):
-        #     self.feat_idx = {
-        #                 'fp1': [X_train.columns.get_loc(c) for c in self.feat_group.get("fp1")] if self.feat_group.get("fp1") else None,
-        #                 'count': [X_train.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
-        #             }
 
-        #     self.count_feat_name_idx = {c: X_train.columns.get_loc(c) for c in self.feat_group.get("count")} if self.feat_group.get("count") else {}
-        #     X_train = X_train.to_numpy()
+    def fit(self, X_train, y_train):
         if isinstance(X_train, pd.DataFrame):
             # Map all fp_{unit} and count to integer indices
             self.feat_idx = {}
@@ -365,7 +339,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         # Pyro GP model with priors
 
-        self._gp_model = GPMixPyro(X_t, y_t, self.feat_idx)
+        self._gp_model = GPMixPyro(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type)
 
         # MCMC over gp_model.model
         samples = run_inference(
@@ -443,35 +417,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
         return {k: self._samples.get(k) for k in var_names}
     
-    # def _get_lengthscale(self):
-    #     summary = {}
 
-    #     if "kernel.kern1.lengthscale" in self._samples:
-    #         ls_count = (
-    #             self._samples["kernel.kern1.lengthscale"]
-    #             .float()
-    #             .cpu()
-    #             .numpy()
-    #         ) 
-
-    #         assert self.count_feat_name_idx is not None, "Feature indices not captured during fit."
-    #         assert len(self.count_feat_name_idx) == ls_count.shape[1], \
-    #             f"Count feature size mismatch: {len(self.count_feat_name_idx)} names vs {ls_count.shape[1]} dims."
-
-    #         for name, idx in self.count_feat_name_idx.items():
-    #             summary[name] = ls_count[:, idx]
-
-    #     if "kernel.kern0.lengthscale" in self._samples:
-    #         summary["fp1"] = (
-    #             self._samples["kernel.kern0.lengthscale"]
-    #             .float()
-    #             .cpu()
-    #             .numpy()
-    #         )
-    #     else:
-    #         summary["fp1"] = None
-
-    #     return summary
     def _get_lengthscale(self):
             summary = {}
             fp_keys = [k for k in self.feat_idx.keys() if k.startswith("fp_")]

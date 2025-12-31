@@ -32,37 +32,30 @@ def ensure_long_path(path: Path) -> Path:
     return path
 
 
-def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
-
-    dataset_path = dataset_basket / paper / f"{dataset_name}.pkl"
-    dataset_path = ensure_long_path(dataset_path)
-
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
-
-    dataset = pd.read_pickle(dataset_path)
-
-    if paper == "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices":
-        features = [
+DATASET_CONFIG = {
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": {
+        "features": [
             "HOMO_D (eV)", "LUMO_D (eV)", "Eg_D (eV)", "Ehl_D (eV)",
             "HOMO_A (eV)", "LUMO_A (eV)", "Eg_A (eV)", "Ehl_A (eV)",
             "D:A ratio (m/m)", "solvent additive conc. (% v/v)",
             "temperature of thermal annealing",
             "HTL energy level (eV)", "ETL energy level (eV)"
-        ]
-        target = ['calculated PCE (%)']
+        ],
+        "target": ["calculated PCE (%)"],
+    },
 
-    elif paper == "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation":
-        features = [
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": {
+        "features": [
             "Xn", "Mw (g/mol)", "PDI", "Concentration (mg/ml)",
             "Temperature SANS/SLS/DLS/SEC (K)",
             "polymer dP", "polymer dD", "polymer dH",
             "solvent dP", "solvent dD", "solvent dH"
-        ]
-        target = ['log Rg (nm)']
+        ],
+        "target": ["log Rg (nm)"],
+    },
 
-    elif paper == "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery":
-        features = [
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": {
+        "features": [
             'Selective_layer_thickness',
             'Filler_size',
             'Filler_concentration',
@@ -73,17 +66,16 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             'Mass_ratio(A/B)',
             'Experimental_temperature',
             'Downstream_pressure',
-        ]
-        if dataset_name == "separation_data_imputed":
-            target = ['log (Separation factor)']
-        else:
-            target = ['log (Total flux)']
+        ],
+        "target": {
+            "separation_data_imputed": ["log (Separation factor)"],
+            "flux_data_imputed": ["log (Total flux)"]
+        }
+    },
 
-    elif paper == "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning":
-        features = [
-            'P_MW',
-            'surface tension (mN/m)',
-            'P_wt%',
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": {
+        "features": [
+            'P_MW','surface tension (mN/m)','P_wt%',
             'pore maker molecular weight (Da)',
             'pore maker wt% (pore maker to total weight)',
             'additive wt% (additive to polymer)',
@@ -92,34 +84,53 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
             'oraganic compound concentration (mg/L)',
             'organic compound size (Da)',
             'foulant concentration (mg/L)',
-        ]
-        target = [
-            'water permeability (LMH/bar)',
+        ],
+        "target": [
+            r'water permeability (LMH/bar)',
             'organic compound removal (%)',
             'flux decline ratio (%)',
             'flux recovery ratio (%)',
             'reversible fouling ratio (%)',
             'irreversible fouling ratio(%)',
-        ]
+        ],
+    },
 
-    elif paper == "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation":
-        features = [
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": {
+        "features": [
             'Contact angle θ （°）',
-            'Thickness ℓ (um)', 
+            'Thickness ℓ (um)',
             'xw (wt%)',
             'Temperature (°C)',
             'Permeate pressure (mbar)',
             'Solvent solubility parameter （MPa1/2）',
-        ]
-        target = ['log (Total flux)', 'log (Separation factor)']
+        ],
+        "target": ['log (Total flux)', 'log (Separation factor)'],
+    }
+}
 
-    else:
-        raise ValueError(
-            f"No predefined features found for paper: '{paper}'. "
-            "Please specify numerical features manually."
-        )
+
+def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
+    dataset_path = ensure_long_path(dataset_basket / paper / f"{dataset_name}.pkl")
+
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
+
+    dataset = pd.read_pickle(dataset_path)
+
+    if paper not in DATASET_CONFIG:
+        raise ValueError(f"No predefined features found for paper '{paper}'")
+
+    entry = DATASET_CONFIG[paper]
+    features = entry["features"]
+
+    target = (
+        entry["target"].get(dataset_name)
+        if isinstance(entry["target"], dict)
+        else entry["target"]
+    )
 
     return dataset, features, target
+
 
 
 def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:

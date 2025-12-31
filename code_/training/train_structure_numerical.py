@@ -8,12 +8,12 @@ import sys
 from data_handling import save_results
 from utils import parse_arguments
 
-import sys
+# import sys
 
-sys.modules.setdefault("numpy._core",         np.core)
-sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+# sys.modules.setdefault("numpy._core",         np.core)
+# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -41,6 +41,7 @@ def main_structural_numerical(
     radius:int=None,
     vector:str=None,
     imputer:Optional[str]=None,
+    **kwargs,
 ) -> None:
 
     structural_features, unroll_single_feat = get_structural_info(representation,polymer_unit,radius,vector)
@@ -58,6 +59,7 @@ def main_structural_numerical(
                                             hyperparameter_optimization=hyperparameter_optimization,
                                             imputer=imputer,
                                             Test=TEST,
+                                            **kwargs,
                                             )
   
     save_results(scores,
@@ -75,15 +77,17 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='product_chain1',
+                # special_file_name='product_chain1',
+                **kwargs,
                 )
 
 
 
 if __name__ == "__main__":
-    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+    dataset_name = "Rg data with clusters aging imputed"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, "cleaned_dataset_Ultrafiltration Membrane")
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     # args = parse_arguments()
 
@@ -127,18 +131,21 @@ if __name__ == "__main__":
                 representation="ECFP",
                 radius=3,
                 vector="count",
-                regressor_type="GPMixMCMC",
+                regressor_type="GpyroMCMC",
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["polymer"],
+                polymer_unit=["Monomer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                imputer="mean",
-                columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                kernel_type={"fp":"TanimotoRBF",
+                             "count":"Matern32"},
+                kernel_mixing_method="product",
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                 )
 
 

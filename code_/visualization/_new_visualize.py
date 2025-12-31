@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import krippendorff
+# import krippendorff
 import pingouin as pg
 from visualization_setting import set_plot_style, save_img_path, ensure_long_path
 
@@ -306,12 +306,12 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     all_shap_fi: List[Dict[str, float]] = []
 
     # Collect model importances
-    if isinstance(scores_data.get("feature_importance_model"), list):
-        all_model_fi.extend(scores_data["feature_importance_model"])
+    if isinstance(scores_data.get("feature_importance_MDI"), list):
+        all_model_fi.extend(scores_data["feature_importance_MDI"])
     else:
         for value in scores_data.values():
-            if isinstance(value, dict) and isinstance(value.get("feature_importance_model"), list):
-                all_model_fi.extend(value["feature_importance_model"])
+            if isinstance(value, dict) and isinstance(value.get("feature_importance_MDI"), list):
+                all_model_fi.extend(value["feature_importance_MDI"])
 
     # Collect SHAP importances
     if isinstance(scores_data.get("feature_importance_SHAP"), list):
@@ -369,69 +369,69 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
     # ------------------------------------------------------------
 
     # ----- NEW VIOLIN + SWARM PLOT SECTION -----
-    fig, ax = plt.subplots(figsize=figsize)
+    # fig, ax = plt.subplots(figsize=figsize)
 
-    # Build long-format dataframe
-    plot_data = []
+    # # Build long-format dataframe
+    # plot_data = []
 
-    if not df_model.empty:
-        for feat in features:
-            for val in df_model[feat].dropna().values:
-                plot_data.append([feat, val, "Model Importance"])
+    # if not df_model.empty:
+    #     for feat in features:
+    #         for val in df_model[feat].dropna().values:
+    #             plot_data.append([feat, val, "Model Importance"])
 
-    if not df_shap.empty:
-        for feat in features:
-            for val in df_shap[feat].dropna().values:
-                plot_data.append([feat, val, "SHAP Importance"])
+    # if not df_shap.empty:
+    #     for feat in features:
+    #         for val in df_shap[feat].dropna().values:
+    #             plot_data.append([feat, val, "SHAP Importance"])
 
-    plot_df = pd.DataFrame(plot_data, columns=["Feature", "Value", "Type"])
+    # plot_df = pd.DataFrame(plot_data, columns=["Feature", "Value", "Type"])
 
     # Colors: red for model, blue for shap
-    palette = {
-        "Model Importance": "#BB3A5A",  # red
-        "SHAP Importance": "#1f77b4",   # blue
-    }
+    # palette = {
+    #     "Model Importance": "#BB3A5A",  # red
+    #     "SHAP Importance": "#1f77b4",   # blue
+    # }
 
-    # VIOLIN PLOTS (side-by-side)
-    sns.violinplot(
-        data=plot_df,
-        x="Feature",
-        y="Value",
-        hue="Type",
-        palette=palette,
-        inner=None,
-        linewidth=1.2,
-        cut=0,
-        dodge=True,
-        ax=ax,
-    )
+    # # VIOLIN PLOTS (side-by-side)
+    # sns.violinplot(
+    #     data=plot_df,
+    #     x="Feature",
+    #     y="Value",
+    #     hue="Type",
+    #     palette=palette,
+    #     inner=None,
+    #     linewidth=1.2,
+    #     cut=0,
+    #     dodge=True,
+    #     ax=ax,
+    # )
 
-    # SWARMPLOTS
-    sns.swarmplot(
-        data=plot_df,
-        x="Feature",
-        y="Value",
-        hue="Type",
-        dodge=True,
-        palette=palette, 
-        size=3,
-        alpha=0.7,
-        ax=ax,
-    )
+    # # SWARMPLOTS
+    # sns.swarmplot(
+    #     data=plot_df,
+    #     x="Feature",
+    #     y="Value",
+    #     hue="Type",
+    #     dodge=True,
+    #     palette=palette, 
+    #     size=3,
+    #     alpha=0.7,
+    #     ax=ax,
+    # )
 
-    # Fix duplicate legends (remove swarm's entries)
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles[:2], labels[:2], frameon=False)
+    # # Fix duplicate legends (remove swarm's entries)
+    # handles, labels = ax.get_legend_handles_labels()
+    # ax.legend(handles[:2], labels[:2], frameon=False)
 
-    ax.set_xticklabels(features, rotation=75, ha="right")
-    ax.set_ylabel("Feature Importance")
-    ax.set_xlabel("Top 15 Features")
-    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    # ax.set_xticklabels(features, rotation=75, ha="right")
+    # ax.set_ylabel("Feature Importance")
+    # ax.set_xlabel("Top 15 Features")
+    # ax.grid(axis="y", linestyle="--", alpha=0.4)
 
-    plt.tight_layout()
-    save_img_path(save_loc / "feature importance", f"feature_importance_top15_{file_extension}.png")
-    # plt.show()
-    plt.close()
+    # plt.tight_layout()
+    # save_img_path(save_loc / "feature importance", f"feature_importance_top15_{file_extension}.png")
+    # # plt.show()
+    # plt.close()
     return df_model, df_shap
 
 
@@ -440,52 +440,75 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 
 
 
-def krippendorff_alpha_by_feature(df, save_loc, file_extension, n_seeds=7, folds_per_seed=5, figsize=(12,6)):
-    total_needed = n_seeds * folds_per_seed
+# def krippendorff_alpha_by_feature(df, save_loc, file_extension, n_seeds=7, folds_per_seed=5, figsize=(12,6)):
+#     total_needed = n_seeds * folds_per_seed
 
-    if len(df) < total_needed:
-        raise ValueError(f"Not enough rows: need {total_needed}, but got {len(df)}")
+#     if len(df) < total_needed:
+#         raise ValueError(f"Not enough rows: need {total_needed}, but got {len(df)}")
 
-    # Ensure we use exactly N rows (or you can shuffle before slicing)
-    df_cut = df.iloc[:total_needed]
+#     # Ensure we use exactly N rows (or you can shuffle before slicing)
+#     df_cut = df.iloc[:total_needed]
 
-    alphas = {}
+#     alphas = {}
 
-    # Loop over all features
-    for feature in df_cut.columns:
-        values = df_cut[feature].values
+#     # Loop over all features
+#     for feature in df_cut.columns:
+#         values = df_cut[feature].values
 
-        # Reshape rows into (n_seeds × folds_per_seed)
-        ratings = values.reshape(n_seeds, folds_per_seed)
+#         # Reshape rows into (n_seeds × folds_per_seed)
+#         ratings = values.reshape(n_seeds, folds_per_seed)
 
-        # Compute alpha
-        try:
-            alpha = krippendorff.alpha(
-                reliability_data=ratings,
-                level_of_measurement='interval'
-            )
-        except Exception:
-            alpha = np.nan
+#         # Compute alpha
+#         try:
+#             alpha = krippendorff.alpha(
+#                 reliability_data=ratings,
+#                 level_of_measurement='interval'
+#             )
+#         except Exception:
+#             alpha = np.nan
 
-        alphas[feature] = alpha
+#         alphas[feature] = alpha
 
-    # Convert to DataFrame
-    alphas_df = pd.DataFrame({
-        "Feature": list(alphas.keys()),
-        "Alpha": list(alphas.values())
-    }).sort_values("Alpha", ascending=False)
+#     # Convert to DataFrame
+#     alphas_df = pd.DataFrame({
+#         "Feature": list(alphas.keys()),
+#         "Alpha": list(alphas.values())
+#     }).sort_values("Alpha", ascending=False)
 
-    # ---- Plot bar chart ----
-    plt.figure(figsize=figsize)
-    plt.bar(alphas_df["Feature"], alphas_df["Alpha"], color="#0b81a5")
-    plt.xticks(rotation=45, ha="right")
-    plt.ylabel("Krippendorff’s α")
-    # plt.title("Krippendorff’s Alpha for Each Feature")
-    plt.tight_layout()
-    save_img_path(save_loc / "feature importance", f"feature_krippendorff_stability_{file_extension}.png")
-    # plt.show()
-    plt.close()
-    return alphas_df
+#     # ---- Plot bar chart ----
+#     plt.figure(figsize=figsize)
+#     plt.bar(alphas_df["Feature"], alphas_df["Alpha"], color="#0b81a5")
+#     plt.xticks(rotation=45, ha="right")
+#     plt.ylabel("Krippendorff’s α")
+#     # plt.title("Krippendorff’s Alpha for Each Feature")
+#     plt.tight_layout()
+#     save_img_path(save_loc / "feature importance", f"feature_krippendorff_stability_{file_extension}.png")
+#     # plt.show()
+#     plt.close()
+#     return alphas_df
+
+def process_lengthscales_to_df(seed_scores: dict) -> pd.DataFrame:
+    all_rows = []
+
+    for key, value in seed_scores.items():
+        # Check if the value is a dictionary (this skips 'rmse_avg', etc.)
+        if isinstance(value, dict) and "test_lengthscale" in value:
+            fold_list = value["test_lengthscale"]
+            
+            for fold_dict in fold_list:
+                row_data = {}
+                
+                for feat_name, samples in fold_dict.items():
+                    if samples is not None:
+                        # Average the MCMC draws (axis 0)
+                        row_data[feat_name] = np.mean(samples)
+                    else:
+                        row_data[feat_name] = np.nan
+                
+                all_rows.append(row_data)
+
+    df_ls = pd.DataFrame(all_rows)
+    return df_ls
 
 
 def calculate_kendalls_w(df_input):
@@ -520,71 +543,79 @@ def calculate_kendalls_w(df_input):
 
 
 if __name__ == "__main__":
-
     PAPER = {
             "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-            # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-            # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
-            # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-            # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
-            # "target_flux decline ratio (%)",
-            # "target_flux recovery ratio (%)",
-            # "target_irreversible fouling ratio(%)",
-            # "target_organic compound removal (%)",
-            # "target_reversible fouling ratio (%)",
-            # r"target_water permeability (LMH\bar)",
-            # ],
+            "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+            "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
+            "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+            "target_flux decline ratio (%)",
+            "target_flux recovery ratio (%)",
+            "target_irreversible fouling ratio(%)",
+            "target_organic compound removal (%)",
+            "target_reversible fouling ratio (%)",
+            r"target_water permeability (LMH\bar)",
+            ],
             }
     
-    models = ["RF","XGBR"]
+    models = ["GPMixMCMC"]
     model_stats = {}
     for paper_name, target_list in PAPER.items():
         for target in target_list:
     #         print(paper_name, target)
-            creat_count_fp_heatmap(
-                                    target_dir=RESULTS/paper_name/target,
-                                    score_metric='rmse',
-                                    figsize=(7,4.5),
-                                    # comparison_value=['scaler', 'Trimer_scaler'],
-                                    )
-    #         for model in models:
-    #             paper_loc: Path = RESULTS / paper_name / target
-    #             file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores"
-    #             score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-    #             with open(score_path, "r") as f:
-    #                 scores = json.load(f)
+            # creat_count_fp_heatmap(
+            #                         target_dir=RESULTS/paper_name/target,
+            #                         score_metric='rmse',
+            #                         figsize=(7,4.5),
+            #                         # comparison_value=['scaler', 'Trimer_scaler'],
+            #                         )
+            for model in models:
+                paper_loc: Path = RESULTS / paper_name / target
+                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
+                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                if not score_path.exists():
+                    file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
+                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                if not score_path.exists():
+                    file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
+                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                with open(score_path, "r") as f:
+                    scores = json.load(f)
 
-    #             MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
-    #                                             save_loc=paper_loc,
-    #                                             file_extension=file_name,
-    #                                             figsize=(8,7.5)
-    #                                             )
-    #             shap_feature_means = shap_imp.abs().mean()
-    #             df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
+                # MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
+                #                                 save_loc=paper_loc,
+                #                                 file_extension=file_name,
+                #                                 figsize=(8,7.5)
+                #                                 )
+                # print(shap_imp)
+                # shap_feature_means = shap_imp.abs().mean()
+                # df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
 
-    #             mdi_feature_means = MDI_imp.mean()
-    #             df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
+                # mdi_feature_means = MDI_imp.mean()
+                # df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
+                df_ls = process_lengthscales_to_df(scores)
+                print(df_ls)
+                # 3. Filter the DataFrame to these 15 features
+                # print(df_top15)
+                # plot_top15_feature_stability(
+                #                     scores_data=scores,
+                #                     # save_loc=paper_loc,
+                #                     # file_extension=file_name,
+                #                     # top_n=15,
+                #                     # figsize=(8,6)
+                #                     )
+                # print(df_top15)
+                # krippendorff_alpha_by_feature(
+                #                             df=df_top15,             
+                #                             save_loc=paper_loc,
+                #                             file_extension=file_name,
+                #                             figsize=(9,6)
+                #                             )
+                # print(calculate_kendalls_w(df_top15))
+                # print(df_top15_mdi_features)
+                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
+                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
+                # print(pg.friedman(df_top15))
 
-    #             # 3. Filter the DataFrame to these 15 features
-    #             # print(df_top15)
-    #             # plot_top15_feature_stability(
-    #             #                     scores_data=scores,
-    #             #                     # save_loc=paper_loc,
-    #             #                     # file_extension=file_name,
-    #             #                     # top_n=15,
-    #             #                     # figsize=(8,6)
-    #             #                     )
-    #             # print(df_top15)
-    #             # krippendorff_alpha_by_feature(
-    #             #                             df=df_top15,             
-    #             #                             save_loc=paper_loc,
-    #             #                             file_extension=file_name,
-    #             #                             figsize=(9,6)
-    #             #                             )
-    #             # print(calculate_kendalls_w(df_top15))
-    #             model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["SHAP"] = calculate_kendalls_w(df_top15_shap_features)
-    #             model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
-    #             # print(pg.friedman(df_top15))
-
-    # with open(RESULTS / "model_stats" / "model_stability.json", "w") as f:
-    #     json.dump(model_stats, f, indent=2)
+    with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
+        json.dump(model_stats, f, indent=2)

@@ -3,41 +3,61 @@
     "target_log Rg (nm)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 294852.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8596268221574344,
-          "Chi-square": 421.21714285714285,
+          "S": 53988.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8569523809523809,
+          "Chi-square": 179.95999999999998,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 304770.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8885422740524781,
-          "Chi-square": 435.38571428571424,
+          "S": 55572.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.882095238095238,
+          "Chi-square": 185.23999999999998,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 222675.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.6491997084548105,
-          "Chi-square": 318.10785714285714,
+          "S": 43505.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.6905634920634921,
+          "Chi-square": 145.01833333333335,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 156072.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.45502040816326533,
-          "Chi-square": 222.96,
+          "S": 27346.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.43406349206349204,
+          "Chi-square": 91.15333333333332,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56188.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8918730158730158,
+          "Chi-square": 187.29333333333332,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56106.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8905714285714286,
+          "Chi-square": 187.02,
           "Degrees of Freedom": 14
         }
       }
@@ -47,41 +67,61 @@
     "target_calculated PCE (%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 101404.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.2956384839650146,
-          "Chi-square": 144.86285714285714,
+          "S": 21814.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.34625396825396826,
+          "Chi-square": 72.71333333333334,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 125938.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.3671661807580175,
-          "Chi-square": 179.91142857142856,
+          "S": 23388.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.37123809523809526,
+          "Chi-square": 77.96000000000001,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 183677.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.535502915451895,
-          "Chi-square": 262.39642857142854,
+          "S": 32689.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.5188809523809523,
+          "Chi-square": 108.96499999999999,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 119055.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.347100583090379,
-          "Chi-square": 170.0792857142857,
+          "S": 20633.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.3275079365079365,
+          "Chi-square": 68.77666666666667,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 43738.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.6942539682539682,
+          "Chi-square": 145.79333333333332,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 34380.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.5457142857142857,
+          "Chi-square": 114.6,
           "Degrees of Freedom": 14
         }
       }
@@ -91,41 +131,61 @@
     "target_log (Separation factor)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 240060.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.6998833819241983,
-          "Chi-square": 342.9428571428572,
+          "S": 46744.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.7419682539682539,
+          "Chi-square": 155.81333333333333,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 330674.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9640641399416909,
-          "Chi-square": 472.39142857142855,
+          "S": 60938.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9672698412698413,
+          "Chi-square": 203.12666666666667,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 285288.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8317434402332361,
-          "Chi-square": 407.5542857142857,
+          "S": 54504.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8651428571428571,
+          "Chi-square": 181.67999999999998,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 150275.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.4381195335276968,
-          "Chi-square": 214.67857142857142,
+          "S": 33606.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.533436507936508,
+          "Chi-square": 112.02166666666668,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 57046.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9054920634920635,
+          "Chi-square": 190.15333333333334,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 60356.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.958031746031746,
+          "Chi-square": 201.18666666666667,
           "Degrees of Freedom": 14
         }
       }
@@ -133,41 +193,61 @@
     "target_log (Total flux)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 310932.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9065072886297376,
-          "Chi-square": 444.18857142857144,
+          "S": 57114.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9065714285714286,
+          "Chi-square": 190.38,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 316566.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.922932944606414,
-          "Chi-square": 452.2371428571428,
+          "S": 58380.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9266666666666666,
+          "Chi-square": 194.6,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 315236.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9190553935860059,
-          "Chi-square": 450.33714285714285,
+          "S": 58520.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9288888888888889,
+          "Chi-square": 195.06666666666666,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 151615.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.4420276967930029,
-          "Chi-square": 216.59357142857144,
+          "S": 30948.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.49123809523809525,
+          "Chi-square": 103.16,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 55052.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8738412698412699,
+          "Chi-square": 183.50666666666666,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 55882.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.887015873015873,
+          "Chi-square": 186.27333333333334,
           "Degrees of Freedom": 14
         }
       }
@@ -177,41 +257,61 @@
     "target_log (Separation factor)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 276436.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8059358600583091,
-          "Chi-square": 394.90857142857146,
+          "S": 53482.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.848920634920635,
+          "Chi-square": 178.27333333333334,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 289916.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8452361516034985,
-          "Chi-square": 414.1657142857143,
+          "S": 55204.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8762539682539683,
+          "Chi-square": 184.01333333333335,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 308774.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9002172011661808,
-          "Chi-square": 441.1064285714286,
+          "S": 56604.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8984761904761904,
+          "Chi-square": 188.67999999999998,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 153914.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.4487303206997085,
-          "Chi-square": 219.87785714285715,
+          "S": 29439.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.4672936507936508,
+          "Chi-square": 98.13166666666667,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 57420.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9114285714285715,
+          "Chi-square": 191.4,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 55960.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8882539682539683,
+          "Chi-square": 186.53333333333333,
           "Degrees of Freedom": 14
         }
       }
@@ -219,41 +319,61 @@
     "target_log (Total flux)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 311150.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9071428571428571,
-          "Chi-square": 444.5,
+          "S": 56412.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8954285714285715,
+          "Chi-square": 188.04000000000002,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 291858.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8508979591836735,
-          "Chi-square": 416.94,
+          "S": 54428.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8639365079365079,
+          "Chi-square": 181.42666666666665,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 297014.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8659314868804665,
-          "Chi-square": 424.30642857142857,
+          "S": 55080.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8742857142857143,
+          "Chi-square": 183.60000000000002,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 73939.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.2155655976676385,
-          "Chi-square": 105.62714285714286,
+          "S": 19496.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.30946031746031744,
+          "Chi-square": 64.98666666666666,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56308.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8937777777777778,
+          "Chi-square": 187.69333333333333,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 54594.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8665714285714285,
+          "Chi-square": 181.98,
           "Degrees of Freedom": 14
         }
       }
@@ -263,41 +383,61 @@
     "target_flux decline ratio (%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 307666.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8969854227405247,
-          "Chi-square": 439.5228571428571,
+          "S": 56556.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8977142857142857,
+          "Chi-square": 188.51999999999998,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 318906.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9297551020408164,
-          "Chi-square": 455.58,
+          "S": 58924.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9353015873015873,
+          "Chi-square": 196.41333333333333,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 270578.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.7888571428571428,
-          "Chi-square": 386.53999999999996,
+          "S": 50677.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.804404761904762,
+          "Chi-square": 168.925,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 105379.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.3072274052478134,
-          "Chi-square": 150.54142857142855,
+          "S": 18508.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.2937777777777778,
+          "Chi-square": 61.69333333333334,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 51906.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8239047619047619,
+          "Chi-square": 173.02,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 55592.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8824126984126984,
+          "Chi-square": 185.30666666666667,
           "Degrees of Freedom": 14
         }
       }
@@ -305,41 +445,61 @@
     "target_flux recovery ratio (%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 320764.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9351720116618076,
-          "Chi-square": 458.23428571428576,
+          "S": 59194.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9395873015873016,
+          "Chi-square": 197.31333333333333,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 331286.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9658483965014577,
-          "Chi-square": 473.2657142857143,
+          "S": 61206.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9715238095238096,
+          "Chi-square": 204.02,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 299512.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8732128279883382,
-          "Chi-square": 427.87428571428575,
+          "S": 55006.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8731111111111111,
+          "Chi-square": 183.35333333333332,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 30589.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.08918221574344024,
-          "Chi-square": 43.699285714285715,
+          "S": 4920.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.0781031746031746,
+          "Chi-square": 16.401666666666667,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 50220.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.7971428571428572,
+          "Chi-square": 167.4,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56318.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8939365079365079,
+          "Chi-square": 187.72666666666666,
           "Degrees of Freedom": 14
         }
       }
@@ -347,41 +507,61 @@
     "target_irreversible fouling ratio(%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 322618.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9405772594752186,
-          "Chi-square": 460.8828571428571,
+          "S": 59326.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9416825396825397,
+          "Chi-square": 197.75333333333333,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 330396.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9632536443148688,
-          "Chi-square": 471.9942857142857,
+          "S": 60974.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9678412698412698,
+          "Chi-square": 203.24666666666667,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 299852.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8742040816326531,
-          "Chi-square": 428.36,
+          "S": 55212.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8763809523809524,
+          "Chi-square": 184.04,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 52643.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.15347813411078717,
-          "Chi-square": 75.20428571428572,
+          "S": 6452.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.10242063492063493,
+          "Chi-square": 21.508333333333333,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 50474.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8011746031746032,
+          "Chi-square": 168.24666666666667,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56366.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8946984126984127,
+          "Chi-square": 187.88666666666666,
           "Degrees of Freedom": 14
         }
       }
@@ -389,41 +569,61 @@
     "target_organic compound removal (%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 326438.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9517142857142857,
-          "Chi-square": 466.34000000000003,
+          "S": 59652.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9468571428571428,
+          "Chi-square": 198.84,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 328798.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.958594752186589,
-          "Chi-square": 469.7114285714286,
+          "S": 60698.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9634603174603175,
+          "Chi-square": 202.32666666666665,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 295750.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.8622448979591837,
-          "Chi-square": 422.5,
+          "S": 54522.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8654285714285714,
+          "Chi-square": 181.74,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 176168.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.5136107871720117,
-          "Chi-square": 251.66928571428573,
+          "S": 32584.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.5172142857142857,
+          "Chi-square": 108.61500000000001,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 54502.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8651111111111112,
+          "Chi-square": 181.67333333333335,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 57314.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9097460317460317,
+          "Chi-square": 191.04666666666668,
           "Degrees of Freedom": 14
         }
       }
@@ -431,41 +631,61 @@
     "target_reversible fouling ratio (%)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 309592.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.902600583090379,
-          "Chi-square": 442.2742857142857,
+          "S": 58098.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9221904761904762,
+          "Chi-square": 193.66,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 321070.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9360641399416909,
-          "Chi-square": 458.6714285714285,
+          "S": 59320.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9415873015873016,
+          "Chi-square": 197.73333333333335,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 266646.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.7773950437317785,
-          "Chi-square": 380.92357142857145,
+          "S": 48104.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.7635555555555555,
+          "Chi-square": 160.34666666666666,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 63462.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.18502040816326532,
-          "Chi-square": 90.66000000000001,
+          "S": 10185.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.16167460317460317,
+          "Chi-square": 33.95166666666667,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 54774.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8694285714285714,
+          "Chi-square": 182.58,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 56554.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8976825396825396,
+          "Chi-square": 188.51333333333332,
           "Degrees of Freedom": 14
         }
       }
@@ -473,41 +693,61 @@
     "target_water permeability (LMH\\bar)": {
       "RF": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 322884.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9413527696793003,
-          "Chi-square": 461.2628571428571,
+          "S": 59228.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9401269841269841,
+          "Chi-square": 197.42666666666668,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 325380.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9486297376093294,
-          "Chi-square": 464.8285714285714,
+          "S": 59524.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9448253968253968,
+          "Chi-square": 198.41333333333333,
           "Degrees of Freedom": 14
         }
       },
       "XGBR": {
         "SHAP": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 311780.0,
-          "S_max": 343000.0,
-          "Kendall's W": 0.9089795918367347,
-          "Chi-square": 445.40000000000003,
+          "S": 57410.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.9112698412698412,
+          "Chi-square": 191.36666666666665,
           "Degrees of Freedom": 14
         },
         "MDI": {
-          "m (Runs)": 35,
+          "m (Runs)": 15,
           "n (Features)": 15,
-          "S": 159068.5,
-          "S_max": 343000.0,
-          "Kendall's W": 0.46375655976676383,
-          "Chi-square": 227.2407142857143,
+          "S": 28628.5,
+          "S_max": 63000.0,
+          "Kendall's W": 0.45442063492063495,
+          "Chi-square": 95.42833333333334,
+          "Degrees of Freedom": 14
+        }
+      },
+      "NGB": {
+        "SHAP": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 54536.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.8656507936507937,
+          "Chi-square": 181.78666666666666,
+          "Degrees of Freedom": 14
+        },
+        "MDI": {
+          "m (Runs)": 15,
+          "n (Features)": 15,
+          "S": 53490.0,
+          "S_max": 63000.0,
+          "Kendall's W": 0.849047619047619,
+          "Chi-square": 178.3,
           "Degrees of Freedom": 14
         }
       }

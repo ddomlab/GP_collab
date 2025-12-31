@@ -69,6 +69,7 @@ def train_regressor(
     cutoff:Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     imputer: Optional[str] = None,
     Test:bool=False,
+    **keyword,
     ) -> None:
         """
         you should change the name here for prepare
@@ -90,6 +91,7 @@ def train_regressor(
                                             imputer=imputer,
                                             cutoff=cutoff,
                                             hyperparameter_optimization=hyperparameter_optimization,
+                                            **keyword
                                             )
         scores = process_scores(scores)
         end = time.time()
@@ -99,30 +101,6 @@ def train_regressor(
   
         return scores, predictions
         
-
-# def create_feature_groups(
-#     unrolled_feats: Optional[list[str]], 
-#     unroll_info: Union[dict, list, None], 
-#     numerical_feats: Optional[list[str]]
-# ) -> dict[str, list[str]]:
-#     feat_group = {}
-#     if unrolled_feats and unroll_info:
-#         units = []
-#         if isinstance(unroll_info, dict):
-#             units = unroll_info.get("unit_name", [])
-#         elif isinstance(unroll_info, list):
-#             for d in unroll_info:
-#                 u = d.get("unit_name", [])
-#                 units.extend(u) if isinstance(u, list) else units.append(u)
-
-#         for i, unit in enumerate(units, start=1):
-#             unit_cols = [col for col in unrolled_feats if col.startswith(f"{unit}_")]
-#             if unit_cols:
-#                 feat_group[f'fp{i}'] = unit_cols
-
-#     if numerical_feats:
-#         feat_group['count'] = numerical_feats
-#     return feat_group
 
 def create_feature_groups(
     unrolled_feats: Optional[list[str]], 
@@ -168,6 +146,8 @@ def _prepare_data(
     hyperparameter_optimization: bool = True,
     imputer: Optional[str] = None,
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
+    # kernel_type: Optional[str]=None,
+    # kernel_mixing_method: Optional[str]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -229,6 +209,7 @@ def run(
     second_transformer:str, 
     regressor_type: str,
     hyperparameter_optimization: bool = True,
+    **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
     seed_scores: dict[int, dict[str, float]] = {}
@@ -296,7 +277,11 @@ def run(
                 kernel = _get_gp_kernel(regressor_type, idx=features_group)
                 model = optimized_models(regressor_type['model'], kernel=kernel)
             else:
-                model = optimized_models(regressor_type, feat_group=features_group)
+                model = optimized_models(
+                                        regressor_type,
+                                        feat_group=features_group,
+                                        **kwargs
+                                        )
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -310,9 +295,11 @@ def run(
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()
-            return_importance = False if "GP" in regressor_type else True
-            # scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=return_importance, return_indices=False)
-            scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+            # return_importance = False if "GP" in regressor_type else True
+            if "gp" in regressor_type.lower():
+                scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+            else:
+                scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices

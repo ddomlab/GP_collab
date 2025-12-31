@@ -454,9 +454,9 @@ def gp_cross_validate(
                 scores[f"test_{key}"].append(val)
                 
     # Return: (Scores Dict, Single Prediction Array)
-    print("style of score",scores["test_r2"])
-    print("style of score",scores["test_rmse"])
-    print("style of score",scores["test_mae"])
+    # print("style of score",scores["test_r2"])
+    # print("style of score",scores["test_rmse"])
+    # print("style of score",scores["test_mae"])
     return scores, predictions
 
 
