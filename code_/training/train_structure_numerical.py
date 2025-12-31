@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 kernel_type={"fp":"Tanimoto",
-                             "count":"Matern32"},
+                             "count":"RBF"},
                 kernel_mixing_method="product",
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
