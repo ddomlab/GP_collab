@@ -8,12 +8,12 @@ import sys
 from data_handling import save_results
 from utils import parse_arguments
 
-# import sys
+import sys
 
-# sys.modules.setdefault("numpy._core",         np.core)
-# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+sys.modules.setdefault("numpy._core",         np.core)
+sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 kernel_type={"fp":"TanimotoRBF",
-                             "count":"Matern32"},
+                             "count":"RBF"},
                 kernel_mixing_method="product",
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
