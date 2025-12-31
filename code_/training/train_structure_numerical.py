@@ -141,7 +141,7 @@ if __name__ == "__main__":
                 target_transformer='Standard',
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                kernel_type={"fp":"TanimotoRBF",
+                kernel_type={"fp":"Tanimoto",
                              "count":"RBF"},
                 kernel_mixing_method="sum",
                 # imputer="mean",
