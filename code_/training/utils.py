@@ -95,7 +95,7 @@ def parse_arguments():
     parser.add_argument(
         '--target_features',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
+        required=False,
         help="Specify a single target for the analysis."
     )
 
