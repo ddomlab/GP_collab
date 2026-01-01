@@ -24,7 +24,11 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     numerator = torch.min(x1e, x2e).sum(dim=-1)
     denominator = torch.max(x1e, x2e).sum(dim=-1)
 
-    sim = (numerator + eps) / (denominator + eps)
+    sim = torch.where(
+        denominator > 0,
+        numerator / (denominator + eps),
+        torch.zeros_like(denominator),
+    )
     dist = 1.0 - sim
     return torch.clamp(dist, min=0.)
 
@@ -57,6 +61,46 @@ class TanimotoRBF(pk.Kernel):
 
         D = weighted_tanimoto_distance(X, Z, eps=1e-6)
         return  self.variance * torch.exp(-0.5 * (D / self.lengthscale)**2)
+
+
+
+class TanimotoMatern(pk.Kernel):
+    def __init__(self, variance=None, lengthscale=None, input_dim=None, active_dims=None, nu=1.5):
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
+        
+        variance = torch.tensor(1.0) if variance is None else variance
+        self.variance = PyroParam(variance, constraints.positive)
+        lengthscale = torch.tensor(1.0) if lengthscale is None else lengthscale
+        self.lengthscale = PyroParam(lengthscale, constraints.positive)
+        self.nu = nu
+
+    def _diag(self, X):
+        """
+        Calculates the diagonal part of covariance matrix on active features.
+        """
+        return self.variance.expand(X.size(0))
+
+    def forward(self, X, Z=None, diag=False):
+        if diag:
+            return self._diag(X)
+        if Z is None:
+            Z = X
+        X = self._slice_input(X)
+        Z = self._slice_input(Z)
+        if X.size(1) != Z.size(1):
+            raise ValueError("Inputs must have the same number of features.")
+
+        D = weighted_tanimoto_distance(X, Z, eps=1e-6)
+        r = D / self.lengthscale
+        if self.nu == 1.5:
+            sqrt3_r = 3**0.5 * r
+            K = self.variance * (1.0 + sqrt3_r) * torch.exp(-sqrt3_r)
+        elif self.nu == 2.5:
+            sqrt5_r = 5**0.5 * r
+            K = self.variance * (1.0 + sqrt5_r + (5.0/3.0)*r**2) * torch.exp(-sqrt5_r)
+        else:
+            raise ValueError("Unsupported nu value. Only 1.5 and 2.5 are supported.")
+        return self.variance * K
 
 
 class Tanimoto(pk.Kernel):
@@ -252,8 +296,8 @@ mixing_factory: dict = {
 
 kernel_factory: dict = {
     "TanimotoRBF": TanimotoRBF,
-    # "TanimotoMatern32": ,
-    # "TanimotoMatern52": ,
+    "TanimotoMatern32": lambda **kwargs: TanimotoMatern(nu=1.5, **kwargs),
+    "TanimotoMatern52": lambda **kwargs: TanimotoMatern(nu=2.5, **kwargs),
     "Tanimoto": Tanimoto,
     "RBF": pk.RBF,
     "Matern32": pk.Matern32,
@@ -261,12 +305,16 @@ kernel_factory: dict = {
 }
 
 class MixingKernelPyro:
-    def __init__(self, feat_idx, mixing_method: str, kerenl_method: dict, variance=None):
+    def __init__(self, 
+                feat_idx,
+                mixing_method: str,
+                kernel_method: dict,
+                variance=None
+                ):
         self.feat_idx = feat_idx
         self.variance = variance
         self.mixing_method = mixing_method
-        self.kerenl_method = kerenl_method
-
+        self.kernel_method = kernel_method
     def build(self):
         fp_kernels = []
         count_kernels = []
@@ -276,7 +324,7 @@ class MixingKernelPyro:
         for key in fp_keys:
             idx = self.feat_idx[key]
             if idx:
-                k_fp = kernel_factory[self.kerenl_method["fp"]](
+                k_fp = kernel_factory[self.kernel_method["fp"]](
                     input_dim=len(idx),
                     active_dims=idx,
                 )
@@ -285,7 +333,7 @@ class MixingKernelPyro:
         # Count kernels
         count_idx = sorted(self.feat_idx.get("count"))
         for dim in count_idx:
-            k_c = kernel_factory[self.kerenl_method["count"]](
+            k_c = kernel_factory[self.kernel_method["count"]](
                 input_dim=1,
                 active_dims=[dim],
             )
