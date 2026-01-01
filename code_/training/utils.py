@@ -102,21 +102,21 @@ def parse_arguments():
     parser.add_argument(
         '--K_fp',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
+        required=False,
         help="Specify a single target for the analysis."
     )
 
     parser.add_argument(
         '--K_count',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
+        required=False,
         help="Specify a single target for the analysis."
     )
 
     parser.add_argument(
         '--Kernel_mixing_method',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
+        required=False,
         help="Specify a single target for the analysis."
     )
 
@@ -124,7 +124,7 @@ def parse_arguments():
         '--regressor_type', 
         type=str, 
         # choices=['RF', 'DT', 'MLR', 'SVR', 'XGBR','KNN', 'GPR', 'NGB', 'sklearn-GPR', 'MLP'], 
-        required=True, 
+        required=False, 
         help="Regressor type required"
     )
 
@@ -136,7 +136,7 @@ def parse_arguments():
                   "abs(solvent dD - polymer dD)", "abs(solvent dP - polymer dP)", "abs(solvent dH - polymer dH)"],
 
         nargs='+',  # Allows multiple choices
-        required=None,
+        required=False,
         help="Numerical features: choose"
     )
     
@@ -147,7 +147,7 @@ def parse_arguments():
                   'Concentration (mg/ml)','solvent dP',	'polymer dP',	'solvent dD',	'polymer dD',	'solvent dH',	'polymer dH', 'Ra'],
 
         nargs='*',  # This allows 0 or more values
-        default=None,  
+        default=False,  
         help="imputation features: choose"
     )
 
@@ -155,7 +155,7 @@ def parse_arguments():
         '--imputer',
         choices=['mean', 'median', 'most_frequent',"distance KNN", None],  
         nargs='?',  # This allows the argument to be optional
-        default=None,  
+        default=False,  
         help="Specify the imputation strategy or leave it as None."
     )
 
@@ -163,7 +163,7 @@ def parse_arguments():
         '--special_impute',
         choices=['Mw (g/mol)', None],  
         nargs='?',  # This allows the argument to be optional
-        default=None,  # Set the default value to None
+        default=False,  # Set the default value to None
         help="Specify the imputation strategy or leave it as None."
     )
 
