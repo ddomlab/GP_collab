@@ -100,9 +100,30 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        '--K_fp',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=True,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
+        '--K_count',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=True,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
+        '--Kernel_mixing_method',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=True,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
         '--regressor_type', 
         type=str, 
-        choices=['RF', 'DT', 'MLR', 'SVR', 'XGBR','KNN', 'GPR', 'NGB', 'sklearn-GPR', 'MLP'], 
+        # choices=['RF', 'DT', 'MLR', 'SVR', 'XGBR','KNN', 'GPR', 'NGB', 'sklearn-GPR', 'MLP'], 
         required=True, 
         help="Regressor type required"
     )
@@ -154,12 +175,12 @@ def parse_arguments():
         help="transform type required"
     )
 
-    parser.add_argument(
-        "--kernel", 
-        type=str,
-        default=None,
-        help='kernel for GP is optinal'
-    )
+    # parser.add_argument(
+    #     "--kernel", 
+    #     type=str,
+    #     default=None,
+    #     help='kernel for GP is optinal'
+    # )
 
     parser.add_argument(
         '--representation', 

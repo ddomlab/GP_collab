@@ -8,12 +8,12 @@ import sys
 from data_handling import save_results
 from utils import parse_arguments
 
-import sys
+# import sys
 
-sys.modules.setdefault("numpy._core",         np.core)
-sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+# sys.modules.setdefault("numpy._core",         np.core)
+# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -89,7 +89,31 @@ if __name__ == "__main__":
     #non_imputed_dropped_nan_Rg_data
     w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
-    # args = parse_arguments()
+    args = parse_arguments()
+
+    for targ in all_targets:
+            main_structural_numerical(
+                dataset=w_data,
+                representation="ECFP",
+                radius=3,
+                vector="count",
+                regressor_type="GpyroMCMC",
+                # GPytorchMixMCMC
+                # GPMixMCMC
+                # kernel="matern32_j_rbf_mix",
+                polymer_unit=["Monomer"],
+                target_features=[targ],  
+                feat_transformer='Standard',
+                target_transformer='Standard',
+                numerical_feats=feats,
+                hyperparameter_optimization=False,
+                kernel_type={"fp":args.K_fp,
+                             "count":args.K_count
+                             },
+                kernel_mixing_method=args.Kernel_mixing_method,
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )
 
     # main_structural_numerical(
     #     dataset=w_data,
@@ -122,31 +146,32 @@ if __name__ == "__main__":
     # import torch
     # train_x = torch.linspace(0, 1, 4)
     # print(train_x)
-    for targ in all_targets:
-        # GPMixMCMC
-        # for model in ["RF", "XGBR", "NGB"]:
+    # for targ in all_targets:
+    #     # GPMixMCMC
+    #     # for model in ["RF", "XGBR", "NGB"]:
             
-            main_structural_numerical(
-                dataset=w_data,
-                representation="ECFP",
-                radius=3,
-                vector="count",
-                regressor_type="GpyroMCMC",
-                # GPytorchMixMCMC
-                # GPMixMCMC
-                # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Monomer"],
-                target_features=[targ],  
-                feat_transformer='Standard',
-                target_transformer='Standard',
-                numerical_feats=feats,
-                hyperparameter_optimization=False,
-                kernel_type={"fp":"Tanimoto",
-                             "count":"RBF"},
-                kernel_mixing_method="sum",
-                # imputer="mean",
-                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-                )
+    #         main_structural_numerical(
+    #             dataset=w_data,
+    #             representation="ECFP",
+    #             radius=3,
+    #             vector="count",
+    #             regressor_type="GpyroMCMC",
+    #             # GPytorchMixMCMC
+    #             # GPMixMCMC
+    #             # kernel="matern32_j_rbf_mix",
+    #             polymer_unit=["Monomer"],
+    #             target_features=[targ],  
+    #             feat_transformer='Standard',
+    #             target_transformer='Standard',
+    #             numerical_feats=feats,
+    #             hyperparameter_optimization=False,
+    #             kernel_type={"fp":"TanimotoRBF",
+    #                          "count":"Matern32"
+    #                          },
+    #             kernel_mixing_method="averageProduct",
+    #             # imputer="mean",
+    #             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+    #             )
 
 
 

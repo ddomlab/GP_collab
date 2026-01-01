@@ -171,9 +171,83 @@ class SumMultipleWithVariance(pk.Kernel):
         return self.variance * val
 
 
+class AverageProductMultipleWithVariance(pk.Kernel):
+    """
+    (sum over sum_kernels) * (product over product_kernels), scaled by a shared variance.
+
+    Backward compatible with your old code:
+      - exposes self._kernels (flattened)
+      - registers kernels as kern0, kern1, ...
+    Also provides aliases:
+      - sum_kern0, sum_kern1, ...
+      - prod_kern0, prod_kern1, ...
+    """
+
+    def __init__(self, sum_kernels, product_kernels, variance=None, average_sum=True):
+        sum_kernels = list(sum_kernels) if sum_kernels is not None else []
+        product_kernels = list(product_kernels) if product_kernels is not None else []
+
+        if len(sum_kernels) < 1:
+            raise ValueError("sum_kernels must contain at least one kernel")
+        if len(product_kernels) < 1:
+            raise ValueError("product_kernels must contain at least one kernel")
+
+        for k in sum_kernels + product_kernels:
+            if not isinstance(k, pk.Kernel):
+                raise TypeError("All components must be Kernel instances")
+
+        self._sum_kernels = sum_kernels
+        self._product_kernels = product_kernels
+        self.average_sum = bool(average_sum)
+
+        # Union active_dims
+        active_dims = set()
+        for k in  product_kernels + sum_kernels:
+            active_dims |= set(k.active_dims)
+        active_dims = sorted(active_dims)
+
+        super().__init__(input_dim=len(active_dims), active_dims=active_dims)
+
+        # Backward-compatible flattened ordering: sum kernels first, then product kernels
+        self._kernels = self._product_kernels + self._sum_kernels
+
+        # Register under old names: kern0, kern1, ...
+        for i, k in enumerate(self._kernels):
+            setattr(self, f"kern{i}", k)
+
+        # Optional aliases (helpful for debugging or explicit grouping)
+        # for i, k in enumerate(self._sum_kernels):
+        #     setattr(self, f"sum_kern{i}", k)
+        # for j, k in enumerate(self._product_kernels):
+        #     setattr(self, f"prod_kern{j}", k)
+
+        variance = torch.tensor(1.0) if variance is None else variance
+        self.variance = PyroParam(variance, constraints.positive)
+
+    def forward(self, X, Z=None, diag=False):
+        # product group
+        prod_val = None
+        for k in self._product_kernels:
+            v = k(X, Z, diag=diag)
+            prod_val = v if prod_val is None else (prod_val * v)
+        
+        # sum group
+        sum_val = None
+        for k in self._sum_kernels:
+            v = k(X, Z, diag=diag)
+            sum_val = v if sum_val is None else (sum_val + v)
+        if self.average_sum:
+            sum_val = sum_val / float(len(self._sum_kernels))
+
+
+        return self.variance * prod_val *sum_val 
+
+
+
 mixing_factory: dict = {
     "product": ProductMultipleWithVariance,
     "sum": SumMultipleWithVariance,
+    "averageProduct": AverageProductMultipleWithVariance,
 } 
 
 kernel_factory: dict = {
@@ -187,37 +261,57 @@ kernel_factory: dict = {
 }
 
 class MixingKernelPyro:
-    def __init__(self, feat_idx, mixing_method:str, kerenl_method:dict, variance=None):
+    def __init__(self, feat_idx, mixing_method: str, kerenl_method: dict, variance=None):
         self.feat_idx = feat_idx
         self.variance = variance
         self.mixing_method = mixing_method
         self.kerenl_method = kerenl_method
 
     def build(self):
-        kernels = []
-        # Dynamically find all keys starting with fp_
-        fp_keys = [k for k in self.feat_idx.keys() if k.startswith("fp_")]
-        
+        fp_kernels = []
+        count_kernels = []
+
+        # Fingerprint kernels
+        fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
         for key in fp_keys:
             idx = self.feat_idx[key]
             if idx:
-                # Using TanimotoRBF or RBF as per your preference
                 k_fp = kernel_factory[self.kerenl_method["fp"]](
                     input_dim=len(idx),
-                    active_dims=idx
+                    active_dims=idx,
                 )
-                kernels.append(k_fp)
+                fp_kernels.append(k_fp)
 
-        # Add continuous kernel
-        cont_idx = self.feat_idx.get("count")
-        if cont_idx:
-            k_cont = kernel_factory[self.kerenl_method["count"]](
-                input_dim=len(cont_idx),
-                active_dims=cont_idx
+        # Count kernels
+        count_idx = sorted(self.feat_idx.get("count"))
+        for dim in count_idx:
+            k_c = kernel_factory[self.kerenl_method["count"]](
+                input_dim=1,
+                active_dims=[dim],
             )
-            kernels.append(k_cont)
-            
-        return mixing_factory[self.mixing_method](*kernels, variance=self.variance)
+            count_kernels.append(k_c)
+
+        # Compose based on mixing method
+        if self.mixing_method in ("sum", "product"):
+            all_kernels = fp_kernels + count_kernels
+            if len(all_kernels) < 2:
+                raise ValueError(f"{self.mixing_method} mixing requires at least two kernels total")
+            return mixing_factory[self.mixing_method](*all_kernels, variance=self.variance)
+
+        if self.mixing_method == "averageProduct":
+            if len(fp_kernels) < 1:
+                raise ValueError("average-product requires at least one fp kernel (sum group)")
+            if len(count_kernels) < 1:
+                raise ValueError("average-product requires at least one count kernel (product group)")
+            return AverageProductMultipleWithVariance(
+                sum_kernels=count_kernels,
+                product_kernels=fp_kernels,
+                variance=self.variance,
+                average_sum=True,
+            )
+
+        raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
+
 
 
 class GPMixPyro(gp.models.GPRegression):
@@ -232,24 +326,20 @@ class GPMixPyro(gp.models.GPRegression):
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
 
         # Dynamically assign lengthscales to all sub-kernels
-        fp_keys = [k for k in feat_idx.keys() if k.startswith("fp_")]
+        fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
         
-        for i, k_obj in enumerate(self.kernel._kernels):
+        for i, _ in enumerate(self.kernel._kernels):
             target_kern = getattr(self.kernel, f"kern{i}")
             
             # Check if this kernel corresponds to one of the FP groups
             if i < len(fp_keys):
                 if self.kernel_method["fp"].lower() == "tanimoto":
                     continue
-                else:
-                    target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+                
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
             else:
-                # This is the 'count' kernel (last one added)
-                cont_dim = len(feat_idx.get("count") or [])
-                if cont_dim > 0:
-                    target_kern.lengthscale = PyroSample(
-                        dist.InverseGamma(5.0, 5.0).expand([cont_dim]).to_event(1)
-                    )
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+
 
 # ----------------------------------------------------------------------
 # Inference Routine
@@ -260,7 +350,7 @@ def run_inference(gp_model,
                 warmup_steps,
                 num_chains,
                 num_drawn_samples,
-                random_state=None
+                random_state=42
                 ):
     pyro.clear_param_store()
     if random_state is not None:
@@ -422,20 +512,13 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
 
     def _get_lengthscale(self):
             summary = {}
-            fp_keys = [k for k in self.feat_idx.keys() if k.startswith("fp_")]
-            
+            fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+            count_keys = sorted(list(self.count_feat_name_idx.keys()))
+            all_keys = fp_keys + count_keys
             # Extract FP lengthscales using their specific unit names
-            for i, key in enumerate(fp_keys):
+            for i, key in enumerate(all_keys):
                 param_name = f"kernel.kern{i}.lengthscale"
                 if param_name in self._samples:
                     summary[key] = self._samples[param_name].float().cpu().numpy()
-
-            # Extract continuous lengthscales
-            cont_kern_idx = len(fp_keys)
-            cont_param_name = f"kernel.kern{cont_kern_idx}.lengthscale"
-            if cont_param_name in self._samples:
-                ls_count = self._samples[cont_param_name].float().cpu().numpy()
-                for name, idx in self.count_feat_name_idx.items():
-                    summary[name] = ls_count[:, idx]
 
             return summary
