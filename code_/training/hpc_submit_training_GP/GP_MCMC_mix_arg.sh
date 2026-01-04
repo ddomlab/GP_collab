@@ -5,7 +5,7 @@ model="GPMixMCMC"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}
 mkdir -p "$output_dir"
 
-k_fps=("TanimotoMatern32" "TanimotoMatern52")
+k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52")
 k_counts=("Matern32" "Matern52" "RBF")
 k_mixing_methods=("sum" "product" "averageProduct") 
 
