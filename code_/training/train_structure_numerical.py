@@ -84,8 +84,8 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-    dataset_name = "separation_data_imputed"
+    PAPER = "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+    dataset_name = "cleaned_dataset_pervaporation_membranes_wang"
     #non_imputed_dropped_nan_Rg_data
     w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["polymers"],
+                polymer_unit=["polymer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
