@@ -84,8 +84,8 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-    dataset_name = "Beyond molecular structure_seifrid_imputed"
+    PAPER = "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+    dataset_name = "cleaned_dataset_Ultrafiltration Membrane"
     #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
     args = parse_arguments()
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Donor", "Acceptor"],
+                polymer_unit=["polymer"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
@@ -110,8 +110,8 @@ if __name__ == "__main__":
                              "count":args.K_count
                              },
                 kernel_mixing_method=args.Kernel_mixing_method,
-                # imputer="mean",
-                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                imputer="mean",
+                columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                 )
 
     # main_structural_numerical(
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     #             # GPytorchMixMCMC
     #             # GPMixMCMC
     #             # kernel="matern32_j_rbf_mix",
-    #             polymer_unit=["Monomer"],
+    #             polymer_unit=["polymer"],
     #             target_features=[targ],  
     #             feat_transformer='Standard',
     #             target_transformer='Standard',
@@ -168,8 +168,8 @@ if __name__ == "__main__":
     #                          "count":"Matern32"
     #                          },
     #             kernel_mixing_method="averageProduct",
-    #             # imputer="mean",
-    #             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+    #             imputer="mean",
+    #             columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
     #             )
 
 
