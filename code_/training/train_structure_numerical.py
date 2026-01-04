@@ -84,11 +84,10 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-    dataset_name = "cleaned_dataset_pervaporation_membranes_wang"
+    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+    dataset_name = "Beyond molecular structure_seifrid_imputed"
     #non_imputed_dropped_nan_Rg_data
-    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
-
+    w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
     args = parse_arguments()
 
     for targ in all_targets:
@@ -101,7 +100,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["polymer"],
+                polymer_unit=["Donor", "Acceptor"],
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
