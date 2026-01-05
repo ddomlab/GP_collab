@@ -700,7 +700,7 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
             fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
             count_names = sorted(list(self.count_feat_name_idx.keys()))
 
-            fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
+            fp_has_tanimoto = "tanimoto" in str(self.kernel_type["fp"]).lower()
             if fp_has_tanimoto:
                 fp_name = fp_keys
             else:
