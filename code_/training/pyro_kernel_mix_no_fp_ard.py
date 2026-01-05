@@ -321,23 +321,30 @@ class MixingKernelPyro:
 
         # Fingerprint kernels
         fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-        fp_is_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
+        fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
         for key in fp_keys:
             idx = self.feat_idx[key]
-            if fp_is_tanimoto:
+            if fp_has_tanimoto:
                 k_fp = kernel_factory[self.kernel_method["fp"]](
                         input_dim=len(idx),
                         active_dims=idx,
                     )
-            fp_kernels.append(k_fp)
-
-        else:
-            for dim in idx:
-                k_fp = kernel_factory[self.kernel_method["fp"]](
+                fp_kernels.append(k_fp)
+            else:
+                for dim in idx:
+                    k_fp = kernel_factory[self.kernel_method["fp"]](
                         input_dim=1,
                         active_dims=[dim],
                     )
-                fp_kernels.append(k_fp)
+                    fp_kernels.append(k_fp)
+
+        # else:
+        #     for dim in idx:
+        #         k_fp = kernel_factory[self.kernel_method["fp"]](
+        #                 input_dim=1,
+        #                 active_dims=[dim],
+        #             )
+        #         fp_kernels.append(k_fp)
                 
         # Count kernels
         count_idx = sorted(self.feat_idx.get("count"))
@@ -406,8 +413,8 @@ class GPMixPyro(gp.models.GPRegression):
         feat_idx,
         mixing_method: str,
         kernel_method: dict,
-        fp_lengthscale_prior=None,
-        count_lengthscale_prior=None,
+        # fp_lengthscale_prior=None,
+        # count_lengthscale_prior=None,
     ):
         self.feat_idx = feat_idx
         self.kernel_method = kernel_method
@@ -420,10 +427,10 @@ class GPMixPyro(gp.models.GPRegression):
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
 
         # Default priors if user does not pass them
-        if fp_lengthscale_prior is None:
-            fp_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
-        if count_lengthscale_prior is None:
-            count_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
+        # if fp_lengthscale_prior is None:
+        #     fp_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
+        # if count_lengthscale_prior is None:
+        #     count_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
 
         fp_name = str(self.kernel_method["fp"]).strip()
         fp_name_l = fp_name.lower()
@@ -447,17 +454,17 @@ class GPMixPyro(gp.models.GPRegression):
 
         # Assign priors based on kernel position:
         # [0, n_fp) are FP kernels, [n_fp, n_fp + n_count) are count kernels
-        for i, target_kern in enumerate(self.kernel._kernels):
+        for i, _ in enumerate(self.kernel._kernels):
             is_fp_kernel = (i < n_fp)
             is_count_kernel = (n_fp <= i < n_fp + n_count)
-
+            target_kern = getattr(self.kernel, f"kern{i}")
             if is_fp_kernel:
                 if fp_is_plain_tanimoto:
                     continue
-                target_kern.lengthscale = PyroSample(fp_lengthscale_prior)
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
 
             elif is_count_kernel:
-                target_kern.lengthscale = PyroSample(count_lengthscale_prior)
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
 
             else:
                 # If you ever add a third kernel family, decide here what prior it should receive.
