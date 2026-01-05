@@ -41,6 +41,7 @@ DATASET_CONFIG = {
             "temperature of thermal annealing",
             "HTL energy level (eV)", "ETL energy level (eV)"
         ],
+        "polymer_unit": ["Donor", "Acceptor"],
         "target": ["calculated PCE (%)"],
     },
 
@@ -51,6 +52,7 @@ DATASET_CONFIG = {
             "polymer dP", "polymer dD", "polymer dH",
             "solvent dP", "solvent dD", "solvent dH"
         ],
+        "polymer_unit": ["Monomer"],
         "target": ["log Rg (nm)"],
     },
 
@@ -67,6 +69,7 @@ DATASET_CONFIG = {
             'Experimental_temperature',
             'Downstream_pressure',
         ],
+        "polymer_unit": ["polymers"],
         "target": {
             "separation_data_imputed": ["log (Separation factor)"],
             "flux_data_imputed": ["log (Total flux)"]
@@ -85,6 +88,7 @@ DATASET_CONFIG = {
             'organic compound size (Da)',
             'foulant concentration (mg/L)',
         ],
+        "polymer_unit": ["polymer"],
         "target": [
             r'water permeability (LMH/bar)',
             'organic compound removal (%)',
@@ -104,6 +108,7 @@ DATASET_CONFIG = {
             'Permeate pressure (mbar)',
             'Solvent solubility parameter （MPa1/2）',
         ],
+        "polymer_unit": ["polymer"],
         "target": ['log (Total flux)', 'log (Separation factor)'],
     }
 }
@@ -128,8 +133,9 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
         if isinstance(entry["target"], dict)
         else entry["target"]
     )
+    polymer_unit = entry["polymer_unit"]
 
-    return dataset, features, target
+    return dataset, features, target, polymer_unit
 
 
 

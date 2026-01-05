@@ -84,10 +84,10 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-    dataset_name = "Beyond molecular structure_seifrid_imputed"
+    PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+    dataset_name = "flux_data_imputed"
     #non_imputed_dropped_nan_Rg_data
-    w_data, feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
     args = parse_arguments()
 
     for targ in all_targets:
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
-                polymer_unit=["Donor","Acceptor"],
+                polymer_unit=polymer_unit,
                 target_features=[targ],  
                 feat_transformer='Standard',
                 target_transformer='Standard',
