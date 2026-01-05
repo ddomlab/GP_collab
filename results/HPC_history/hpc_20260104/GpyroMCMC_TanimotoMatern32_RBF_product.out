@@ -1,0 +1,436 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c202n13>
+Subject: Job 886745: <structure_numerical_20260104> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260104> was submitted from host <c207n13> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:36:41 2026
+Job was executed on host(s) <6*c202n13>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:36:42 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 15:36:42 2026
+Terminated at Sun Jan  4 15:37:13 2026
+Results reported at Sun Jan  4 15:37:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 32:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   10.76 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   49 sec.
+    Turnaround time :                            32 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.21±0.04	 r2: 0.89±0.04
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.29±0.08	 r2: 0.97±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c002n03>
+Subject: Job 886881: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c201n04> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:55:23 2026
+Job was executed on host(s) <6*c002n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:56:16 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 15:56:16 2026
+Terminated at Sun Jan  4 16:33:40 2026
+Results reported at Sun Jan  4 16:33:40 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 5:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   9331.56 sec.
+    Max Memory :                                 10 GB
+    Average Memory :                             6.04 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               22.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                48
+    Run time :                                   2270 sec.
+    Turnaround time :                            2297 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+
+Running seed: 13
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 71.19±9.76	 r2: 0.79±0.05
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 9.2±1.4	 r2: 0.67±0.14
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.09±1.36	 r2: 0.71±0.07
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 2.19±0.15	 r2: 0.49±0.05
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c013n03>
+Subject: Job 886924: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c205n10> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 16:20:12 2026
+Job was executed on host(s) <6*c013n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 16:21:30 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 16:21:30 2026
+Terminated at Sun Jan  4 17:07:45 2026
+Results reported at Sun Jan  4 17:07:45 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   8919.00 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             4.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                46
+    Run time :                                   2801 sec.
+    Turnaround time :                            2853 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+
+Average scores:	 rmse: 10.19±1.36	 r2: 0.36±0.1
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.24±1.62	 r2: 0.72±0.09
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.18±1.24	 r2: 0.36±0.09
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c202n05>
+Subject: Job 886974: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c202n05> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 16:35:00 2026
+Job was executed on host(s) <6*c202n05>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 16:35:47 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 16:35:47 2026
+Terminated at Sun Jan  4 17:18:51 2026
+Results reported at Sun Jan  4 17:18:51 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   11545.00 sec.
+    Max Memory :                                 12 GB
+    Average Memory :                             8.57 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               20.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                48
+    Run time :                                   2589 sec.
+    Turnaround time :                            2631 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 0.34±0.03	 r2: 0.86±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c026n02>
+Subject: Job 886819: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c207n13> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:42:48 2026
+Job was executed on host(s) <6*c026n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:43:46 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 15:43:46 2026
+Terminated at Sun Jan  4 22:36:15 2026
+Results reported at Sun Jan  4 22:36:15 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 32:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   110837.00 sec.
+    Max Memory :                                 46 GB
+    Average Memory :                             29.46 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -14.00 GB
+    Max Swap :                                   1 GB
+    Max Processes :                              38
+    Max Threads :                                46
+    Run time :                                   24775 sec.
+    Turnaround time :                            24807 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.28±0.02	 r2: 0.85±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-RBF_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c202n06>
+Subject: Job 886782: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c207n13> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:40:10 2026
+Job was executed on host(s) <6*c202n06>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:40:11 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 15:40:11 2026
+Terminated at Mon Jan  5 08:06:37 2026
+Results reported at Mon Jan  5 08:06:37 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 32:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count RBF                                         --Kernel_mixing_method product 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   257446.00 sec.
+    Max Memory :                                 53 GB
+    Average Memory :                             19.69 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -21.00 GB
+    Max Swap :                                   10 GB
+    Max Processes :                              30
+    Max Threads :                                39
+    Run time :                                   59214 sec.
+    Turnaround time :                            59187 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_RBF_product.err> for stderr output of this job.
+

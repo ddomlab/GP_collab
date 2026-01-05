@@ -1,0 +1,58 @@
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pandas/io/pickle.py", line 202, in read_pickle
+    return pickle.load(handles.handle)
+ModuleNotFoundError: No module named 'numpy._core.numeric'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 90, in <module>
+    w_data,feats, all_targets = _get_dataset_features(DATASETS, PAPER, dataset_name)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/filter_data.py", line 118, in _get_dataset_features
+    dataset = pd.read_pickle(dataset_path)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pandas/io/pickle.py", line 207, in read_pickle
+    return pc.load(handles.handle, encoding=None)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pandas/compat/pickle_compat.py", line 231, in load
+    return up.load()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/pickle.py", line 1213, in load
+    dispatch[key[0]](self)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/pickle.py", line 1538, in load_stack_global
+    self.append(self.find_class(module, name))
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/pandas/compat/pickle_compat.py", line 162, in find_class
+    return super().find_class(module, name)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/pickle.py", line 1580, in find_class
+    __import__(module, level=0)
+ModuleNotFoundError: No module named 'numpy._core.numeric'
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 95, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 48, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 80, in train_regressor
+    scores, predictions = _prepare_data(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 188, in _prepare_data
+    score,predication = run(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/training_utils_gp_special.py", line 300, in run
+    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/scoring.py", line 474, in gp_cross_validate_regressor
+    score, predictions = gp_cross_validate(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/scoring.py", line 435, in gp_cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+joblib.externals.loky.process_executor.TerminatedWorkerError: A worker process managed by the executor was unexpectedly terminated. This could be caused by a segmentation fault while calling the function or by an excessive memory usage causing the Operating System to kill the worker.
+
+The exit codes of the workers are {SIGKILL(-9)}
+Detailed tracebacks of the workers should have been printed to stderr in the executor process if faulthandler was not disabled.
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 5 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
