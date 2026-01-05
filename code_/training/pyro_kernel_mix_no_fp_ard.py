@@ -304,6 +304,7 @@ kernel_factory: dict = {
     "Matern52": pk.Matern52,
 }
 
+
 class MixingKernelPyro:
     def __init__(self, 
                 feat_idx,
@@ -321,31 +322,15 @@ class MixingKernelPyro:
 
         # Fingerprint kernels
         fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-        fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
         for key in fp_keys:
             idx = self.feat_idx[key]
-            if fp_has_tanimoto:
+            if idx:
                 k_fp = kernel_factory[self.kernel_method["fp"]](
-                        input_dim=len(idx),
-                        active_dims=idx,
-                    )
+                    input_dim=len(idx),
+                    active_dims=idx,
+                )
                 fp_kernels.append(k_fp)
-            else:
-                for dim in idx:
-                    k_fp = kernel_factory[self.kernel_method["fp"]](
-                        input_dim=1,
-                        active_dims=[dim],
-                    )
-                    fp_kernels.append(k_fp)
 
-        # else:
-        #     for dim in idx:
-        #         k_fp = kernel_factory[self.kernel_method["fp"]](
-        #                 input_dim=1,
-        #                 active_dims=[dim],
-        #             )
-        #         fp_kernels.append(k_fp)
-                
         # Count kernels
         count_idx = sorted(self.feat_idx.get("count"))
         for dim in count_idx:
@@ -377,48 +362,76 @@ class MixingKernelPyro:
         raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
 
 
-
-# class GPMixPyro(gp.models.GPRegression):
-#     def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict):
+# class MixingKernelPyro:
+#     def __init__(self, 
+#                 feat_idx,
+#                 mixing_method: str,
+#                 kernel_method: dict,
+#                 variance=None
+#                 ):
 #         self.feat_idx = feat_idx
+#         self.variance = variance
+#         self.mixing_method = mixing_method
 #         self.kernel_method = kernel_method
-#         self.kernel_builder = MixingKernelPyro(feat_idx, mixing_method, self.kernel_method)
-#         kernel = self.kernel_builder.build()
-#         super().__init__(X, y, kernel, jitter=1e-6)
+#     def build(self):
+#         fp_kernels = []
+#         count_kernels = []
 
-#         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
-#         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
-
-#         # Dynamically assign lengthscales to all sub-kernels
-#         fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
-        
-#         for i, _ in enumerate(self.kernel._kernels):
-#             target_kern = getattr(self.kernel, f"kern{i}")
-            
-#             # Check if this kernel corresponds to one of the FP groups
-#             if i < len(fp_keys):
-#                 if self.kernel_method["fp"].lower() == "tanimoto":
-#                     continue
-                
-#                 target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+#         # Fingerprint kernels
+#         fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+#         fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
+#         for key in fp_keys:
+#             idx = self.feat_idx[key]
+#             if fp_has_tanimoto:
+#                 k_fp = kernel_factory[self.kernel_method["fp"]](
+#                         input_dim=len(idx),
+#                         active_dims=idx,
+#                     )
+#                 fp_kernels.append(k_fp)
 #             else:
-#                 target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+#                 for dim in idx:
+#                     k_fp = kernel_factory[self.kernel_method["fp"]](
+#                         input_dim=1,
+#                         active_dims=[dim],
+#                     )
+#                     fp_kernels.append(k_fp)
+
+#         # Count kernels
+#         count_idx = sorted(self.feat_idx.get("count"))
+#         for dim in count_idx:
+#             k_c = kernel_factory[self.kernel_method["count"]](
+#                 input_dim=1,
+#                 active_dims=[dim],
+#             )
+#             count_kernels.append(k_c)
+
+#         # Compose based on mixing method
+#         if self.mixing_method in ("sum", "product"):
+#             all_kernels = fp_kernels + count_kernels
+#             if len(all_kernels) < 2:
+#                 raise ValueError(f"{self.mixing_method} mixing requires at least two kernels total")
+#             return mixing_factory[self.mixing_method](*all_kernels, variance=self.variance)
+
+#         if self.mixing_method == "averageProduct":
+#             if len(fp_kernels) < 1:
+#                 raise ValueError("average-product requires at least one fp kernel (sum group)")
+#             if len(count_kernels) < 1:
+#                 raise ValueError("average-product requires at least one count kernel (product group)")
+#             return AverageProductMultipleWithVariance(
+#                 sum_kernels=count_kernels,
+#                 product_kernels=fp_kernels,
+#                 variance=self.variance,
+#                 average_sum=True,
+#             )
+
+#         raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
+
 
 
 class GPMixPyro(gp.models.GPRegression):
-    def __init__(
-        self,
-        X,
-        y,
-        feat_idx,
-        mixing_method: str,
-        kernel_method: dict,
-        # fp_lengthscale_prior=None,
-        # count_lengthscale_prior=None,
-    ):
+    def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict):
         self.feat_idx = feat_idx
         self.kernel_method = kernel_method
-
         self.kernel_builder = MixingKernelPyro(feat_idx, mixing_method, self.kernel_method)
         kernel = self.kernel_builder.build()
         super().__init__(X, y, kernel, jitter=1e-6)
@@ -426,49 +439,90 @@ class GPMixPyro(gp.models.GPRegression):
         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
 
-        # Default priors if user does not pass them
-        # if fp_lengthscale_prior is None:
-        #     fp_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
-        # if count_lengthscale_prior is None:
-        #     count_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
-
-        fp_name = str(self.kernel_method["fp"]).strip()
-        fp_name_l = fp_name.lower()
-
-        # Exact "Tanimoto" means no lengthscale. "TanimotoRBF" (and others containing tanimoto) do need one.
-        fp_is_plain_tanimoto = (fp_name_l == "tanimoto")
-        fp_is_block_kernel = ("tanimoto" in fp_name_l)  # includes TanimotoRBF
-
+        # Dynamically assign lengthscales to all sub-kernels
         fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
-
-        # Number of FP kernels created at the front of kernel._kernels
-        if fp_is_block_kernel:
-            # One kernel per fp group (non-empty)
-            n_fp = sum(1 for k in fp_keys if (feat_idx.get(k) or []))
-        else:
-            # One kernel per fp bit (dimension)
-            n_fp = sum(len(feat_idx.get(k) or []) for k in fp_keys)
-
-        # Number of count kernels (one per count dim in your build)
-        n_count = len(feat_idx.get("count") or [])
-
-        # Assign priors based on kernel position:
-        # [0, n_fp) are FP kernels, [n_fp, n_fp + n_count) are count kernels
+        
         for i, _ in enumerate(self.kernel._kernels):
-            is_fp_kernel = (i < n_fp)
-            is_count_kernel = (n_fp <= i < n_fp + n_count)
             target_kern = getattr(self.kernel, f"kern{i}")
-            if is_fp_kernel:
-                if fp_is_plain_tanimoto:
+            
+            # Check if this kernel corresponds to one of the FP groups
+            if i < len(fp_keys):
+                if self.kernel_method["fp"].lower() == "tanimoto":
                     continue
-                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
-
-            elif is_count_kernel:
-                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
-
+                if "tanimoto" in self.kernel_method["fp"].lower():
+                    target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+                else:
+                    ard_length = len(self.feat_idx[fp_keys[i]])
+                    target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0).expand([ard_length]).to_event(1))
             else:
-                # If you ever add a third kernel family, decide here what prior it should receive.
-                raise RuntimeError("Kernel index exceeds expected number of kernels.")
+                target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+
+
+# class GPMixPyro(gp.models.GPRegression):
+#     def __init__(
+#         self,
+#         X,
+#         y,
+#         feat_idx,
+#         mixing_method: str,
+#         kernel_method: dict,
+#         # fp_lengthscale_prior=None,
+#         # count_lengthscale_prior=None,
+#     ):
+#         self.feat_idx = feat_idx
+#         self.kernel_method = kernel_method
+
+#         self.kernel_builder = MixingKernelPyro(feat_idx, mixing_method, self.kernel_method)
+#         kernel = self.kernel_builder.build()
+#         super().__init__(X, y, kernel, jitter=1e-6)
+
+#         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
+#         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
+
+#         # Default priors if user does not pass them
+#         # if fp_lengthscale_prior is None:
+#         #     fp_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
+#         # if count_lengthscale_prior is None:
+#         #     count_lengthscale_prior = dist.InverseGamma(5.0, 5.0)
+
+#         fp_name = str(self.kernel_method["fp"]).strip()
+#         fp_name_l = fp_name.lower()
+
+#         # Exact "Tanimoto" means no lengthscale. "TanimotoRBF" (and others containing tanimoto) do need one.
+#         fp_is_plain_tanimoto = (fp_name_l == "tanimoto")
+#         fp_is_block_kernel = ("tanimoto" in fp_name_l)  # includes TanimotoRBF
+
+#         fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
+
+#         # Number of FP kernels created at the front of kernel._kernels
+#         if fp_is_block_kernel:
+#             # One kernel per fp group (non-empty)
+#             n_fp = sum(1 for k in fp_keys if (feat_idx.get(k) or []))
+#         else:
+#             # One kernel per fp bit (dimension)
+#             n_fp = sum(len(feat_idx.get(k) or []) for k in fp_keys)
+
+#         # Number of count kernels (one per count dim in your build)
+#         n_count = len(feat_idx.get("count") or [])
+
+#         # Assign priors based on kernel position:
+#         # [0, n_fp) are FP kernels, [n_fp, n_fp + n_count) are count kernels
+#         print(n_fp, n_count)
+#         for i, _ in enumerate(self.kernel._kernels):
+#             is_fp_kernel = (i < n_fp)
+#             is_count_kernel = (n_fp <= i < n_fp + n_count)
+#             target_kern = getattr(self.kernel, f"kern{i}")
+#             if is_fp_kernel:
+#                 if fp_is_plain_tanimoto:
+#                     continue
+#                 target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+
+#             elif is_count_kernel:
+#                 target_kern.lengthscale = PyroSample(dist.InverseGamma(5.0, 5.0))
+
+#             else:
+#                 # If you ever add a third kernel family, decide here what prior it should receive.
+#                 raise RuntimeError("Kernel index exceeds expected number of kernels.")
 
 
 
@@ -641,73 +695,80 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
         return {k: self._samples.get(k) for k in var_names}
     
 
-    # def _get_lengthscale(self):
-    #         summary = {}
-    #         fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-    #         count_keys = sorted(list(self.count_feat_name_idx.keys()))
-
-    #         fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
-
-    #         all_keys = fp_keys + count_keys
-    #         # Extract FP lengthscales using their specific unit names
-    #         for i, key in enumerate(all_keys):
-    #             param_name = f"kernel.kern{i}.lengthscale"
-    #             if param_name in self._samples:
-    #                 summary[key] = self._samples[param_name].float().cpu().numpy()
-
-    #         return summary
-
     def _get_lengthscale(self):
-        if self._samples is None:
-            raise RuntimeError("No MCMC samples found. Call fit() first.")
+            summary = {}
+            fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+            count_names = sorted(list(self.count_feat_name_idx.keys()))
 
-        summary = {}
-
-        fp_name = str(self.kernel_type["fp"]).strip()
-        fp_name_l = fp_name.lower()
-
-        # Exact "Tanimoto" => no lengthscale for FP kernels
-        fp_is_plain_tanimoto = (fp_name_l == "tanimoto")
-
-        # Any tanimoto-* kernel (e.g. TanimotoRBF) is a block kernel in your construction
-        fp_is_block_kernel = ("tanimoto" in fp_name_l)
-
-        fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-
-        # Count keys in build order (recommended) or sorted; choose one and keep consistent with build()
-        count_keys = list(self.feat_group.get("count", []) or [])
-        # If you prefer your previous behavior:
-        # count_keys = sorted(list(self.count_feat_name_idx.keys()))
-
-        labels = []
-
-        # FP labels (must match how FP kernels were built)
-        if not fp_is_plain_tanimoto:
-            if fp_is_block_kernel:
-                # one kernel per fp group (non-empty)
-                for g in fp_keys:
-                    if self.feat_idx.get(g):
-                        labels.append(g)
+            fp_has_tanimoto = "tanimoto" in str(self.kernel_method["fp"]).lower()
+            if fp_has_tanimoto:
+                fp_name = fp_keys
             else:
-                # one kernel per fp bit/dimension (non-empty), ordered deterministically
-                for g in fp_keys:
-                    dims = sorted(list(self.feat_idx.get(g) or []))
-                    for dim in dims:
-                        labels.append(f"{g}[{dim}]")
+                fp_name = [
+                    f"{key}[{dim}]"
+                    for key in fp_keys
+                    for dim in sorted(list(self.feat_idx.get(key) or []))
+                ]
+            all_keys = fp_name + count_names
+            # Extract FP lengthscales using their specific unit names
+            for i, key in enumerate(all_keys):
+                param_name = f"kernel.kern{i}.lengthscale"
+                if param_name in self._samples:
+                    summary[key] = self._samples[param_name].float().cpu().numpy()
 
-        # Count labels (one kernel per count feature)
-        labels.extend(count_keys)
+            return summary
 
-        # Extract lengthscales by kernel index
-        for i, label in enumerate(labels):
-            site = f"kernel.kern{i}.lengthscale"
-            if site in self._samples:
-                summary[label] = (
-                    self._samples[site]
-                    .detach()
-                    .float()
-                    .cpu()
-                    .numpy()
-                )
+    # def _get_lengthscale(self):
+    #     if self._samples is None:
+    #         raise RuntimeError("No MCMC samples found. Call fit() first.")
 
-        return summary
+    #     summary = {}
+
+    #     fp_name = str(self.kernel_type["fp"]).strip()
+    #     fp_name_l = fp_name.lower()
+
+    #     # Exact "Tanimoto" => no lengthscale for FP kernels
+    #     fp_is_plain_tanimoto = (fp_name_l == "tanimoto")
+
+    #     # Any tanimoto-* kernel (e.g. TanimotoRBF) is a block kernel in your construction
+    #     fp_is_block_kernel = ("tanimoto" in fp_name_l)
+
+    #     fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+
+    #     # Count keys in build order (recommended) or sorted; choose one and keep consistent with build()
+    #     count_keys = list(self.feat_group.get("count", []) or [])
+    #     # If you prefer your previous behavior:
+    #     # count_keys = sorted(list(self.count_feat_name_idx.keys()))
+
+    #     labels = []
+
+    #     # FP labels (must match how FP kernels were built)
+    #     if not fp_is_plain_tanimoto:
+    #         if fp_is_block_kernel:
+    #             # one kernel per fp group (non-empty)
+    #             for g in fp_keys:
+    #                 if self.feat_idx.get(g):
+    #                     labels.append(g)
+    #         else:
+    #             # one kernel per fp bit/dimension (non-empty), ordered deterministically
+    #             for g in fp_keys:
+    #                 dims = sorted(list(self.feat_idx.get(g) or []))
+    #                 for dim in dims:
+    #                     labels.append(f"{g}[{dim}]")
+
+    #     # Count labels (one kernel per count feature)
+    #     labels.extend(count_keys)
+
+    #     # Extract lengthscales by kernel index
+    #     for i, label in enumerate(labels):
+    #         site = f"kernel.kern{i}.lengthscale"
+    #         if site in self._samples:
+    #             summary[label] = (
+    #                 self._samples[site]
+    #                 .detach()
+    #                 .float()
+    #                 .cpu()
+    #                 .numpy()
+    #             )
+
+    #     return summary

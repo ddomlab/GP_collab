@@ -10,6 +10,7 @@ sys.path.append("../cleaning")
 from argparse import ArgumentParser
 from data_handling import save_results
 from train_structure_numerical import get_structural_info
+from utils import parse_arguments
 
 HERE: Path = Path(__file__).resolve().parent
 DATASETS: Path = HERE.parent.parent / "datasets"
@@ -75,76 +76,7 @@ def main_structural(
 
 
 
-def parse_arguments():
-    parser = ArgumentParser(description="Process some data for numerical-only regression.")
-    
-    # Argument for regressor_type
-    parser.add_argument(
-        '--target_features',
-        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
-        help="Specify a single target for the analysis."
-    )
 
-    parser.add_argument(
-        '--regressor_type', 
-        type=str, 
-        choices=['RF', 'DT', 'MLR', 'SVR', 'XGBR','KNN', 'GPR', 'NGB', 'sklearn-GPR'], 
-        required=True, 
-        help="Regressor type required"
-    )
-
-    parser.add_argument(
-        "--transform_type", 
-        type=str, 
-        choices=["Standard", "Robust Scaler"], 
-        default= "Standard", 
-        help="transform type required"
-    )
-
-    parser.add_argument(
-        "--kernel", 
-        type=str,
-        default=None,
-        help='kernel for GP is optinal'
-    )
-
-    parser.add_argument(
-        '--representation', 
-        type=str, 
-        choices=['ECFP', 'MACCS', 'Mordred'], 
-        required=True, 
-        help="Fingerprint required"
-    )
-
-    parser.add_argument(
-        '--oligomer_representation', 
-        type=str, 
-        choices=['Monomer', 'Dimer', 'Trimer', 'RRU Monomer', 'RRU Dimer', 'RRU Trimer'], 
-        required=True, 
-        help="Fingerprint required"
-    )
-
-    parser.add_argument(
-        '--radius',
-        type=int,
-        choices=[3, 4, 5, 6],
-        nargs='?',  # This allows the argument to be optional
-        default=None,  # Set the default value to None
-        help='Radius for ECFP'
-    )
-
-    parser.add_argument(
-        '--vector',
-        type=str,
-        choices=['count', 'binary'],
-        nargs='?',  # This allows the argument to be optional
-        default='count',  # Set the default value to None
-        help='Type of vector (default: count)'
-    )
-
-
-    return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_arguments()
