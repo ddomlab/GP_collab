@@ -77,7 +77,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                # special_file_name='product_chain1',
+                special_file_name='ARD',
                 **kwargs,
                 )
 
