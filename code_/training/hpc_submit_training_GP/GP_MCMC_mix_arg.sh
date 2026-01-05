@@ -5,9 +5,9 @@ model="GPMixMCMC"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}
 mkdir -p "$output_dir"
 
-k_fps=("RBF")
-k_counts=("Matern32")
-k_mixing_methods=("sum") 
+k_fps=("RBF" "Matern32" "Matern52")
+k_counts=("Matern32" "Matern52" "RBF")
+k_mixing_methods=("sum" "product" "averageProduct") 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
