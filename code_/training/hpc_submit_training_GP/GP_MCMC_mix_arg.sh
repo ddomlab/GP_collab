@@ -3,7 +3,7 @@
 DATE=$(date +%Y%m%d)
 # model="GPMixMCMC"
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="target_calculated PCE (%)"
+dataset="Beyond molecular structure_seifrid_imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 

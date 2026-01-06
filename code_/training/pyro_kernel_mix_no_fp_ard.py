@@ -434,7 +434,7 @@ class GPMixPyro(gp.models.GPRegression):
         self.kernel_method = kernel_method
         self.kernel_builder = MixingKernelPyro(feat_idx, mixing_method, self.kernel_method)
         kernel = self.kernel_builder.build()
-        super().__init__(X, y, kernel, jitter=1e-6)
+        super().__init__(X, y, kernel, jitter=1e-4)
 
         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
@@ -548,7 +548,7 @@ def run_inference(gp_model,
         num_samples=num_samples,
         warmup_steps=warmup_steps,
         num_chains=num_chains,
-        disable_progbar=False
+        disable_progbar=True
     )
 
     mcmc.run()
@@ -560,8 +560,8 @@ class GPMixMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_group:dict,
-        num_samples=200,
-        warmup_steps=200,
+        num_samples=400,
+        warmup_steps=400,
         num_chains=1,
         num_drawn_samples=100,
         use_cuda=False,
