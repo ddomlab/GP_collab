@@ -12,6 +12,12 @@ import seaborn as sns
 
 # import krippendorff
 import pingouin as pg
+
+from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+
 from visualization_setting import set_plot_style, save_img_path, ensure_long_path
 
 set_plot_style()
@@ -541,8 +547,69 @@ def calculate_kendalls_w(df_input):
     }
 
 
+def get_scores(data: Dict, metric: List[str]):
+    return {
+        score: f"{data[f'{score}_avg']} ± {data[f'{score}_stdev']}"
+        for score in metric
+    }
+
+
+def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.docx"):
+    document = Document()
+
+    rows = len(rows_data) + 3
+    cols = 5
+    table = document.add_table(rows=rows, cols=cols)
+    table.style = "Table Grid"
+
+    # ---------------- HEADER LEVEL 1 ----------------
+    h = table.rows[0].cells
+    h[0].text = "Combination"
+    h[3].text = "GP pyro"
+
+    h[0].merge(h[2])     # Combination spans Count/FP/Mixing
+    h[3].merge(h[4])     # GP pyro spans RMSE/R2
+
+    # ---------------- HEADER LEVEL 2 ----------------
+    h2 = table.rows[1].cells
+    h2[0].text = "Kernel"
+    h2[3].text = "RMSE"
+    h2[4].text = "R²"
+    h2[0].merge(h2[1])
+
+    # ---------------- HEADER LEVEL 3 ----------------
+    h3 = table.rows[2].cells
+    h3[0].text = "Count"
+    h3[1].text = "FP"
+    h3[2].text = "Mixing method"
+
+    # ---------------- DATA ROWS ----------------
+    r = 3
+    for row in rows_data:
+        cells = table.rows[r].cells
+        for c, v in enumerate(row):
+            cells[c].text = str(v)
+        r += 1
+
+    # styling
+    for row in table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for run in p.runs:
+                    run.font.size = Pt(10)
+    os.makedirs(folder_path, exist_ok=True)
+    document.save(folder_path / file_name)
+    print(f"Saved Word table → {file_name}")
+
 
 if __name__ == "__main__":
+
+    baseline_kernel = ["RBF", "Matern32", "Matern52"]
+    tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimoto",  ]
+    count_kernel = ["Matern32", "Matern52", "RBF"]
+    mixing_methods = ["sum", "product", "averageProduct"]
+    
     PAPER = {
             "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
             "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
@@ -558,8 +625,10 @@ if __name__ == "__main__":
             ],
             }
     
-    models = ["GPMixMCMC"]
-    model_stats = {}
+    models = ["GpyroMCMC", 
+            #   "GPMixMCMC"
+              ]
+    # model_stats = {}
     for paper_name, target_list in PAPER.items():
         for target in target_list:
     #         print(paper_name, target)
@@ -571,16 +640,16 @@ if __name__ == "__main__":
             #                         )
             for model in models:
                 paper_loc: Path = RESULTS / paper_name / target
-                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
-                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                with open(score_path, "r") as f:
-                    scores = json.load(f)
+            #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
+            #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     with open(score_path, "r") as f:
+            #         scores = json.load(f)
 
                 # MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
                 #                                 save_loc=paper_loc,
@@ -593,8 +662,8 @@ if __name__ == "__main__":
 
                 # mdi_feature_means = MDI_imp.mean()
                 # df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
-                df_ls = process_lengthscales_to_df(scores)
-                print(df_ls)
+                # df_ls = process_lengthscales_to_df(scores)
+
                 # 3. Filter the DataFrame to these 15 features
                 # print(df_top15)
                 # plot_top15_feature_stability(
@@ -613,9 +682,36 @@ if __name__ == "__main__":
                 #                             )
                 # print(calculate_kendalls_w(df_top15))
                 # print(df_top15_mdi_features)
-                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
+                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
                 # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
                 # print(pg.friedman(df_top15))
 
-    with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
-        json.dump(model_stats, f, indent=2)
+    # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
+    #     json.dump(model_stats, f, indent=2)
+                rows_data = []
+                for count_k in count_kernel:
+                    for fp_k in tanimoto_kernel:
+                        for mix_method in mixing_methods:
+
+                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
+                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                            if not score_path.exists():
+                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                                score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                with open(score_path, "r") as f:
+                                    score_file = json.load(f)
+
+                                if score_file is None:
+                                    print(f"❌ Missing score: {file_template}")
+                                    continue
+                                score_annot = get_scores(score_file, metric=['rmse','r2'])
+                                mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
+                                rows_data.append([
+                                        count_k,
+                                        fp_k,
+                                        mix_method,
+                                        score_annot["rmse"],
+                                        score_annot["r2"]
+                                    ])
+                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
+                                
