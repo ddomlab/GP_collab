@@ -84,11 +84,14 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    PAPER = "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-    dataset_name = "cleaned_dataset_pervaporation_membranes_wang"
+    args = parse_arguments()
+    PAPER = args.paper
+    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+    dataset_name = args.dataset
+    # "cleaned_dataset_pervaporation_membranes_wang"
     #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-    args = parse_arguments()
+    
 
     for targ in all_targets:
             main_structural_numerical(

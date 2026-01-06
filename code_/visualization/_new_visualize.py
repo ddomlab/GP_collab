@@ -549,7 +549,7 @@ def calculate_kendalls_w(df_input):
 
 def get_scores(data: Dict, metric: List[str]):
     return {
-        score: f"{data[f'{score}_avg']} ± {data[f'{score}_stdev']}"
+        score: f"{round(data[f'{score}_avg'], 2)} ± {round(data[f'{score}_stdev'], 2)}"
         for score in metric
     }
 
@@ -583,6 +583,10 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     h3[1].text = "FP"
     h3[2].text = "Mixing method"
 
+    # ---- VERTICAL MERGES ----
+    table.rows[1].cells[2].merge(table.rows[2].cells[2])
+    table.rows[1].cells[3].merge(table.rows[2].cells[3])
+    table.rows[1].cells[4].merge(table.rows[2].cells[4])
     # ---------------- DATA ROWS ----------------
     r = 3
     for row in rows_data:
@@ -692,26 +696,35 @@ if __name__ == "__main__":
                 for count_k in count_kernel:
                     for fp_k in tanimoto_kernel:
                         for mix_method in mixing_methods:
-
+                            
+                            score_file = None
                             file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
                             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
                             if not score_path.exists():
                                 file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
                                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                            if not score_path.exists():
+                                print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+
+                            else:
                                 with open(score_path, "r") as f:
                                     score_file = json.load(f)
 
-                                if score_file is None:
-                                    print(f"❌ Missing score: {file_template}")
-                                    continue
+                            if score_file is None:
+                                rmse_value = ""
+                                r2_value = ""
+                            else:
                                 score_annot = get_scores(score_file, metric=['rmse','r2'])
-                                mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
-                                rows_data.append([
-                                        count_k,
-                                        fp_k,
-                                        mix_method,
-                                        score_annot["rmse"],
-                                        score_annot["r2"]
-                                    ])
+                                rmse_value = score_annot["rmse"]
+                                r2_value = score_annot["r2"]
+
+                            mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
+                            rows_data.append([
+                                count_k,
+                                fp_k,
+                                mix_method,
+                                rmse_value,
+                                r2_value
+                            ])
                 create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
                                 

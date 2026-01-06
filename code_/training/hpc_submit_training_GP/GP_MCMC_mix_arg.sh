@@ -1,13 +1,15 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPMixMCMC"
-output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}
+# model="GPMixMCMC"
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="target_calculated PCE (%)"
+output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-k_fps=("RBF" "Matern32" "Matern52")
-k_counts=("Matern32" "Matern52" "RBF")
-k_mixing_methods=("sum" "product" "averageProduct") 
+k_fps=("TanimotoRBF")
+k_counts=("RBF")
+k_mixing_methods=("sum" "averageProduct") 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
@@ -29,6 +31,8 @@ conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
 python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --K_count $count_kernel \
                                         --Kernel_mixing_method $mixing_method 
+                                        --paper "$paper" \
+                                        --dataset "$dataset" \
 
 EOT
 

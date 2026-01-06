@@ -100,6 +100,20 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        '--paper',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=False,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
+        '--dataset',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=False,
+        help="Specify a single target for the analysis."
+    )
+
+    parser.add_argument(
         '--K_fp',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
