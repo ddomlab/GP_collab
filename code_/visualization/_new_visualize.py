@@ -445,62 +445,10 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 
 
 
-
-
-
-
-# def krippendorff_alpha_by_feature(df, save_loc, file_extension, n_seeds=7, folds_per_seed=5, figsize=(12,6)):
-#     total_needed = n_seeds * folds_per_seed
-
-#     if len(df) < total_needed:
-#         raise ValueError(f"Not enough rows: need {total_needed}, but got {len(df)}")
-
-#     # Ensure we use exactly N rows (or you can shuffle before slicing)
-#     df_cut = df.iloc[:total_needed]
-
-#     alphas = {}
-
-#     # Loop over all features
-#     for feature in df_cut.columns:
-#         values = df_cut[feature].values
-
-#         # Reshape rows into (n_seeds × folds_per_seed)
-#         ratings = values.reshape(n_seeds, folds_per_seed)
-
-#         # Compute alpha
-#         try:
-#             alpha = krippendorff.alpha(
-#                 reliability_data=ratings,
-#                 level_of_measurement='interval'
-#             )
-#         except Exception:
-#             alpha = np.nan
-
-#         alphas[feature] = alpha
-
-#     # Convert to DataFrame
-#     alphas_df = pd.DataFrame({
-#         "Feature": list(alphas.keys()),
-#         "Alpha": list(alphas.values())
-#     }).sort_values("Alpha", ascending=False)
-
-#     # ---- Plot bar chart ----
-#     plt.figure(figsize=figsize)
-#     plt.bar(alphas_df["Feature"], alphas_df["Alpha"], color="#0b81a5")
-#     plt.xticks(rotation=45, ha="right")
-#     plt.ylabel("Krippendorff’s α")
-#     # plt.title("Krippendorff’s Alpha for Each Feature")
-#     plt.tight_layout()
-#     save_img_path(save_loc / "feature importance", f"feature_krippendorff_stability_{file_extension}.png")
-#     # plt.show()
-#     plt.close()
-#     return alphas_df
-
 def get_lengthscale_stat(
         scores: dict,
         expert_rank=None,
         feature_stability=True,
-        feature_validity=True,
         mean_std=True
     ) -> Dict:
 
@@ -534,25 +482,43 @@ def get_lengthscale_stat(
     df_ls = pd.DataFrame(all_rows)
 
     # ---- NEW: mean + std over ALL seeds × folds × draws ----
-    if mean_std:
-        stats = {}
+    mean_std_stats = {}
+    if mean_std or expert_rank is not None:
         for feat, arr_list in feat_samples.items():
             arr = np.concatenate(arr_list)
-            stats[feat] = {
+            mean_std_stats[feat] = {
                 "mean": np.mean(arr),
                 "std": np.std(arr, ddof=1)
             }
+            df_mean_std = pd.DataFrame(mean_std_stats).T
 
-        df_mean_std = pd.DataFrame(stats)
-        # rows: mean / std, columns: features (as you wanted)
+    kendalls_w_result=  kendalls_w(df_ls, tie_corrected=False)["Kendall's W"] if feature_stability else None
+        
+
+    kendall_tau_result = None
+    if expert_rank is not None:
+        expert_series = expert_rank.iloc[0].copy()
+
+        assert set(expert_series.index) == set(df_mean_std.index), \
+            "Features in expert_rank and length scale mean must match exactly!"
+
+        ls_rank = df_mean_std["mean"].rank(method="average", ascending=True)
+        ls_rank_aligned = ls_rank.loc[expert_series.index]
+        print("expert rank\n", expert_series)
+        print("model rank (aligned)\n", ls_rank_aligned)
+        print("real ls values\n", df_mean_std["mean"].loc[expert_series.index])
+        kendall_tau_result = kendalltau(
+            expert_series.values,
+            ls_rank_aligned.values
+        ).statistic
+
     stat_results = {
-        "kendalls_w": kendalls_w(df_ls, tie_corrected=False)["Kendall's W"],
-        "kendall_tau": None,
-        "mean":
-        "std":
+        "kendalls_w":kendalls_w_result,
+        "kendall_tau": kendall_tau_result,
+        "mean_std": mean_std_stats if mean_std else None,
     }
-    kendallTau_results = kendalltau(x=, y=)
-    return df_ls
+    # kendallTau_results = kendalltau(x=, y=)
+    return stat_results
 
 
 def kendalls_w(df_input, tie_corrected=True):
@@ -681,20 +647,20 @@ tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimo
 count_kernel = ["Matern32", "Matern52", "RBF"]
 mixing_methods = ["sum", "product", "averageProduct"]
 
-PAPER = {
-        "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-        "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-        "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
-        "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-        "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
-        "target_flux decline ratio (%)",
-        "target_flux recovery ratio (%)",
-        "target_irreversible fouling ratio(%)",
-        "target_organic compound removal (%)",
-        "target_reversible fouling ratio (%)",
-        r"target_water permeability (LMH\bar)",
-        ],
-        }
+# PAPER = {
+#         "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
+#         "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+#         "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+#         "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
+#         "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+#         "target_flux decline ratio (%)",
+#         "target_flux recovery ratio (%)",
+#         "target_irreversible fouling ratio(%)",
+#         "target_organic compound removal (%)",
+#         "target_reversible fouling ratio (%)",
+#         r"target_water permeability (LMH\bar)",
+#         ],
+#         }
 
 models = [
             # "GpyroMCMC", 
@@ -704,42 +670,70 @@ models = [
 
 PLS_Ranks = pd.DataFrame([{
                 "Xn": 1,
-                "Mw": 2,
-                "Concentration": 3,
-                "Temperature": 4,
-                "dD (polymer)": 5,
-                "dD (solvent)": 6,
-                "dP (polymer)": 7,
-                "dP (solvent)": 8,
-                "dH (polymer)": 9,
-                "dH (solvent)": 10,
-                "FP": 11,
+                "Mw (g/mol)": 2,
+                "Concentration (mg/ml)": 3,
+                "Temperature SANS/SLS/DLS/SEC (K)": 4,
+                "polymer dD": 5,
+                "solvent dD": 6,
+                "polymer dP": 7,
+                "solvent dP": 8,
+                "polymer dH": 9,
+                "solvent dH": 10,
+                "fp": 11,
                 "PDI": 12
             }], 
-            index=["rank"]
+            index=["expert_rank"]
             )
 
 BMS_Ranks = pd.DataFrame([{
-                                "HOMO D": 1,
-                                "LUMO A": 2,
-                                "Eg-D": 3,
-                                "Eg-A": 4,
-                                "Eh-D": 5,
-                                "Eh-A": 6,
-                                "HOMO-A": 7,
-                                "LUMO-D": 8,
-                                "FP Donor": 9,
-                                "FP Acceptor": 10,
-                                "D:A ratio": 11,
-                                "Thermal annealing": 12,
-                                "Solvent additives": 13,
-                                "HTL": 14,
-                                "ETL": 15
-                                }],
-                                index=["rank"]
-                            )
+                "HOMO_D (eV)": 1,
+                "LUMO_A (eV)": 2,
+                "Eg_D (eV)": 3,
+                "Eg_A (eV)": 4,
+                "Ehl_D (eV)": 5,
+                "Ehl_A (eV)": 6,
+                "HOMO_A (eV)": 7,
+                "LUMO_D (eV)": 8,
+                "fp_Donor": 9,
+                "fp_Acceptor": 10,
+                "D:A ratio (m/m)": 11,
+                "temperature of thermal annealing": 12,
+                "solvent additive conc. (% v/v)": 13,
+                "HTL energy level (eV)": 14,
+                "ETL energy level (eV)": 15
+            }],
+            index=["expert_rank"]
+            )
 
-# make a dataframe with a single row
+PAPER = {
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": {
+        "target": ["target_log Rg (nm)"],
+        "expert_impt": PLS_Ranks
+    },
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": {
+        "target": ["target_calculated PCE (%)"],
+        "expert_impt": BMS_Ranks
+    },
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": {
+        "target": ["target_log (Separation factor)", "target_log (Total flux)"],
+        "expert_impt": None
+    },
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": {
+        "target": ["target_log (Separation factor)", "target_log (Total flux)"],
+        "expert_impt": None
+    },
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": {
+        "target": [
+            "target_flux decline ratio (%)",
+            "target_flux recovery ratio (%)",
+            "target_irreversible fouling ratio(%)",
+            "target_organic compound removal (%)",
+            "target_reversible fouling ratio (%)",
+            r"target_water permeability (LMH\bar)"
+        ],
+        "expert_impt": None
+    }
+}
 
 
 if __name__ == "__main__":
@@ -748,8 +742,8 @@ if __name__ == "__main__":
     
 
     model_stats = {}
-    for paper_name, target_list in PAPER.items():
-        for target in target_list:
+    for paper_name, paper_info in PAPER.items():
+        for target in paper_info["target"]:
     #         print(paper_name, target)
             # creat_count_fp_heatmap(
             #                         target_dir=RESULTS/paper_name/target,
@@ -757,6 +751,7 @@ if __name__ == "__main__":
             #                         figsize=(7,4.5),
             #                         # comparison_value=['scaler', 'Trimer_scaler'],
             #                         )
+            feat_impt_expert = paper_info["expert_impt"]
             for model in models:
                 paper_loc: Path = RESULTS / paper_name / target
                 file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
@@ -795,9 +790,9 @@ if __name__ == "__main__":
                 #                             file_extension=file_name,
                 #                             figsize=(9,6)
                 #                             )
-                df_ls = process_lengthscales_to_df(scores)
-                print(df_ls)
-                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
+                ls_stats = get_lengthscale_stat(scores, expert_rank=feat_impt_expert, feature_stability=True, mean_std=False)
+                # print(df_ls)
+                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = ls_stats
                 # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
                 # print(pg.friedman(df_top15))
 
