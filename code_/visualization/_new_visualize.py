@@ -587,7 +587,7 @@ def get_scores(data: Dict, metric: List[str]):
         score: (
             f"{round(data[f'{score}_avg'], 2)} ± {round(data[f'{score}_stdev'], 2)}"
             if score.lower() in special
-            else f"{round(data[score], 2)}"
+            else f"{int(round(data[score]))}"
         )
         for score in metric
     }
@@ -812,14 +812,14 @@ if __name__ == "__main__":
 
                 rows_data = []
                 for count_k in count_kernel:
-                    for fp_k in baseline_kernel:
+                    for fp_k in tanimoto_kernel:
                         for mix_method in mixing_methods:
                             
                             score_file = None
-                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
+                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
                             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
                             if not score_path.exists():
-                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
+                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
                                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
                             if not score_path.exists():
                                 print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
@@ -847,5 +847,5 @@ if __name__ == "__main__":
                                 r2_value,
                                 run_time_value
                             ])
-                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
+                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
                                 
