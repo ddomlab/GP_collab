@@ -4,20 +4,23 @@ from typing import List, Optional, Any, Dict
 import os 
 import re
 
+# visualization imports
 # import cmcrameri.cm as cmc
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
+#statistics imports
 # import krippendorff
 import pingouin as pg
-
+from scipy.stats import kendalltau
+#docs
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-
+# internal imports
 from visualization_setting import set_plot_style, save_img_path, ensure_long_path
 
 set_plot_style()
@@ -493,58 +496,122 @@ def plot_average_feature_importances(scores_data: Dict[str, Any], save_loc: Path
 #     plt.close()
 #     return alphas_df
 
-def process_lengthscales_to_df(seed_scores: dict) -> pd.DataFrame:
-    all_rows = []
+def get_lengthscale_stat(
+        scores: dict,
+        expert_rank=None,
+        feature_stability=True,
+        feature_validity=True,
+        mean_std=True
+    ) -> Dict:
 
-    for key, value in seed_scores.items():
-        # Check if the value is a dictionary (this skips 'rmse_avg', etc.)
+    all_rows = []
+    feat_samples = {}   # <-- collect raw samples for mean/std over seeds, folds, draws
+
+    for key, value in scores.items():
         if isinstance(value, dict) and "test_lengthscale" in value:
             fold_list = value["test_lengthscale"]
-            
+
             for fold_dict in fold_list:
                 row_data = {}
-                
+
                 for feat_name, samples in fold_dict.items():
                     if samples is not None:
-                        # Average the MCMC draws (axis 0)
+                        samples = np.asarray(samples)
+
+                        # Row dataframe: mean across draws only for df_ls
                         row_data[feat_name] = np.mean(samples)
+
+                        # For global stats: keep ALL draws across folds + seeds
+                        if feat_name not in feat_samples:
+                            feat_samples[feat_name] = []
+                        feat_samples[feat_name].append(samples.flatten())
                     else:
                         row_data[feat_name] = np.nan
-                
+
                 all_rows.append(row_data)
 
+    # main df like before (mean over draws per fold/seed)
     df_ls = pd.DataFrame(all_rows)
+
+    # ---- NEW: mean + std over ALL seeds × folds × draws ----
+    if mean_std:
+        stats = {}
+        for feat, arr_list in feat_samples.items():
+            arr = np.concatenate(arr_list)
+            stats[feat] = {
+                "mean": np.mean(arr),
+                "std": np.std(arr, ddof=1)
+            }
+
+        df_mean_std = pd.DataFrame(stats)
+        # rows: mean / std, columns: features (as you wanted)
+    stat_results = {
+        "kendalls_w": kendalls_w(df_ls, tie_corrected=False)["Kendall's W"],
+        "kendall_tau": None,
+        "mean":
+        "std":
+    }
+    kendallTau_results = kendalltau(x=, y=)
     return df_ls
 
 
-def calculate_kendalls_w(df_input):
-    m = len(df_input)
-    n = len(df_input.columns)
-    
-    df_ranked = df_input.rank(axis=1, ascending=False, method='average')
-    
-    R = df_ranked.sum(axis=0)
-    
-    R_bar_expected = m * (n + 1) / 2
-    
-    S = np.sum((R - R_bar_expected)**2)
-    
-    S_max = (m**2 * (n**3 - n)) / 12
-    
-    W = S / S_max
-    
-    Chi_sq = m * (n - 1) * W
-    df_chi_sq = n - 1
-    
+def kendalls_w(df_input, tie_corrected=True):
+    """
+    Kendall's W for agreement across raters (rows) on items (columns).
+    If tie_corrected=True, applies the standard tie correction.
+    """
+    m = len(df_input)          # raters / folds
+    n = len(df_input.columns)  # items / features
+
+    # Rank each row
+    ranks = df_input.rank(axis=1, ascending=False, method="average")
+
+    # Sum of ranks for each feature
+    R = ranks.sum(axis=0)
+    R_bar = m * (n + 1) / 2.0
+
+    # S term
+    S = np.sum((R - R_bar) ** 2)
+
+    if not tie_corrected:
+        # Classic denominator
+        S_max = (m**2 * (n**3 - n)) / 12.0
+        W = S / S_max if S_max != 0 else np.nan
+        chi_sq = m * (n - 1) * W
+        df_chi = n - 1
+        return {
+            "m (Runs)": m,
+            "n (Features)": n,
+            "Kendall's W": W,
+            "Chi-square": chi_sq,
+            "Degrees of Freedom": df_chi,
+            "Tie Corrected": False
+        }
+
+    # -------- Tie corrected version --------
+    T_total = 0
+    for _, row in df_input.iterrows():
+        counts = row.value_counts()
+        ties = counts[counts > 1]
+        if len(ties) > 0:
+            T_total += np.sum(ties**3 - ties)
+
+    denom = (m**2 * (n**3 - n)) - (m * T_total)
+    W = (12 * S) / denom if denom != 0 else np.nan
+
+    chi_sq = m * (n - 1) * W
+    df_chi = n - 1
+
     return {
         "m (Runs)": m,
         "n (Features)": n,
-        "S": S,
-        "S_max": S_max,
         "Kendall's W": W,
-        "Chi-square": Chi_sq,
-        "Degrees of Freedom": df_chi_sq
+        "Chi-square": chi_sq,
+        "Degrees of Freedom": df_chi,
+        "Tie Corrected": True,
+        "Total Tie Correction Term (Σ(t^3−t))": T_total
     }
+
 
 
 def get_scores(data: Dict, metric: List[str]):
@@ -607,32 +674,80 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     print(f"Saved Word table → {file_name}")
 
 
+
+
+baseline_kernel = ["RBF", "Matern32", "Matern52"]
+tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimoto",  ]
+count_kernel = ["Matern32", "Matern52", "RBF"]
+mixing_methods = ["sum", "product", "averageProduct"]
+
+PAPER = {
+        "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
+        "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
+        "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
+        "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
+        "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
+        "target_flux decline ratio (%)",
+        "target_flux recovery ratio (%)",
+        "target_irreversible fouling ratio(%)",
+        "target_organic compound removal (%)",
+        "target_reversible fouling ratio (%)",
+        r"target_water permeability (LMH\bar)",
+        ],
+        }
+
+models = [
+            # "GpyroMCMC", 
+            "GPMixMCMC"
+            ]
+
+
+PLS_Ranks = pd.DataFrame([{
+                "Xn": 1,
+                "Mw": 2,
+                "Concentration": 3,
+                "Temperature": 4,
+                "dD (polymer)": 5,
+                "dD (solvent)": 6,
+                "dP (polymer)": 7,
+                "dP (solvent)": 8,
+                "dH (polymer)": 9,
+                "dH (solvent)": 10,
+                "FP": 11,
+                "PDI": 12
+            }], 
+            index=["rank"]
+            )
+
+BMS_Ranks = pd.DataFrame([{
+                                "HOMO D": 1,
+                                "LUMO A": 2,
+                                "Eg-D": 3,
+                                "Eg-A": 4,
+                                "Eh-D": 5,
+                                "Eh-A": 6,
+                                "HOMO-A": 7,
+                                "LUMO-D": 8,
+                                "FP Donor": 9,
+                                "FP Acceptor": 10,
+                                "D:A ratio": 11,
+                                "Thermal annealing": 12,
+                                "Solvent additives": 13,
+                                "HTL": 14,
+                                "ETL": 15
+                                }],
+                                index=["rank"]
+                            )
+
+# make a dataframe with a single row
+
+
 if __name__ == "__main__":
 
-    baseline_kernel = ["RBF", "Matern32", "Matern52"]
-    tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimoto",  ]
-    count_kernel = ["Matern32", "Matern52", "RBF"]
-    mixing_methods = ["sum", "product", "averageProduct"]
+
     
-    PAPER = {
-            "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-            "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-            "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
-            "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-            "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
-            "target_flux decline ratio (%)",
-            "target_flux recovery ratio (%)",
-            "target_irreversible fouling ratio(%)",
-            "target_organic compound removal (%)",
-            "target_reversible fouling ratio (%)",
-            r"target_water permeability (LMH\bar)",
-            ],
-            }
-    
-    models = ["GpyroMCMC", 
-            #   "GPMixMCMC"
-              ]
-    # model_stats = {}
+
+    model_stats = {}
     for paper_name, target_list in PAPER.items():
         for target in target_list:
     #         print(paper_name, target)
@@ -644,32 +759,29 @@ if __name__ == "__main__":
             #                         )
             for model in models:
                 paper_loc: Path = RESULTS / paper_name / target
-            #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
-            #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     if not score_path.exists():
-            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
-            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     if not score_path.exists():
-            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
-            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     with open(score_path, "r") as f:
-            #         scores = json.load(f)
+                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
+                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                if not score_path.exists():
+                    file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
+                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                if not score_path.exists():
+                    file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
+                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+                with open(score_path, "r") as f:
+                    scores = json.load(f)
 
                 # MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
                 #                                 save_loc=paper_loc,
                 #                                 file_extension=file_name,
                 #                                 figsize=(8,7.5)
                 #                                 )
-                # print(shap_imp)
                 # shap_feature_means = shap_imp.abs().mean()
                 # df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
 
                 # mdi_feature_means = MDI_imp.mean()
                 # df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
-                # df_ls = process_lengthscales_to_df(scores)
 
                 # 3. Filter the DataFrame to these 15 features
-                # print(df_top15)
                 # plot_top15_feature_stability(
                 #                     scores_data=scores,
                 #                     # save_loc=paper_loc,
@@ -677,54 +789,55 @@ if __name__ == "__main__":
                 #                     # top_n=15,
                 #                     # figsize=(8,6)
                 #                     )
-                # print(df_top15)
                 # krippendorff_alpha_by_feature(
                 #                             df=df_top15,             
                 #                             save_loc=paper_loc,
                 #                             file_extension=file_name,
                 #                             figsize=(9,6)
                 #                             )
-                # print(calculate_kendalls_w(df_top15))
-                # print(df_top15_mdi_features)
-                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
+                df_ls = process_lengthscales_to_df(scores)
+                print(df_ls)
+                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = calculate_kendalls_w(df_ls)
                 # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
                 # print(pg.friedman(df_top15))
 
-    # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
-    #     json.dump(model_stats, f, indent=2)
-                rows_data = []
-                for count_k in count_kernel:
-                    for fp_k in tanimoto_kernel:
-                        for mix_method in mixing_methods:
+    with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
+        json.dump(model_stats, f, indent=2)
+
+
+                # rows_data = []
+                # for count_k in count_kernel:
+                #     for fp_k in baseline_kernel:
+                #         for mix_method in mixing_methods:
                             
-                            score_file = None
-                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                            if not score_path.exists():
-                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
-                                score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                            if not score_path.exists():
-                                print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+                #             score_file = None
+                #             file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
+                #             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #             if not score_path.exists():
+                #                 file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
+                #                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #             if not score_path.exists():
+                #                 print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
-                            else:
-                                with open(score_path, "r") as f:
-                                    score_file = json.load(f)
+                #             else:
+                #                 with open(score_path, "r") as f:
+                #                     score_file = json.load(f)
 
-                            if score_file is None:
-                                rmse_value = ""
-                                r2_value = ""
-                            else:
-                                score_annot = get_scores(score_file, metric=['rmse','r2'])
-                                rmse_value = score_annot["rmse"]
-                                r2_value = score_annot["r2"]
+                #             if score_file is None:
+                #                 rmse_value = ""
+                #                 r2_value = ""
+                #             else:
+                #                 score_annot = get_scores(score_file, metric=['rmse','r2'])
+                #                 rmse_value = score_annot["rmse"]
+                #                 r2_value = score_annot["r2"]
 
-                            mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
-                            rows_data.append([
-                                count_k,
-                                fp_k,
-                                mix_method,
-                                rmse_value,
-                                r2_value
-                            ])
-                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
+                #             mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
+                #             rows_data.append([
+                #                 count_k,
+                #                 fp_k,
+                #                 mix_method,
+                #                 rmse_value,
+                #                 r2_value
+                #             ])
+                # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
                                 
