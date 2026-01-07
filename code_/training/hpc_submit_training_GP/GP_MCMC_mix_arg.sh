@@ -7,7 +7,7 @@ dataset="Beyond molecular structure_seifrid_imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-k_fps=("TanimotoRBF")
+k_fps=("TanimotoMatern52" "TanimotoMatern32")
 k_counts=("RBF")
 k_mixing_methods=("sum" "averageProduct") 
 
@@ -19,7 +19,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 6
-#BSUB -W 10:00
+#BSUB -W 30:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
