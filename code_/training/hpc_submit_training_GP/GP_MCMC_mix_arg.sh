@@ -7,9 +7,9 @@ dataset="Beyond molecular structure_seifrid_imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-k_fps=("TanimotoMatern52" "TanimotoMatern32")
+k_fps=("TanimotoRBF")
 k_counts=("RBF")
-k_mixing_methods=("sum" "averageProduct") 
+k_mixing_methods=("sum") 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
