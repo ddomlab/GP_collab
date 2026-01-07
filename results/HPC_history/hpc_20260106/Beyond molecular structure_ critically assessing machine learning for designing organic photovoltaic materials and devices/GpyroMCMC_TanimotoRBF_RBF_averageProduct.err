@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP/../train_structure_numerical.py", line 93, in <module>
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/filter_data.py", line 118, in _get_dataset_features
+    dataset_path = ensure_long_path(dataset_basket / paper / f"{dataset_name}.pkl")
+TypeError: unsupported operand type(s) for /: 'PosixPath' and 'NoneType'
+/tmp/.lsbtmp404534/.lsbatch/1767743766.913301.shell: line 15: --paper: command not found

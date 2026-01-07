@@ -374,3 +374,63 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_Matern52_sum.err> for stderr output of this job.
 
+Average scores:	 rmse: 0.38±0.02	 r2: 0.72±0.04
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_TanimotoMatern32-Matern52_sum)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c205n06>
+Subject: Job 886769: <structure_numerical_20260104> in cluster <Hazel> Done
+
+Job <structure_numerical_20260104> was submitted from host <c207n13> by user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:40:06 2026
+Job was executed on host(s) <6*c205n06>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Jan  4 15:40:07 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Jan  4 15:40:07 2026
+Terminated at Mon Jan  5 11:29:16 2026
+Results reported at Mon Jan  5 11:29:16 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 32:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260104"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_Matern52_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_Matern52_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern52                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   275464.00 sec.
+    Max Memory :                                 67 GB
+    Average Memory :                             23.49 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -35.00 GB
+    Max Swap :                                   19 GB
+    Max Processes :                              30
+    Max Threads :                                39
+    Run time :                                   71369 sec.
+    Turnaround time :                            71350 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260104/GpyroMCMC_TanimotoMatern32_Matern52_sum.err> for stderr output of this job.
+

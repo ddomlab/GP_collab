@@ -1,0 +1,719 @@
+Running seed: 42
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c205n09>
+Subject: Job 894009: <structure_numerical_20260105> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260105> was submitted from host <c207n07> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 16:46:28 2026
+Job was executed on host(s) <6*c205n09>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 16:46:29 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 16:46:29 2026
+Terminated at Mon Jan  5 16:49:22 2026
+Results reported at Mon Jan  5 16:49:22 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   300.08 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.25 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                35
+    Run time :                                   193 sec.
+    Turnaround time :                            174 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 105.4±6.1	 r2: 0.56±0.05
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 42
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c201n07>
+Subject: Job 894082: <structure_numerical_20260105> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260105> was submitted from host <c207n09> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:04:01 2026
+Job was executed on host(s) <6*c201n07>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:04:02 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:04:02 2026
+Terminated at Mon Jan  5 17:04:19 2026
+Results reported at Mon Jan  5 17:04:19 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   9.01 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   4 sec.
+    Turnaround time :                            18 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 12.97±0.2	 r2: 0.4±0.05
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 0.4±0.03	 r2: 0.55±0.06
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c201n07>
+Subject: Job 894112: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c207n09> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:06:13 2026
+Job was executed on host(s) <6*c201n07>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:06:13 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:06:13 2026
+Terminated at Mon Jan  5 17:10:53 2026
+Results reported at Mon Jan  5 17:10:53 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   485.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.83 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                37
+    Run time :                                   304 sec.
+    Turnaround time :                            280 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Average scores:	 rmse: 15.61±1.5	 r2: 0.34±0.1
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 11.67±0.55	 r2: 0.17±0.06
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 15.29±0.87	 r2: 0.39±0.08
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c201n07>
+Subject: Job 894051: <structure_numerical_20260105> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260105> was submitted from host <c207n14> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 16:57:42 2026
+Job was executed on host(s) <6*c201n07>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 16:57:43 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 16:57:43 2026
+Terminated at Mon Jan  5 17:24:02 2026
+Results reported at Mon Jan  5 17:24:02 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 130.
+
+Resource usage summary:
+
+    CPU time :                                   3032.00 sec.
+    Max Memory :                                 5 GB
+    Average Memory :                             3.17 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               27.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                39
+    Run time :                                   1582 sec.
+    Turnaround time :                            1580 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.36±0.03	 r2: 0.64±0.07
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c205n03>
+Subject: Job 894403: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c207n07> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:30:02 2026
+Job was executed on host(s) <6*c205n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:30:03 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:30:03 2026
+Terminated at Mon Jan  5 17:41:56 2026
+Results reported at Mon Jan  5 17:41:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2948.00 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             4.19 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                43
+    Run time :                                   715 sec.
+    Turnaround time :                            714 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Average scores:	 rmse: 96.71±11.26	 r2: 0.62±0.08
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 12.74±1.38	 r2: 0.37±0.21
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 11.45±1.23	 r2: 0.64±0.07
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 10.59±1.29	 r2: 0.31±0.11
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 2.21±0.18	 r2: 0.48±0.07
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c200n07>
+Subject: Job 894468: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c203n01> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:37:31 2026
+Job was executed on host(s) <6*c200n07>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:37:32 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:37:32 2026
+Terminated at Mon Jan  5 18:49:16 2026
+Results reported at Mon Jan  5 18:49:16 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   18622.19 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             4.96 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              26
+    Max Threads :                                34
+    Run time :                                   4318 sec.
+    Turnaround time :                            4305 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Average scores:	 rmse: 13.68±2.23	 r2: 0.49±0.18
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Average scores:	 rmse: 0.29±0.02	 r2: 0.81±0.03
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+Running seed: 6
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.58±1.32	 r2: 0.31±0.13
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_mean_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c201n07>
+Subject: Job 894436: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c207n07> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:31:11 2026
+Job was executed on host(s) <6*c201n07>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:31:11 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:31:11 2026
+Terminated at Mon Jan  5 19:08:56 2026
+Results reported at Mon Jan  5 19:08:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   26611.00 sec.
+    Max Memory :                                 11 GB
+    Average Memory :                             5.52 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               21.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                39
+    Run time :                                   5869 sec.
+    Turnaround time :                            5865 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.37±0.04	 r2: 0.95±0.01
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c013n04>
+Subject: Job 894579: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c024n02> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 18:14:28 2026
+Job was executed on host(s) <6*c013n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 18:14:29 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 18:14:29 2026
+Terminated at Mon Jan  5 19:45:58 2026
+Results reported at Mon Jan  5 19:45:58 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 10:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   23572.03 sec.
+    Max Memory :                                 9 GB
+    Average Memory :                             5.41 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               23.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                46
+    Run time :                                   5488 sec.
+    Turnaround time :                            5490 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 13
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.54±0.02	 r2: 0.66±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c015n02>
+Subject: Job 894528: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c203n14> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:48:15 2026
+Job was executed on host(s) <6*c015n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:49:20 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:49:20 2026
+Terminated at Tue Jan  6 09:39:51 2026
+Results reported at Tue Jan  6 09:39:51 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 33:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   247018.00 sec.
+    Max Memory :                                 28 GB
+    Average Memory :                             23.53 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               4.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                46
+    Run time :                                   57057 sec.
+    Turnaround time :                            57096 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
+Average scores:	 rmse: 0.44±0.02	 r2: 0.64±0.03
+Filename: (ECFP3_count_512-COUNT)_(GpyroMCMC_RBF-RBF_sum)_hypOFF_Standard_Standard_ARD
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c205n09>
+Subject: Job 894500: <structure_numerical_20260105> in cluster <Hazel> Done
+
+Job <structure_numerical_20260105> was submitted from host <c207n09> by user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:47:12 2026
+Job was executed on host(s) <6*c205n09>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jan  5 17:47:13 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jan  5 17:47:13 2026
+Terminated at Tue Jan  6 15:32:12 2026
+Results reported at Tue Jan  6 15:32:12 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 33:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260105"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method sum 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   314341.00 sec.
+    Max Memory :                                 26 GB
+    Average Memory :                             18.23 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               6.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                38
+    Run time :                                   78303 sec.
+    Turnaround time :                            78300 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260105/GpyroMCMC_RBF_RBF_sum.err> for stderr output of this job.
+
