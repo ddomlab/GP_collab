@@ -581,8 +581,14 @@ def kendalls_w(df_input, tie_corrected=True):
 
 
 def get_scores(data: Dict, metric: List[str]):
+    special = {"rmse", "r2", "mae"}
+
     return {
-        score: f"{round(data[f'{score}_avg'], 2)} ± {round(data[f'{score}_stdev'], 2)}"
+        score: (
+            f"{round(data[f'{score}_avg'], 2)} ± {round(data[f'{score}_stdev'], 2)}"
+            if score.lower() in special
+            else f"{round(data[score], 2)}"
+        )
         for score in metric
     }
 
@@ -591,7 +597,7 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     document = Document()
 
     rows = len(rows_data) + 3
-    cols = 5
+    cols = 6   # <-- now 6 columns
     table = document.add_table(rows=rows, cols=cols)
     table.style = "Table Grid"
 
@@ -600,14 +606,15 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     h[0].text = "Combination"
     h[3].text = "GP pyro"
 
-    h[0].merge(h[2])     # Combination spans Count/FP/Mixing
-    h[3].merge(h[4])     # GP pyro spans RMSE/R2
+    h[0].merge(h[2])   # Combination spans Count/FP/Mixing
+    h[3].merge(h[5])   # GP spans RMSE / R2 / runtime
 
     # ---------------- HEADER LEVEL 2 ----------------
     h2 = table.rows[1].cells
     h2[0].text = "Kernel"
     h2[3].text = "RMSE"
     h2[4].text = "R²"
+    h2[5].text = "Run time (sec)"
     h2[0].merge(h2[1])
 
     # ---------------- HEADER LEVEL 3 ----------------
@@ -620,6 +627,8 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     table.rows[1].cells[2].merge(table.rows[2].cells[2])
     table.rows[1].cells[3].merge(table.rows[2].cells[3])
     table.rows[1].cells[4].merge(table.rows[2].cells[4])
+    table.rows[1].cells[5].merge(table.rows[2].cells[5])
+
     # ---------------- DATA ROWS ----------------
     r = 3
     for row in rows_data:
@@ -635,10 +644,10 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 for run in p.runs:
                     run.font.size = Pt(10)
+
     os.makedirs(folder_path, exist_ok=True)
     document.save(folder_path / file_name)
     print(f"Saved Word table → {file_name}")
-
 
 
 
@@ -662,10 +671,6 @@ mixing_methods = ["sum", "product", "averageProduct"]
 #         ],
 #         }
 
-models = [
-            # "GpyroMCMC", 
-            "GPMixMCMC"
-            ]
 
 
 PLS_Ranks = pd.DataFrame([{
@@ -736,6 +741,11 @@ PAPER = {
 }
 
 
+models = [
+            "GpyroMCMC", 
+            # "GPMixMCMC"
+            ]
+
 if __name__ == "__main__":
 
 
@@ -751,19 +761,19 @@ if __name__ == "__main__":
             #                         figsize=(7,4.5),
             #                         # comparison_value=['scaler', 'Trimer_scaler'],
             #                         )
-            feat_impt_expert = paper_info["expert_impt"]
+            # feat_impt_expert = paper_info["expert_impt"]
             for model in models:
                 paper_loc: Path = RESULTS / paper_name / target
-                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
-                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                with open(score_path, "r") as f:
-                    scores = json.load(f)
+            #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
+            #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     with open(score_path, "r") as f:
+            #         scores = json.load(f)
 
                 # MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
                 #                                 save_loc=paper_loc,
@@ -790,49 +800,52 @@ if __name__ == "__main__":
                 #                             file_extension=file_name,
                 #                             figsize=(9,6)
                 #                             )
-                ls_stats = get_lengthscale_stat(scores, expert_rank=feat_impt_expert, feature_stability=True, mean_std=False)
+                # ls_stats = get_lengthscale_stat(scores, expert_rank=feat_impt_expert, feature_stability=True, mean_std=False)
                 # print(df_ls)
-                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = ls_stats
+                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = ls_stats
                 # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = calculate_kendalls_w(df_top15_mdi_features)
                 # print(pg.friedman(df_top15))
 
-    with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
-        json.dump(model_stats, f, indent=2)
+    # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
+    #     json.dump(model_stats, f, indent=2)
 
 
-                # rows_data = []
-                # for count_k in count_kernel:
-                #     for fp_k in baseline_kernel:
-                #         for mix_method in mixing_methods:
+                rows_data = []
+                for count_k in count_kernel:
+                    for fp_k in baseline_kernel:
+                        for mix_method in mixing_methods:
                             
-                #             score_file = None
-                #             file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
-                #             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #             if not score_path.exists():
-                #                 file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
-                #                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #             if not score_path.exists():
-                #                 print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+                            score_file = None
+                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
+                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                            if not score_path.exists():
+                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
+                                score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                            if not score_path.exists():
+                                print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
-                #             else:
-                #                 with open(score_path, "r") as f:
-                #                     score_file = json.load(f)
+                            else:
+                                with open(score_path, "r") as f:
+                                    score_file = json.load(f)
 
-                #             if score_file is None:
-                #                 rmse_value = ""
-                #                 r2_value = ""
-                #             else:
-                #                 score_annot = get_scores(score_file, metric=['rmse','r2'])
-                #                 rmse_value = score_annot["rmse"]
-                #                 r2_value = score_annot["r2"]
+                            if score_file is None:
+                                rmse_value = ""
+                                r2_value = ""
+                                run_time_value = ""
+                            else:
+                                score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
+                                rmse_value = score_annot["rmse"]
+                                r2_value = score_annot["r2"]
+                                run_time_value = score_annot["run_time_sec"]
 
-                #             mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
-                #             rows_data.append([
-                #                 count_k,
-                #                 fp_k,
-                #                 mix_method,
-                #                 rmse_value,
-                #                 r2_value
-                #             ])
-                # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
+                            mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
+                            rows_data.append([
+                                count_k,
+                                fp_k,
+                                mix_method,
+                                rmse_value,
+                                r2_value,
+                                run_time_value
+                            ])
+                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
                                 
