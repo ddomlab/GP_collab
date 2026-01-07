@@ -30,7 +30,7 @@ source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
 python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --K_count $count_kernel \
-                                        --Kernel_mixing_method $mixing_method 
+                                        --Kernel_mixing_method $mixing_method \
                                         --paper "$paper" \
                                         --dataset "$dataset" \
 
