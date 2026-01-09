@@ -199,7 +199,6 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
 
 
 class TanimotoRBF(Kernel):
-    is_stationary = False
     has_lengthscale = True
 
     def _tanimoto_dist(self, x1, x2, eps=1e-6):
