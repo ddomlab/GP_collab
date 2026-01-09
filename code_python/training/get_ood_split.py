@@ -17,7 +17,7 @@ from all_factories import (
                             get_regressor_search_space)
 
 from imputation_normalization import preprocessing_workflow
-from training_utils import get_target_transformer, split_for_training,_optimize_hyperparams,set_globals
+from training_utils_gp_special import get_target_transformer, split_for_training,_optimize_hyperparams,set_globals
 from scoring import (
                     cross_validate_regressor,
                     process_scores,
