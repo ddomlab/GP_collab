@@ -26,8 +26,12 @@ from all_factories import optimized_models
 from get_ood_split import (StratifiedKFoldWithLabels,
                             get_loco_splits)
 
+import warnings
+from sklearn.exceptions import DataConversionWarning
+warnings.filterwarnings(action='ignore', category=DataConversionWarning)
+
 def set_globals(Test: bool=False) -> None:
-    global SEEDS, N_FOLDS, BO_ITER
+    global N_FOLDS, BO_ITER
     if not Test:
         # SEEDS = [6, 13, 42, 69, 420, 1234567890, 473129]
         N_FOLDS = 5
@@ -37,8 +41,6 @@ def set_globals(Test: bool=False) -> None:
         # SEEDS = [42,13]
         N_FOLDS = 2
         BO_ITER = 1
-
-
 
 
 
@@ -118,10 +120,10 @@ def prepare_data(
 def run_single_ood(
     seed: int,
     train_ratio: float,
-    X_train_val: np.ndarray,
-    y_train_val: np.ndarray,
-    X_test: np.ndarray,
-    y_test: np.ndarray,
+    X_train_val,
+    y_train_val,
+    X_test,
+    y_test,
     cluster_train_val_labels_OOD: np.ndarray,
     model_name: str,
     transform_type: str,
@@ -131,10 +133,17 @@ def run_single_ood(
     if train_ratio == 1:
         X_train_OOD, y_train_OOD = X_train_val, y_train_val
     else:
-        X_train_OOD, _, y_train_OOD, _ = train_test_split(
-            X_train_val, y_train_val, train_size=train_ratio,
-            random_state=seed, stratify=cluster_train_val_labels_OOD, shuffle=True,
-        )
+        try:
+            X_train_OOD, _, y_train_OOD, _ = train_test_split(
+                X_train_val, y_train_val, train_size=train_ratio,
+                random_state=seed, stratify=cluster_train_val_labels_OOD, shuffle=True,
+            )
+        
+        except ValueError:
+             X_train_OOD, _, y_train_OOD, _ = train_test_split(
+                X_train_val, y_train_val, train_size=train_ratio,
+                random_state=seed, shuffle=True,
+            )
     return seed, fit_and_eval(
         X_train_OOD, y_train_OOD, X_test, y_test,
         model_name, transform_type, second_transformer, preprocessor
@@ -145,8 +154,8 @@ def run_single_iid(
     seed: int,
     test_seed: int,
     train_ratio: float,
-    X_full: np.ndarray,
-    y_full: np.ndarray,
+    X_full,
+    y_full,
     y_test_len: int,
     model_name: str,
     transform_type: str,
@@ -191,8 +200,8 @@ def fit_and_eval(
     )
 
 def run_ood_learning_curve(
-    X: np.ndarray,
-    y: np.ndarray,
+    X,
+    y,
     cluster_labels: Union[np.ndarray, dict[str, np.ndarray]],
     model_name: str,
     transform_type: str = None,
@@ -227,22 +236,10 @@ def run_ood_learning_curve(
         learning_curve_predictions.setdefault(f'CO_{cluster}', {})['y_true'] = y_test_OOD.flatten()
         train_ratios = [
             .1, 0.3, 0.5, 0.7,
-                         .9]
+                         .9,1]
         min_ratio = min_train_size / len(X_tv_OOD)
         if min_ratio not in train_ratios:
             train_ratios.append(min_ratio)
-
-
-        filtered_train_ratios = []
-        num_classes = len(np.unique(cluster_tv_labels_OOD))
-        n_samples = len(X_tv_OOD)
-
-        for train_ratio in train_ratios:
-            train_size = train_ratio * n_samples
-            if train_size >= num_classes:
-                filtered_train_ratios.append(train_ratio)
-
-        train_ratios = filtered_train_ratios
 
         for train_ratio in train_ratios:
             seeds = random_state_generator(train_ratio)
@@ -318,7 +315,7 @@ def random_state_generator(train_ratio: float) -> np.ndarray:
     elif train_ratio >=0.1:
         random_state_list = np.arange(30)
     else:
-        random_state_list = np.arange(50)
+        random_state_list = np.arange(40)
 
     return random_state_list
 
