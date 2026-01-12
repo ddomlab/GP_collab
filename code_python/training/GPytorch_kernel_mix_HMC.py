@@ -17,6 +17,8 @@ from pyro.distributions import inverse_gamma as InvGammaPrior
 from pyro.infer import MCMC, NUTS, Predictive
 import pyro.distributions as dist
 from tqdm import trange
+from tqdm import tqdm
+import os, sys
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
 import gc
@@ -302,17 +304,46 @@ class GPMix(gpytorch.models.ExactGP):
 #     mcmc.run()
 #     return mcmc.get_samples(num_samples=num_drawn_samples)
 
+
+
+
+class CVProgressBar:
+    """CV- and multi-bar-safe progress bar for GP MAP training."""
+
+    def __init__(self, total_steps, disable=False, position=0, desc="MAP training"):
+        # Auto-disable in CI or pytest parallel runs
+        disable = disable or "CI" in os.environ or "PYTEST_XDIST_WORKER" in os.environ
+
+        self.pbar = tqdm(
+            total=total_steps,
+            desc=desc,
+            leave=False,
+            position=position,
+            file=sys.stderr,
+            disable=disable,
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}, {rate_fmt}{postfix}]",
+        )
+
+    def update(self, n=1, postfix=None):
+        if postfix is not None:
+            self.pbar.set_postfix(postfix)
+        self.pbar.update(n)
+
+    def close(self):
+        self.pbar.close()
+
+
 class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_group:dict,
         lr=1e-2,
-        n_epoch=400,
+        n_epoch=800,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
-        verbose:bool=False,
+        progbar:bool=False,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -321,7 +352,8 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self.random_state = random_state
         self.kernel_mixing_method = kernel_mixing_method
         self.kernel_type = kernel_type
-        self.verbose = verbose
+        self.progbar = progbar
+        
         
     def fit(self, X_train, y_train):
         if isinstance(X_train, pd.DataFrame):
@@ -365,7 +397,11 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         self._gp_model.train()
         self._likelihood.train()
-        for i in trange(self.n_epoch, desc="MAP training", disable=False):
+        pbar = None
+        if self.progbar:
+            position=0
+            pbar = CVProgressBar(total_steps=self.n_epoch, position=position)
+        for _ in range(self.n_epoch):
             optimizer.zero_grad()
 
             y_pred = self._gp_model(self._X_train)
@@ -373,13 +409,13 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
             loss.backward()
             optimizer.step()
-            if self.verbose and (i % 25 == 0 or i == self.n_epoch - 1):
-                log_prior = self._gp_model.log_prior().item()
-                print(
-                    f"[{i:03d}] "
-                    f"Loss: {loss.item():.3f} | "
-                    f"LogPrior: {log_prior:.3f}"
-                )
+            
+            if pbar is not None:
+                # postfix = {"loss": f"{loss.item():.3f}", "log_prior": f"{self._gp_model.log_prior().item():.3f}"}
+                pbar.update(1)
+        if pbar is not None:
+            pbar.close()
+
 
     def predict(self, X_test, return_std=False):
         if isinstance(X_test, pd.DataFrame):
