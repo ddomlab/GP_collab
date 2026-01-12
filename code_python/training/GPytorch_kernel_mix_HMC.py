@@ -338,7 +338,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self,
         feat_group:dict,
         lr=1e-2,
-        n_epoch=800,
+        n_epoch=400,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
