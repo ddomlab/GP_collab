@@ -149,32 +149,40 @@ if __name__ == "__main__":
     # import torch
     # train_x = torch.linspace(0, 1, 4)
     # print(train_x)
-    # for targ in all_targets:
+
+    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+    dataset_name = "Rg data with clusters aging imputed"
+    # "cleaned_dataset_pervaporation_membranes_wang"
+    #non_imputed_dropped_nan_Rg_data
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+    for targ in all_targets:
         # GPMixMCMC
-        # for model in ["RF", "XGBR", "NGB"]:
+        # GPytorchMCMC
+        for model in ["RF", "XGBR", "NGB"]:
             
-            # main_structural_numerical(
-            #     dataset=w_data,
-            #     representation="ECFP",
-            #     radius=3,
-            #     vector="count",
-            #     regressor_type="GpyroMCMC",
-            #     # GPytorchMixMCMC
-            #     # GPMixMCMC
-            #     # kernel="matern32_j_rbf_mix",
-            #     polymer_unit=["polymer"],
-            #     target_features=[targ],  
-            #     feat_transformer='Standard',
-            #     target_transformer='Standard',
-            #     numerical_feats=feats,
-            #     hyperparameter_optimization=False,
-            #     kernel_type={"fp":"RBF",
-            #                  "count":"Matern32"
-            #                  },
-            #     kernel_mixing_method="averageProduct",
-            #     imputer="mean",
-            #     columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-            #     )
+            main_structural_numerical(
+                dataset=w_data,
+                representation="ECFP",
+                radius=3,
+                vector="count",
+                regressor_type="GPytorchMCMC",
+                # GPytorchMixMCMC
+                # GPMixMCMC
+                # kernel="matern32_j_rbf_mix",
+                polymer_unit=["Monomer"],
+                target_features=[targ],  
+                feat_transformer='Standard',
+                target_transformer='Standard',
+                numerical_feats=feats,
+                hyperparameter_optimization=False,
+                kernel_type={"fp":"RBF",
+                             "count":"Matern32"
+                             },
+                kernel_mixing_method="averageProduct",
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )
 
 
 
