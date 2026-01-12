@@ -297,7 +297,7 @@ def run(
             y = y.flatten()
             # return_importance = False if "GP" in regressor_type else True
             if "gp" in regressor_type.lower():
-                scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+                scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=False)
             else:
                 scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, return_indices=False)
         seed_scores[seed] = scores.copy()

@@ -8,7 +8,7 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
-from GPytorch_kernel_mix_HMC import GPytorchMCMCRegressor
+from GPytorch_kernel_mix_HMC import GPytorchMCMCRegressor,GPytorchMAPRegressor
 # from pyro_kernel_mix import GPMixMCMCRegressor
 from GPyro_kernel_mix_HMC import GPMixMCMCRegressor
 
@@ -147,6 +147,8 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
         # kernel = kwargs.get('kernel')
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
+    if "GPytorchMAP"==model_name:
+        return GPytorchMAPRegressor(**kwargs)
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     

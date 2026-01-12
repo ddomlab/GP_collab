@@ -22,7 +22,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = False
+TEST = True
 
 
 
@@ -159,14 +159,16 @@ if __name__ == "__main__":
     for targ in all_targets:
         # GPMixMCMC
         # GPytorchMCMC
-        for model in ["RF", "XGBR", "NGB"]:
+        # GPytorchMAP
+
+        # for model in ["RF", "XGBR", "NGB"]:
             
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP",
                 radius=3,
                 vector="count",
-                regressor_type="GPytorchMCMC",
+                regressor_type="GPytorchMAP",
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",

@@ -16,7 +16,7 @@ from gpytorch.models import PyroGP # <-- Import PyroGP
 from pyro.distributions import inverse_gamma as InvGammaPrior
 from pyro.infer import MCMC, NUTS, Predictive
 import pyro.distributions as dist
-
+from tqdm import trange
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
 import gc
@@ -302,6 +302,129 @@ class GPMix(gpytorch.models.ExactGP):
 #     mcmc.run()
 #     return mcmc.get_samples(num_samples=num_drawn_samples)
 
+class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
+    def __init__(
+        self,
+        feat_group:dict,
+        lr=1e-2,
+        n_epoch=400,
+        use_cuda=False,
+        random_state=42,
+        kernel_mixing_method:str="product",
+        kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
+        verbose:bool=False,
+    ):
+        self.feat_group = feat_group
+        self.lr = lr
+        self.n_epoch = n_epoch
+        self.use_cuda = use_cuda
+        self.random_state = random_state
+        self.kernel_mixing_method = kernel_mixing_method
+        self.kernel_type = kernel_type
+        self.verbose = verbose
+        
+    def fit(self, X_train, y_train):
+        if isinstance(X_train, pd.DataFrame):
+            # Map all fp_{unit} and count to integer indices
+            self.feat_idx = {}
+            for key, cols in self.feat_group.items():
+                if cols:
+                    self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
+            
+            self.count_feat_name_idx = {
+                c: X_train.columns.get_loc(c) 
+                for c in self.feat_group.get("count", [])
+            }
+            X_train = X_train.to_numpy()
+
+        if isinstance(y_train, (pd.DataFrame, pd.Series)):
+            y_train = y_train.to_numpy()
+
+        X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
+        y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
+
+        if self.use_cuda and torch.cuda.is_available():
+            device = torch.device("cuda")
+            X_t = X_t.to(device)
+            y_t = y_t.to(device)
+        else:
+            device = torch.device("cpu")
+
+        self._X_train = X_t
+        self._y_train = y_t
+
+        # Pyro GP model with priors
+        self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
+        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood)
+        
+        optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
+
+        if self.use_cuda and torch.cuda.is_available():
+            mll = mll.cuda()
+
+        self._gp_model.train()
+        self._likelihood.train()
+        for i in trange(self.n_epoch, desc="MAP training", disable=False):
+            optimizer.zero_grad()
+
+            y_pred = self._gp_model(self._X_train)
+            loss = -mll(y_pred, self._y_train)
+
+            loss.backward()
+            optimizer.step()
+            if self.verbose and (i % 25 == 0 or i == self.n_epoch - 1):
+                log_prior = self._gp_model.log_prior().item()
+                print(
+                    f"[{i:03d}] "
+                    f"Loss: {loss.item():.3f} | "
+                    f"LogPrior: {log_prior:.3f}"
+                )
+
+    def predict(self, X_test, return_std=False):
+        if isinstance(X_test, pd.DataFrame):
+            X_test = X_test.to_numpy()
+
+        X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
+
+        if torch.cuda.is_available():
+            X_t = X_t.cuda()
+            self._gp_model = self._gp_model.cuda()
+            self._likelihood = self._likelihood.cuda()
+
+        self._gp_model.eval()
+        self._likelihood.eval()
+        with torch.no_grad():
+            posterior = self._likelihood(self._gp_model(X_t))
+            y_pred = posterior.mean.cpu().numpy()
+            if return_std:
+                y_std = posterior.variance.sqrt().cpu().numpy()
+                return y_pred, y_std
+
+        return y_pred
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
@@ -365,24 +488,8 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
         # Pyro GP model with priors
         self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
         self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self.likelihood)
-        # self.likelihood.register_prior(
-        #     "noise_prior", 
-        #     gpytorch.priors.LogNormalPrior(0.0, 1.0), 
-        #     "noise"
-        # )
 
-        # MCMC over gp_model.model
-        # samples = run_inference(
-        #     self._gp_model,
-        #     num_samples=self.num_samples,
-        #     warmup_steps=self.warmup_steps,
-        #     num_chains=self.num_chains,
-        #     random_state=self.random_state,
-        #     num_drawn_samples=self.num_drawn_samples,
-        # )
         def pyro_model(x, y):
-            # with gpytorch.settings.fast_computations(False, False, False):
-                # with gpytorch.settings.cholesky_jitter(1e-4):
                     sampled_model = self._gp_model.pyro_sample_from_prior()
                     output = sampled_model.likelihood(sampled_model(x))
                     pyro.sample("obs", output, obs=y)
