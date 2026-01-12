@@ -381,12 +381,12 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
         #     num_drawn_samples=self.num_drawn_samples,
         # )
         def pyro_model(x, y):
-            with gpytorch.settings.fast_computations(False, False, False):
-                # with gpytorch.settings.cholesky_jitter(1e-2):
+            # with gpytorch.settings.fast_computations(False, False, False):
+                # with gpytorch.settings.cholesky_jitter(1e-4):
                     sampled_model = self._gp_model.pyro_sample_from_prior()
                     output = sampled_model.likelihood(sampled_model(x))
                     pyro.sample("obs", output, obs=y)
-            return y
+                    return y
         pyro.clear_param_store()
         if self.random_state is not None:
             pyro.set_rng_seed(self.random_state)
@@ -411,6 +411,7 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
         return self
     
     def _predictive_strategy(self, X_new):
+            print("ready to go")
             """
             Method used by Pyro's Predictive class. 
             Must be a method of the class to allow pickling.
