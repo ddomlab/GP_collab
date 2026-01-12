@@ -39,39 +39,35 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     return torch.clamp(dist, min=0.)
 
 
-class TanimotoRBF(Kernel):
+class TanimotoRBF(gpytorch.kernels.Kernel):
     is_stationary = False
-    has_lengthscale = True
+    has_lengthscale=True
+    def __init__(self, **kwargs):
+        super().__init__(has_lengthscale=True, **kwargs)
 
-    def _tanimoto_dist(self, x1, x2, eps=1e-6):
-        # x1: (..., N, D), x2: (..., M, D)
-        x1e = x1.unsqueeze(-2)
-        x2e = x2.unsqueeze(-3)
-
-        numerator = torch.min(x1e, x2e).sum(dim=-1)
-        denominator = torch.max(x1e, x2e).sum(dim=-1)
-
-        sim = (numerator + eps) / (denominator + eps)
-        return (1.0 - sim).clamp(min=0.)
 
     def forward(self, x1, x2, diag=False, **params):
         if diag:
-            # If x1 and x2 are the same, the distance is 0 and exp(0) = 1.
-            # If they are different (e.g. in cross-validation), we compute 
-            # only the element-wise distance.
             if torch.equal(x1, x2):
-                # Returns a vector of 1s with the shape of the batch/n_samples
-                return torch.ones(*x1.shape[:-1], device=x1.device, dtype=x1.dtype)
-            
-            # Element-wise Tanimoto distance
+                return torch.ones(
+                    *x1.shape[:-1],
+                    device=x1.device,
+                    dtype=x1.dtype
+                )
+
             num = torch.min(x1, x2).sum(dim=-1)
             den = torch.max(x1, x2).sum(dim=-1)
             dist = 1.0 - (num + 1e-6) / (den + 1e-6)
-            return torch.exp(-0.5 * (dist.clamp(min=0.) / self.lengthscale).pow(2)).squeeze(-1)
 
-        # Full covariance matrix path
-        dist = self._tanimoto_dist(x1, x2)
-        return torch.exp(-0.5 * (dist / self.lengthscale).pow(2))
+            return torch.exp(
+                -0.5 * (dist.clamp(min=0.) / self.lengthscale).pow(2)
+            )
+
+        dist = weighted_tanimoto_distance(x1, x2)
+        return torch.exp(
+            -0.5 * (dist / self.lengthscale).pow(2)
+        )
+
 
 
 
@@ -106,10 +102,14 @@ class MixingKernel:
         for key in fp_keys:
             idx = self.feat_idx[key]
             if idx:
+                # print(f"{idx}")
+                # print("ard dim for ", key, ":", len(idx))
                 k = kernel_factory[self.kernel_method["fp"]](
-                    active_dims=idx
+                    active_dims=idx,
+                    # ard_num_dims=len(idx)
                 )
                 fp_kernels.append(k)
+        # print(len(fp_kernels), "fp kernels created")
         return fp_kernels
 
     def _make_count_kernels(self):
@@ -118,7 +118,8 @@ class MixingKernel:
 
         for dim in count_idx:
             k = kernel_factory[self.kernel_method["count"]](
-                active_dims=[dim]
+                active_dims=[dim],
+                # ard_num_dims=1,
             )
             count_kernels.append(k)
         return count_kernels
@@ -210,31 +211,38 @@ class GPMix(gpytorch.models.ExactGP):
         if mixing_method in ("sum", "product"):
             for i, (name, sk) in enumerate(root_kernel.named_sub_kernels()):
                 if i < len(fp_keys):
-                    fp_key = fp_keys[i]
-                if kernel_method["fp"].lower() == "tanimoto":
-                    continue
-                ard_dim = len(feat_idx[fp_key])
-
-                sk.register_prior(
-                    f"fp_lengthscale_prior_{name}",
-                    gpytorch.priors.GammaPrior(5.0, 5.0),
-                    "lengthscale",
-                    )
-                if ard_dim > 1:
-                    sk.ard_num_dims = ard_dim
+                    if kernel_method["fp"].lower() == "tanimoto":
+                        continue
+                    if "tanimoto" in self.kernel_method["fp"].lower():
+                        # ard_dim = len(feat_idx[fp_key])
+                        sk.register_prior(
+                            f"fp_lengthscale_prior_{i}",
+                            gpytorch.priors.GammaPrior(5.0, 5.0),
+                            "lengthscale",
+                            )
+                        # sk.ard_num_dims = len(feat_idx[fp_keys[i]]) 
+                        
+                    else:
+                        sk.register_prior(
+                            f"fp_lengthscale_prior_{i}",
+                            gpytorch.priors.GammaPrior(5.0, 5.0),
+                            "lengthscale",
+                            )
+                        sk.ard_num_dims = len(feat_idx[fp_keys[i]])   
 
                 else:
                     sk.register_prior(
-                        f"count_lengthscale_prior_{name}",
+                        f"count_lengthscale_prior_{i}",
                         gpytorch.priors.GammaPrior(5.0, 5.0),
                         "lengthscale",
                     )
+
         elif mixing_method == "averageProduct":
             fp_product_kernel = root_kernel.kernels[0]
             count_sum_kernel = root_kernel.kernels[1]
-            for name, sk in count_sum_kernel.named_sub_kernels():
+            for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
                 sk.register_prior(
-                            f"count_lengthscale_prior_{name}",
+                            f"count_lengthscale_prior_{i}",
                             gpytorch.priors.GammaPrior(5.0, 5.0),
                             "lengthscale",
                             )
@@ -245,7 +253,7 @@ class GPMix(gpytorch.models.ExactGP):
                 fp_key = fp_keys[i]
                 ard_dim = len(feat_idx[fp_key])
                 sk.register_prior(
-                            f"fp_lengthscale_prior_{name}",
+                            f"fp_lengthscale_prior_{i}",
                             gpytorch.priors.GammaPrior(5.0, 5.0),
                             "lengthscale",
                             )
@@ -254,11 +262,12 @@ class GPMix(gpytorch.models.ExactGP):
                     sk.ard_num_dims = ard_dim
         else:
             raise ValueError(f"Unknown mixing_method: {mixing_method}")
-        
+
+    
     def forward(self, x):
-            mean_x = self.mean_module(x)
-            covar_x = self.covar_module(x)
-            return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
     
 
@@ -299,8 +308,8 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         feat_group:dict,
-        num_samples=400,
-        warmup_steps=400,
+        num_samples=200,
+        warmup_steps=200,
         num_chains=1,
         num_drawn_samples=100,
         use_cuda=False,
@@ -355,7 +364,7 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
 
         # Pyro GP model with priors
         self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type)
+        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self.likelihood)
         # self.likelihood.register_prior(
         #     "noise_prior", 
         #     gpytorch.priors.LogNormalPrior(0.0, 1.0), 
@@ -374,7 +383,7 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
         def pyro_model(x, y):
             with gpytorch.settings.fast_computations(False, False, False):
                 # with gpytorch.settings.cholesky_jitter(1e-2):
-                    sampled_model = self.model.pyro_sample_from_prior()
+                    sampled_model = self._gp_model.pyro_sample_from_prior()
                     output = sampled_model.likelihood(sampled_model(x))
                     pyro.sample("obs", output, obs=y)
             return y
