@@ -8,9 +8,9 @@ from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
-from GPytorch_kernel_mix_HMC import GPytorchMCMCRegressor,GPytorchMAPRegressor
+from GPytorch_kernel_mix import GPytorchMCMCRegressor,GPytorchMAPRegressor
 # from pyro_kernel_mix import GPMixMCMCRegressor
-from GPyro_kernel_mix_HMC import GPMixMCMCRegressor
+from GPyro_kernel_mix import GPMixMCMCRegressor
 
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
@@ -125,10 +125,16 @@ regressor_factory: dict[str, type]={
 def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
-                             random_state=None, verbose=False,**kwargs)
+                             random_state=None, verbose=False,
+                            #  early_stopping_rounds=20,
+                             **kwargs,
+                             
+                             )
     if 'XGBR'==model_name:
         return  XGBRegressor(eval_metric="rmse", 
-                               random_state=None, n_jobs=-1,**kwargs)
+                               random_state=None, n_jobs=-1,**kwargs,
+                            #    early_stopping_rounds=20
+                               )
     
     if 'RF'==model_name:
         return RandomForestRegressor(n_estimators=100, max_depth=None, 

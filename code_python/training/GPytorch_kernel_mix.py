@@ -159,8 +159,9 @@ class MixingKernel:
             # sum over count kernels (optionally averaged)
             prod_kernel = ProductKernel(*fp_kernels)
             sum_kernel = AdditiveKernel(*count_kernels)
-
-            kernel = ProductKernel(prod_kernel, sum_kernel)
+            avg_kernel = ScaleKernel(sum_kernel)
+            avg_kernel.outputscale = 1.0 / len(count_kernels)
+            kernel = ProductKernel(prod_kernel, avg_kernel)
             return kernel
 
         raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
@@ -241,7 +242,7 @@ class GPMix(gpytorch.models.ExactGP):
 
         elif mixing_method == "averageProduct":
             fp_product_kernel = root_kernel.kernels[0]
-            count_sum_kernel = root_kernel.kernels[1]
+            count_sum_kernel = root_kernel.kernels[1].base_kernel
             for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
                 sk.register_prior(
                             f"count_lengthscale_prior_{i}",
@@ -272,40 +273,6 @@ class GPMix(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
     
-
-
-# def run_inference(gp_model,
-#                 num_samples,
-#                 warmup_steps,
-#                 num_chains,
-#                 num_drawn_samples,
-#                 random_state=42
-#                 ):
-#     pyro.clear_param_store()
-#     if random_state is not None:
-#         pyro.set_rng_seed(random_state)
-#     with gpytorch.settings.fast_computations(False, False, False):
-#         # with gpytorch.settings.cholesky_jitter(1e-2):
-#             sampled_model = self.model.pyro_sample_from_prior()
-#             output = sampled_model.likelihood(sampled_model(x))
-#             pyro.sample("obs", output, obs=y)
-
-
-#     nuts_kernel = NUTS(gp_model, ignore_jit_warnings=True, jit_compile=True)
-
-#     mcmc = MCMC(
-#         nuts_kernel,
-#         num_samples=num_samples,
-#         warmup_steps=warmup_steps,
-#         num_chains=num_chains,
-#         disable_progbar=True
-#     )
-
-#     mcmc.run()
-#     return mcmc.get_samples(num_samples=num_drawn_samples)
-
-
-
 
 class CVProgressBar:
     """CV- and multi-bar-safe progress bar for GP MAP training."""
@@ -338,7 +305,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self,
         feat_group:dict,
         lr=1e-2,
-        n_epoch=400,
+        n_epoch=200,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
@@ -439,18 +406,56 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         return y_pred
 
+    def _get_lengthscale(self):
+        summary = {}
+        root_kernel = self._gp_model.covar_module.base_kernel
+        fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+        count_names = sorted(list(self.count_feat_name_idx.keys()))
 
+        def _extract_ls(kernel, key_prefix):
+            print(type(kernel))
+            if not hasattr(kernel, "lengthscale") or kernel.lengthscale is None:
+                raise RuntimeError(f"No lengthscale found for kernel '{key_prefix}'")
+            ls = kernel.lengthscale.detach().cpu().numpy()
+            # If ARD, return one key per dimension
+            if ls.ndim == 1:
+                return {f"{key_prefix}[{i}]": ls_i for i, ls_i in enumerate(ls)}
+            else:
+                return {key_prefix: ls}
 
+        if self.kernel_mixing_method in ("sum", "product"):
+            for i, (_, sk) in enumerate(root_kernel.named_sub_kernels()):
+                if i < len(fp_keys):
+                    fp_key = fp_keys[i]
+                    if self.kernel_type["fp"].lower() == "tanimoto":
+                        summary[fp_key] = None
+                    else:
+                        summary.update(_extract_ls(sk, fp_key))
+                else:
+                    count_key = count_names[i - len(fp_keys)]
+                    summary.update(_extract_ls(sk, count_key))
 
+        elif self.kernel_mixing_method == "averageProduct":
+            fp_product_kernel = root_kernel.kernels[0]
+            count_sum_kernel = root_kernel.kernels[1].base_kernel
 
+            for i, (_, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
+                count_key = count_names[i]
+                summary.update(_extract_ls(sk, count_key))
 
-
-
-
-
-
-
-
+            # FP kernels
+            for i, (_, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
+                fp_key = fp_keys[i]
+                if self.kernel_type["fp"].lower() == "tanimoto":
+                    summary[fp_key] = None
+                else:
+                    summary.update(_extract_ls(sk, fp_key))
+                
+        else:
+            raise ValueError(f"Unknown mixing_method: {self.kernel_mixing_method}")
+        
+        return summary
+    
 
 
 
