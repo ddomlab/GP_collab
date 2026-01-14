@@ -1,0 +1,118 @@
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c202n13>
+Subject: Job 958723: <structure_numerical_20260114> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260114> was submitted from host <c003n04> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:24:55 2026
+Job was executed on host(s) <6*c202n13>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:35:32 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 10:35:32 2026
+Terminated at Wed Jan 14 10:36:18 2026
+Results reported at Wed Jan 14 10:36:18 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 6:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern52                                         --Kernel_mixing_method averageProduct                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane" 
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   75.15 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             0.50 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                33
+    Run time :                                   48 sec.
+    Turnaround time :                            683 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c019n04>
+Subject: Job 960448: <structure_numerical_20260114> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260114> was submitted from host <c013n03> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 11:38:02 2026
+Job was executed on host(s) <6*c019n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 11:49:39 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 11:49:39 2026
+Terminated at Wed Jan 14 11:50:13 2026
+Results reported at Wed Jan 14 11:50:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 6:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern52                                         --Kernel_mixing_method averageProduct                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane" 
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   49.59 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   61 sec.
+    Turnaround time :                            731 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Tanimoto_Matern52_averageProduct.err> for stderr output of this job.
+

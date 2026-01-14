@@ -1,0 +1,164 @@
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c201n04>
+Subject: Job 958690: <structure_numerical_20260114> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260114> was submitted from host <c003n04> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:24:41 2026
+Job was executed on host(s) <6*c201n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:29:16 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 10:29:16 2026
+Terminated at Wed Jan 14 10:30:05 2026
+Results reported at Wed Jan 14 10:30:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 6:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Matern52                                         --K_count Matern52                                         --Kernel_mixing_method sum                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane" 
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   70.00 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             0.50 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                33
+    Run time :                                   62 sec.
+    Turnaround time :                            324 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 90.79±11.13	 r2: 0.66±0.09
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 12.33±1.34	 r2: 0.41±0.19
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 11.3±1.25	 r2: 0.64±0.06
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.24±1.25	 r2: 0.35±0.12
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 13.16±2.13	 r2: 0.53±0.17
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 10.24±1.25	 r2: 0.35±0.12
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_sum)_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c202n14>
+Subject: Job 960392: <structure_numerical_20260114> in cluster <Hazel> Done
+
+Job <structure_numerical_20260114> was submitted from host <c013n03> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 11:37:48 2026
+Job was executed on host(s) <6*c202n14>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 11:39:19 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 11:39:19 2026
+Terminated at Wed Jan 14 11:48:13 2026
+Results reported at Wed Jan 14 11:48:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 6:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Matern52                                         --K_count Matern52                                         --Kernel_mixing_method sum                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane" 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2265.29 sec.
+    Max Memory :                                 9 GB
+    Average Memory :                             6.45 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               23.00 GB
+    Max Swap :                                   -
+    Max Processes :                              30
+    Max Threads :                                33
+    Run time :                                   534 sec.
+    Turnaround time :                            625 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_Matern52_Matern52_sum.err> for stderr output of this job.
+

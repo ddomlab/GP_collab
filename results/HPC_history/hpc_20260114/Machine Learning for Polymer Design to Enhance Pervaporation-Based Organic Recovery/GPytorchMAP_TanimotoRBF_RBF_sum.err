@@ -1,0 +1,41 @@
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/process_executor.py", line 453, in _process_worker
+    call_item = call_queue.get(block=True, timeout=timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/multiprocessing/queues.py", line 122, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute '_fit_predict_score' on <module 'scoring' from '/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py'>
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 97, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 48, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 80, in train_regressor
+    scores, predictions = _prepare_data(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 188, in _prepare_data
+    score,predication = run(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 300, in run
+    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 474, in gp_cross_validate_regressor
+    
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 435, in gp_cross_validate
+    predictions_all (np.ndarray): A single array of shape (n_samples,) containing 
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+joblib.externals.loky.process_executor.BrokenProcessPool: A task has failed to un-serialize. Please ensure that the arguments of the function are all picklable.
+User defined signal 2

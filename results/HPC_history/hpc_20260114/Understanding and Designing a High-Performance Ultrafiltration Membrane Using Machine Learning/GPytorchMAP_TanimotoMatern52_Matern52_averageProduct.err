@@ -1,0 +1,58 @@
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/process_executor.py", line 490, in _process_worker
+    r = call_item()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/process_executor.py", line 291, in __call__
+    return self.fn(*self.args, **self.kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 607, in __call__
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 607, in <listcomp>
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 404, in _fit_predict_score
+    model.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/pipeline.py", line 663, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/GPytorch_kernel_mix.py", line 477, in fit
+    y_pred = self._gp_model(self._X_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/gpytorch/models/exact_gp.py", line 279, in __call__
+    raise RuntimeError("You must train on the training inputs!")
+RuntimeError: You must train on the training inputs!
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 97, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 48, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 80, in train_regressor
+    scores, predictions = _prepare_data(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 188, in _prepare_data
+    score,predication = run(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 300, in run
+    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 474, in gp_cross_validate_regressor
+    score, predictions = gp_cross_validate(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 435, in gp_cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+RuntimeError: You must train on the training inputs!

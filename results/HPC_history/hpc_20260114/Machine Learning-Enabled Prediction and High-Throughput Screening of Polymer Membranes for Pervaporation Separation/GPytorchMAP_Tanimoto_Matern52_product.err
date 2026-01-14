@@ -1,0 +1,104 @@
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-06 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-05 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-06 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-04 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-05 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-04 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-06 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-06 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-05 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-06 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-05 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-04 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-05 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-04 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning: A not p.d., added jitter of 1.0e-04 to the diagonal
+  warnings.warn(
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/process_executor.py", line 490, in _process_worker
+    r = call_item()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/externals/loky/process_executor.py", line 291, in __call__
+    return self.fn(*self.args, **self.kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 607, in __call__
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 607, in <listcomp>
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 404, in _fit_predict_score
+    model.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/pipeline.py", line 663, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/GPytorch_kernel_mix.py", line 478, in fit
+    loss = -mll(y_pred, self._y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/gpytorch/module.py", line 82, in __call__
+    outputs = self.forward(*inputs, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/gpytorch/mlls/exact_marginal_log_likelihood.py", line 82, in forward
+    res = output.log_prob(target)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/gpytorch/distributions/multivariate_normal.py", line 250, in log_prob
+    inv_quad, logdet = covar.inv_quad_logdet(inv_quad_rhs=diff.unsqueeze(-1), logdet=True)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/operators/_linear_operator.py", line 1709, in inv_quad_logdet
+    cholesky = CholLinearOperator(TriangularLinearOperator(self.cholesky()))
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/operators/_linear_operator.py", line 1311, in cholesky
+    chol = self._cholesky(upper=False)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/memoize.py", line 59, in g
+    return _add_to_cache(self, cache_name, method(self, *args, **kwargs), *args, kwargs_pkl=kwargs_pkl)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/operators/_linear_operator.py", line 528, in _cholesky
+    cholesky = psd_safe_cholesky(evaluated_mat, upper=upper).contiguous()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py", line 65, in psd_safe_cholesky
+    L = _psd_safe_cholesky(A, out=out, jitter=jitter, max_tries=max_tries)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/linear_operator/utils/cholesky.py", line 47, in _psd_safe_cholesky
+    raise NotPSDError(f"Matrix not positive definite after repeatedly adding jitter up to {jitter_new:.1e}.")
+linear_operator.utils.errors.NotPSDError: Matrix not positive definite after repeatedly adding jitter up to 1.0e-04.
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 97, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 48, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 80, in train_regressor
+    scores, predictions = _prepare_data(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 188, in _prepare_data
+    score,predication = run(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/training_utils_gp_special.py", line 300, in run
+    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 474, in gp_cross_validate_regressor
+    score, predictions = gp_cross_validate(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/scoring.py", line 435, in gp_cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/torch_cpu/lib/python3.10/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+linear_operator.utils.errors.NotPSDError: Matrix not positive definite after repeatedly adding jitter up to 1.0e-04.

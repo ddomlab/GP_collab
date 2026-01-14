@@ -1,0 +1,59 @@
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c020n01>
+Subject: Job 958512: <structure_numerical_20260114> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260114> was submitted from host <c203n03> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:17:01 2026
+Job was executed on host(s) <6*c020n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 10:19:02 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 10:19:02 2026
+Terminated at Wed Jan 14 10:19:35 2026
+Results reported at Wed Jan 14 10:19:35 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 3:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_Tanimoto_RBF_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_Tanimoto_RBF_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang" 
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   50.00 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   34 sec.
+    Turnaround time :                            154 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_Tanimoto_RBF_averageProduct.err> for stderr output of this job.
+
