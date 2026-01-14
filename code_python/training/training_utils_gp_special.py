@@ -299,7 +299,7 @@ def run(
             if "gp" in regressor_type.lower():
                 scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
             else:
-                scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, return_importance=True, return_indices=False)
+                scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer, early_stopping=True,return_importance=True, return_indices=False)
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
