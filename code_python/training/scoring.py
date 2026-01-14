@@ -485,7 +485,7 @@ def gp_cross_validate_regressor(
         return score, predictions
 
 
-def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
+def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_estimator):
     """
     - clone estimator
     - split train into train / eval
@@ -511,19 +511,17 @@ def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
 
     # ---- Early stopping dispatch ----
     inner_model = model.named_steps["regressor"].regressor
-    fit_sig = inner_model.fit.__signature__.parameters
-    fit_sig = inspect.signature(model.fit).parameters
-    print(fit_sig)
+    fit_sig = inspect.signature(inner_model.fit).parameters
     fit_kwargs = {}
 
     # XGBoost / LightGBM style
     if "eval_set" in fit_sig:
-        fit_kwargs["regressor__regressor__eval_set"] = [(X_eval, y_eval)]
-        fit_kwargs["regressor__regressor__verbose"] = False
+        fit_kwargs["regressor__eval_set"] = [(X_eval, y_eval)]
+        # fit_kwargs["regressor__regressor__verbose"] = False
 
     elif "X_val" in fit_sig and "Y_val" in fit_sig:
-        fit_kwargs["regressor__regressor__X_val"] = X_eval
-        fit_kwargs["regressor__regressor__Y_val"] = y_eval
+        fit_kwargs["regressor__X_val"] = X_eval
+        fit_kwargs["regressor__Y_val"] = y_eval
 
     model.fit(X_train, y_train, **fit_kwargs)
     y_pred = model.predict(X_test)
@@ -531,7 +529,8 @@ def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
         name: scorer(y_test, y_pred)
         for name, scorer in scoring.items()
     }
-
+    if return_estimator:
+        return test_idx, y_pred, scores, model
     return test_idx, y_pred, scores
 
 
@@ -542,11 +541,12 @@ def early_stopping_cross_validate(
     cv,
     scoring,
     n_jobs=-1,
+    return_estimator: bool = False,
 ):
     
     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
         delayed(_es_fit_predict_score)(
-            estimator, X, y, train_idx, test_idx, scoring
+            estimator, X, y, train_idx, test_idx, scoring, return_estimator
         )
         for train_idx, test_idx in cv.split(X, y)
     )
@@ -555,7 +555,16 @@ def early_stopping_cross_validate(
     n_samples = len(y)
     predictions = np.full(n_samples, np.nan)
 
-    for test_idx, y_pred, fold_scores in parallel_results:
+    if return_estimator:
+        scores["estimator"] = []
+        
+    for result in parallel_results:
+        if return_estimator:
+            test_idx, y_pred, fold_scores, model = result
+            scores["estimator"].append(model)
+        else:
+            test_idx, y_pred, fold_scores = result
+
         predictions[test_idx] = y_pred
 
         for key, val in fold_scores.items():
@@ -563,29 +572,6 @@ def early_stopping_cross_validate(
                 
     return scores, predictions
 
-
-# def cross_validate_early_stopping_regressor(
-#     regressor, X, y, cv, return_importance: bool = False) -> tuple[dict[str, float], np.ndarray]:
-    
-#     scorers = {
-#         "r2": r2_scorer_multi,
-#         "rmse": rmse_scorer_multi,
-#         "mae": mae_scorer_multi
-#         }
-    
-#     score, predictions = early_stopping_cross_validate(
-#         regressor,
-#         X,
-#         y,
-#         cv=cv,
-#         scoring=scorers,
-#         n_jobs=-1,
-#         )
-
-#     if return_importance:
-#         get_feature_importances_from_cv(score, X=X)
-
-#     return score, predictions
 
 # from joblib import parallel_backend
 def cross_validate_regressor(
@@ -615,14 +601,13 @@ def cross_validate_regressor(
         # # SINGLE OUTPUT
         # else:
         
-        scorers = {
-            "spearman_r": spearman_scorer,
-            "rmse": rmse_scorer,
-            "mae": mae_scorer,
-            "r2": r2_scorer,
-        }
 
         if early_stopping:
+            scorers = {
+            "rmse": root_mean_squared_error,
+            "mae": mean_absolute_error,
+            "r2": r2_score,
+            }
             score, predictions = early_stopping_cross_validate(
                 regressor,
                 X,
@@ -630,8 +615,15 @@ def cross_validate_regressor(
                 cv=cv,
                 scoring=scorers,
                 n_jobs=-1,
+                return_estimator=True
             )
         else:
+            scorers = {
+            "rmse": rmse_scorer,
+            "mae": mae_scorer,
+            "r2": r2_scorer,
+            }
+
             score: dict[str, float] = cross_validate(
                 regressor,
                 X,

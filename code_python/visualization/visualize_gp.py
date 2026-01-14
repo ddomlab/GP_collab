@@ -597,17 +597,19 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     document = Document()
 
     rows = len(rows_data) + 3
-    cols = 6   # <-- now 6 columns
+    cols = 9   # <-- 9 columns now (Combination + 2 models × 3 metrics)
     table = document.add_table(rows=rows, cols=cols)
     table.style = "Table Grid"
 
     # ---------------- HEADER LEVEL 1 ----------------
     h = table.rows[0].cells
     h[0].text = "Combination"
-    h[3].text = "GP pyro"
+    h[3].text = "GPyro HMC"
+    h[6].text = "GPyTorch MAP"
 
     h[0].merge(h[2])   # Combination spans Count/FP/Mixing
-    h[3].merge(h[5])   # GP spans RMSE / R2 / runtime
+    h[3].merge(h[5])   # GPyro HMC spans RMSE / R² / runtime
+    h[6].merge(h[8])   # GPyTorch MAP spans RMSE / R² / runtime
 
     # ---------------- HEADER LEVEL 2 ----------------
     h2 = table.rows[1].cells
@@ -615,6 +617,9 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
     h2[3].text = "RMSE"
     h2[4].text = "R²"
     h2[5].text = "Run time (sec)"
+    h2[6].text = "RMSE"
+    h2[7].text = "R²"
+    h2[8].text = "Run time (sec)"
     h2[0].merge(h2[1])
 
     # ---------------- HEADER LEVEL 3 ----------------
@@ -625,9 +630,8 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
 
     # ---- VERTICAL MERGES ----
     table.rows[1].cells[2].merge(table.rows[2].cells[2])
-    table.rows[1].cells[3].merge(table.rows[2].cells[3])
-    table.rows[1].cells[4].merge(table.rows[2].cells[4])
-    table.rows[1].cells[5].merge(table.rows[2].cells[5])
+    for i in range(3, 9):
+        table.rows[1].cells[i].merge(table.rows[2].cells[i])
 
     # ---------------- DATA ROWS ----------------
     r = 3
@@ -637,7 +641,7 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
             cells[c].text = str(v)
         r += 1
 
-    # styling
+    # ---------------- STYLING ----------------
     for row in table.rows:
         for cell in row.cells:
             for p in cell.paragraphs:
@@ -743,7 +747,7 @@ PAPER = {
 
 models = [
             "GpyroMCMC", 
-            # "GPMixMCMC"
+            "GPytorchMAP"
             ]
 
 if __name__ == "__main__":
@@ -762,7 +766,7 @@ if __name__ == "__main__":
             #                         # comparison_value=['scaler', 'Trimer_scaler'],
             #                         )
             # feat_impt_expert = paper_info["expert_impt"]
-            for model in models:
+            # for model in models:    
                 paper_loc: Path = RESULTS / paper_name / target
             #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
             #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
@@ -809,43 +813,38 @@ if __name__ == "__main__":
     # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
     #     json.dump(model_stats, f, indent=2)
 
-
+            
                 rows_data = []
                 for count_k in count_kernel:
                     for fp_k in tanimoto_kernel:
                         for mix_method in mixing_methods:
-                            
-                            score_file = None
-                            file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                            if not score_path.exists():
-                                file_template = f"(ECFP3_count_512-COUNT)_(GpyroMCMC_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                            row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
+                            for model in models:
+
+                                score_file = None
+                                file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
                                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                            if not score_path.exists():
-                                print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+                                if not score_path.exists():
+                                    file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                                    score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                if not score_path.exists():
+                                    print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
-                            else:
-                                with open(score_path, "r") as f:
-                                    score_file = json.load(f)
+                                else:
+                                    with open(score_path, "r") as f:
+                                        score_file = json.load(f)
 
-                            if score_file is None:
-                                rmse_value = ""
-                                r2_value = ""
-                                run_time_value = ""
-                            else:
-                                score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
-                                rmse_value = score_annot["rmse"]
-                                r2_value = score_annot["r2"]
-                                run_time_value = score_annot["run_time_sec"]
+                                if score_file is None:
+                                    rmse_value = ""
+                                    r2_value = ""
+                                    run_time_value = ""
+                                else:
+                                    score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
+                                    rmse_value = score_annot["rmse"]
+                                    r2_value = score_annot["r2"]
+                                    run_time_value = score_annot["run_time_sec"]
 
-                            mix_method = "Av(co)*FP" if mix_method == "averageProduct" else mix_method
-                            rows_data.append([
-                                count_k,
-                                fp_k,
-                                mix_method,
-                                rmse_value,
-                                r2_value,
-                                run_time_value
-                            ])
+                                row.extend([rmse_value, r2_value, run_time_value])
+                            rows_data.append(row)
                 create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
                                 

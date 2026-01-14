@@ -77,7 +77,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                # special_file_name='ARD',
+                special_file_name='early_stop',
                 **kwargs,
                 )
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 representation="ECFP",
                 radius=3,
                 vector="count",
-                regressor_type="NGB",
+                regressor_type="XGBR",
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",

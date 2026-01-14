@@ -126,7 +126,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,
-                             early_stopping_rounds=20,
+                             early_stopping_rounds=500,
                             #  **kwargs,
                              
                              )
