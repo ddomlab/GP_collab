@@ -24,6 +24,64 @@ import os, sys
 import gc
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
+#Torch modules
+import torch
+from torch.distributions import InverseGamma
+from gpytorch.priors import Prior
+from gpytorch.module import Module as TModule
+from gpytorch.priors.utils import _bufferize_attributes
+
+
+import torch
+from torch.distributions import Gamma
+from gpytorch.priors import Prior
+from torch.nn import Module as TModule
+from gpytorch.priors.utils import _bufferize_attributes
+
+
+class InverseGammaPrior(Prior, Gamma):
+    r"""
+    Inverse-Gamma prior parameterized by concentration (alpha) and rate (beta).
+
+    If X ~ InverseGamma(alpha, beta), then 1/X ~ Gamma(alpha, beta).
+
+    log p_X(x) = log p_Gamma(1/x) + log|d(1/x)/dx|
+               = log p_Gamma(1/x) - 2 log x
+    """
+
+    def __init__(self, concentration, rate, validate_args=False, transform=None):
+        TModule.__init__(self)
+        Gamma.__init__(self, concentration=concentration, rate=rate, validate_args=validate_args)
+        _bufferize_attributes(self, ("concentration", "rate"))
+        self._transform = transform
+
+    def expand(self, batch_shape):
+        batch_shape = torch.Size(batch_shape)
+        return InverseGammaPrior(
+            self.concentration.expand(batch_shape),
+            self.rate.expand(batch_shape),
+            transform=self._transform,
+        )
+
+    def log_prob(self, x):
+        # Apply any gpytorch transform first (same convention as Prior.log_prob)
+        x = self.transform(x)
+
+        inv_x = x.reciprocal()
+        # Gamma.log_prob on inv_x (use super(Prior, self) to jump to Gamma in the MRO)
+        gamma_lp = super(Prior, self).log_prob(inv_x)
+
+        # Jacobian term for inv_x = 1/x is |d(1/x)/dx| = 1/x^2  -> log = -2 log x
+        return gamma_lp - 2.0 * torch.log(x)
+
+    def rsample(self, sample_shape=torch.Size()):
+        # Sample from Gamma then invert
+        s = super(Prior, self).rsample(sample_shape)
+        return s.reciprocal()
+
+    def __call__(self, *args, **kwargs):
+        # Match gpytorch's torch_priors pattern
+        return super(Gamma, self).__call__(*args, **kwargs)
 
 
     
@@ -275,7 +333,7 @@ class GPMix(gpytorch.models.ExactGP):
                         # ard_dim = len(feat_idx[fp_key])
                         sk.register_prior(
                             f"fp_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
+                            InverseGammaPrior(5.0, 5.0),
                             "lengthscale",
                             )
                     
@@ -283,7 +341,7 @@ class GPMix(gpytorch.models.ExactGP):
                 else:
                     sk.register_prior(
                         f"count_lengthscale_prior_{i}",
-                        gpytorch.priors.GammaPrior(5.0, 5.0),
+                        InverseGammaPrior(5.0, 5.0),
                         "lengthscale",
                     )
 
