@@ -14,19 +14,12 @@ k_mixing_methods=("sum" "product" "averageProduct")
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
-        
-            if [[ "$fp_kernel" == *Tanimoto* ]]; then
-                WALLTIME="5:00"
-            else
-                WALLTIME="10:00"
-            fi
-
             bsub <<EOT
 
 
 
 #BSUB -n 6
-#BSUB -W $WALLTIME
+#BSUB -W 7:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
