@@ -485,7 +485,15 @@ def gp_cross_validate_regressor(
         return score, predictions
 
 
-def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_estimator):
+def _custom_fit_predict_score(
+        estimator, X, y,
+        train_idx, 
+        test_idx, 
+        scoring: Dict,
+        return_estimator: bool,
+        return_feature_importances: bool,
+        early_stopping:bool
+        ):
     """
     - clone estimator
     - split train into train / eval
@@ -502,39 +510,59 @@ def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     y_test = split_for_training(y, test_idx)
 
     # Internal validation split (ONLY from training fold)
-    X_train, X_eval, y_train, y_eval = train_test_split(
-        X_train_eval,
-        y_train_eval,
-        test_size=0.2,
-        random_state=42,
-    )
-
-    # ---- Early stopping dispatch ----
-    inner_model = model.named_steps["regressor"].regressor
-    fit_sig = inspect.signature(inner_model.fit).parameters
     fit_kwargs = {}
+    if  early_stopping:
+        X_train, X_eval, y_train, y_eval = train_test_split(
+            X_train_eval,
+            y_train_eval,
+            test_size=0.2,
+            random_state=42,
+        )
 
-    # XGBoost / LightGBM style
-    if "eval_set" in fit_sig:
-        fit_kwargs["regressor__eval_set"] = [(X_eval, y_eval)]
-        # fit_kwargs["regressor__regressor__verbose"] = False
+        # ---- Early stopping dispatch ----
+        inner_model = model.named_steps["regressor"].regressor
+        fit_sig = inspect.signature(inner_model.fit).parameters
+        
 
-    elif "X_val" in fit_sig and "Y_val" in fit_sig:
-        fit_kwargs["regressor__X_val"] = X_eval
-        fit_kwargs["regressor__Y_val"] = y_eval
+        # XGBoost / LightGBM style
+        if "eval_set" in fit_sig:
+            fit_kwargs["regressor__eval_set"] = [(X_eval, y_eval)]
+            # fit_kwargs["regressor__regressor__verbose"] = False
+
+        elif "X_val" in fit_sig and "Y_val" in fit_sig:
+            fit_kwargs["regressor__X_val"] = X_eval
+            fit_kwargs["regressor__Y_val"] = y_eval
 
     model.fit(X_train, y_train, **fit_kwargs)
     y_pred = model.predict(X_test)
     scores = {
-        name: scorer(y_test, y_pred)
+        f"test_{name}": scorer(y_test, y_pred)
         for name, scorer in scoring.items()
     }
+ 
+    if return_feature_importances:
+        MDI_importances = []
+        shap_importances = []
+        preprocessor = model.named_steps["preprocessor"]
+        feature_names = preprocessor.get_feature_names_out()
+        model_inner = model.named_steps["regressor"].regressor_
+        raw_fi = model_inner.feature_importances_
+        feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
+        MDI_importances.append(dict(zip(feature_names, feat_imp)))
+
+        explainer = shap.Explainer(model.predict, X_train)
+        shap_values = explainer(X_test, check_additivity=False)
+        fi_shap = np.abs(shap_values.values).mean(axis=0)
+        shap_importances.append(dict(zip(feature_names, fi_shap)))
+        scores["feature_importances_MDI"] = MDI_importances
+        scores["feature_importances_SHAP"] = shap_importances
     if return_estimator:
-        return test_idx, y_pred, scores, model
+        scores["estimator"] = model
+    
     return test_idx, y_pred, scores
 
 
-def early_stopping_cross_validate(
+def custom_cross_validate(
     estimator,
     X,
     y,
@@ -542,11 +570,13 @@ def early_stopping_cross_validate(
     scoring,
     n_jobs=-1,
     return_estimator: bool = False,
+    return_feature_importances: bool = False,
+    early_stopping:bool = False
 ):
     
     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
-        delayed(_es_fit_predict_score)(
-            estimator, X, y, train_idx, test_idx, scoring, return_estimator
+        delayed(_custom_fit_predict_score)(
+            estimator, X, y, train_idx, test_idx, scoring, return_estimator, return_feature_importances, early_stopping
         )
         for train_idx, test_idx in cv.split(X, y)
     )
@@ -554,28 +584,25 @@ def early_stopping_cross_validate(
     scores = defaultdict(list)
     n_samples = len(y)
     predictions = np.full(n_samples, np.nan)
-
-    if return_estimator:
-        scores["estimator"] = []
         
-    for result in parallel_results:
-        if return_estimator:
-            test_idx, y_pred, fold_scores, model = result
-            scores["estimator"].append(model)
-        else:
-            test_idx, y_pred, fold_scores = result
-
+    for test_idx, y_pred, fold_scores in parallel_results:
         predictions[test_idx] = y_pred
 
         for key, val in fold_scores.items():
-            scores[f"test_{key}"].append(val)
+                scores[key].append(val)
                 
     return scores, predictions
 
 
-# from joblib import parallel_backend
+
+
 def cross_validate_regressor(
-    regressor, X, y, cv, early_stopping: bool = False, return_importance: bool = False, return_indices: bool = False
+    regressor, X, y, cv,
+    custom: bool = False,
+    early_stopping: bool = False,
+    return_estimator: bool = False,
+    return_feature_importances: bool = False,
+    return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
@@ -602,20 +629,22 @@ def cross_validate_regressor(
         # else:
         
 
-        if early_stopping:
+        if custom   :
             scorers = {
             "rmse": root_mean_squared_error,
             "mae": mean_absolute_error,
             "r2": r2_score,
             }
-            score, predictions = early_stopping_cross_validate(
+            score, predictions = custom_cross_validate(
                 regressor,
                 X,
                 y,
                 cv=cv,
                 scoring=scorers,
                 n_jobs=-1,
-                return_estimator=True
+                return_estimator=return_estimator,
+                return_feature_importances=return_feature_importances,
+                early_stopping=early_stopping
             )
         else:
             scorers = {
@@ -641,12 +670,12 @@ def cross_validate_regressor(
                 cv=cv,
                 n_jobs=-1,
             )
-        if return_importance:
-            get_feature_importances_from_cv(score, X=X)
+            if return_feature_importances:
+                get_feature_importances_from_cv(score, X=X)
 
-        if return_indices:
-            indexes = score.pop("indices")
-            return score, predictions, indexes
+            if return_indices:
+                indexes = score.pop("indices")
+                return score, predictions, indexes
         return score, predictions
 
 
