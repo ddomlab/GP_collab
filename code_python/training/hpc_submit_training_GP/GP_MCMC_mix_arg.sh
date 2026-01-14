@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 # model="GPMixMCMC"
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-dataset="cleaned_dataset_Ultrafiltration Membrane"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="separation_data_imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
