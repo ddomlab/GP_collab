@@ -1,0 +1,65 @@
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 2.89±0.23	 r2: 0.12±0.04
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-Matern52_averageProduct)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c011n01>
+Subject: Job 957598: <structure_numerical_20260114> in cluster <Hazel> Done
+
+Job <structure_numerical_20260114> was submitted from host <c207n13> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 00:38:15 2026
+Job was executed on host(s) <6*c011n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 00:48:12 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 00:48:12 2026
+Terminated at Wed Jan 14 00:56:32 2026
+Results reported at Wed Jan 14 00:56:32 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 7:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Matern52_Matern52_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Matern52_Matern52_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Matern52                                         --K_count Matern52                                         --Kernel_mixing_method averageProduct                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --dataset "Beyond molecular structure_seifrid_imputed" 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2308.40 sec.
+    Max Memory :                                 5 GB
+    Average Memory :                             3.24 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               27.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                41
+    Run time :                                   501 sec.
+    Turnaround time :                            1097 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Matern52_Matern52_averageProduct.err> for stderr output of this job.
+

@@ -1,0 +1,65 @@
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.21±0.06	 r2: 0.87±0.07
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoRBF-Matern32_averageProduct)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c005n04>
+Subject: Job 957647: <structure_numerical_20260114> in cluster <Hazel> Done
+
+Job <structure_numerical_20260114> was submitted from host <c050n01> by user <sdehgha2> in cluster <Hazel> at Wed Jan 14 00:42:13 2026
+Job was executed on host(s) <6*c005n04>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Wed Jan 14 00:42:39 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan 14 00:42:39 2026
+Terminated at Wed Jan 14 00:45:16 2026
+Results reported at Wed Jan 14 00:45:16 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 2:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260114"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed" 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   607.08 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             2.71 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                41
+    Run time :                                   174 sec.
+    Turnaround time :                            183 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260114/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_Matern32_averageProduct.err> for stderr output of this job.
+

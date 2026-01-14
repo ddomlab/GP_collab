@@ -1,0 +1,59 @@
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c019n03>
+Subject: Job 918097: <structure_numerical_20260107> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260107> was submitted from host <c007n04> by user <sdehgha2> in cluster <Hazel> at Wed Jan  7 17:39:19 2026
+Job was executed on host(s) <6*c019n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jan  7 17:40:04 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jan  7 17:40:04 2026
+Terminated at Wed Jan  7 17:52:16 2026
+Results reported at Wed Jan  7 17:52:16 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 7:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260107"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260107/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroMCMC_TanimotoMatern52_Matern32_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260107/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroMCMC_TanimotoMatern52_Matern32_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp TanimotoMatern52                                         --K_count Matern32                                         --Kernel_mixing_method sum                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --dataset "Beyond molecular structure_seifrid_imputed" 
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   3545.00 sec.
+    Max Memory :                                 5 GB
+    Average Memory :                             3.96 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               27.00 GB
+    Max Swap :                                   -
+    Max Processes :                              38
+    Max Threads :                                46
+    Run time :                                   744 sec.
+    Turnaround time :                            777 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260107/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroMCMC_TanimotoMatern52_Matern32_sum.err> for stderr output of this job.
+
