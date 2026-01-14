@@ -41,11 +41,35 @@ def weighted_tanimoto_distance(x1, x2, eps=1e-6):
     return torch.clamp(dist, min=0.)
 
 
-class TanimotoRBF(gpytorch.kernels.Kernel):
+class Tanimoto(Kernel):
+    has_lengthscale = False
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    def forward(self, x1, x2, diag=False, **params):            
+        if diag:    
+            if torch.equal(x1, x2):
+                return torch.ones(
+                    *x1.shape[:-1],
+                    device=x1.device,
+                    dtype=x1.dtype
+                )
+            num = torch.min(x1, x2).sum(dim=-1)
+            den = torch.max(x1, x2).sum(dim=-1)
+            dist = 1.0 - (num + 1e-6) / (den + 1e-6)
+
+            return torch.clamp(dist, min=0.)
+        
+        else:
+            # if self.last_dim_is_batch:
+                # x1 = x1.transpose(-1, -2).unsqueeze(-1)
+                # x2 = x2.transpose(-1, -2).unsqueeze(-1)
+            return weighted_tanimoto_distance(x1, x2)
+
+class TanimotoRBF(Kernel):
     is_stationary = False
     has_lengthscale=True
     def __init__(self, **kwargs):
-        super().__init__(has_lengthscale=True, **kwargs)
+        super().__init__(**kwargs)
 
 
     def forward(self, x1, x2, diag=False, **params):
@@ -71,13 +95,54 @@ class TanimotoRBF(gpytorch.kernels.Kernel):
         )
 
 
+class TanimotoMatern(Kernel):
+    is_stationary = False
+    has_lengthscale=True
+    def __init__(self, nu,**kwargs):
+        super().__init__(has_lengthscale=True, **kwargs)
+        self.nu = nu
 
+    def forward(self, x1, x2, diag=False, **params):
+        if diag:
+            if torch.equal(x1, x2):
+                return torch.ones(
+                    *x1.shape[:-1],
+                    device=x1.device,
+                    dtype=x1.dtype
+                )
 
+            num = torch.min(x1, x2).sum(dim=-1)
+            den = torch.max(x1, x2).sum(dim=-1)
+            dist = 1.0 - (num + 1e-6) / (den + 1e-6)
+            r = dist / self.lengthscale
+            if self.nu == 1.5:
+                sqrt3_r = 3**0.5 * r
+                K = (1.0 + sqrt3_r) * torch.exp(-sqrt3_r)
+            elif self.nu == 2.5:
+                sqrt5_r = 5**0.5 * r
+                K = (1.0 + sqrt5_r + 5.0/3.0 * r**2) * torch.exp(-sqrt5_r)
+            else:
+                raise RuntimeError("nu expected to be 1.5 or 2.5")
+            return K
+
+        dist = weighted_tanimoto_distance(x1, x2)
+        r = dist / self.lengthscale
+        if self.nu == 1.5:
+            sqrt3_r = 3**0.5 * r
+            K = (1.0 + sqrt3_r) * torch.exp(-sqrt3_r)
+        elif self.nu == 2.5:
+            sqrt5_r = 5**0.5 * r
+            K = (1.0 + sqrt5_r + 5.0/3.0 * r**2) * torch.exp(-sqrt5_r)
+        else:
+            raise RuntimeError("nu expected to be 1.5 or 2.5")
+        return K
+    
+    
 kernel_factory = {
     "TanimotoRBF": TanimotoRBF,
-    # "TanimotoMatern32": lambda **kw: TanimotoMatern(nu=1.5, **kw),
-    # "TanimotoMatern52": lambda **kw: TanimotoMatern(nu=2.5, **kw),
-    # "Tanimoto": Tanimoto,
+    "TanimotoMatern32": lambda **kw: TanimotoMatern(nu=1.5, **kw),
+    "TanimotoMatern52": lambda **kw: TanimotoMatern(nu=2.5, **kw),
+    "Tanimoto": Tanimoto,
     "RBF": RBFKernel,
     "Matern32": lambda **kw: MaternKernel(nu=1.5, **kw),
     "Matern52": lambda **kw: MaternKernel(nu=2.5, **kw),
@@ -104,12 +169,17 @@ class MixingKernel:
         for key in fp_keys:
             idx = self.feat_idx[key]
             if idx:
-                # print(f"{idx}")
                 # print("ard dim for ", key, ":", len(idx))
-                k = kernel_factory[self.kernel_method["fp"]](
-                    active_dims=idx,
-                    # ard_num_dims=len(idx)
-                )
+                if "tanimoto" in self.kernel_method["fp"].lower():
+                    k = kernel_factory[self.kernel_method["fp"]](
+                        active_dims=idx,
+                        # ard_num_dims=len(idx)
+                    )
+                else:
+                    k = kernel_factory[self.kernel_method["fp"]](
+                        active_dims=idx,
+                        ard_num_dims=len(idx)
+                    )
                 fp_kernels.append(k)
         # print(len(fp_kernels), "fp kernels created")
         return fp_kernels
@@ -168,22 +238,6 @@ class MixingKernel:
 
 
 
-# k_prod = ProductKernel(
-#     gpytorch.kernels.RBFKernel(ard_num_dims=3),
-#     gpytorch.kernels.LinearKernel()
-# )
-
-# k_mult = AdditiveKernel(
-#     gpytorch.kernels.RBFKernel(ard_num_dims=3),
-#     gpytorch.kernels.LinearKernel()
-# )
-# k_total = ProductKernel(k_prod, k_mult)
-# k_var = ScaleKernel(k_total)
-
-# for name, sk in k_var.base_kernel.named_sub_kernels():
-#     print("name\n",name)
-#     print("sk\n",sk)
-
 class GPMix(gpytorch.models.ExactGP):
     def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict, likelihood):
         super().__init__(X, y, likelihood)
@@ -216,22 +270,15 @@ class GPMix(gpytorch.models.ExactGP):
                 if i < len(fp_keys):
                     if kernel_method["fp"].lower() == "tanimoto":
                         continue
-                    if "tanimoto" in self.kernel_method["fp"].lower():
+                    else:
+                        # "tanimoto" in self.kernel_method["fp"].lower():
                         # ard_dim = len(feat_idx[fp_key])
                         sk.register_prior(
                             f"fp_lengthscale_prior_{i}",
                             gpytorch.priors.GammaPrior(5.0, 5.0),
                             "lengthscale",
                             )
-                        # sk.ard_num_dims = len(feat_idx[fp_keys[i]]) 
-                        
-                    else:
-                        sk.register_prior(
-                            f"fp_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
-                            "lengthscale",
-                            )
-                        sk.ard_num_dims = len(feat_idx[fp_keys[i]])   
+                    
 
                 else:
                     sk.register_prior(
@@ -253,16 +300,14 @@ class GPMix(gpytorch.models.ExactGP):
             for i, (name, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
                 if kernel_method["fp"].lower() == "tanimoto":
                     continue
-                fp_key = fp_keys[i]
-                ard_dim = len(feat_idx[fp_key])
-                sk.register_prior(
-                            f"fp_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
-                            "lengthscale",
-                            )
-
-                if ard_dim > 1:
-                    sk.ard_num_dims = ard_dim
+                # if "tanimoto" in self.kernel_method["fp"].lower():
+                else:
+                    # fp_key = fp_keys[i]
+                    sk.register_prior(
+                                f"fp_lengthscale_prior_{i}",
+                                gpytorch.priors.GammaPrior(5.0, 5.0),
+                                "lengthscale",
+                                )
         else:
             raise ValueError(f"Unknown mixing_method: {mixing_method}")
 
@@ -305,7 +350,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self,
         feat_group:dict,
         lr=1e-2,
-        n_epoch=200,
+        n_epoch=400,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
@@ -413,13 +458,13 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         count_names = sorted(list(self.count_feat_name_idx.keys()))
 
         def _extract_ls(kernel, key_prefix):
-            print(type(kernel))
             if not hasattr(kernel, "lengthscale") or kernel.lengthscale is None:
                 raise RuntimeError(f"No lengthscale found for kernel '{key_prefix}'")
             ls = kernel.lengthscale.detach().cpu().numpy()
             # If ARD, return one key per dimension
-            if ls.ndim == 1:
-                return {f"{key_prefix}[{i}]": ls_i for i, ls_i in enumerate(ls)}
+            if ls.shape[-1] > 1:
+
+                return {f"{key_prefix}[{i}]": ls_i for i, ls_i in enumerate(ls.squeeze(0))}
             else:
                 return {key_prefix: ls}
 

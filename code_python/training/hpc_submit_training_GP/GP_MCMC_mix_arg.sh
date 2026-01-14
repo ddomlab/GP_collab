@@ -7,9 +7,9 @@ dataset="Beyond molecular structure_seifrid_imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-k_fps=("TanimotoRBF")
-k_counts=("RBF")
-k_mixing_methods=("sum") 
+k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
+k_counts=("RBF" "Matern32" "Matern52")
+k_mixing_methods=("sum" "product" "averageProduct") 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
@@ -19,12 +19,12 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 6
-#BSUB -W 10:00
+#BSUB -W 5:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/GpyroMCMC_${fp_kernel}_${count_kernel}_${mixing_method}.out"
-#BSUB -e "${output_dir}/GpyroMCMC_${fp_kernel}_${count_kernel}_${mixing_method}.err"
+#BSUB -o "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.out"
+#BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
