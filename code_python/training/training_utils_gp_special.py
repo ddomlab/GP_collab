@@ -301,9 +301,10 @@ def run(
             else:
                 scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
                                                                 custom=True,
-                                                                early_stopping=False,
+                                                                early_stopping=True,
                                                                 return_estimator=False,
-                                                                return_feature_importances=False
+                                                                return_feature_importances=True,
+                                                                
                                                                 )
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)

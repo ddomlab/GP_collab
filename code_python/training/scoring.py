@@ -504,8 +504,8 @@ def _custom_fit_predict_score(
 
     model = clone(estimator)
 
-    X_train_eval = split_for_training(X, train_idx)
-    y_train_eval = split_for_training(y, train_idx)
+    X_train= split_for_training(X, train_idx)
+    y_train = split_for_training(y, train_idx)
     X_test = split_for_training(X, test_idx)
     y_test = split_for_training(y, test_idx)
 
@@ -513,8 +513,8 @@ def _custom_fit_predict_score(
     fit_kwargs = {}
     if  early_stopping:
         X_train, X_eval, y_train, y_eval = train_test_split(
-            X_train_eval,
-            y_train_eval,
+            X_train,
+            y_train,
             test_size=0.2,
             random_state=42,
         )
@@ -541,6 +541,7 @@ def _custom_fit_predict_score(
     }
  
     if return_feature_importances:
+        
         MDI_importances = []
         shap_importances = []
         preprocessor = model.named_steps["preprocessor"]
@@ -549,9 +550,10 @@ def _custom_fit_predict_score(
         raw_fi = model_inner.feature_importances_
         feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
         MDI_importances.append(dict(zip(feature_names, feat_imp)))
-
-        explainer = shap.Explainer(model.predict, X_train)
-        shap_values = explainer(X_test, check_additivity=False)
+        model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
+        explainer = shap.TreeExplainer(model_inner, model_output=model_output)
+        x_t_transformed = preprocessor.transform(X_test)
+        shap_values = explainer(x_t_transformed)
         fi_shap = np.abs(shap_values.values).mean(axis=0)
         shap_importances.append(dict(zip(feature_names, fi_shap)))
         scores["feature_importances_MDI"] = MDI_importances
