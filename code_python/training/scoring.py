@@ -510,7 +510,7 @@ def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
 
     # ---- Early stopping dispatch ----
     fit_sig = inspect.signature(model.fit).parameters
-
+    print(fit_sig)
     fit_kwargs = {}
 
     # XGBoost / LightGBM style

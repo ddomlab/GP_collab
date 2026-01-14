@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 representation="ECFP",
                 radius=3,
                 vector="count",
-                regressor_type="XGBR",
+                regressor_type="NGB",
                 # GPytorchMixMCMC
                 # GPMixMCMC
                 # kernel="matern32_j_rbf_mix",
