@@ -6,8 +6,13 @@ import pandas as pd
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.pipeline import Pipeline
 from sklearn.metrics._scorer import r2_scorer
-from sklearn.model_selection import cross_val_predict, cross_validate
-from sklearn.model_selection import learning_curve
+from sklearn.model_selection import (
+    cross_val_predict,
+    cross_validate,
+    train_test_split,
+    learning_curve
+    )
+
 from _validation import multioutput_cross_validate 
 from utils import split_for_training
 import shap
@@ -25,7 +30,7 @@ from sklearn.metrics import (
     precision_score,
 )
 
-
+import inspect
 
 
 
@@ -383,7 +388,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 
-def _fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool):
+def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool):
     """
     Runs inside a parallel worker:
     - clone estimator
@@ -433,7 +438,7 @@ def gp_cross_validate(
     
     # 1. Run Parallel Folds
     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
-        delayed(_fit_predict_score)(
+        delayed(_gp_fit_predict_score)(
             estimator, X, y, train_idx, test_idx, scoring, return_ls
         )
         for train_idx, test_idx in cv.split(X, y)
@@ -453,10 +458,6 @@ def gp_cross_validate(
             else:
                 scores[f"test_{key}"].append(val)
                 
-    # Return: (Scores Dict, Single Prediction Array)
-    # print("style of score",scores["test_r2"])
-    # print("style of score",scores["test_rmse"])
-    # print("style of score",scores["test_mae"])
     return scores, predictions
 
 
@@ -483,41 +484,152 @@ def gp_cross_validate_regressor(
         return score, predictions
 
 
+def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
+    """
+    - clone estimator
+    - split train into train / eval
+    - fit with early stopping (XGB or NGBoost)
+    - predict on test
+    - compute scores
+    """
+
+    model = clone(estimator)
+
+    X_train_eval = split_for_training(X, train_idx)
+    y_train_eval = split_for_training(y, train_idx)
+    X_test = split_for_training(X, test_idx)
+    y_test = split_for_training(y, test_idx)
+
+    # Internal validation split (ONLY from training fold)
+    X_train, X_eval, y_train, y_eval = train_test_split(
+        X_train_eval,
+        y_train_eval,
+        test_size=0.2,
+        random_state=42,
+    )
+
+    # ---- Early stopping dispatch ----
+    fit_sig = inspect.signature(model.fit).parameters
+
+    fit_kwargs = {}
+
+    # XGBoost / LightGBM style
+    if "eval_set" in fit_sig:
+        fit_kwargs["eval_set"] = [(X_eval, y_eval)]
+        fit_kwargs["verbose"] = False
+
+    # NGBoost style
+    elif "X_val" in fit_sig and "Y_val" in fit_sig:
+        fit_kwargs["X_val"] = X_eval
+        fit_kwargs["Y_val"] = y_eval
+
+    model.fit(X_train, y_train, **fit_kwargs)
+    y_pred = model.predict(X_test)
+    scores = {
+        name: scorer(y_test, y_pred)
+        for name, scorer in scoring.items()
+    }
+
+    return test_idx, y_pred, scores
+
+
+def early_stopping_cross_validate(
+    estimator,
+    X,
+    y,
+    cv,
+    scoring,
+    n_jobs=-1,
+):
+    
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+        delayed(_es_fit_predict_score)(
+            estimator, X, y, train_idx, test_idx, scoring
+        )
+        for train_idx, test_idx in cv.split(X, y)
+    )
+
+    scores = defaultdict(list)
+    n_samples = len(y)
+    predictions = np.full(n_samples, np.nan)
+
+    for test_idx, y_pred, fold_scores in parallel_results:
+        predictions[test_idx] = y_pred
+
+        for key, val in fold_scores.items():
+            scores[f"test_{key}"].append(val)
+                
+    return scores, predictions
+
+
+# def cross_validate_early_stopping_regressor(
+#     regressor, X, y, cv, return_importance: bool = False) -> tuple[dict[str, float], np.ndarray]:
+    
+#     scorers = {
+#         "r2": r2_scorer_multi,
+#         "rmse": rmse_scorer_multi,
+#         "mae": mae_scorer_multi
+#         }
+    
+#     score, predictions = early_stopping_cross_validate(
+#         regressor,
+#         X,
+#         y,
+#         cv=cv,
+#         scoring=scorers,
+#         n_jobs=-1,
+#         )
+
+#     if return_importance:
+#         get_feature_importances_from_cv(score, X=X)
+
+#     return score, predictions
+
 # from joblib import parallel_backend
 def cross_validate_regressor(
-    regressor, X, y, cv, return_importance: bool = False, return_indices: bool = False
+    regressor, X, y, cv, early_stopping: bool = False, return_importance: bool = False, return_indices: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
-        if y.ndim > 1 and y.shape[1] > 1:
+        # if y.ndim > 1 and y.shape[1] > 1:
   
-            scorers = {
-                    "r2": r2_scorer_multi,
-                    "rmse": rmse_scorer_multi,
-                    "mae": mae_scorer_multi
-                    }
+        #     scorers = {
+        #             "r2": r2_scorer_multi,
+        #             "rmse": rmse_scorer_multi,
+        #             "mae": mae_scorer_multi
+        #             }
         
 
-            score =  multioutput_cross_validate(
-                estimator= regressor,
-                X=X,
-                y= y,
+        #     score =  multioutput_cross_validate(
+        #         estimator= regressor,
+        #         X=X,
+        #         y= y,
+        #         cv=cv,
+        #         scorers=scorers,
+        #         n_jobs=-1,
+        #         verbose=0
+        #         )
+
+        # # SINGLE OUTPUT
+        # else:
+        
+        scorers = {
+            "spearman_r": spearman_scorer,
+            "rmse": rmse_scorer,
+            "mae": mae_scorer,
+            "r2": r2_scorer,
+        }
+
+        if early_stopping:
+            score, predictions = early_stopping_cross_validate(
+                regressor,
+                X,
+                y,
                 cv=cv,
-                scorers=scorers,
+                scoring=scorers,
                 n_jobs=-1,
-                verbose=0
-                )
-
-        # SINGLE OUTPUT
+            )
         else:
-        
-            scorers = {
-                "spearman_r": spearman_scorer,
-                "rmse": rmse_scorer,
-                "mae": mae_scorer,
-                "r2": r2_scorer,
-            }
-
             score: dict[str, float] = cross_validate(
                 regressor,
                 X,
@@ -528,13 +640,13 @@ def cross_validate_regressor(
                 n_jobs=-1,
                 return_indices=return_indices,
                 )
-        predictions: np.ndarray = cross_val_predict(
-            regressor,
-            X,
-            y,
-            cv=cv,
-            n_jobs=-1,
-        )
+            predictions: np.ndarray = cross_val_predict(
+                regressor,
+                X,
+                y,
+                cv=cv,
+                n_jobs=-1,
+            )
         if return_importance:
             get_feature_importances_from_cv(score, X=X)
 
