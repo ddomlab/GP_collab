@@ -1,5 +1,6 @@
 from itertools import product
 from typing import Callable, Union, Dict, List
+from xml.parsers.expat import model
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
@@ -509,19 +510,20 @@ def _es_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring):
     )
 
     # ---- Early stopping dispatch ----
+    inner_model = model.named_steps["regressor"].regressor
+    fit_sig = inner_model.fit.__signature__.parameters
     fit_sig = inspect.signature(model.fit).parameters
     print(fit_sig)
     fit_kwargs = {}
 
     # XGBoost / LightGBM style
     if "eval_set" in fit_sig:
-        fit_kwargs["eval_set"] = [(X_eval, y_eval)]
-        fit_kwargs["verbose"] = False
+        fit_kwargs["regressor__regressor__eval_set"] = [(X_eval, y_eval)]
+        fit_kwargs["regressor__regressor__verbose"] = False
 
-    # NGBoost style
     elif "X_val" in fit_sig and "Y_val" in fit_sig:
-        fit_kwargs["X_val"] = X_eval
-        fit_kwargs["Y_val"] = y_eval
+        fit_kwargs["regressor__regressor__X_val"] = X_eval
+        fit_kwargs["regressor__regressor__Y_val"] = y_eval
 
     model.fit(X_train, y_train, **fit_kwargs)
     y_pred = model.predict(X_test)
