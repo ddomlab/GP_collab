@@ -520,46 +520,90 @@ def _custom_fit_predict_score(
         )
 
         # ---- Early stopping dispatch ----
-        inner_model = model.named_steps["regressor"].regressor
+        preprocessor = model.named_steps["preprocessor"]
+        reg = model.named_steps["regressor"]
+        inner_model = reg.regressor
+        preprocessor.fit(X_train)
+
+        X_train_t = preprocessor.transform(X_train)
+        X_eval_t  = preprocessor.transform(X_eval)
+        X_test_t  = preprocessor.transform(X_test)
+
+
+
         fit_sig = inspect.signature(inner_model.fit).parameters
-        
+        preprocessor = model.named_steps["preprocessor"]
 
         # XGBoost / LightGBM style
         if "eval_set" in fit_sig:
-            fit_kwargs["regressor__eval_set"] = [(X_eval, y_eval)]
-            # fit_kwargs["regressor__regressor__verbose"] = False
+            fit_kwargs["eval_set"] = [(X_eval_t, y_eval)]
+            fit_kwargs["verbose"] = False
 
         elif "X_val" in fit_sig and "Y_val" in fit_sig:
-            fit_kwargs["regressor__X_val"] = X_eval
-            fit_kwargs["regressor__Y_val"] = y_eval
+            fit_kwargs["X_val"] = X_eval_t
+            fit_kwargs["Y_val"] = y_eval
 
-    model.fit(X_train, y_train, **fit_kwargs)
-    y_pred = model.predict(X_test)
-    scores = {
-        f"test_{name}": scorer(y_test, y_pred)
-        for name, scorer in scoring.items()
-    }
- 
-    if return_feature_importances:
-        
-        MDI_importances = []
-        shap_importances = []
-        preprocessor = model.named_steps["preprocessor"]
-        feature_names = preprocessor.get_feature_names_out()
-        model_inner = model.named_steps["regressor"].regressor_
-        raw_fi = model_inner.feature_importances_
-        feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
-        MDI_importances.append(dict(zip(feature_names, feat_imp)))
-        model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
-        explainer = shap.TreeExplainer(model_inner, model_output=model_output)
-        x_t_transformed = preprocessor.transform(X_test)
-        shap_values = explainer(x_t_transformed)
-        fi_shap = np.abs(shap_values.values).mean(axis=0)
-        shap_importances.append(dict(zip(feature_names, fi_shap)))
-        scores["feature_importances_MDI"] = MDI_importances
-        scores["feature_importances_SHAP"] = shap_importances
-    if return_estimator:
-        scores["estimator"] = model
+        reg.fit(X_train_t, y_train, **fit_kwargs)
+        y_pred = reg.predict(X_test_t)
+        scores = {
+            f"test_{name}": scorer(y_test, y_pred)
+            for name, scorer in scoring.items()
+        }
+
+        if return_feature_importances:
+            MDI_importances = []
+            shap_importances = []
+
+            model_inner = reg.regressor_   # ✅ FIX
+            feature_names = preprocessor.get_feature_names_out()
+
+            raw_fi = model_inner.feature_importances_
+            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
+            MDI_importances.append(dict(zip(feature_names, feat_imp)))
+
+            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
+            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
+
+            shap_values = explainer(X_test_t)
+            fi_shap = np.abs(shap_values.values).mean(axis=0)
+            shap_importances.append(dict(zip(feature_names, fi_shap)))
+
+            scores["feature_importances_MDI"] = MDI_importances
+            scores["feature_importances_SHAP"] = shap_importances
+
+        if return_estimator:
+            scores["estimator"] = {
+                "preprocessor": preprocessor,
+                "regressor": reg,
+            }
+    else:
+        model.fit(X_train, y_train, **fit_kwargs)
+        y_pred = model.predict(X_test)
+        scores = {
+            f"test_{name}": scorer(y_test, y_pred)
+            for name, scorer in scoring.items()
+        }
+    
+        if return_feature_importances:
+            
+            MDI_importances = []
+            shap_importances = []
+            preprocessor = model.named_steps["preprocessor"]
+            feature_names = preprocessor.get_feature_names_out()
+            model_inner = model.named_steps["regressor"].regressor_
+            raw_fi = model_inner.feature_importances_
+            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
+            MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
+            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
+            x_t_transformed = preprocessor.transform(X_test)
+            shap_values = explainer(x_t_transformed)
+            fi_shap = np.abs(shap_values.values).mean(axis=0)
+            shap_importances.append(dict(zip(feature_names, fi_shap)))
+            scores["feature_importances_MDI"] = MDI_importances
+            scores["feature_importances_SHAP"] = shap_importances
+        if return_estimator:
+            scores["estimator"] = model
     
     return test_idx, y_pred, scores
 
