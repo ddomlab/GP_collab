@@ -816,17 +816,22 @@ if __name__ == "__main__":
             
                 rows_data = []
                 for count_k in count_kernel:
-                    for fp_k in tanimoto_kernel:
+                    for fp_k in baseline_kernel:
                         for mix_method in mixing_methods:
                             row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
                             for model in models:
-
                                 score_file = None
                                 file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
                                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
                                 if not score_path.exists():
                                     file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
                                     score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                    if not score_path.exists():
+                                        file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
+                                        score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                        if not score_path.exists():
+                                            file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
+                                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
                                 if not score_path.exists():
                                     print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
@@ -846,5 +851,5 @@ if __name__ == "__main__":
 
                                 row.extend([rmse_value, r2_value, run_time_value])
                             rows_data.append(row)
-                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
+                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
                                 

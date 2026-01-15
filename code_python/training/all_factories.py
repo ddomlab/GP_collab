@@ -131,12 +131,13 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
                              
                              )
     if 'XGBR'==model_name:
-        return  XGBRegressor(eval_metric="rmse", 
+        return  XGBRegressor(
+                            eval_metric="rmse", 
                             random_state=None, 
                             n_jobs=-1,
                             n_estimators=100,
                             verbose=False,
-                            early_stopping_rounds=100
+                            early_stopping_rounds=10000
                             #    **kwargs,
                         )
     

@@ -532,7 +532,6 @@ def _custom_fit_predict_score(
 
 
         fit_sig = inspect.signature(inner_model.fit).parameters
-        preprocessor = model.named_steps["preprocessor"]
 
         # XGBoost / LightGBM style
         if "eval_set" in fit_sig:
@@ -542,6 +541,8 @@ def _custom_fit_predict_score(
         elif "X_val" in fit_sig and "Y_val" in fit_sig:
             fit_kwargs["X_val"] = X_eval_t
             fit_kwargs["Y_val"] = y_eval
+        else:
+            raise ValueError("Early stopping requested but the model does not support eval_set or X_val/Y_val.")
 
         reg.fit(X_train_t, y_train, **fit_kwargs)
         y_pred = reg.predict(X_test_t)
