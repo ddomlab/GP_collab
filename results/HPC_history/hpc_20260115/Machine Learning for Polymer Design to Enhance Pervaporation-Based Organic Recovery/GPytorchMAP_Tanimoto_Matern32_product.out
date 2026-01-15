@@ -1,0 +1,122 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c200n02>
+Subject: Job 969877: <structure_numerical_20260115> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260115> was submitted from host <c207n06> by user <sdehgha2> in cluster <Hazel> at Thu Jan 15 09:54:23 2026
+Job was executed on host(s) <6*c200n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Thu Jan 15 09:54:28 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab> was used as the working directory.
+Started at Thu Jan 15 09:54:28 2026
+Terminated at Thu Jan 15 09:54:29 2026
+Results reported at Thu Jan 15 09:54:29 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 12:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260115"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed" 
+
+------------------------------------------------------------
+
+Exited with exit code 2.
+
+Resource usage summary:
+
+    CPU time :                                   0.61 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   2 sec.
+    Turnaround time :                            6 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 139.31±105.08	 r2: -36603.91±50908.03
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Tanimoto-Matern32_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c200n02>
+Subject: Job 969965: <structure_numerical_20260115> in cluster <Hazel> Done
+
+Job <structure_numerical_20260115> was submitted from host <c202n02> by user <sdehgha2> in cluster <Hazel> at Thu Jan 15 09:57:42 2026
+Job was executed on host(s) <6*c200n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Thu Jan 15 09:59:30 2026
+</tmp/.lsbtmp404534> was used as the home directory.
+</share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jan 15 09:59:30 2026
+Terminated at Thu Jan 15 14:28:29 2026
+Results reported at Thu Jan 15 14:28:29 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 6
+#BSUB -W 12:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260115"
+#BSUB -o "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed" 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   76032.18 sec.
+    Max Memory :                                 38 GB
+    Average Memory :                             17.70 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -6.00 GB
+    Max Swap :                                   -
+    Max Processes :                              26
+    Max Threads :                                29
+    Run time :                                   16165 sec.
+    Turnaround time :                            16247 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_20260115/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_Tanimoto_Matern32_product.err> for stderr output of this job.
+
