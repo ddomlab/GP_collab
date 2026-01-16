@@ -1,6 +1,6 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor,RandomForestClassifier
-from xgboost import XGBRegressor, XGBClassifier
+from xgboost import XGBRegressor, XGBClassifier, callback
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.svm import SVR
@@ -126,18 +126,20 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,
-                             early_stopping_rounds=400,
+                             early_stopping_rounds=50,
                             #  **kwargs,
                              
                              )
     if 'XGBR'==model_name:
+        # params = callback.EarlyStopping(rounds=50, metric_name="rmse")
         return  XGBRegressor(
                             eval_metric="rmse", 
                             random_state=None, 
                             n_jobs=-1,
                             n_estimators=100,
                             verbose=False,
-                            early_stopping_rounds=10000
+                            # callbacks=[params]
+                            early_stopping_rounds=3
                             #    **kwargs,
                         )
     

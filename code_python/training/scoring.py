@@ -520,9 +520,15 @@ def _custom_fit_predict_score(
         )
 
         # ---- Early stopping dispatch ----
-        preprocessor = model.named_steps["preprocessor"]
+        preprocessor = clone(model.named_steps["preprocessor"])
         reg = model.named_steps["regressor"]
         inner_model = reg.regressor
+        yt  = clone(reg.transformer) 
+        y_train_2d = np.asarray(y_train).reshape(-1, 1)
+        y_eval_2d  = np.asarray(y_eval).reshape(-1, 1)
+        yt.fit(y_train_2d)
+        # y_train_tgt = yt.transform()
+        y_eval_tgt  = yt.transform(y_eval_2d)
         preprocessor.fit(X_train)
 
         X_train_t = preprocessor.transform(X_train)
@@ -535,16 +541,19 @@ def _custom_fit_predict_score(
 
         # XGBoost / LightGBM style
         if "eval_set" in fit_sig:
-            fit_kwargs["eval_set"] = [(X_eval_t, y_eval)]
+            fit_kwargs["eval_set"] = [(X_eval_t, y_eval_tgt)]
             fit_kwargs["verbose"] = False
 
         elif "X_val" in fit_sig and "Y_val" in fit_sig:
             fit_kwargs["X_val"] = X_eval_t
-            fit_kwargs["Y_val"] = y_eval
+            fit_kwargs["Y_val"] = y_eval_tgt
         else:
             raise ValueError("Early stopping requested but the model does not support eval_set or X_val/Y_val.")
 
         reg.fit(X_train_t, y_train, **fit_kwargs)
+        # print(f"best score, {reg.regressor_.best_score}")
+        # best_iteration = reg.regressor_.best_iteration
+        # print(f"Best iteration: {best_iteration}")
         y_pred = reg.predict(X_test_t)
         scores = {
             f"test_{name}": scorer(y_test, y_pred)
@@ -552,26 +561,25 @@ def _custom_fit_predict_score(
         }
 
         if return_feature_importances:
-            MDI_importances = []
-            shap_importances = []
+            # MDI_importances = []
+            # shap_importances = []
 
             model_inner = reg.regressor_   # ✅ FIX
             feature_names = preprocessor.get_feature_names_out()
 
             raw_fi = model_inner.feature_importances_
             feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
-            MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            scores["feature_importance_MDI"] = dict(zip(feature_names, feat_imp))
 
             model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
             explainer = shap.TreeExplainer(model_inner, model_output=model_output)
 
             shap_values = explainer(X_test_t)
             fi_shap = np.abs(shap_values.values).mean(axis=0)
-            shap_importances.append(dict(zip(feature_names, fi_shap)))
+            # shap_importances.append(dict(zip(feature_names, fi_shap)))
 
-            scores["feature_importances_MDI"] = MDI_importances
-            scores["feature_importances_SHAP"] = shap_importances
-
+            scores["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
         if return_estimator:
             scores["estimator"] = {
                 "preprocessor": preprocessor,
@@ -594,15 +602,15 @@ def _custom_fit_predict_score(
             model_inner = model.named_steps["regressor"].regressor_
             raw_fi = model_inner.feature_importances_
             feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
-            MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            scores["feature_importance_MDI"] = dict(zip(feature_names, feat_imp)) 
             model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
             explainer = shap.TreeExplainer(model_inner, model_output=model_output)
             x_t_transformed = preprocessor.transform(X_test)
             shap_values = explainer(x_t_transformed)
             fi_shap = np.abs(shap_values.values).mean(axis=0)
-            shap_importances.append(dict(zip(feature_names, fi_shap)))
-            scores["feature_importances_MDI"] = MDI_importances
-            scores["feature_importances_SHAP"] = shap_importances
+            # shap_importances.append(dict(zip(feature_names, fi_shap)))
+            scores["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
         if return_estimator:
             scores["estimator"] = model
     
