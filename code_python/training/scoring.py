@@ -512,6 +512,7 @@ def _custom_fit_predict_score(
     # Internal validation split (ONLY from training fold)
     fit_kwargs = {}
     if  early_stopping:
+        print("Using early stopping during training...")
         X_train, X_eval, y_train, y_eval = train_test_split(
             X_train,
             y_train,
@@ -575,7 +576,7 @@ def _custom_fit_predict_score(
             model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
             explainer = shap.TreeExplainer(model_inner, model_output=model_output)
 
-            shap_values = explainer(X_test_t)
+            shap_values = explainer(X_train_t)
             fi_shap = np.abs(shap_values.values).mean(axis=0)
             # shap_importances.append(dict(zip(feature_names, fi_shap)))
 
@@ -606,7 +607,7 @@ def _custom_fit_predict_score(
             scores["feature_importance_MDI"] = dict(zip(feature_names, feat_imp)) 
             model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
             explainer = shap.TreeExplainer(model_inner, model_output=model_output)
-            x_t_transformed = preprocessor.transform(X_test)
+            x_t_transformed = preprocessor.transform(X_train)
             shap_values = explainer(x_t_transformed)
             fi_shap = np.abs(shap_values.values).mean(axis=0)
             # shap_importances.append(dict(zip(feature_names, fi_shap)))

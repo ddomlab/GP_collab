@@ -126,7 +126,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,
-                             early_stopping_rounds=50,
+                            #  early_stopping_rounds=50,
                             #  **kwargs,
                              
                              )
@@ -139,7 +139,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
                             n_estimators=100,
                             verbose=False,
                             # callbacks=[params]
-                            early_stopping_rounds=3
+                            # early_stopping_rounds=3
                             #    **kwargs,
                         )
     
@@ -256,147 +256,67 @@ def _get_gp_kernel(gp_info: dict, idx: Optional[dict[str, list[int]]] = None):
 
 
 def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
-    if algortihm == "MLR":
-        return {
-            "regressor__regressor__fit_intercept": [True, False]
+    SEARCH_SPACES: Dict[str, Dict] = {
+        "MLR": {
+            "regressor__regressor__fit_intercept": [True, False],
+        },
+
+        "Lasso": {
+            "regressor__alpha": Real(1e-3, 1e3, prior="log-uniform"),
+            "regressor__fit_intercept": [True, False],
+            "regressor__selection": Categorical(["cyclic", "random"]),
+        },
+
+        "KNN": {
+            "regressor__n_neighbors": Integer(1, 50),
+            "regressor__weights": Categorical(["uniform", "distance"]),
+            "regressor__algorithm": Categorical(["ball_tree", "kd_tree", "brute"]),
+            "regressor__leaf_size": Integer(1, 100),
+        },
+
+        "SVR": {
+            "regressor__kernel": Categorical(["linear", "rbf"]),
+        },
+
+        "MLP": {
+            "regressor__regressor__learning_rate_init": Real(1e-5, 1e-1, prior="log-uniform"),
+            "regressor__regressor__alpha": Real(1e-8, 1e-6, prior="log-uniform"),
+            "regressor__regressor__batch_size": Categorical([32, 64, 128, 256]),
+            "regressor__regressor__max_iter": [200],
+        },
+
+        "RF": {
+            "regressor__regressor__n_estimators": Integer(10, 2000, prior="log-uniform"),
+            "regressor__regressor__max_depth": [None],
+            "regressor__regressor__min_samples_split": Real(0.001, 0.99),
+            "regressor__regressor__min_samples_leaf": Real(0.001, 0.99),
+            "regressor__regressor__max_features": Categorical(["sqrt", "log2", None]),
+        },
+
+        "XGBR": {
+            "regressor__regressor__n_estimators": Integer(50, 2000, prior="log-uniform"),
+            "regressor__regressor__max_depth": Integer(10, 10000, prior="log-uniform"),
+            "regressor__regressor__n_jobs": [-2],
+            "regressor__regressor__learning_rate": Real(1e-4, 1e-1, prior="log-uniform"),
+        },
+
+        "DT": {
+            "regressor__regressor__min_samples_split": Real(0.05, 0.99),
+            "regressor__regressor__min_samples_leaf": Real(0.05, 0.99),
+            "regressor__regressor__max_features": Categorical([None, "sqrt", "log2"]),
+            "regressor__regressor__max_depth": [None],
+            "regressor__regressor__ccp_alpha": Real(0.05, 0.99),
+        },
+
+        "NGB": {
+            "regressor__regressor__n_estimators": Integer(50, 2000, prior="log-uniform"),
+            "regressor__regressor__learning_rate": Real(1e-4, 1e-1, prior="log-uniform"),
+            "regressor__regressor__natural_gradient": [True],
+            "regressor__regressor__verbose": [False],
+            "regressor__regressor__tol": Real(1e-4, 1e-2, prior="log-uniform"),
+        },
     }
-    
-    if algortihm == "Lasso":
-        return {
-        "regressor__alpha": Real(1e-3, 1e3, prior="log-uniform"),
-        "regressor__fit_intercept": [True, False],
-        "regressor__selection": Categorical(["cyclic", "random"]),
-    }
-
-    if algortihm == "KNN":
-        return {
-        "regressor__n_neighbors": Integer(1, 50),
-        "regressor__weights": Categorical(["uniform", "distance"]),
-        "regressor__algorithm": Categorical(["ball_tree", "kd_tree", "brute"]),
-        "regressor__leaf_size": Integer(1, 100),
-    }
-
-    if algortihm == "SVR":
-        return {
-        "regressor__kernel": Categorical(["linear", "rbf"]),
-    }
-
-    if algortihm == "MLP":
-        return {
-                    # "regressor__regressor__hidden_layer_sizes": Categorical([
-                    # (64), (128), (256), (512)
-                    # ]),
-                    "regressor__regressor__learning_rate_init": Real(1e-5, 1e-1, prior="log-uniform"),
-                    "regressor__regressor__alpha": Real(1e-8, 1e-6, prior="log-uniform"),  # This is weight decay
-                    "regressor__regressor__batch_size": Categorical([32, 64, 128, 256]),
-                    "regressor__regressor__max_iter": [200],
-                }
-
-    if algortihm == "RF":
-        return {
-        "regressor__regressor__n_estimators": Integer(10, 2000, prior="log-uniform"),
-        "regressor__regressor__max_depth": [None],
-        "regressor__regressor__min_samples_split": Real(0.001, 0.99),
-        "regressor__regressor__min_samples_leaf": Real(0.001, 0.99),
-        "regressor__regressor__max_features": Categorical(["sqrt", "log2", None]),
-    }
-
-    if algortihm == "XGBR":
-        return {
-        "regressor__regressor__n_estimators": Integer(50, 2000, prior="log-uniform"),
-        "regressor__regressor__max_depth": Integer(10, 10000, prior="log-uniform"),
-        # "regressor__grow_policy": Categorical(["depthwise", "lossguide"]),
-        "regressor__regressor__n_jobs": [-2],
-        "regressor__regressor__learning_rate": Real(1e-4, 1e-1, prior="log-uniform"),
-    }
-
-
-    if algortihm == "XGBC":
-        return {
-        "regressor__n_estimators": Integer(50, 2000, prior="log-uniform"),
-        "regressor__max_depth": Integer(3, 10000, prior="log-uniform"),
-        "regressor__learning_rate": Real(1e-3, 1e-1, prior="log-uniform"),
-        # "classifier__classifier__subsample": Real(0.5, 1.0, prior="uniform"),
-        # "classifier__classifier__colsample_bytree": Real(0.5, 1.0, prior="uniform"),
-        # "classifier__classifier__gamma": Real(1e-8, 1.0, prior="log-uniform"),
-        # "classifier__classifier__min_child_weight": Integer(1, 10),
-        # "classifier__classifier__reg_alpha": Real(1e-5, 1.0, prior="log-uniform"),
-        # "classifier__classifier__reg_lambda": Real(1e-5, 1.0, prior="log-uniform"),
-        "regressor__n_jobs": [-2],
-        "regressor__objective":['binary:logistic']
-    }
-
-
-    if algortihm == "RFC":
-        return {
-        "regressor__n_estimators": Integer(10, 2000, prior="log-uniform"),
-        "regressor__max_depth": Integer(2, 10000, prior="log-uniform"),
-    }
-
-
-    if algortihm == "DT":
-        return {
-        "regressor__regressor__min_samples_split": Real(0.05, 0.99),
-        "regressor__regressor__min_samples_leaf": Real(0.05, 0.99),
-        "regressor__regressor__max_features": Categorical([None,"sqrt", "log2"]),
-        "regressor__regressor__max_depth": [None],
-        "regressor__regressor__ccp_alpha": Real(0.05, 0.99),
-    }
-
-    if algortihm == "NGB":
-        return {
-        "regressor__regressor__n_estimators": Integer(50, 2000, prior="log-uniform"),
-        "regressor__regressor__learning_rate": Real(1e-4, 1e-1, prior="log-uniform"),
-        # "regressor__regressor__minibatch_frac": [1],
-        # "regressor__regressor__minibatch_size":   Integer(1, 100),
-        #  "regressor__regressor__Base":             Categorical(["DecisionTreeRegressor", "Ridge", "Lasso",
-        #                                            "KernelRidge", "SVR"]),
-        "regressor__regressor__natural_gradient": [True],
-        "regressor__regressor__verbose": [False],
-        # "regressor__regressor__min_samples_split": Real(0.05, 0.99),
-        # "regressor__regressor__min_samples_leaf": Real(0.05, 0.99),
-        "regressor__regressor__tol": Real(1e-4, 1e-2, prior="log-uniform"),
-    }
-
-
-    if algortihm == "GPR":
-        if kernel == 'rbf':
-            return {
-        "regressor__regressor__lr": [1e-2], 
-        "regressor__regressor__n_epoch": [100],
-        "regressor__regressor__lengthscale": Real(0.05, 3.0), 
-            }
-        if kernel == 'matern':
-            return {
-        "regressor__regressor__lr": [1e-2], 
-        "regressor__regressor__n_epoch": [100],
-        "regressor__regressor__lengthscale": Real(0.05, 3.0), 
-        "regressor__regressor__nu": Real(0.5, 2.5),
-
-            }
-        if kernel == 'tanimoto':
-            return {
-        "regressor__regressor__lr": [1e-2], 
-        "regressor__regressor__n_epoch": [100],
-        }
-
-
-    if algortihm == "sklearn-GPR":
-        if kernel == 'rbf':
-            return {
-            "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
-            }
-
-        if kernel == 'matern':
-            return {
-            "regressor__regressor__n_restarts_optimizer": [25],
-            "regressor__regressor__kernel__nu": Real(0.5, 2.5),
-            "regressor__regressor__kernel__length_scale": Real(0.05, 3.0),
-            }
-    
-    else:
-        return None
-
+    return SEARCH_SPACES.get(algortihm, {})
 
 
 results = {

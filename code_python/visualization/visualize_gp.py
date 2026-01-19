@@ -766,9 +766,9 @@ if __name__ == "__main__":
             #                         # comparison_value=['scaler', 'Trimer_scaler'],
             #                         )
             # feat_impt_expert = paper_info["expert_impt"]
-            for model in ["XGBR", "NGB"]:    
+            for model in ["RF","XGBR", "NGB"]:    
                 paper_loc: Path = RESULTS / paper_name / target
-                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_custom_cv_early_stopping_scores"
+                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
                 score_path = ensure_long_path(paper_loc / f"{file_name}.json")
                 if not score_path.exists():
                     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
@@ -813,7 +813,7 @@ if __name__ == "__main__":
 
                 # print(pg.friedman(df_top15))
                 # print(MDI_imp)
-    with open(RESULTS / "model_stats" / "tree_model_es_stability.json", "w") as f:
+    with open(RESULTS / "model_stats" / "tree_model_stability.json", "w") as f:
         json.dump(model_stats, f, indent=2)
 
     # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
