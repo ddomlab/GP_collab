@@ -110,11 +110,11 @@ if __name__ == "__main__":
                     target_transformer='Standard',
                     numerical_feats=feats,
                     hyperparameter_optimization=False,
-                    kernel_type={
-                        "fp":args.K_fp,
-                        "count":args.K_count
-                                },
-                    kernel_mixing_method=args.Kernel_mixing_method,
+                    # kernel_type={
+                    #     "fp":args.K_fp,
+                    #     "count":args.K_count
+                    #             },
+                    # kernel_mixing_method=args.Kernel_mixing_method,
                     # imputer="mean",
                     # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                     )
