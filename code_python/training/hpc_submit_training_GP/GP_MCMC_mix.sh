@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="RF-XGB-NGB"
-paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset="cleaned_dataset_pervaporation_membranes_wang"
+paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+dataset="cleaned_dataset_Ultrafiltration Membrane"
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -11,7 +11,7 @@ mkdir -p "$output_dir"
 bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 2:00
+#BSUB -W 10:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
