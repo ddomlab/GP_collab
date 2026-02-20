@@ -37,7 +37,7 @@ from torch.distributions import Gamma
 from gpytorch.priors import Prior
 from torch.nn import Module as TModule
 from gpytorch.priors.utils import _bufferize_attributes
-
+from Gpytorch_string_sskkernel import SubsequenceStringKernel
 
 class InverseGammaPrior(Prior, Gamma):
     r"""
@@ -204,6 +204,7 @@ kernel_factory = {
     "RBF": RBFKernel,
     "Matern32": lambda **kw: MaternKernel(nu=1.5, **kw),
     "Matern52": lambda **kw: MaternKernel(nu=2.5, **kw),
+    "SSK": SubsequenceStringKernel,
 }
 
 
