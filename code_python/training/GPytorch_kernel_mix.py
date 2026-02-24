@@ -19,25 +19,19 @@ import pyro.distributions as dist
 from tqdm import trange
 from tqdm import tqdm
 import os, sys
+import gc
 # from torch_geometric.data import Batch
 # from torch_geometric.loader import DataLoader
-import gc
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
 #Torch modules
 import torch
-from torch.distributions import InverseGamma
+from torch.distributions import InverseGamma, Gamma
 from gpytorch.priors import Prior
 from gpytorch.module import Module as TModule
 from gpytorch.priors.utils import _bufferize_attributes
 
-
-import torch
-from torch.distributions import Gamma
-from gpytorch.priors import Prior
-from torch.nn import Module as TModule
-from gpytorch.priors.utils import _bufferize_attributes
-from Gpytorch_string_sskkernel import SubsequenceStringKernel
+from Gpytorch_sskkernel import SubsequenceStringKernel
 
 class InverseGammaPrior(Prior, Gamma):
     r"""
@@ -298,7 +292,7 @@ class MixingKernel:
 
 
 class GPMix(gpytorch.models.ExactGP):
-    def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict, likelihood):
+    def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict, likelihood, prior=True):
         super().__init__(X, y, likelihood)
         self.feat_idx = feat_idx
         self.kernel_method = kernel_method
@@ -324,51 +318,53 @@ class GPMix(gpytorch.models.ExactGP):
         fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
 
         root_kernel = self.covar_module.base_kernel
-        if mixing_method in ("sum", "product"):
-            for i, (name, sk) in enumerate(root_kernel.named_sub_kernels()):
-                if i < len(fp_keys):
-                    if kernel_method["fp"].lower() == "tanimoto":
-                        continue
+        if prior:
+            if mixing_method in ("sum", "product"):
+                for i, (name, sk) in enumerate(root_kernel.named_sub_kernels()):
+                    if i < len(fp_keys):
+                        if kernel_method["fp"].lower() == "tanimoto":
+                            continue
+                        else:
+                            # "tanimoto" in self.kernel_method["fp"].lower():
+                            # ard_dim = len(feat_idx[fp_key])
+                            sk.register_prior(
+                                f"fp_lengthscale_prior_{i}",
+                                InverseGammaPrior(5.0, 5.0),
+                                "lengthscale",
+                                )
+                        
+
                     else:
-                        # "tanimoto" in self.kernel_method["fp"].lower():
-                        # ard_dim = len(feat_idx[fp_key])
                         sk.register_prior(
-                            f"fp_lengthscale_prior_{i}",
+                            f"count_lengthscale_prior_{i}",
                             InverseGammaPrior(5.0, 5.0),
                             "lengthscale",
-                            )
-                    
+                        )
 
-                else:
+            elif mixing_method == "averageProduct":
+                fp_product_kernel = root_kernel.kernels[0]
+                count_sum_kernel = root_kernel.kernels[1].base_kernel
+                for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
                     sk.register_prior(
-                        f"count_lengthscale_prior_{i}",
-                        InverseGammaPrior(5.0, 5.0),
-                        "lengthscale",
-                    )
-
-        elif mixing_method == "averageProduct":
-            fp_product_kernel = root_kernel.kernels[0]
-            count_sum_kernel = root_kernel.kernels[1].base_kernel
-            for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
-                sk.register_prior(
-                            f"count_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
-                            "lengthscale",
-                            )
-            fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
-            for i, (name, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
-                if kernel_method["fp"].lower() == "tanimoto":
-                    continue
-                # if "tanimoto" in self.kernel_method["fp"].lower():
-                else:
-                    # fp_key = fp_keys[i]
-                    sk.register_prior(
-                                f"fp_lengthscale_prior_{i}",
+                                f"count_lengthscale_prior_{i}",
                                 gpytorch.priors.GammaPrior(5.0, 5.0),
                                 "lengthscale",
                                 )
-        else:
-            raise ValueError(f"Unknown mixing_method: {mixing_method}")
+                fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
+                for i, (name, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
+                    if kernel_method["fp"].lower() == "tanimoto":
+                        continue
+                    # if "tanimoto" in self.kernel_method["fp"].lower():
+                    else:
+                        # fp_key = fp_keys[i]
+                        sk.register_prior(
+                                    f"fp_lengthscale_prior_{i}",
+                                    gpytorch.priors.GammaPrior(5.0, 5.0),
+                                    "lengthscale",
+                                    )
+            else:
+                raise ValueError(f"Unknown mixing_method: {mixing_method}")
+            
 
     
     def forward(self, x):
@@ -458,7 +454,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         # Pyro GP model with priors
         self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood)
+        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood, prior=False)
         
         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)

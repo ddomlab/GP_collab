@@ -78,6 +78,9 @@ class SubsequenceStringKernel(Kernel):
         _gap_decay=0.5,
         _match_decay=0.2,
         _order_coefs=[1 / (2**i) for i in range(5)],
+        gap_decay_prior=None,
+        match_decay_prior=None,
+        order_coefs_prior=None,
         normalize=True,
         **kwargs,
     ):
@@ -93,6 +96,13 @@ class SubsequenceStringKernel(Kernel):
         )
         raw_gap_decay_constraint = Interval(0, 1)
         self.register_constraint("raw_gap_decay", raw_gap_decay_constraint)
+        if gap_decay_prior is not None:
+            self.register_prior(
+                "gap_decay_prior",
+                gap_decay_prior,
+                self._gap_decay_param,
+                self._gap_decay_closure,
+            )
 
         self.register_parameter(
             name="raw_match_decay",
@@ -102,7 +112,14 @@ class SubsequenceStringKernel(Kernel):
         )
         raw_match_decay_constraint = Interval(0, 1)
         self.register_constraint("raw_match_decay", raw_match_decay_constraint)
-
+        if match_decay_prior is not None:
+            self.register_prior(
+                "match_decay_prior",
+                match_decay_prior,
+                self._match_decay_param,
+                self._match_decay_closure,
+            )
+            
         self.register_parameter(
             name="raw_order_coefs",
             parameter=torch.nn.Parameter(
@@ -112,7 +129,14 @@ class SubsequenceStringKernel(Kernel):
         )
         raw_order_coefs_constraint = Interval(0, 1)
         self.register_constraint("raw_order_coefs", raw_order_coefs_constraint)
-
+        if order_coefs_prior is not None:
+            self.register_prior(
+                "order_coefs_prior",
+                order_coefs_prior,
+                self._order_coefs_param,
+                self._order_coefs_closure,
+            )
+        
         self.alphabet = alphabet
         self.normalize = normalize
         self.embds = embds
@@ -122,49 +146,76 @@ class SubsequenceStringKernel(Kernel):
 
         self.batch_size = batch_size
 
+    # ============================================================
+    # GAP DECAY (transformed parameter)
+    # ============================================================
     @property
     def gap_decay(self) -> torch.Tensor:
         return self.raw_gap_decay_constraint.transform(self.raw_gap_decay)
 
     @gap_decay.setter
     def gap_decay(self, value: torch.Tensor) -> None:
-        if not torch.is_tensor(value):
-            value = torch.tensor(value)
+        self._set_gap_decay(value)
 
+    def _gap_decay_param(self, m):
+        return m.gap_decay
+
+    def _gap_decay_closure(self, m, value):
+        m._set_gap_decay(value)
+
+    def _set_gap_decay(self, value):
+        if not torch.is_tensor(value):
+            value = torch.as_tensor(value).to(self.raw_gap_decay)
         self.initialize(
-            raw_gap_decay=self.raw_gap_decay_constraint.inverse_transform(
-                value
-            )
+            raw_gap_decay=self.raw_gap_decay_constraint.inverse_transform(value)
         )
 
+    # ============================================================
+    # MATCH DECAY
+    # ============================================================
     @property
     def match_decay(self) -> torch.Tensor:
         return self.raw_match_decay_constraint.transform(self.raw_match_decay)
 
     @match_decay.setter
     def match_decay(self, value: torch.Tensor) -> None:
-        if not torch.is_tensor(value):
-            value = torch.tensor(value)
+        self._set_match_decay(value)
 
+    def _match_decay_param(self, m):
+        return m.match_decay
+
+    def _match_decay_closure(self, m, value):
+        m._set_match_decay(value)
+
+    def _set_match_decay(self, value):
+        if not torch.is_tensor(value):
+            value = torch.as_tensor(value).to(self.raw_match_decay)
         self.initialize(
-            raw_match_decay=self.raw_match_decay_constraint.inverse_transform(
-                value
-            )
+            raw_match_decay=self.raw_match_decay_constraint.inverse_transform(value)
         )
 
+    # ============================================================
+    # ORDER COEFFICIENTS
+    # ============================================================
     @property
     def order_coefs(self) -> torch.Tensor:
         return self.raw_order_coefs_constraint.transform(self.raw_order_coefs)
 
     @order_coefs.setter
     def order_coefs(self, value: torch.Tensor) -> None:
-        if not torch.is_tensor(value):
-            value = torch.tensor(value)
+        self._set_order_coefs(value)
 
+    def _order_coefs_param(self, m):
+        return m.order_coefs
+
+    def _order_coefs_closure(self, m, value):
+        m._set_order_coefs(value)
+
+    def _set_order_coefs(self, value):
+        if not torch.is_tensor(value):
+            value = torch.as_tensor(value).to(self.raw_order_coefs)
         self.initialize(
-            raw_order_coefs=self.raw_order_coefs_constraint.inverse_transform(
-                value
-            )
+            raw_order_coefs=self.raw_order_coefs_constraint.inverse_transform(value)
         )
 
     def forward(
