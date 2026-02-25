@@ -163,6 +163,8 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
                                 "col_names": fp_features,
                                 }
             return fp_features, unrolling_featurs
+        if fp == "SMILES":
+            return ["Monomer SMILES"], None
         else:
               return None, None
 

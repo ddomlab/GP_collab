@@ -162,7 +162,7 @@ if __name__ == "__main__":
         # GPytorchMAP
 
         # for model in ["RF", "XGBR", "NGB"]:
-            print(f"Training {targ} with GPytorchMAP")
+            print(w_data["Monomer SMILES"])
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP",
