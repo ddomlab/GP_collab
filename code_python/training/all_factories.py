@@ -122,7 +122,7 @@ regressor_factory: dict[str, type]={
     # "GPMixR": GPMixRegressor(),
 }
 
-def optimized_models(model_name:str,random_state:int=42, **kwargs):
+def optimized_models(model_name:str, ssk_parameters:dict, random_state:int=42, **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,
@@ -161,7 +161,7 @@ def optimized_models(model_name:str,random_state:int=42, **kwargs):
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
     if "GPytorchMAP"==model_name:
-        return GPytorchMAPRegressor(**kwargs)
+        return GPytorchMAPRegressor(ssk_parameters=ssk_parameters,**kwargs)
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     

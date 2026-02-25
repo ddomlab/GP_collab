@@ -2,12 +2,18 @@ import json
 from pathlib import Path
 import sys
 from typing import Optional, Union, Dict, Tuple
+
+import torch
 from all_factories import radius_to_bits,cutoffs
 import pandas as pd
 from unrolling_utils import unrolling_factory
 import numpy as np
 import os
+from Gpytorch_sskkernel import pad, build_one_hot, encode_string
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tkwargs = {"dtype": torch.float, "device": device}
 
 def cutoff_filteration(data: pd.DataFrame, lower_cutoff: Optional[float], upper_cutoff: Optional[float], target_feature: str) -> pd.DataFrame:
     if lower_cutoff is not None:
@@ -164,7 +170,12 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
                                 }
             return fp_features, unrolling_featurs
         if fp == "SMILES":
-            return ["Monomer SMILES"], None
+            fp_features = [f"{unit} {fp}" for unit in poly_unit_name]
+            unrolling_featurs = {
+                                "representation": fp,
+                                "unit_name": poly_unit_name,
+            }
+            return fp_features, unrolling_featurs
         else:
               return None, None
 
@@ -191,6 +202,26 @@ def sanitize_dataset(
         return df
 
 
+def _ssk_emb(smiles):
+
+    maxlen = np.max([len(x) for x in smiles])
+    # get alphabet of characters used in candidate set (to init SSK)
+    alphabet = list({l for word in smiles for l in word})
+    print(f'alphabet \n {alphabet} \n length of alphabet {len(alphabet)}')
+    print(f'maxlen {maxlen}')
+    embds, index = build_one_hot(alphabet)
+    embds = embds.to(**tkwargs)
+    all_encoded_smiles = torch.cat([pad(encode_string(x, index), maxlen).unsqueeze(0) for x in smiles], dim=0)
+
+    parameters = {
+        "maxlen": maxlen,
+        "alphabet": alphabet,
+        "embds": embds,
+        "index": index
+    }
+    return all_encoded_smiles, parameters
+
+
 def filter_dataset(
     raw_dataset: pd.DataFrame,
     structure_feats: Optional[list[str]], # can be None
@@ -215,6 +246,7 @@ def filter_dataset(
         Input features and targets.
     """
     # Add multiple lists together as long as they are not NoneType
+    ssk_parameters = {}
     all_feats: list[str] = [
         feat
         for feat_list in [structure_feats, scalar_feats, target_feats]
@@ -233,34 +265,26 @@ def filter_dataset(
     if cutoff:
         dataset = apply_cutoff(dataset,cutoff)
 
-    if unroll:
-        if isinstance(unroll, dict):
-            structure_features: pd.DataFrame = unrolling_factory[
-                unroll["representation"]](dataset[structure_feats], **unroll)
-        elif isinstance(unroll, list):
-            multiple_unrolled_structure_feats: list[pd.DataFrame] = []
-            for unroll_dict in unroll:
-                single_structure_feat: pd.DataFrame = filter_dataset(
-                    dataset,
-                    # structure_feats=unroll_dict["columns"],
-                    structure_feats=unroll_dict["col_names"],
-                    scalar_feats=[],
-                    target_feats=[],
-                    # dropna=dropna,
-                    dropna=False,
-                    unroll=unroll_dict,
-                )[0]
-                multiple_unrolled_structure_feats.append(single_structure_feat)
-            structure_features: pd.DataFrame = pd.concat(
-                multiple_unrolled_structure_feats, axis=1
-            )
-        else:
-            raise ValueError(f"Unroll must be a dict or list, not {type(unroll)}")
-    
+    if unroll["representation"] != "SMILES":
+        structure_features: pd.DataFrame = unrolling_factory[
+            unroll["representation"]](dataset[structure_feats], **unroll)
 
+
+    elif unroll["representation"] == "SMILES":
+            # generalize for donor acceptor
+            
+            list_of_st_features = []
+            for unit in unroll["unit_name"]:
+                feat_name = f"{unit} SMILES"
+                all_encoded_smiles, parameters = _ssk_emb(dataset[feat_name].values)
+                ssk_parameters[f"fp_{unit}"] = parameters
+                df_features = pd.DataFrame(
+                all_encoded_smiles,
+                columns=[f"{unit}_ssk_emb_{i}" for i in range(all_encoded_smiles.shape[1])]
+                )
     
-    elif structure_feats:
-        structure_features: pd.DataFrame = dataset[structure_feats]
+                list_of_st_features.append(df_features)
+            structure_features: pd.DataFrame = pd.concat(list_of_st_features, axis=1)
     else:
         structure_features: pd.DataFrame = dataset[[]]
 
@@ -287,6 +311,6 @@ def filter_dataset(
                         "Side Chain Cluster": side_chain_labels}
         else:
             c_labels = dataset[cluster_type].squeeze().to_numpy()
-        return training_features, targets, new_struct_feats, c_labels
+        return training_features, targets, new_struct_feats, ssk_parameters, c_labels
 
-    return training_features, targets, new_struct_feats
+    return training_features, targets, new_struct_feats, ssk_parameters 

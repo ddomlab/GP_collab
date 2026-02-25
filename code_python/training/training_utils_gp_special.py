@@ -157,8 +157,8 @@ def _prepare_data(
     """
 
 
-
-    X, y, unrolled_feats = filter_dataset(
+    
+    X, y, unrolled_feats, extra_params = filter_dataset(
                                             raw_dataset=dataset,
                                             structure_feats=structural_features,
                                             scalar_feats=numerical_feats,
@@ -193,6 +193,7 @@ def _prepare_data(
                             second_transformer=second_transformer,
                             regressor_type=regressor_type,
                             hyperparameter_optimization=hyperparameter_optimization,
+                            ssk_parameters=extra_params,
                             **kwargs,
                             )
     # print(X_y_shape)
@@ -209,6 +210,7 @@ def run(
     second_transformer:str, 
     regressor_type: str,
     hyperparameter_optimization: bool = True,
+    ssk_parameters: Optional[dict]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -280,6 +282,7 @@ def run(
                 model = optimized_models(
                                         regressor_type,
                                         feat_group=features_group,
+                                        ssk_parameters=ssk_parameters,
                                         **kwargs
                                         )
 

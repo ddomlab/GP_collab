@@ -26,7 +26,7 @@ import gc
 
 #Torch modules
 import torch
-from torch.distributions import InverseGamma, Gamma
+from torch.distributions import Gamma
 from gpytorch.priors import Prior
 from gpytorch.module import Module as TModule
 from gpytorch.priors.utils import _bufferize_attributes
@@ -209,11 +209,13 @@ class MixingKernel:
         mixing_method: str,
         kernel_method: dict,
         variance: float | None = None,
+        ssk_parameters: dict | None = None
     ):
         self.feat_idx = feat_idx
         self.mixing_method = mixing_method
         self.kernel_method = kernel_method
         self.variance = variance if variance else 1.0
+        self.ssk_parameters = ssk_parameters
 
     def _make_fp_kernels(self):
         fp_kernels = []
@@ -223,16 +225,27 @@ class MixingKernel:
             idx = self.feat_idx[key]
             if idx:
                 # print("ard dim for ", key, ":", len(idx))
+                
                 if "tanimoto" in self.kernel_method["fp"].lower():
                     k = kernel_factory[self.kernel_method["fp"]](
                         active_dims=idx,
                         # ard_num_dims=len(idx)
                     )
+
                 else:
-                    k = kernel_factory[self.kernel_method["fp"]](
-                        active_dims=idx,
-                        ard_num_dims=len(idx)
-                    )
+
+                    if self.kernel_method["fp"].lower() == "ssk":
+                        ssk_params = self.ssk_parameters.get(key, {})
+                        k = kernel_factory[self.kernel_method["fp"]](
+                            active_dims=idx,
+                            ard_num_dims=len(idx),
+                            **ssk_params
+                        )
+                    else:
+                        k = kernel_factory[self.kernel_method["fp"]](
+                            active_dims=idx,
+                            ard_num_dims=len(idx)
+                        )
                 fp_kernels.append(k)
         # print(len(fp_kernels), "fp kernels created")
         return fp_kernels
@@ -292,16 +305,19 @@ class MixingKernel:
 
 
 class GPMix(gpytorch.models.ExactGP):
-    def __init__(self, X, y, feat_idx, mixing_method:str, kernel_method:dict, likelihood, prior=True):
+    def __init__(self, X, y, feat_idx,
+                  mixing_method:str, kernel_method:dict, likelihood, prior, ssk_parameters):
         super().__init__(X, y, likelihood)
-        self.feat_idx = feat_idx
-        self.kernel_method = kernel_method
+        # self.feat_idx = feat_idx
+        # self.kernel_method = kernel_method
+        # self.ssk_parameters = ssk_parameters
         self.mean_module = gpytorch.means.ZeroMean()
 
         self.kernel_builder = MixingKernel(
             feat_idx=feat_idx,
             mixing_method=mixing_method,
             kernel_method=kernel_method,
+            ssk_parameters=ssk_parameters
         )
         base_kernel  = self.kernel_builder.build()
         self.covar_module = gpytorch.kernels.ScaleKernel(base_kernel)
@@ -410,7 +426,9 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
+        ssk_parameters:dict=None,
         progbar:bool=False,
+        prior=False,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -419,7 +437,9 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self.random_state = random_state
         self.kernel_mixing_method = kernel_mixing_method
         self.kernel_type = kernel_type
+        self.ssk_parameters = ssk_parameters
         self.progbar = progbar
+        self.prior = prior
         
         
     def fit(self, X_train, y_train):
@@ -454,7 +474,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         # Pyro GP model with priors
         self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood, prior=False)
+        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood, prior=self.prior, ssk_parameters=self.ssk_parameters)
         
         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
@@ -556,16 +576,6 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         
         return summary
     
-
-
-
-
-
-
-
-
-
-
 
 
 class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):

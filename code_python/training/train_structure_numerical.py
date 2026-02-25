@@ -162,12 +162,12 @@ if __name__ == "__main__":
         # GPytorchMAP
 
         # for model in ["RF", "XGBR", "NGB"]:
-            print(w_data["Monomer SMILES"])
+            # print(w_data["Monomer SMILES"])
             main_structural_numerical(
                 dataset=w_data,
-                representation="ECFP",
-                radius=3,
-                vector="count",
+                representation="SMILES",
+                # radius=3,
+                # vector="count",
                 regressor_type="GPytorchMAP",
                 # GPytorchMixMCMC
                 # GPMixMCMC
