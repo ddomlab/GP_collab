@@ -25,7 +25,6 @@ RESULTS = HERE.parent.parent / "results"
 TEST = False
 
 
-
 def main_structural_numerical(
     dataset: pd.DataFrame,
     regressor_type: str,

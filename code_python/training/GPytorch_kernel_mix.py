@@ -427,7 +427,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         kernel_mixing_method:str="product",
         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
         ssk_parameters:dict=None,
-        progbar:bool=False,
+        progbar:bool=True,
         prior=False,
     ):
         self.feat_group = feat_group

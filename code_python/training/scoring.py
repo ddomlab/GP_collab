@@ -479,7 +479,7 @@ def gp_cross_validate_regressor(
             y,
             cv=cv,
             scoring=scorers,
-            n_jobs=-1,
+            n_jobs=1,
             return_ls=return_ls
             )
         return score, predictions
