@@ -1,5 +1,7 @@
 import pandas as pd
 from pathlib import Path
+
+import torch
 from filter_data import _get_dataset_features, get_structural_info
 from training_utils_gp_special import train_regressor
 from typing import Callable, Optional, Union, Dict, Tuple
@@ -89,7 +91,10 @@ if __name__ == "__main__":
     # # "cleaned_dataset_pervaporation_membranes_wang"
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-    
+    if torch.cuda.is_available():
+        print("GPU is available. Training on GPU.")
+    else:
+        print("GPU is not available. Training on CPU.")
 
     for targ in all_targets:
                 main_structural_numerical(
@@ -97,7 +102,7 @@ if __name__ == "__main__":
                     representation="SMILES",
                     # radius=3,
                     # vector="count",
-                    regressor_type=args.regressor_type,
+                    regressor_type="GPytorchMAP",
                     # GPytorchMixMCMC
                     # GPMixMCMC
                     polymer_unit=polymer_unit,
