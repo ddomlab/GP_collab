@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 kernel_type={"fp":"SSK",
-                             "count":"Matern32"
+                             "count":"RBF"
                              },
                 kernel_mixing_method="product",
                 # imputer="mean",

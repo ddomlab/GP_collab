@@ -29,11 +29,7 @@ source ~/.bashrc
 module load cuda/12.1
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_gpu
 
-python ../train_structure_numerical.py --K_fp $fp_kernel \
-                                        --K_count $count_kernel \
-                                        --Kernel_mixing_method $mixing_method \
-                                        --paper "$paper" \
-                                        --dataset "$dataset"
+python ../train_structure_numerical.py
 
 
 EOT
