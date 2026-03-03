@@ -29,7 +29,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 #BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
 
 source ~/.bashrc
-module load cuda/12.1
+module load cuda/12.6
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/gpu_please
 
 python ../train_structure_numerical.py --K_fp $fp_kernel \
