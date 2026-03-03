@@ -476,6 +476,9 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
         self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood, prior=self.prior, ssk_parameters=self.ssk_parameters)
         
+        if self.use_cuda and torch.cuda.is_available():
+            self._gp_model = self._gp_model.to(device)
+            self._likelihood = self._likelihood.to(device)
         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
 
@@ -510,7 +513,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and self.use_cuda:
             X_t = X_t.cuda()
             self._gp_model = self._gp_model.cuda()
             self._likelihood = self._likelihood.cuda()

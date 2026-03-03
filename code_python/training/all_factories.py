@@ -161,7 +161,7 @@ def optimized_models(model_name:str, ssk_parameters:dict, random_state:int=42, *
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
     if "GPytorchMAP"==model_name:
-        return GPytorchMAPRegressor(ssk_parameters=ssk_parameters,**kwargs)
+        return GPytorchMAPRegressor(use_cuda=True, ssk_parameters=ssk_parameters,**kwargs)
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     
