@@ -82,59 +82,40 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    # args = parse_arguments()
-    # PAPER = args.paper
+    args = parse_arguments()
+    PAPER = args.paper
     # # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-    # dataset_name = args.dataset
+    dataset_name = args.dataset
     # # "cleaned_dataset_pervaporation_membranes_wang"
     # #non_imputed_dropped_nan_Rg_data
-    # w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
     
 
-    # for targ in all_targets:
-    #         for model in ["RF", "XGBR", "NGB"]:
-    #             main_structural_numerical(
-    #                 dataset=w_data,
-    #                 representation="ECFP",
-    #                 radius=3,
-    #                 vector="count",
-    #                 regressor_type=model,
-    #                 # GPytorchMixMCMC
-    #                 # GPMixMCMC
-    #                 # kernel="matern32_j_rbf_mix",
-    #                 polymer_unit=polymer_unit,
-    #                 target_features=[targ],  
-    #                 feat_transformer='Standard',
-    #                 target_transformer='Standard',
-    #                 numerical_feats=feats,
-    #                 hyperparameter_optimization=False,
-    #                 # kernel_type={
-    #                 #     "fp":args.K_fp,
-    #                 #     "count":args.K_count
-    #                 #             },
-    #                 # kernel_mixing_method=args.Kernel_mixing_method,
-    #                 imputer="mean",
-    #                 columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-    #                 )
+    for targ in all_targets:
+                main_structural_numerical(
+                    dataset=w_data,
+                    representation="SMILES",
+                    # radius=3,
+                    # vector="count",
+                    regressor_type=args.regressor_type,
+                    # GPytorchMixMCMC
+                    # GPMixMCMC
+                    polymer_unit=polymer_unit,
+                    target_features=[targ],  
+                    feat_transformer='Standard',
+                    target_transformer='Standard',
+                    numerical_feats=feats,
+                    hyperparameter_optimization=False,
+                    kernel_type={
+                        "fp":args.K_fp,
+                        "count":args.K_count
+                                },
+                    kernel_mixing_method=args.Kernel_mixing_method,
+                    # imputer="mean",
+                    # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                    )
 
-    # main_structural_numerical(
-    #     dataset=w_data,
-    #     representation=args.representation,
-    #     radius=args.radius,
-    #     vector=args.vector,
-    #     polymer_unit=args.polymer_unit,
-    #     regressor_type=args.regressor_type,
-    #     kernel=args.kernel,
-    #     target_features=[args.target_features],  
-    #     feat_transformer='Standard',
-    #     second_transformer=None,
-    #     hyperparameter_optimization=True,
-    #     columns_to_impute=args.columns_to_impute,  
-    #     special_impute=args.special_impute,
-    #     numerical_feats=args.numerical_feats,  
-    #     imputer=args.imputer,
-    #     cutoff=None,  
-    # )
+ 
         # 'log (Total flux)',
         # 'log (Separation factor)'
 

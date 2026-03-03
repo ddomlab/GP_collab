@@ -8,12 +8,15 @@ dataset="Rg data with clusters aging imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-fp_kernel="SSK"
-count_kernel="RBF"
-mixing_method="product"
+fp_kernel=("SSK")
+count_kernel=("RBF")
+mixing_method=("product")
 
 
-bsub <<EOT
+for mixing_method in "${k_mixing_methods[@]}"; do
+    for fp_kernel in "${k_fps[@]}"; do
+        for count_kernel in "${k_counts[@]}"; do
+            bsub <<EOT
 
 
 #BSUB -n 1
@@ -29,8 +32,14 @@ source ~/.bashrc
 module load cuda/12.1
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_gpu
 
-python ../train_structure_numerical.py
-
+python ../train_structure_numerical.py --K_fp $fp_kernel \
+                                        --K_count $count_kernel \
+                                        --Kernel_mixing_method $mixing_method \
+                                        --paper "$paper" \
+                                        --dataset "$dataset"
 
 EOT
 
+        done
+    done
+done
