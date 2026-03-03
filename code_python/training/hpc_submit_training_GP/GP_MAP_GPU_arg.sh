@@ -8,9 +8,9 @@ dataset="Rg data with clusters aging imputed"
 output_dir=/share/ddomlab/sdehgha2/working-space/main/_colab_GP/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-fp_kernel=("SSK")
-count_kernel=("RBF")
-mixing_method=("product")
+k_fps=("SSK")
+k_counts=("RBF")
+k_mixing_methods=("product")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
