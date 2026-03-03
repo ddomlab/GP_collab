@@ -19,8 +19,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 
-#BSUB -n 1
-#BSUB -W 10
+#BSUB -n 2
+#BSUB -W 40
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -30,7 +30,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 source ~/.bashrc
 module load cuda/12.1
-conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_gpu
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/gpu_please
 
 python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --K_count $count_kernel \

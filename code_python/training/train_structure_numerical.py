@@ -91,10 +91,6 @@ if __name__ == "__main__":
     # # "cleaned_dataset_pervaporation_membranes_wang"
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-    if torch.cuda.is_available():
-        print("GPU is available. Training on GPU.")
-    else:
-        print("GPU is not available. Training on CPU.")
 
     for targ in all_targets:
                 main_structural_numerical(
