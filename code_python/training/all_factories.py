@@ -122,7 +122,9 @@ regressor_factory: dict[str, type]={
     # "GPMixR": GPMixRegressor(),
 }
 
-def optimized_models(model_name:str, ssk_parameters:dict, random_state:int=42, **kwargs):
+def optimized_models(model_name:str, kernel_parameters:dict, random_state:int=42, 
+                     kernel_type:Optional[str]=None, kernel_mixing_method:Optional[str]=None,
+                     **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=None, verbose=False,
@@ -161,7 +163,13 @@ def optimized_models(model_name:str, ssk_parameters:dict, random_state:int=42, *
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
     if "GPytorchMAP"==model_name:
-        return GPytorchMAPRegressor(use_cuda=True, ssk_parameters=ssk_parameters,**kwargs)
+        return GPytorchMAPRegressor(
+                                    use_cuda=True,
+                                    kernel_type=kernel_type,
+                                    kernel_mixing_method=kernel_mixing_method,
+                                    ssk_parameters=kernel_parameters,
+                                    **kwargs
+                                    )
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     

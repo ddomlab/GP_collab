@@ -74,7 +74,7 @@ class SubsequenceStringKernel(Kernel):
         index,
         alphabet=[],
         maxlen=80,
-        batch_size=1000,
+        batch_size=100,
         _gap_decay=0.5,
         _match_decay=0.2,
         _order_coefs=[1 / (2**i) for i in range(5)],

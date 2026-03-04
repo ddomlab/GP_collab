@@ -209,14 +209,15 @@ class MixingKernel:
         mixing_method: str,
         kernel_method: dict,
         variance: float | None = None,
-        ssk_parameters: dict | None = None
+        ssk_parameters: dict | None = None,
+        cuda_avail: dict = None
     ):
         self.feat_idx = feat_idx
         self.mixing_method = mixing_method
         self.kernel_method = kernel_method
         self.variance = variance if variance else 1.0
         self.ssk_parameters = ssk_parameters
-
+        self.cuda_avail = cuda_avail
     def _make_fp_kernels(self):
         fp_kernels = []
         fp_keys = sorted(k for k in self.feat_idx if k.startswith("fp_"))
@@ -239,7 +240,8 @@ class MixingKernel:
                         k = kernel_factory[self.kernel_method["fp"]](
                             active_dims=idx,
                             ard_num_dims=len(idx),
-                            **ssk_params
+                            **ssk_params,
+                            **self.cuda_avail
                         )
                     else:
                         k = kernel_factory[self.kernel_method["fp"]](
@@ -257,6 +259,7 @@ class MixingKernel:
         for dim in count_idx:
             k = kernel_factory[self.kernel_method["count"]](
                 active_dims=[dim],
+                **self.cuda_avail
                 # ard_num_dims=1,
             )
             count_kernels.append(k)
@@ -306,7 +309,7 @@ class MixingKernel:
 
 class GPMix(gpytorch.models.ExactGP):
     def __init__(self, X, y, feat_idx,
-                  mixing_method:str, kernel_method:dict, likelihood, prior, ssk_parameters):
+                  mixing_method:str, kernel_method:dict, likelihood, prior, ssk_parameters, cuda_avail):
         super().__init__(X, y, likelihood)
         # self.feat_idx = feat_idx
         # self.kernel_method = kernel_method
@@ -317,7 +320,8 @@ class GPMix(gpytorch.models.ExactGP):
             feat_idx=feat_idx,
             mixing_method=mixing_method,
             kernel_method=kernel_method,
-            ssk_parameters=ssk_parameters
+            ssk_parameters=ssk_parameters,
+            cuda_avail=cuda_avail
         )
         base_kernel  = self.kernel_builder.build()
         self.covar_module = gpytorch.kernels.ScaleKernel(base_kernel)
@@ -422,7 +426,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         feat_group:dict,
         lr=1e-2,
         n_epoch=400,
-        use_cuda=False,
+        # use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
@@ -433,14 +437,15 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self.feat_group = feat_group
         self.lr = lr
         self.n_epoch = n_epoch
-        self.use_cuda = use_cuda
+        # self.use_cuda = use_cuda
         self.random_state = random_state
         self.kernel_mixing_method = kernel_mixing_method
         self.kernel_type = kernel_type
         self.ssk_parameters = ssk_parameters
         self.progbar = progbar
         self.prior = prior
-        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.cuda_avail = {"dtype": torch.float, "device": device} 
         
     def fit(self, X_train, y_train):
         if isinstance(X_train, pd.DataFrame):
@@ -459,31 +464,39 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         if isinstance(y_train, (pd.DataFrame, pd.Series)):
             y_train = y_train.to_numpy()
 
-        X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
-        y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
+        # X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
+        # y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
 
-        if self.use_cuda and torch.cuda.is_available():
-            device = torch.device("cuda")
-            X_t = X_t.to(device)
-            y_t = y_t.to(device)
-        else:
-            device = torch.device("cpu")
+        # if self.use_cuda and torch.cuda.is_available():
+            # device = torch.device("cuda")
+        X_train = torch.as_tensor(
+            np.asarray(X_train),
+            **self.cuda_avail
+        )
 
-        self._X_train = X_t
-        self._y_train = y_t
-
+        y_train = torch.as_tensor(
+            np.asarray(y_train),    
+            **self.cuda_avail
+        ).view(-1)
+                
         # Pyro GP model with priors
         self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self._likelihood, prior=self.prior, ssk_parameters=self.ssk_parameters)
+        self._gp_model = GPMix(X_train, y_train, self.feat_idx,
+                                self.kernel_mixing_method,
+                                self.kernel_type,
+                                self._likelihood,
+                                prior=self.prior,
+                                ssk_parameters=self.ssk_parameters,
+                                cuda_avail=self.cuda_avail
+                                )
         
-        if self.use_cuda and torch.cuda.is_available():
-            self._gp_model = self._gp_model.to(device)
-            self._likelihood = self._likelihood.to(device)
+        # if self.use_cuda and torch.cuda.is_available():
+        self._gp_model = self._gp_model.to(self.cuda_avail["device"])
+        self._likelihood = self._likelihood.to(self.cuda_avail["device"])
         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
 
-        if self.use_cuda and torch.cuda.is_available():
-            mll = mll.cuda()
+        # if torch.cuda.is_available():
 
         self._gp_model.train()
         self._likelihood.train()
@@ -494,8 +507,8 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         for _ in range(self.n_epoch):
             optimizer.zero_grad()
 
-            y_pred = self._gp_model(self._X_train)
-            loss = -mll(y_pred, self._y_train)
+            y_pred = self._gp_model(X_train)
+            loss = -mll(y_pred, y_train)
 
             loss.backward()
             optimizer.step()
@@ -511,12 +524,14 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         if isinstance(X_test, pd.DataFrame):
             X_test = X_test.to_numpy()
 
-        X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
+            X_t = torch.as_tensor(
+                    np.asarray(X_test),
+                    **self.cuda_avail
+                    )
 
-        if torch.cuda.is_available() and self.use_cuda:
-            X_t = X_t.cuda()
-            self._gp_model = self._gp_model.cuda()
-            self._likelihood = self._likelihood.cuda()
+        # if torch.cuda.is_available() and self.use_cuda:
+        # self._gp_model = self._gp_model.to(**self.cuda_avail["device"])
+        # self._likelihood = self._likelihood.to(**self.cuda_avail["device"])
 
         self._gp_model.eval()
         self._likelihood.eval()
@@ -581,254 +596,78 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
     
 
 
-class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
-    def __init__(
-        self,
-        feat_group:dict,
-        num_samples=200,
-        warmup_steps=200,
-        num_chains=1,
-        num_drawn_samples=100,
-        use_cuda=False,
-        random_state=42,
-        kernel_mixing_method:str="product",
-        kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
-    ):
-        self.feat_group = feat_group
-        self.num_samples = num_samples
-        self.warmup_steps = warmup_steps
-        self.num_chains = num_chains
-        self.use_cuda = use_cuda
-        self.random_state = random_state
-        self.num_drawn_samples = num_drawn_samples
-        self.kernel_mixing_method = kernel_mixing_method
-        self.kernel_type = kernel_type
-
-        self._is_fitted = False
-        self._gp_model = None
-        self._samples = None
-        self._predictive = None
-
-    def fit(self, X_train, y_train):
-        if isinstance(X_train, pd.DataFrame):
-            # Map all fp_{unit} and count to integer indices
-            self.feat_idx = {}
-            for key, cols in self.feat_group.items():
-                if cols:
-                    self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
-            
-            self.count_feat_name_idx = {
-                c: X_train.columns.get_loc(c) 
-                for c in self.feat_group.get("count", [])
-            }
-            X_train = X_train.to_numpy()
-
-        if isinstance(y_train, (pd.DataFrame, pd.Series)):
-            y_train = y_train.to_numpy()
-
-        X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
-        y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
-
-        if self.use_cuda and torch.cuda.is_available():
-            device = torch.device("cuda")
-            X_t = X_t.to(device)
-            y_t = y_t.to(device)
-        else:
-            device = torch.device("cpu")
-
-        self._X_train = X_t
-        self._y_train = y_t
-
-        # Pyro GP model with priors
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self.likelihood)
-
-        def pyro_model(x, y):
-                    sampled_model = self._gp_model.pyro_sample_from_prior()
-                    output = sampled_model.likelihood(sampled_model(x))
-                    pyro.sample("obs", output, obs=y)
-                    return y
-        pyro.clear_param_store()
-        if self.random_state is not None:
-            pyro.set_rng_seed(self.random_state)
-
-
-        nuts_kernel = NUTS(pyro_model, ignore_jit_warnings=True, jit_compile=False)
-        mcmc = MCMC(
-            nuts_kernel, 
-            num_samples=self.num_samples, 
-            warmup_steps=self.warmup_steps, 
-            num_chains=self.num_chains,
-            # disable_progbar=True,
-            # hook_fn=hook,
-        )
-        mcmc.run(self._X_train, self._y_train)
-        samples =mcmc.get_samples(num_samples=self.num_drawn_samples)
-
-        # make sure samples live on the same device as the model
-        self._samples = {k: v.to(device) for k, v in samples.items()}
-        # Build Predictive object that will plug in posterior parameter samples
-        self._is_fitted = True
-        return self
-    
-    def _predictive_strategy(self, X_new):
-            print("ready to go")
-            """
-            Method used by Pyro's Predictive class. 
-            Must be a method of the class to allow pickling.
-            """
-            # GP forward returns predictive mean and variance (including noise if noiseless=False)
-            f_loc, f_var = self._gp_model(X_new, full_cov=False, noiseless=False)
-            
-            # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
-            f_scale = f_var.sqrt()
-
-            # Sample observations
-            pyro.sample(
-                "y_pred",
-                dist.Normal(f_loc, f_scale).to_event(1),
-            )
-            
-    def predict(self, X_test):
-        if not self._is_fitted:
-            raise RuntimeError("Call fit before predict.")
-
-        if isinstance(X_test, pd.DataFrame):
-            X_test = X_test.to_numpy()
-
-        X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
-
-        if X_t.ndim == 1:
-            X_t = X_t.unsqueeze(0)
-
-        device = next(self._gp_model.parameters()).device
-        X_t = X_t.to(device)
-        predictive = Predictive(
-            self._predictive_strategy,
-            posterior_samples=self._samples,
-            return_sites=("y_pred",),
-            parallel=False,
-        )
-        # draw predictive samples
-        with torch.no_grad():
-            samples_pred = predictive(X_t)
-            y_samples = samples_pred["y_pred"]  # shape [S, N] or [S, N, 1]
-
-        if y_samples.ndim == 3:
-            y_samples = y_samples.squeeze(-1)
-
-        mean_pred = y_samples.mean(dim=0)
-        # if later you want std:
-        # std_pred = y_samples.std(dim=0)
-
-        return mean_pred.detach().cpu().numpy()
-
-
-    def _get_latent_values(self, var_names):
-        if isinstance(var_names, str):
-            var_names = [var_names]
-
-        return {k: self._samples.get(k) for k in var_names}
-    
-
-    def _get_lengthscale(self):
-            summary = {}
-            fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-            count_names = sorted(list(self.count_feat_name_idx.keys()))
-
-            fp_has_tanimoto = "tanimoto" in str(self.kernel_type["fp"]).lower()
-            if fp_has_tanimoto:
-                fp_name = fp_keys
-            else:
-                fp_name = [
-                    f"{key}[{dim}]"
-                    for key in fp_keys
-                    for dim in sorted(list(self.feat_idx.get(key) or []))
-                ]
-            all_keys = fp_name + count_names
-            # Extract FP lengthscales using their specific unit names
-            for i, key in enumerate(all_keys):
-                param_name = f"kernel.kern{i}.lengthscale"
-                if param_name in self._samples:
-                    summary[key] = self._samples[param_name].float().cpu().numpy()
-
-            return summary
-
-# class GPytorchMixMCMCRegressor(BaseEstimator, RegressorMixin):
-#     def __init__(self, 
-#                 feat_group=None, 
-#                 num_samples=200,
-#                 warmup_steps=200,
-#                 num_drawn_samples=100,
-#                 num_chains=1,
-#                 use_cuda=False,
-#                 random_state=42
-#         ):
-        
+# class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
+#     def __init__(
+#         self,
+#         feat_group:dict,
+#         num_samples=200,
+#         warmup_steps=200,
+#         num_chains=1,
+#         num_drawn_samples=100,
+#         use_cuda=False,
+#         random_state=42,
+#         kernel_mixing_method:str="product",
+#         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
+#     ):
 #         self.feat_group = feat_group
 #         self.num_samples = num_samples
 #         self.warmup_steps = warmup_steps
-#         self.num_drawn_samples = num_drawn_samples
 #         self.num_chains = num_chains
 #         self.use_cuda = use_cuda
-#         self.model = None
-#         self.likelihood = None
-#         self.mcmc_samples = None
 #         self.random_state = random_state
+#         self.num_drawn_samples = num_drawn_samples
+#         self.kernel_mixing_method = kernel_mixing_method
+#         self.kernel_type = kernel_type
 
+#         self._is_fitted = False
+#         self._gp_model = None
+#         self._samples = None
+#         self._predictive = None
 
-#     def fit(self, X, y):
-#         if isinstance(X, pd.DataFrame):
-#             self.feat_idx = {
-#                         'fp': [X.columns.get_loc(c) for c in self.feat_group.get("fp")] if self.feat_group.get("fp") else None,
-#                         'count': [X.columns.get_loc(c) for c in self.feat_group.get("count") ] if self.feat_group.get("count") else None
-#                     }
-#             self.count_feat_name_idx = {c: X.columns.get_loc(c) for c in self.feat_group.get("count")} if self.feat_group.get("count") else {}
-#             X = X.to_numpy()
-#         if self.feat_idx is None:
-#              raise ValueError("feat_idx must be provided")
+#     def fit(self, X_train, y_train):
+#         if isinstance(X_train, pd.DataFrame):
+#             # Map all fp_{unit} and count to integer indices
+#             self.feat_idx = {}
+#             for key, cols in self.feat_group.items():
+#                 if cols:
+#                     self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
+            
+#             self.count_feat_name_idx = {
+#                 c: X_train.columns.get_loc(c) 
+#                 for c in self.feat_group.get("count", [])
+#             }
+#             X_train = X_train.to_numpy()
 
-#         if isinstance(y, (pd.DataFrame, pd.Series)):
-#             y = y.values
+#         if isinstance(y_train, (pd.DataFrame, pd.Series)):
+#             y_train = y_train.to_numpy()
 
-#         X = torch.as_tensor(X, dtype=torch.float32)
-#         y = torch.as_tensor(y, dtype=torch.float32).view(-1)
+#         X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
+#         y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
 
 #         if self.use_cuda and torch.cuda.is_available():
-#             X = X.cuda()
-#             y = y.cuda()
+#             device = torch.device("cuda")
+#             X_t = X_t.to(device)
+#             y_t = y_t.to(device)
+#         else:
+#             device = torch.device("cpu")
 
-#         self.train_x = X
-#         self.train_y = y
+#         self._X_train = X_t
+#         self._y_train = y_t
 
+#         # Pyro GP model with priors
 #         self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-#         self.model = GPMix(X, y, self.likelihood, self.feat_idx)
-#         self.likelihood.register_prior(
-#             "noise_prior", 
-#             gpytorch.priors.LogNormalPrior(0.0, 1.0), 
-#             "noise"
-#         )
-        
-#         if self.use_cuda and torch.cuda.is_available():
-#             self.model = self.model.cuda()
-#             self.likelihood = self.likelihood.cuda()
-
-
-#         # mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
+#         self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self.likelihood)
 
 #         def pyro_model(x, y):
-#             with gpytorch.settings.fast_computations(False, False, False):
-#                 with gpytorch.settings.cholesky_jitter(1e-2):
-#                     sampled_model = self.model.pyro_sample_from_prior()
+#                     sampled_model = self._gp_model.pyro_sample_from_prior()
 #                     output = sampled_model.likelihood(sampled_model(x))
 #                     pyro.sample("obs", output, obs=y)
-#             return y
+#                     return y
 #         pyro.clear_param_store()
 #         if self.random_state is not None:
 #             pyro.set_rng_seed(self.random_state)
-#         def hook(kernel, samples, stage, i):
-#             if stage == "Warmup" and i % 50 == 0:
-#                 print(i, samples["likelihood.noise"], samples["covar_module.variance"])
+
+
 #         nuts_kernel = NUTS(pyro_model, ignore_jit_warnings=True, jit_compile=False)
 #         mcmc = MCMC(
 #             nuts_kernel, 
@@ -836,35 +675,97 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
 #             warmup_steps=self.warmup_steps, 
 #             num_chains=self.num_chains,
 #             # disable_progbar=True,
-#             hook_fn=hook,
+#             # hook_fn=hook,
 #         )
+#         mcmc.run(self._X_train, self._y_train)
+#         samples =mcmc.get_samples(num_samples=self.num_drawn_samples)
 
-#         mcmc.run(X, y)
-#         self.mcmc_samples = mcmc.get_samples(num_samples=self.num_drawn_samples)
+#         # make sure samples live on the same device as the model
+#         self._samples = {k: v.to(device) for k, v in samples.items()}
+#         # Build Predictive object that will plug in posterior parameter samples
+#         self._is_fitted = True
 #         return self
+    
+#     def _predictive_strategy(self, X_new):
+#             print("ready to go")
+#             """
+#             Method used by Pyro's Predictive class. 
+#             Must be a method of the class to allow pickling.
+#             """
+#             # GP forward returns predictive mean and variance (including noise if noiseless=False)
+#             f_loc, f_var = self._gp_model(X_new, full_cov=False, noiseless=False)
+            
+#             # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
+#             f_scale = f_var.sqrt()
 
-#     def predict(self, X_test, return_std=False):
+#             # Sample observations
+#             pyro.sample(
+#                 "y_pred",
+#                 dist.Normal(f_loc, f_scale).to_event(1),
+#             )
+            
+#     def predict(self, X_test):
+#         if not self._is_fitted:
+#             raise RuntimeError("Call fit before predict.")
+
 #         if isinstance(X_test, pd.DataFrame):
 #             X_test = X_test.to_numpy()
 
-#         X_test = torch.as_tensor(X_test, dtype=torch.float32)
-#         if self.use_cuda and torch.cuda.is_available():
-#             X_test = X_test.cuda()
+#         X_t = torch.as_tensor(np.asarray(X_test), dtype=torch.float32)
 
-#         self.model.eval()
-#         # self.likelihood.eval()
+#         if X_t.ndim == 1:
+#             X_t = X_t.unsqueeze(0)
 
-#         self.model.pyro_load_from_samples(self.mcmc_samples)
-#         self.model.eval()
-#         num_samples = list(self.mcmc_samples.values())[0].shape[0]
-#         expanded_test_x = X_test.unsqueeze(0).expand(num_samples, *X_test.shape)
-
+#         device = next(self._gp_model.parameters()).device
+#         X_t = X_t.to(device)
+#         predictive = Predictive(
+#             self._predictive_strategy,
+#             posterior_samples=self._samples,
+#             return_sites=("y_pred",),
+#             parallel=False,
+#         )
+#         # draw predictive samples
 #         with torch.no_grad():
-#             output = self.model(expanded_test_x)
-#             observed_output = self.likelihood(output) 
+#             samples_pred = predictive(X_t)
+#             y_samples = samples_pred["y_pred"]  # shape [S, N] or [S, N, 1]
 
-#             means = observed_output.mean
-#             mean_prediction = means.mean(0) 
-#         return mean_prediction.cpu().numpy()
+#         if y_samples.ndim == 3:
+#             y_samples = y_samples.squeeze(-1)
+
+#         mean_pred = y_samples.mean(dim=0)
+#         # if later you want std:
+#         # std_pred = y_samples.std(dim=0)
+
+#         return mean_pred.detach().cpu().numpy()
+
+
+#     def _get_latent_values(self, var_names):
+#         if isinstance(var_names, str):
+#             var_names = [var_names]
+
+#         return {k: self._samples.get(k) for k in var_names}
     
-    
+
+#     def _get_lengthscale(self):
+#             summary = {}
+#             fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+#             count_names = sorted(list(self.count_feat_name_idx.keys()))
+
+#             fp_has_tanimoto = "tanimoto" in str(self.kernel_type["fp"]).lower()
+#             if fp_has_tanimoto:
+#                 fp_name = fp_keys
+#             else:
+#                 fp_name = [
+#                     f"{key}[{dim}]"
+#                     for key in fp_keys
+#                     for dim in sorted(list(self.feat_idx.get(key) or []))
+#                 ]
+#             all_keys = fp_name + count_names
+#             # Extract FP lengthscales using their specific unit names
+#             for i, key in enumerate(all_keys):
+#                 param_name = f"kernel.kern{i}.lengthscale"
+#                 if param_name in self._samples:
+#                     summary[key] = self._samples[param_name].float().cpu().numpy()
+
+#             return summary
+

@@ -146,8 +146,8 @@ def _prepare_data(
     hyperparameter_optimization: bool = True,
     imputer: Optional[str] = None,
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
-    # kernel_type: Optional[str]=None,
-    # kernel_mixing_method: Optional[str]=None,
+    kernel_type: Optional[str]=None,
+    kernel_mixing_method: Optional[str]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -158,7 +158,7 @@ def _prepare_data(
 
 
     
-    X, y, unrolled_feats, extra_params = filter_dataset(
+    X, y, unrolled_feats, kernel_parameters = filter_dataset(
                                             raw_dataset=dataset,
                                             structure_feats=structural_features,
                                             scalar_feats=numerical_feats,
@@ -166,6 +166,7 @@ def _prepare_data(
                                             cutoff=cutoff,
                                             dropna = True,
                                             unroll=unroll,
+                                            kernel_type=kernel_type,
                                             )
 
     # Pipline workflow here and preprocessor
@@ -193,7 +194,9 @@ def _prepare_data(
                             second_transformer=second_transformer,
                             regressor_type=regressor_type,
                             hyperparameter_optimization=hyperparameter_optimization,
-                            ssk_parameters=extra_params,
+                            kernel_parameters=kernel_parameters,
+                            kernel_type=kernel_type,
+                            kernel_mixing_method=kernel_mixing_method,
                             **kwargs,
                             )
     # print(X_y_shape)
@@ -210,13 +213,15 @@ def run(
     second_transformer:str, 
     regressor_type: str,
     hyperparameter_optimization: bool = True,
-    ssk_parameters: Optional[dict]=None,
+    kernel_parameters: Optional[dict]=None,
+    kernel_type: Optional[str]=None,
+    kernel_mixing_method: Optional[str]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
-    seed_indices: dict[int, np.ndarray] = {}
+    # seed_indices: dict[int, np.ndarray] = {}
 
     for seed in SEEDS:
 
@@ -275,16 +280,18 @@ def run(
 
         else:
             print("No hyperparameter optimization")
-            if isinstance(regressor_type, dict):
-                kernel = _get_gp_kernel(regressor_type, idx=features_group)
-                model = optimized_models(regressor_type['model'], kernel=kernel)
-            else:
-                model = optimized_models(
-                                        regressor_type,
-                                        feat_group=features_group,
-                                        ssk_parameters=ssk_parameters,
-                                        **kwargs
-                                        )
+            # if isinstance(regressor_type, dict):
+            #     kernel = _get_gp_kernel(regressor_type, idx=features_group)
+            #     model = optimized_models(regressor_type['model'], kernel=kernel)
+            # else:
+            model = optimized_models(
+                                    regressor_type,
+                                    feat_group=features_group,
+                                    kernel_parameters=kernel_parameters,
+                                    kernel_type=kernel_type,
+                                    kernel_mixing_method=kernel_mixing_method,
+                                    **kwargs,
+                                    )
 
             y_transform_regressor = TransformedTargetRegressor(
                         regressor=model,
@@ -294,7 +301,8 @@ def run(
             regressor :Pipeline= Pipeline(steps=[
                         ("preprocessor", new_preprocessor),
                         ("regressor", y_transform_regressor),
-                            ])
+                            ]
+                        )
             regressor.set_output(transform="pandas")
             # y = y.ravel()
             y = y.flatten()

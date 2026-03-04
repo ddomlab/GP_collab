@@ -231,7 +231,8 @@ def filter_dataset(
     dropna: bool = True,
     unroll: Union[dict, list, None] = None,
     cluster_type:Optional[str]= None,
-    **kwargs,
+    kernel_type: Optional[str]=None,
+    # **kwargs,
 ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """
     Filter the dataset.
@@ -246,7 +247,7 @@ def filter_dataset(
         Input features and targets.
     """
     # Add multiple lists together as long as they are not NoneType
-    ssk_parameters = {}
+    kernel_parameters = {}
     all_feats: list[str] = [
         feat
         for feat_list in [structure_feats, scalar_feats, target_feats]
@@ -260,7 +261,7 @@ def filter_dataset(
 
     dataset: pd.DataFrame = raw_dataset[all_feats]
     dataset = sanitize_dataset(dataset,
-        target_feats, dropna=dropna, **kwargs
+        target_feats, dropna=dropna
         )
     if cutoff:
         dataset = apply_cutoff(dataset,cutoff)
@@ -272,18 +273,19 @@ def filter_dataset(
 
     elif unroll["representation"] == "SMILES":
             # generalize for donor acceptor
-            
             list_of_st_features = []
             for unit in unroll["unit_name"]:
                 feat_name = f"{unit} SMILES"
-                all_encoded_smiles, parameters = _ssk_emb(dataset[feat_name].values)
-                ssk_parameters[f"fp_{unit}"] = parameters
-                df_features = pd.DataFrame(
-                all_encoded_smiles,
-                columns=[f"{unit}_ssk_emb_{i}" for i in range(all_encoded_smiles.shape[1])]
-                )
-    
-                list_of_st_features.append(df_features)
+                if kernel_type["fp"] == "SSK":
+                    all_encoded_smiles, parameters = _ssk_emb(dataset[feat_name].values)
+                    kernel_parameters[f"fp_{unit}"] = parameters
+                    df_features = pd.DataFrame(
+                    all_encoded_smiles,
+                    columns=[f"{unit}_ssk_emb_{i}" for i in range(all_encoded_smiles.shape[1])]
+                    )
+                    list_of_st_features.append(df_features)
+                else:
+                    list_of_st_features.append(dataset[feat_name])
             structure_features: pd.DataFrame = pd.concat(list_of_st_features, axis=1)
     else:
         structure_features: pd.DataFrame = dataset[[]]
@@ -311,6 +313,6 @@ def filter_dataset(
                         "Side Chain Cluster": side_chain_labels}
         else:
             c_labels = dataset[cluster_type].squeeze().to_numpy()
-        return training_features, targets, new_struct_feats, ssk_parameters, c_labels
+        return training_features, targets, new_struct_feats, kernel_parameters, c_labels
 
-    return training_features, targets, new_struct_feats, ssk_parameters 
+    return training_features, targets, new_struct_feats, kernel_parameters 
