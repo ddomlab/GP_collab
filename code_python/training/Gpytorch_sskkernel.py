@@ -140,6 +140,7 @@ class SubsequenceStringKernel(Kernel):
         self.alphabet = alphabet
         self.normalize = normalize
         self.embds = embds
+        self.embds = self.embds.to(**self.tensor_kwargs)
         self.index = index
         self.embs_dim = self.embds.shape[1]
         self.maxlen = maxlen

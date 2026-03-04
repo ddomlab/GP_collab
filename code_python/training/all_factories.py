@@ -164,7 +164,6 @@ def optimized_models(model_name:str, kernel_parameters:dict, random_state:int=42
     
     if "GPytorchMAP"==model_name:
         return GPytorchMAPRegressor(
-                                    use_cuda=True,
                                     kernel_type=kernel_type,
                                     kernel_mixing_method=kernel_mixing_method,
                                     ssk_parameters=kernel_parameters,
