@@ -86,6 +86,7 @@ class SubsequenceStringKernel(Kernel):
     ):
         super().__init__(**kwargs)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {device}")
         self.tensor_kwargs = {"dtype": torch.float, "device": device}
         # setting up hyper-parameters of string kernel
         self.register_parameter(
@@ -139,8 +140,7 @@ class SubsequenceStringKernel(Kernel):
         
         self.alphabet = alphabet
         self.normalize = normalize
-        self.embds = embds
-        self.embds = self.embds.to(**self.tensor_kwargs)
+        self.embds = torch.as_tensor(embds,**self.tensor_kwargs)
         self.index = index
         self.embs_dim = self.embds.shape[1]
         self.maxlen = maxlen
