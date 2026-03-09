@@ -5,7 +5,7 @@ import networkx as nx
 from graphdot import Graph
 from graphdot.graph._from_networkx import _from_networkx
 from rxntools.reaction import *
-from mgktools.graph.from_rdkit import _from_rdkit, default_config, AtomBondFeaturesConfig
+from from_rdkit import _from_rdkit, default_config, AtomBondFeaturesConfig
 
 
 CWD = os.path.dirname(os.path.abspath(__file__))
