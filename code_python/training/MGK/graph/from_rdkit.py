@@ -11,7 +11,7 @@ from rxntools.smiles import *
 from rxntools.substructure import FunctionalGroup, AtomEnvironment
 
 
-CWD = os.path.dirname(os.path.abspath(__file__))
+# CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_bond_orientation_dict(mol: Chem.Mol) -> Dict[Tuple[int, int], int]:
