@@ -15,7 +15,7 @@ Datapoint
 Dataset
     Main dataset container for molecular property prediction tasks.
 """
-from typing import Dict, List, Union, Literal
+from typing import Dict, List, Union
 import copy
 import os
 import pickle
@@ -324,7 +324,7 @@ class Datapoint:
         return [self.cache.smiles2graph(smiles) for smiles in self.smiles_list]
 
     def features_mol(self, features_generators: List[FeaturesGenerator] = None,
-                     features_combination: Literal['concat', 'mean'] = None) -> List[float]:
+                     features_combination = None) -> List[float]:
         """
         Compute molecular features for this data point.
 
@@ -440,9 +440,9 @@ class Dataset:
         """
         return self.data[item]
 
-    def set_status(self, graph_kernel_type: Literal['graph', 'pre-computed', 'no'],
+    def set_status(self, graph_kernel_type,
                    features_generators: List[FeaturesGenerator] = None,
-                   features_combination: Literal['concat', 'mean'] = None):
+                   features_combination = None):
         """
         Set the dataset status for kernel computation.
 
