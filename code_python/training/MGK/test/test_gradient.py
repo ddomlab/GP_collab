@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from mgktools.data.data import Dataset
+from data_handler.data import Dataset
 from kernels.utils import get_kernel_config
 from hyperparameters import *
 from models.gpr import GaussianProcessRegressor
