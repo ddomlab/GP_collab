@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Literal, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 import copy
 import numpy as np
 from sklearn.gaussian_process.kernels import RBF, DotProduct
-from mgktools.kernels.base import BaseKernelConfig
+from base import BaseKernelConfig
 
 
 class HybridKernel:
@@ -12,7 +12,7 @@ class HybridKernel:
         self,
         kernel_list: List,
         composition: List[Tuple[int]],
-        hybrid_rule: Literal["product", "sum"] = "product",
+        hybrid_rule = "product", # "product" or "sum"
     ):
         self.kernel_list = kernel_list
         self.composition = composition
@@ -180,7 +180,7 @@ class HybridKernelConfig(BaseKernelConfig):
         self,
         kernel_configs: List[BaseKernelConfig],
         composition: List[Tuple[int]],
-        hybrid_rule: Literal["product"] = "product",
+        hybrid_rule = "product", # "product" or "sum"
     ):
         assert len(kernel_configs) == len(composition) >= 2
         self.kernel_configs = kernel_configs

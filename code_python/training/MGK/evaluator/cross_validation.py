@@ -12,7 +12,7 @@ Evaluator
     Main class for evaluating machine learning models with various cross-validation
     strategies and optional interpretability analysis.
 """
-from typing import List, Optional, Literal, Tuple
+from typing import List, Optional, Tuple
 import os
 import math
 from tqdm import tqdm
@@ -21,10 +21,10 @@ import numpy as np
 import inspect
 from rdkit import Chem
 from sklearn.model_selection import KFold
-from mgktools.interpret.utils import save_mols_pkl
-from mgktools.data.data import Dataset
-from mgktools.data.split import get_data_from_index, dataset_split
-from mgktools.evaluators.metric import Metric, metric_regression, metric_binary
+from interpret.utils import save_mols_pkl
+from data_handler.data import Dataset
+from data_handler.split import get_data_from_index, dataset_split
+from metric import Metric, metric_regression, metric_binary
 
 
 class Evaluator:
@@ -102,11 +102,11 @@ class Evaluator:
                  save_dir: str,
                  dataset: Dataset,
                  model,
-                 task_type: Literal["regression", "binary", "multi-class"],
+                 task_type: str, # "regression", "binary", or "multi-class"
                  metrics: List[Metric] = None,
-                 cross_validation: Literal["kFold", "leave-one-out", "Monte-Carlo", "no"] = "Monte-Carlo",
+                 cross_validation: str = "Monte-Carlo", # "kFold", "leave-one-out", "Monte-Carlo", or "no"
                  n_splits: int = None,
-                 split_type: Literal["random", "scaffold_order", "scaffold_random"] = None,
+                 split_type: str = None, # "random", "scaffold_order", or "scaffold_random"
                  split_sizes: List[float] = None,
                  num_folds: int = 1,
                  evaluate_train: bool = False,

@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 import os
 import pickle
-from typing import Dict, List, Literal, Tuple
-from mgktools.data.data import Dataset
-from mgktools.kernels.FeatureKernel import FeatureKernelConfig
-from mgktools.kernels.PreComputed import PreComputedKernelConfig
-from mgktools.kernels.HybridKernel import HybridKernelConfig
+from typing import Dict, List, Tuple
+from data_handler.data import Dataset
+from FeatureKernel import FeatureKernelConfig
+from PreComputed import PreComputedKernelConfig
+from HybridKernel import HybridKernelConfig
 
 
 def get_kernel_config(
     dataset: Dataset,
-    graph_kernel_type: Literal["graph", "pre-computed", 'no'],
+    graph_kernel_type: str, # "graph", "pre-computed", or "features"
     # arguments for vectorized features.
-    features_kernel_type: Literal["dot_product", "rbf"] = None,
+    features_kernel_type: str = None, # "rbf", "dot_product", or None
     features_hyperparameters: List[float] = None,
     features_hyperparameters_bounds: Tuple[float, float] = None,
     features_hyperparameters_file: str = None,
