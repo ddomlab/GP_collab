@@ -4,9 +4,9 @@ import os
 import pickle
 from typing import Dict, List, Tuple
 from data_handler.data import Dataset
-from FeatureKernel import FeatureKernelConfig
-from PreComputed import PreComputedKernelConfig
-from HybridKernel import HybridKernelConfig
+from kernels.FeatureKernel import FeatureKernelConfig
+from kernels.PreComputed import PreComputedKernelConfig
+from kernels.HybridKernel import HybridKernelConfig
 
 
 def get_kernel_config(
