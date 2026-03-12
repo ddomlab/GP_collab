@@ -5,7 +5,7 @@ import os
 import json
 import numpy as np
 from graphdot.kernel.marginalized import MarginalizedGraphKernel
-from base import BaseKernelConfig, MicroKernel
+from .base import BaseKernelConfig, MicroKernel
 
 
 class MGK(MarginalizedGraphKernel):

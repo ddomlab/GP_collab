@@ -4,7 +4,7 @@ from typing import Dict, Any
 import os
 import json
 import numpy as np
-from base import BaseKernelConfig, MicroKernel
+from .base import BaseKernelConfig, MicroKernel
 
 
 class FeatureKernelConfig(BaseKernelConfig):

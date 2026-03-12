@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple, Any
 import copy
 import numpy as np
 from sklearn.gaussian_process.kernels import RBF, DotProduct
-from base import BaseKernelConfig
+from .base import BaseKernelConfig
 
 
 class HybridKernel:
