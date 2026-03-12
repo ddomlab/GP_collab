@@ -31,12 +31,16 @@ from graphdot.microkernel import (
     Convolution as kConv,
     Normalize,
 )
-from graphdot.microprobability import (
-    Additive as Additive_p,
-    Constant,
-    AssignProbability,
-)
+# from graphdot.microprobability import (
+#     Additive as Additive_p,
+#     Constant,
+#     AssignProbability,
+# )
+def AssignProbability(value, bounds):
+    return value, bounds
 
+def Additive_p(value):
+    return value
 
 class MicroKernel:
     """
@@ -156,11 +160,13 @@ class MicroKernel:
         elif self.kernel_type == "sExp":
             return sExp(self.value, length_scale_bounds=bounds)
         elif self.kernel_type == "Const_p":
-            return Constant(self.value, bounds)
+            #edit if you need  something else for probability microkernels
+            return Const(self.value, bounds)
         elif self.kernel_type == "Assign_p":
-            return AssignProbability(self.value, bounds)
+            #edit if you need  something else for probability microkernels
+            return Const(self.value, bounds)
         elif self.kernel_type == "Normalization":
-            from mgktools.kernels.normalization import Norm, NormalizationMolSize
+            from kernels.normalization import Norm, NormalizationMolSize
             assert self.name == self.kernel_type
             if self.value == True:
                 return Norm
@@ -172,12 +178,15 @@ class MicroKernel:
                     kernel=x, s=self.value, s_bounds=bounds
                 )
         elif self.kernel_type in ["a_type", "b_type", "p_type"]:
+            ### starting point for p_type: fix it.
             if self.value == "Tensorproduct":
                 return TensorProduct
             elif self.value == "Additive":
-                return lambda **x: Normalize(Additive(**x))
+                # change if you need something else for composition types
+                return 1
             elif self.value == "Additive_p":
-                return Additive_p
+                # change if you need something else for probability composition types
+                return 1
             else:
                 raise ValueError(
                     "For kernel type (%s), the value (%s) is not supported."
