@@ -67,7 +67,7 @@ def get_kernel_config(
             features_kernel_config = FeatureKernelConfig(hyperdict, idx=0)
 
     if graph_kernel_type == "graph":
-        from mgktools.kernels.GraphKernel import GraphKernelConfig
+        from kernels.GraphKernel import GraphKernelConfig
         graph_kernel_configs = []
         for i, mgk_file in enumerate(mgk_hyperparameters_files):
             if not os.path.exists(mgk_file):
