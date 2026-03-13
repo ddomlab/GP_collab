@@ -43,26 +43,38 @@ from graphdot.kernel.marginalized.starting_probability import StartingProbabilit
 
 class Additive_p(StartingProbability):
     def __init__(self, **kwargs):
+        # kwargs will be the microkernels from p_dict (e.g. element=AssignProb)
         self.probabilities = list(kwargs.values())
+        self._names = list(kwargs.keys())
 
     def __call__(self, nodes):
-        # Ensure we handle the (p, dp) tuple correctly
+        # Sum the results of all sub-probability objects
         results = [p(nodes) for p in self.probabilities]
         p_total = np.sum([r[0] for r in results], axis=0)
         dp_total = np.concatenate([r[1] for r in results], axis=0)
         return p_total, dp_total
 
     def gen_expr(self):
-        exprs = []
-        for p in self.probabilities:
-            # GraphDot probability objects return (expr, jacobian_code)
-            expr, _ = p.gen_expr()
-            exprs.append(expr)
-        return " + ".join([f"({e})" for e in exprs]), None
+        f_exprs = []
+        all_jacs = []
+        
+        for i, p in enumerate(self.probabilities):
+            # We must pass the node variable 'n' to match the CUDA template 'operator()(N const &n)'
+            # And provide a scope so hyperparameters don't collide
+            scope = f'self.{self._names[i]}.'
+            
+            # Calling the old gen_expr(x, theta_scope)
+            f, j = p.gen_expr('n', theta_scope=scope)
+            
+            f_exprs.append(f)
+            all_jacs.extend(j)
+            
+        combined_f = " + ".join(f_exprs)
+        return combined_f, all_jacs
 
     @property
     def theta(self):
-        # Ensure we only try to concatenate if theta exists
+        # Concatenate the 'p' values from each MicroProbability
         return np.concatenate([np.atleast_1d(p.theta) for p in self.probabilities])
 
     @theta.setter
@@ -75,6 +87,7 @@ class Additive_p(StartingProbability):
 
     @property
     def bounds(self):
+        # Flatten the bounds tuples
         return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
     
 
