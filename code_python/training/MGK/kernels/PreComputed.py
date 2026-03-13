@@ -3,9 +3,9 @@
 from typing import Dict, Any, Union
 import numpy as np
 import copy
-from .data import Dataset
-from .base import BaseKernelConfig
-from .HybridKernel import HybridKernelConfig
+from data_handler.data import Dataset
+from kernels.base import BaseKernelConfig
+from kernels.HybridKernel import HybridKernelConfig
 
 
 class PreComputedKernel:
