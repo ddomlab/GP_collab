@@ -24,15 +24,17 @@ class Additive_p(StartingProbability):
         return p_total, d_p_total
 
     def gen_expr(self):
-        f_exprs = []
-        all_jacs = []
+        exprs = []
+        jacs = []
+
         for name in self._names:
             p = getattr(self, name)
-            scope = f'self.{name}.'
-            f, j = p.gen_expr() 
-            f_exprs.append(f"{scope}{f}")
-            all_jacs.extend(j)
-        return " + ".join([f"({e})" for e in f_exprs]), all_jacs
+            f, j = p.gen_expr()
+
+            exprs.append(f"({f})")
+            jacs.extend(j)
+
+        return " + ".join(exprs), jacs
 
     @property
     def theta(self):
