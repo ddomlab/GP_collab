@@ -4,6 +4,7 @@ from graphdot.codegen.cpptool import cpptype
 import numpy as np
 
 
+@cpptype(_placeholder=np.int32)
 
 class Additive_p(StartingProbability):
     def __init__(self, **kwargs):
