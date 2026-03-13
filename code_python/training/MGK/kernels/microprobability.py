@@ -48,4 +48,10 @@ class Additive_p(StartingProbability):
     @property
     def bounds(self):
         return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
+    
+
+
+
+
+
 
