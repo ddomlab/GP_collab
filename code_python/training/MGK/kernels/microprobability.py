@@ -49,5 +49,3 @@ class Additive_p(StartingProbability):
     def bounds(self):
         return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
 
-# Apply the decorator MANUALLY here
-Additive_p = cpptype(Additive_p)
