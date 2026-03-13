@@ -31,8 +31,8 @@ class Additive_p(StartingProbability):
             p = getattr(self, name)
             f, j = p.gen_expr()
 
-            exprs.append(f"({f})")
-            jacs.extend(j)
+            exprs.append(f"({name}.{f})")
+            jacs.extend([f"{name}.{jj}" for jj in j])
 
         return " + ".join(exprs), jacs
 
