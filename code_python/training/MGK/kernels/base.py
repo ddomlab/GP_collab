@@ -41,40 +41,62 @@ from graphdot.kernel.marginalized.starting_probability import StartingProbabilit
 #     AssignProbability,
 # )
 
+import numpy as np
+from graphdot.kernel.marginalized.starting_probability import StartingProbability
+
 class Additive_p(StartingProbability):
     def __init__(self, **kwargs):
-        # kwargs will be the microkernels from p_dict (e.g. element=AssignProb)
-        self.probabilities = list(kwargs.values())
+        """
+        kwargs: Dictionary of feature names and their corresponding probability kernels.
+        Example: Additive_p(element=AssignProb, charge=AssignProb)
+        """
         self._names = list(kwargs.keys())
+        self.probabilities = list(kwargs.values())
+        
+        # Crucial: Set attributes so that C++ 'self.name.p' resolution works
+        for name, kernel in kwargs.items():
+            setattr(self, name, kernel)
 
     def __call__(self, nodes):
-        # Sum the results of all sub-probability objects
+        # r[0] is the probability array p, r[1] is the gradient matrix d_p
         results = [p(nodes) for p in self.probabilities]
+        
+        # Sum the probabilities across all kernels
         p_total = np.sum([r[0] for r in results], axis=0)
-        dp_total = np.concatenate([r[1] for r in results], axis=0)
-        return p_total, dp_total
+        
+        # Stack the gradients vertically (each row is a hyperparameter)
+        # Handle cases where d_p might be empty for fixed parameters
+        d_p_list = [r[1] for r in results if r[1].size > 0]
+        d_p_total = np.vstack(d_p_list) if d_p_list else np.empty((0, len(nodes)))
+        
+        return p_total, d_p_total
 
     def gen_expr(self):
         f_exprs = []
         all_jacs = []
         
         for i, p in enumerate(self.probabilities):
-            # We must pass the node variable 'n' to match the CUDA template 'operator()(N const &n)'
-            # And provide a scope so hyperparameters don't collide
+            # We use 'n' as the node variable to match the CUDA template 'operator()(N const &n)'
             scope = f'self.{self._names[i]}.'
             
-            # Calling the old gen_expr(x, theta_scope)
-            f, j = p.gen_expr('n', theta_scope=scope)
+            # Use an adaptive call to handle different microkernel signatures
+            try:
+                # Try the older signature: gen_expr(x, theta_scope)
+                f, j = p.gen_expr('n', theta_scope=scope)
+            except TypeError:
+                # Fallback to the modern signature: gen_expr()
+                f, j = p.gen_expr()
             
             f_exprs.append(f)
-            all_jacs.extend(j)
-            
-        combined_f = " + ".join(f_exprs)
+            if j is not None:
+                all_jacs.extend(j)
+        
+        combined_f = " + ".join([f"({e})" for e in f_exprs])
         return combined_f, all_jacs
 
     @property
     def theta(self):
-        # Concatenate the 'p' values from each MicroProbability
+        # Concatenate log-scale hyperparameters
         return np.concatenate([np.atleast_1d(p.theta) for p in self.probabilities])
 
     @theta.setter
@@ -87,7 +109,7 @@ class Additive_p(StartingProbability):
 
     @property
     def bounds(self):
-        # Flatten the bounds tuples
+        # Concatenate 2D bounds arrays
         return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
     
 
