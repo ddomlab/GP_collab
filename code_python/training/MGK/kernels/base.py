@@ -165,7 +165,7 @@ class MicroKernel:
             return Uniform(self.value, bounds)
         elif self.kernel_type == "Assign_p":
             #edit if you need  something else for probability microkernels
-            return Const(self.value, bounds)
+            return Uniform(self.value, bounds)
         elif self.kernel_type == "Normalization":
             from kernels.normalization import Norm, NormalizationMolSize
             assert self.name == self.kernel_type
