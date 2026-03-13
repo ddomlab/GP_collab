@@ -26,17 +26,11 @@ class Additive_p(StartingProbability):
     def gen_expr(self):
         exprs = []
         jacs = []
-
         for name in self._names:
             p = getattr(self, name)
-            f, j = p.gen_expr()
-
-            # namespace only the function expression
-            exprs.append(f"({name}.{f})")
-
-            # DO NOT modify jacobians
+            f, j = p.gen_expr()  # get C++ variable (e.g., "p") and jacobian
+            exprs.append(f"({f})")  # just wrap in parentheses
             jacs.extend(j)
-
         return " + ".join(exprs), jacs
 
     @property
