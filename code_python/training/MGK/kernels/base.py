@@ -57,10 +57,23 @@ class Additive_p(StartingProbability):
         return p_total, dp_total
 
     def gen_expr(self):
-        # Combine C++ expressions for the JIT compiler
-        exprs = [p.gen_expr() for p in self.probabilities]
+        # Standard kernels expect (x, y) for their C++ expression.
+        # For a starting probability, we only care about the current node 'x'.
+        exprs = []
+        for p in self.probabilities:
+            try:
+                # Try calling with x and y as expected by standard kernels
+                fun_expr, jac_expr = p.gen_expr('x', 'x') 
+                exprs.append(fun_expr)
+            except TypeError:
+                # If it's already a probability-type object, it might take no args
+                fun_expr, jac_expr = p.gen_expr()
+                exprs.append(fun_expr)
+                
         combined_expr = " + ".join([f"({e})" for e in exprs])
-        return combined_expr
+        # The MarginalizedGraphKernel backend expects a tuple: (expression, jacobian_info)
+        # If you aren't handling custom jacobian strings here, returning the expr is the first step.
+        return combined_expr, None
 
     @property
     def theta(self):
