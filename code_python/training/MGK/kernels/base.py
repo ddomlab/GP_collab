@@ -32,7 +32,6 @@ from graphdot.microkernel import (
     Normalize,
 
 )
-from .microprobability import Additive_p
 from graphdot.kernel.marginalized.starting_probability import Uniform
 # from graphdot.microprobability import (
 #     Additive as Additive_p,
