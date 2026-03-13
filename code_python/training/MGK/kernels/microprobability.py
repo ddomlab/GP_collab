@@ -5,18 +5,14 @@ import numpy as np
 
 
 
-@cpptype
 class Additive_p(StartingProbability):
     def __init__(self, **kwargs):
         self._names = list(kwargs.keys())
-        # Do NOT store self.probabilities as an attribute here
         for name, kernel in kwargs.items():
             setattr(self, name, kernel)
 
     @property
     def probabilities(self):
-        # This allows your __call__, theta, and bounds to still work
-        # without confusing the @cpptype serializer
         return [getattr(self, name) for name in self._names]
 
     def __call__(self, nodes):
@@ -32,13 +28,9 @@ class Additive_p(StartingProbability):
         for name in self._names:
             p = getattr(self, name)
             scope = f'self.{name}.'
-            
-            # Since Uniform.gen_expr() returns 'p', 
-            # this correctly creates 'self.AtomicNumber.p'
             f, j = p.gen_expr() 
             f_exprs.append(f"{scope}{f}")
             all_jacs.extend(j)
-            
         return " + ".join([f"({e})" for e in f_exprs]), all_jacs
 
     @property
@@ -56,3 +48,6 @@ class Additive_p(StartingProbability):
     @property
     def bounds(self):
         return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
+
+# Apply the decorator MANUALLY here
+Additive_p = cpptype(Additive_p)
