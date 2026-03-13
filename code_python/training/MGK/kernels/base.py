@@ -33,7 +33,7 @@ from graphdot.microkernel import (
 
 )
 
-from graphdot.kernel.marginalized.starting_probability import StartingProbability
+from graphdot.kernel.marginalized.starting_probability import StartingProbability, Uniform
 
 # from graphdot.microprobability import (
 #     Additive as Additive_p,
@@ -43,53 +43,40 @@ from graphdot.kernel.marginalized.starting_probability import StartingProbabilit
 
 class Additive_p(StartingProbability):
     def __init__(self, **kwargs):
-        """
-        probabilities: list of StartingProbability objects
-        """
         self.probabilities = list(kwargs.values())
 
     def __call__(self, nodes):
-        # Sum the results of all sub-probability objects
+        # Ensure we handle the (p, dp) tuple correctly
         results = [p(nodes) for p in self.probabilities]
         p_total = np.sum([r[0] for r in results], axis=0)
-        # Concatenate gradients
         dp_total = np.concatenate([r[1] for r in results], axis=0)
         return p_total, dp_total
 
     def gen_expr(self):
-        # Standard kernels expect (x, y) for their C++ expression.
-        # For a starting probability, we only care about the current node 'x'.
         exprs = []
         for p in self.probabilities:
-            try:
-                # Try calling with x and y as expected by standard kernels
-                fun_expr, jac_expr = p.gen_expr('x', 'x') 
-                exprs.append(fun_expr)
-            except TypeError:
-                # If it's already a probability-type object, it might take no args
-                fun_expr, jac_expr = p.gen_expr()
-                exprs.append(fun_expr)
-                
-        combined_expr = " + ".join([f"({e})" for e in exprs])
-        # The MarginalizedGraphKernel backend expects a tuple: (expression, jacobian_info)
-        # If you aren't handling custom jacobian strings here, returning the expr is the first step.
-        return combined_expr, None
+            # GraphDot probability objects return (expr, jacobian_code)
+            expr, _ = p.gen_expr()
+            exprs.append(expr)
+        return " + ".join([f"({e})" for e in exprs]), None
 
     @property
     def theta(self):
-        return np.concatenate([p.theta for p in self.probabilities])
+        # Ensure we only try to concatenate if theta exists
+        return np.concatenate([np.atleast_1d(p.theta) for p in self.probabilities])
 
     @theta.setter
     def theta(self, value):
         start = 0
         for p in self.probabilities:
-            end = start + len(p.theta)
-            p.theta = value[start:end]
-            start = end
+            n = len(np.atleast_1d(p.theta))
+            p.theta = value[start:start + n]
+            start += n
 
     @property
     def bounds(self):
-        return np.concatenate([p.bounds for p in self.probabilities])
+        return np.concatenate([np.atleast_1d(p.bounds) for p in self.probabilities])
+    
 
 class MicroKernel:
     """
@@ -210,7 +197,7 @@ class MicroKernel:
             return sExp(self.value, length_scale_bounds=bounds)
         elif self.kernel_type == "Const_p":
             #edit if you need  something else for probability microkernels
-            return Const(self.value, bounds)
+            return Uniform(self.value, bounds)
         elif self.kernel_type == "Assign_p":
             #edit if you need  something else for probability microkernels
             return Const(self.value, bounds)
