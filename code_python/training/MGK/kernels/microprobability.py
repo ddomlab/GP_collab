@@ -1,7 +1,8 @@
 from graphdot.kernel.marginalized.starting_probability import StartingProbability, Uniform
+from graphdot.codegen.cpptool import cpptype
+
 import numpy as np
 
-from graphdot.codegen.cpptool import cpptype
 
 
 @cpptype(p=np.float32)
