@@ -30,17 +30,53 @@ from graphdot.microkernel import (
     KroneckerDelta as kDelta,
     Convolution as kConv,
     Normalize,
+
 )
+
+from graphdot.kernel.marginalized.starting_probability import StartingProbability
+
 # from graphdot.microprobability import (
 #     Additive as Additive_p,
 #     Constant,
 #     AssignProbability,
 # )
-def AssignProbability(value, bounds):
-    return value, bounds
 
-def Additive_p(value):
-    return value
+class Additive_p(StartingProbability):
+    def __init__(self, **kwargs):
+        """
+        probabilities: list of StartingProbability objects
+        """
+        self.probabilities = list(kwargs.values())
+
+    def __call__(self, nodes):
+        # Sum the results of all sub-probability objects
+        results = [p(nodes) for p in self.probabilities]
+        p_total = np.sum([r[0] for r in results], axis=0)
+        # Concatenate gradients
+        dp_total = np.concatenate([r[1] for r in results], axis=0)
+        return p_total, dp_total
+
+    def gen_expr(self):
+        # Combine C++ expressions for the JIT compiler
+        exprs = [p.gen_expr() for p in self.probabilities]
+        combined_expr = " + ".join([f"({e})" for e in exprs])
+        return combined_expr
+
+    @property
+    def theta(self):
+        return np.concatenate([p.theta for p in self.probabilities])
+
+    @theta.setter
+    def theta(self, value):
+        start = 0
+        for p in self.probabilities:
+            end = start + len(p.theta)
+            p.theta = value[start:end]
+            start = end
+
+    @property
+    def bounds(self):
+        return np.concatenate([p.bounds for p in self.probabilities])
 
 class MicroKernel:
     """
@@ -182,11 +218,10 @@ class MicroKernel:
             if self.value == "Tensorproduct":
                 return TensorProduct
             elif self.value == "Additive":
-                # change if you need something else for composition types
-                return 1
+                return lambda **x: Normalize(Additive(**x))
             elif self.value == "Additive_p":
                 # change if you need something else for probability composition types
-                return 1
+                return Additive_p
             else:
                 raise ValueError(
                     "For kernel type (%s), the value (%s) is not supported."
