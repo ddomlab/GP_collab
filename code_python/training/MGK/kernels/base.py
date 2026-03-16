@@ -161,7 +161,7 @@ class MicroKernel:
             return sExp(self.value, length_scale_bounds=bounds)
         elif self.kernel_type == "Const_p":
             #edit if you need  something else for probability microkernels
-            return Uniform(self.value, bounds)
+            return ConstantStartingProbability(self.value, bounds)
         elif self.kernel_type == "Assign_p":
             #edit if you need  something else for probability microkernels
             return Uniform(self.value, bounds)
