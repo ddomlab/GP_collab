@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import List, Literal
+from typing import List
 import warnings
 import numpy as np
 import scipy
@@ -19,8 +19,9 @@ from sklearn.metrics import (
 )
 
 
-Metric = Literal['roc_auc', 'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1_score', 'mcc',
-                 'rmse', 'mae', 'mse', 'r2', 'max', 'spearman', 'kendall', 'pearson']
+Metric = str
+# ['roc_auc', 'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1_score', 'mcc',
+#                  'rmse', 'mae', 'mse', 'r2', 'max', 'spearman', 'kendall', 'pearson']
 AVAILABLE_METRICS_REGRESSION = ['rmse', 'mae', 'mse', 'r2', 'max', 'spearman', 'pearson', 'kendall']
 AVAILABLE_METRICS_BINARY = ['roc_auc', 'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1_score', 'mcc']
 AVAILABLE_METRICS_MULTICLASS = ['roc_auc', 'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1_score', 'mcc']
