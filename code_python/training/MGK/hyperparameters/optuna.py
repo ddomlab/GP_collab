@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Union, Literal, Tuple
+from typing import Dict, List, Union, Tuple, Callable
 import os
 import numpy as np
 import copy
 import optuna
 from optuna.samplers import TPESampler
-from mgktools.data.data import Dataset
-from mgktools.models import set_model
-from mgktools.evaluators.cross_validation import Evaluator, Metric
-from mgktools.kernels.PreComputed import calc_precomputed_kernel_config
-from mgktools.kernels.base import BaseKernelConfig
+from data_handler.data import Dataset
+
+from handle_model import set_model
+from evaluator.cross_validation import Evaluator, Metric
+from kernels.PreComputed import calc_precomputed_kernel_config
+from kernels.base import BaseKernelConfig
 
 
 def evaluate_model(dataset, dataset_val, dataset_test, kernel_config, model_type, task_type, metric, **kwargs):
@@ -98,12 +99,12 @@ def bayesian_optimization(
     dataset_val: Dataset,
     dataset_test: Dataset,
     kernel_config: BaseKernelConfig,
-    task_type: Literal["regression", "binary", "multi-class"],
-    model_type: Literal["gpr", "gpr-sod", "gpr-nystrom", "gpr-nle", "svr", "gpc", "svc"],
-    metric: Literal[Metric, "log_likelihood"],
-    cross_validation: Literal["n-fold", "leave-one-out", "Monte-Carlo"],
+    task_type:str, # "regression", "binary", or "multi-class" 
+    model_type: str, # "gpr", "gpr-sod", "gpr-nystrom", "gpr-nle", "svr", "gpc", or "svc"
+    metric: Union[str, Callable], # Metric Function or "log_likelihood" for GPR models
+    cross_validation: str, # "n-fold", "leave-one-out", or "Monte-Carlo"
     n_splits: int = None,
-    split_type: Literal['random', 'scaffold_order', 'scaffold_random'] = None,
+    split_type: str = None, # 'random', 'scaffold_order', 'scaffold_random'
     split_sizes: List[float] = None,
     num_folds: int = 10,
     num_iters: int = 100,
@@ -283,11 +284,11 @@ def bayesian_optimization_gpr_multi_datasets(
     save_dir: str,
     kernel_config: BaseKernelConfig,
     datasets: List[Dataset],
-    tasks_type: List[Literal["regression", "binary"]],
-    metrics: List[Literal[Metric]],
-    cross_validation: Literal["n-fold", "leave-one-out", "Monte-Carlo"],
+    tasks_type: List[str], # List of task types for each dataset, either "regression" or "binary"
+    metrics: List[Callable], # List[Metric]
+    cross_validation: str, # n-fold, leave-one-out, or Monte-Carlo
     n_splits: int = None,
-    split_type: Literal['random', 'scaffold_order', 'scaffold_random'] = None,
+    split_type: str = None, # 'random', 'scaffold_order', 'scaffold_random'
     split_sizes: List[float] = None,
     num_folds: int = 10,
     num_iters: int = 100,
