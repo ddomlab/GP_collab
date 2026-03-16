@@ -24,7 +24,7 @@ from sklearn.model_selection import KFold
 from interpret.utils import save_mols_pkl
 from data_handler.data import Dataset
 from data_handler.split import get_data_from_index, dataset_split
-from metric import Metric, metric_regression, metric_binary
+from .metric import Metric, metric_regression, metric_binary
 
 
 class Evaluator:
