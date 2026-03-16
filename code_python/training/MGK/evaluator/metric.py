@@ -40,7 +40,7 @@ def metric_regression(y: List[float], y_pred: List[float], metric: Metric) -> fl
         float: Calculated metric value.
     """
     if metric == 'rmse':
-        return root_mean_squared_error(y, y_pred)
+        return np.sqrt(mean_squared_error(y, y_pred))
     elif metric == 'mae':
         return mean_absolute_error(y, y_pred)
     elif metric == 'mse':
