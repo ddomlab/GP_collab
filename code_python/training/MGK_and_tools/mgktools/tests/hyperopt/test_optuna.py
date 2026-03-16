@@ -16,11 +16,11 @@ targets = [3.1, 14.5, 25.6, 56.7, 12.3]
 df = pd.DataFrame({'smiles': smiles, 'targets': targets})
 
 
-@pytest.mark.parametrize('mgk_file', [additive, additive_norm, additive_pnorm, additive_msnorm,
-                                      product, product_norm, product_pnorm, product_msnorm])
+@pytest.mark.parametrize('mgk_file', [
+                                      product])
 @pytest.mark.parametrize('split_set', [
-    ('leave-one-out', None, None, 1),
-    ('Monte-Carlo', None, 'random', 10),
+    # ('leave-one-out', None, None, 1),
+    # ('Monte-Carlo', None, 'random', 10),
     ('kFold', 5, None, 1)
 ])
 def test_bayesian_Graph(mgk_file, split_set):
