@@ -148,16 +148,16 @@ class GraphKernelConfig(BaseKernelConfig):
             )
         kedge = self.microkernel_btype.get_kernel()(**kedge_dict)
         p_dict = {}
-        # for mks in self.microkernels_probability:
-        #     p_dict.update({mks[0].name[12:]: np.prod([k.get_kernel() for k in mks])})
-        # p = self.microkernel_ptype.get_kernel()(**p_dict)
+        for mks in self.microkernels_probability:
+            p_dict.update({mks[0].name[12:]: np.prod([k.get_kernel() for k in mks])})
+        p = self.microkernel_ptype.get_kernel()(**p_dict)
 
         kernel = MGK(
             node_kernel=knode,
             edge_kernel=kedge,
             q=self.microkernel_q.value,
             q_bounds=self.microkernel_q.bounds,
-            p=1.0,
+            p=p,
             unique=self.unique,
         )
         self.kernel = self.microkernel_normalization.get_kernel()(kernel)
