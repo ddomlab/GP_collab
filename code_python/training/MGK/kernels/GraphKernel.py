@@ -4,7 +4,7 @@ from typing import Dict, Any
 import os
 import json
 import numpy as np
-from graphdot.kernel.marginalized import MarginalizedGraphKernel
+from graphdot.kernel.marginalized._kernel import MarginalizedGraphKernel
 from .base import BaseKernelConfig, MicroKernel
 
 
