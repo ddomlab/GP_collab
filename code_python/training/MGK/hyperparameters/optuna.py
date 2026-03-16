@@ -8,7 +8,7 @@ import optuna
 from optuna.samplers import TPESampler
 from data_handler.data import Dataset
 
-from handle_model import set_model
+from models.handle_model import set_model
 from evaluator.cross_validation import Evaluator, Metric
 from kernels.PreComputed import calc_precomputed_kernel_config
 from kernels.base import BaseKernelConfig
