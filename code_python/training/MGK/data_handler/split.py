@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Union, Literal, Set
+from typing import Dict, List, Union, Set
 import math
 import numpy as np
 from collections import defaultdict
@@ -131,8 +131,7 @@ def get_split_sizes(n_samples: int,
 def data_split_index(n_samples: int,
                      mols: List[Union[str, Chem.Mol]] = None,
                      targets: List = None,
-                     split_type: Literal['random', 'scaffold_order', 'scaffold_random',
-                                         'init_al', 'stratified', 'n_heavy'] = 'random',
+                     split_type: str = 'random', # 'random', 'scaffold_order', 'scaffold_random', 'init_al', 'stratified', 'n_heavy'
                      sizes: List[float] = [0.8, 0.2],
                      n_samples_per_class: int = None,
                      n_heavy_cutoff: int = None,
@@ -266,8 +265,7 @@ def data_split_index(n_samples: int,
 
 
 def dataset_split(dataset,
-                  split_type: Literal['random', 'scaffold_order', 'scaffold_random', 'init_al', 'stratified',
-                                      'n_heavy'] = None,
+                  split_type: str = None, # 'random', 'scaffold_order', 'scaffold_random', 'init_al', 'stratified', 'n_heavy'
                   sizes: List[float] = [0.8, 0.2],
                   n_heavy_cutoff: int = 15,
                   seed: int = 0) -> List:
