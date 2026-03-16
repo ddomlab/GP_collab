@@ -157,7 +157,7 @@ class GraphKernelConfig(BaseKernelConfig):
             edge_kernel=kedge,
             q=self.microkernel_q.value,
             q_bounds=self.microkernel_q.bounds,
-            p=1,
+            p=1.0,
             unique=self.unique,
         )
         self.kernel = self.microkernel_normalization.get_kernel()(kernel)
