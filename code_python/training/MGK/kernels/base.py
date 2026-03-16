@@ -183,9 +183,9 @@ class MicroKernel:
                 return TensorProduct
             elif self.value == "Additive":
                 return lambda **x: Normalize(Additive(**x))
-            elif self.value == "Additive_p":
-                # change if you need something else for probability composition types
-                return Additive_p
+            # elif self.value == "Additive_p":
+            #     # change if you need something else for probability composition types
+            #     return Additive_p
             else:
                 raise ValueError(
                     "For kernel type (%s), the value (%s) is not supported."
