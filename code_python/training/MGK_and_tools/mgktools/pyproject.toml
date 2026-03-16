@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mgktools"
+description = "Marginalized Graph Kernel Library for Molecular Property Prediction"
+version = "3.4.0"
+authors = [
+    {name = "Yan Xiang", email="yan.xiang@duke.edu"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+keywords = [
+    "chemistry",
+    "machine learning",
+    "molecular property prediction",
+    "marginalized graph kernel",
+    "drug discovery"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "descriptastorus", # new version fail in pickle and multi-process acceleration
+    "typed-argument-parser",
+    "scikit-learn",
+    "rxntools",
+    "optuna",
+    "ipython",
+    "pytest"
+]
+
+[project.urls]
+source = "https://github.com/xiangyan93/mgktools"
+PyPi = "https://pypi.org/project/mgktools/"
+
+[project.scripts]
+mgk_cache_data = "mgktools.exe.run:mgk_cache_data"
+mgk_kernel_calc = "mgktools.exe.run:mgk_kernel_calc"
+mgk_cross_validation = "mgktools.exe.run:mgk_cross_validation"
+mgk_gradientopt = "mgktools.exe.run:mgk_gradientopt"
+mgk_optuna = "mgktools.exe.run:mgk_optuna"
+mgk_optuna_multi_datasets = "mgktools.exe.run:mgk_optuna_multi_datasets"
+mgk_embedding = "mgktools.exe.run:mgk_embedding"
+
+[tool.setuptools.package-data]
+"*" = ["hyperparameters/configs/*.json", "graph/*.dat"]
+
+[tool.setuptools.packages.find]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
