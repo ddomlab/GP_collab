@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 from sklearn.metrics import (
     mean_squared_error,
-    root_mean_squared_error,
+    # root_mean_squared_error,
     mean_absolute_error,
     r2_score,
     accuracy_score,
