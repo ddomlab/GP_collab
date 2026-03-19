@@ -33,7 +33,7 @@ targets = w_data[all_targets]
 
 df = pd.concat([smiles, w_data[all_targets]], axis=1)
 
-smiles = ['CCCC', 'CCCCCO', 'c1ccccc1', '*/C=C/c1cc(OCC(CC)CCCC)c(*)cc1OC', 'OCCCO']
+smiles = ['CCCC', 'CCCCCO', 'c1ccccc1', 'C/C=C/c1cc(OCC(CC)CCCC)c(C)cc1OC', 'OCCCO']
 targets = [3.1, 14.5, 25.6, 56.7, 12.3]
 df = pd.DataFrame({'smiles': smiles, 'targets': targets})
 # print(df.head())
