@@ -47,7 +47,7 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
                               smiles_columns='smiles',
                               targets_columns='targets')
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
-    dataset.create_graphs(n_jobs=4)
+    dataset.create_graphs(n_jobs=1)
     dataset.unify_datatype()
     kernel_config = get_kernel_config(dataset=dataset,
                                       graph_kernel_type='graph',
