@@ -41,8 +41,8 @@ df = pd.concat([smiles, w_data[all_targets]], axis=1)
 @pytest.mark.parametrize('optimizer', ['L-BFGS-B'])
 def test_gradient_Graph(mgk_file, loss_function, optimizer):
     dataset = Dataset.from_df(df=df,
-                              smiles_columns=['smiles'],
-                              targets_columns=['targets'])
+                              smiles_columns=f"{polymer_unit[0]} SMILES",
+                              targets_columns=all_targets)
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
     dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
