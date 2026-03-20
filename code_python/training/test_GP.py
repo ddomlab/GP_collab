@@ -28,9 +28,10 @@ w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER
 
 
 
-smiles = ['CCCC', 'CCCCCO', 'c1ccccc1', 'C/C=C/c1cc(OCC(CC)CCCC)c(C)cc1OC', 'OCCCO']
-targets = [3.1, 14.5, 25.6, 56.7, 12.3]
-df = pd.DataFrame({'smiles': smiles, 'targets': targets})
+smiles = ['CCCC', 'CCCCCO', 'CC=Cc1cc(OCC(CC)CCCC)c(C)cc1OC', 'OCCCO']
+sanitized_smiles = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiles]
+targets = [3.1, 14.5, 56.7, 12.3]
+df = pd.DataFrame({'smiles': sanitized_smiles, 'targets': targets})
 
    
 # print(df.head())
@@ -44,7 +45,7 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
                               smiles_columns='smiles',
                               targets_columns='targets')
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
-    dataset.create_graphs(n_jobs=4)
+    dataset.create_graphs(n_jobs=1)
     dataset.unify_datatype()
     kernel_config = get_kernel_config(dataset=dataset,
                                       graph_kernel_type='graph',
