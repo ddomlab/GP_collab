@@ -236,6 +236,7 @@ class AtomBondFeaturesConfig:
         return hash(','.join(list(map(str, np.sort(l)))))
 
     def preprocess(self, mol):
+        print("original mol:", Chem.MolToSmiles(mol))
         Chem.SanitizeMol(mol)
         print("preprocess mol:", Chem.MolToSmiles(mol))
         if self.set_hydrogen_explicit:
