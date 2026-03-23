@@ -29,7 +29,7 @@ w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER
 
 
 
-smiles = ['CCCC', 'CCCCCO', 'CC=Cc1cc(OCC(CC)CCCC)c(C)cc1OC', 'OCCCO']
+smiles = ['CCCC', 'CCCCCO', 'CC(=O)CC', 'OCCCO']
 targets = [3.1, 14.5, 56.7, 12.3]
 df = pd.DataFrame({'smiles': smiles, 'targets': targets})
 
