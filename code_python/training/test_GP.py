@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 import pandas as pd
 import numpy as np
-from mgktools.data.data import Dataset
+
+from MGK_and_tools.mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
 from mgktools.hyperparameters import *
 from mgktools.models import GaussianProcessRegressor
