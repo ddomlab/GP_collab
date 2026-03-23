@@ -30,8 +30,9 @@ w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER
 
 
 smiles = ['CCCC', 'CCCCCO', 'CC(=O)CC', 'OCCCO']
+can_smiles = [Chem.CanonSmiles(smi) for smi in smiles]
 targets = [3.1, 14.5, 56.7, 12.3]
-df = pd.DataFrame({'smiles': smiles, 'targets': targets})
+df = pd.DataFrame({'smiles': can_smiles, 'targets': targets})
 
    
 # print(df.head())
