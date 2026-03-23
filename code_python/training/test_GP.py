@@ -14,7 +14,8 @@ from sklearn.metrics import r2_score, root_mean_squared_error
 
 from rdkit import Chem
 from filter_data import _get_dataset_features, get_structural_info
-
+import mgktools
+print(mgktools.__file__)
 HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
