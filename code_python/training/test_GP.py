@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 import pandas as pd
 import numpy as np
-
 from mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
 from mgktools.hyperparameters import *
@@ -29,10 +28,9 @@ w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER
 
 
 
-smiles = ['CCCC', 'CCCCCO', 'CC=Cc1cc(OCC(CC)CCCC)c(C)cc1OC', 'OCCCO']
-can_smiles = [Chem.CanonSmiles(smi) for smi in smiles]
-targets = [3.1, 14.5, 56.7, 12.3]
-df = pd.DataFrame({'smiles': can_smiles, 'targets': targets})
+smiles = w_data[f"{polymer_unit[0]} SMILES"].apply(lambda x: Chem.CanonSmiles(x))
+targets = w_data[all_targets]
+df = pd.concat([smiles, w_data[all_targets]], axis=1)
 
    
 # print(df.head())
@@ -43,11 +41,10 @@ df = pd.DataFrame({'smiles': can_smiles, 'targets': targets})
 @pytest.mark.parametrize('optimizer', ['L-BFGS-B'])
 def test_gradient_Graph(mgk_file, loss_function, optimizer):
     dataset = Dataset.from_df(df=df,
-                              smiles_columns=['smiles'],
-                              targets_columns=['targets'])
+                              smiles_columns=[f"{polymer_unit[0]} SMILES"],
+                              targets_columns=all_targets)
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
-    dataset.create_graphs(n_jobs=1)
-    # print("x and y data types:", dataset.X, dataset.y)
+    dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
     kernel_config = get_kernel_config(dataset=dataset,
                                       graph_kernel_type='graph',
