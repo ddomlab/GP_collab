@@ -5,7 +5,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from MGK_and_tools.mgktools.mgktools.data.data import Dataset
+from mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
 from mgktools.hyperparameters import *
 from mgktools.models import GaussianProcessRegressor
@@ -47,6 +47,7 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
                               targets_columns='targets')
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
     dataset.create_graphs(n_jobs=1)
+    print("x and y data types:", dataset.X, dataset.y)
     dataset.unify_datatype()
     kernel_config = get_kernel_config(dataset=dataset,
                                       graph_kernel_type='graph',
