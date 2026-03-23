@@ -126,20 +126,20 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
 
-    dataset = pd.read_pickle(dataset_path)
+    dataset: pd.DataFrame = pd.read_pickle(dataset_path)
 
     if paper not in DATASET_CONFIG:
         raise ValueError(f"No predefined features found for paper '{paper}'")
 
     entry = DATASET_CONFIG[paper]
-    features = entry["features"]
+    features: list[str] = entry["features"]
 
-    target = (
+    target: list[str] = (
         entry["target"].get(dataset_name)
         if isinstance(entry["target"], dict)
         else entry["target"]
     )
-    polymer_unit = entry["polymer_unit"]
+    polymer_unit: list[str] = entry["polymer_unit"]
 
     return dataset, features, target, polymer_unit
 
