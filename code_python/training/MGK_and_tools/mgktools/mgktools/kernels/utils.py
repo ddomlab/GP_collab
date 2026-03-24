@@ -123,11 +123,30 @@ def get_kernel_config(
         precomputed_kernel_config = PreComputedKernelConfig(kernel_dict=kernel_dict)
 
         if features_kernel_config is not None:
+            if feature_mode == "joint":
+                kernel_configs = [precomputed_kernel_config, features_kernel_config]
+                composition = [(0,), ] + [tuple(range(1, 1 + n_features))]
+            elif feature_mode == "per_feature":
+                import copy
+                feature_kernel_configs = [
+                    FeatureKernelConfig(
+                        copy.deepcopy(features_kernel_config.hyperdict),
+                        idx=1 + j
+                    )
+                    for j in range(n_features)
+                ]
+                kernel_configs = [precomputed_kernel_config, *feature_kernel_configs]
+                composition = [(0,), ] + [(1 + j,) for j in range(n_features)]
+            else:
+                raise ValueError(f"Unknown feature_mode: {feature_mode}")
+
+
             hybrid_kernel_config = HybridKernelConfig(
-                kernel_configs=[precomputed_kernel_config, features_kernel_config],
-                composition=[(0,), ] + [tuple(range(1, 1 + n_features))],
+                kernel_configs=kernel_configs,
+                composition=composition,
                 hybrid_rule=hybrid_rule,
             )
+
             return hybrid_kernel_config
         else:
             return precomputed_kernel_config

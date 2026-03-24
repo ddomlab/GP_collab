@@ -53,7 +53,9 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
                                       features_kernel_type='rbf',
                                     #   features_hyperparameters=[rbf],
                                     #   features_hyperparameters_bounds=,
-                                      features_hyperparameters_file="rbf.json"
+                                      features_hyperparameters_file="rbf.json",
+                                      kernel_rule="product",
+                                      feature_mode="joint",
                                       )
     gpr = GaussianProcessRegressor(kernel=kernel_config.kernel,
                                    optimizer=optimizer,
