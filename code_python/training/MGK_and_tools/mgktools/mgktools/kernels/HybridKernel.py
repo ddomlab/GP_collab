@@ -180,7 +180,7 @@ class HybridKernelConfig(BaseKernelConfig):
         self,
         kernel_configs: List[BaseKernelConfig],
         composition: List[Tuple[int]],
-        hybrid_rule: Literal["product"] = "product",
+        hybrid_rule: Literal["product", "sum"] = "product",
     ):
         assert len(kernel_configs) == len(composition) >= 2
         self.kernel_configs = kernel_configs

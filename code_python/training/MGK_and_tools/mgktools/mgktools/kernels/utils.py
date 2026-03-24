@@ -22,6 +22,8 @@ def get_kernel_config(
     # arguments for pre-computed kernel
     kernel_dict: Dict = None,
     kernel_pkl: str = None,
+    hybrid_rule: Literal["product", "sum"] = "product",
+    feature_mode: Literal["joint", "per_feature"] = "joint"
 ):
     if kernel_pkl is not None and os.path.exists(kernel_pkl) and graph_kernel_type == "pre-computed":
         return pickle.load(open(kernel_pkl, "rb"))
@@ -86,14 +88,14 @@ def get_kernel_config(
             hybrid_kernel_config = HybridKernelConfig(
                 kernel_configs=[*graph_kernel_configs, features_kernel_config],
                 composition=[(i,) for i in range(n_configs)] + [tuple(range(n_configs, n_configs + n_features))],
-                hybrid_rule="product",
+                hybrid_rule=hybrid_rule,
             )
             return hybrid_kernel_config
         elif n_configs >= 2:
             hybrid_kernel_config = HybridKernelConfig(
                 kernel_configs=graph_kernel_configs,
                 composition=[(i,) for i in range(n_configs)],
-                hybrid_rule="product",
+                hybrid_rule=hybrid_rule,
             )
             return hybrid_kernel_config
         else:
@@ -107,7 +109,7 @@ def get_kernel_config(
             hybrid_kernel_config = HybridKernelConfig(
                 kernel_configs=[precomputed_kernel_config, features_kernel_config],
                 composition=[(0,), ] + [tuple(range(1, 1 + n_features))],
-                hybrid_rule="product",
+                hybrid_rule=hybrid_rule,
             )
             return hybrid_kernel_config
         else:
