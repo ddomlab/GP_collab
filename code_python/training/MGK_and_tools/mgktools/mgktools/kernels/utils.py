@@ -85,11 +85,28 @@ def get_kernel_config(
             graph_kernel_configs.append(graph_kernel_config)
         n_configs = len(graph_kernel_configs)
         if features_kernel_config is not None:
-            hybrid_kernel_config = HybridKernelConfig(
-                kernel_configs=[*graph_kernel_configs, features_kernel_config],
-                composition=[(i,) for i in range(n_configs)] + [tuple(range(n_configs, n_configs + n_features))],
-                hybrid_rule=hybrid_rule,
-            )
+            if feature_mode == "joint":
+                hybrid_kernel_config = HybridKernelConfig(
+                    kernel_configs=[*graph_kernel_configs, features_kernel_config],
+                    composition=[(i,) for i in range(n_configs)] + [tuple(range(n_configs, n_configs + n_features))],
+                    hybrid_rule=hybrid_rule,
+                )
+            elif feature_mode == "per_feature":
+                import copy
+                feature_kernel_configs = []
+                for j in range(n_features):
+                    fk = FeatureKernelConfig(
+                        copy.deepcopy(features_kernel_config.hyperdict),
+                        idx=n_configs + j
+                    )
+                    feature_kernel_configs.append(fk)
+
+                hybrid_kernel_config = HybridKernelConfig(
+                    kernel_configs=[*graph_kernel_configs, *feature_kernel_configs],
+                    composition=[(i,) for i in range(n_configs)] +
+                                [(n_configs + j,) for j in range(n_features)],
+                    hybrid_rule=hybrid_rule,
+                )
             return hybrid_kernel_config
         elif n_configs >= 2:
             hybrid_kernel_config = HybridKernelConfig(
