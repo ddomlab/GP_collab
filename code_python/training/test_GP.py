@@ -19,9 +19,9 @@ DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
 
-PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+PAPER = "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
 # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset_name = "Rg data with clusters aging imputed"
+dataset_name = "flux_data_imputed"
 # "cleaned_dataset_pervaporation_membranes_wang"
 #non_imputed_dropped_nan_Rg_data
 w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
