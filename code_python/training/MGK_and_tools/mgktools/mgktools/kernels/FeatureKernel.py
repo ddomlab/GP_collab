@@ -74,3 +74,10 @@ class FeatureKernelConfig(BaseKernelConfig):
             hyperdict=hyperdict,
             idx=idx,
         )
+
+    @property
+    def hyperdict(self):
+        hyperdict = {}
+        for microkernel in self.microkernels_feature:
+            microkernel.update_hyperdict(hyperdict)
+        return hyperdict
