@@ -462,6 +462,65 @@ def gp_cross_validate(
     return scores, predictions
 
 
+def mgk_cross_validate(
+    estimator,
+    X,
+    y,
+    cv,
+    scoring,
+    loss_function,
+    repeat,
+    # n_jobs=-1,
+    return_importance=False,
+):
+    # Placeholder for MGK-specific cross-validation logic
+    results = {f"test_{name}": [] for name in scoring}
+    n_samples = len(y)
+    predictions = np.full(n_samples, np.nan)
+    for train_idx, test_idx in cv.split(X, y):
+        model = clone(estimator)
+
+    # Use safe row selector for all data types
+        X_train = split_for_training(X, train_idx)
+        X_test  = split_for_training(X, test_idx)
+        y_train = split_for_training(y, train_idx)
+        y_test  = split_for_training(y, test_idx)
+
+        model.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=repeat)
+        y_pred = model.predict(X_test)
+        predictions[test_idx] = y_pred
+        for name, scorer in scoring.items():
+            results[f"test_{name}"].append(scorer(y_test, y_pred))
+
+    ## ADD feature importance extraction for MGK if possible
+    if return_importance:
+        # Placeholder for feature importance extraction logic
+        pass
+    return results, predictions
+
+def mgk_cross_validate_regressor(
+        regressor, X, y, cv, loss_function, repeat, return_importance: bool = False
+    ) -> tuple[dict[str, float], np.ndarray]:
+
+        scorers = {
+        "rmse": root_mean_squared_error,
+        "mae": mean_absolute_error,
+        "r2": r2_score,
+        }
+
+        score, predictions = mgk_cross_validate(
+            regressor,
+            X,
+            y,
+            cv=cv,
+            scoring=scorers,
+            loss_function=loss_function,
+            repeat=repeat,
+            return_importance=return_importance,
+            )
+        return score, predictions
+
+
 def gp_cross_validate_regressor(
     regressor, X, y, cv, return_ls: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:

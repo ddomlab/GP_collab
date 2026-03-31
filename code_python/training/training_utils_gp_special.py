@@ -11,10 +11,9 @@ from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.multioutput import MultiOutputRegressor,MultiOutputClassifier
+# from sklearn.preprocessing import FunctionTransformer
+from sklearn.multioutput import MultiOutputRegressor
 # from optuna.integration import OptunaSearchCV
-from scipy.stats import invgamma
 
 # from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from data_handling import remove_unserializable_keys, save_results
@@ -24,15 +23,17 @@ from all_factories import (
                             # regressor_search_space,
                             transforms,
                             get_regressor_search_space,
-                            _get_gp_kernel)
+                            # _get_gp_kernel
+                            )
 from all_factories import optimized_models
 
 from imputation_normalization import preprocessing_workflow
 from scoring import (
     cross_validate_regressor,
     process_scores,
-    _average_ls,
-    gp_cross_validate_regressor
+    # _average_ls,
+    gp_cross_validate_regressor,
+    mgk_cross_validate_regressor
 )
 
 from utils import split_for_training
@@ -309,6 +310,8 @@ def run(
             # return_importance = False if "GP" in regressor_type else True
             if "gp" in regressor_type.lower():
                 scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+            elif "mgk" in regressor_type.lower():
+                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
             else:
                 scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
                                                                 custom=True,
