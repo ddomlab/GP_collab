@@ -48,7 +48,7 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
     dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
 
-    print(dataset.X)
+    print(dataset.X.columns.tolist())
     print(dataset.X.shape)
     # kernel_config = get_kernel_config(dataset=dataset,
     #                                   graph_kernel_type='graph',
