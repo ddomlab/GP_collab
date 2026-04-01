@@ -45,7 +45,7 @@ def main_structural_numerical(
     **kwargs,
 ) -> None:
 
-    structural_features, unroll_single_feat = get_structural_info(representation,polymer_unit,radius,vector)
+    structural_features, unroll_single_feat = get_structural_info(representation, polymer_unit, radius, vector)
     scores, predictions  =   train_regressor(
                                             dataset=dataset,
                                             features_impute=columns_to_impute,
@@ -65,7 +65,7 @@ def main_structural_numerical(
   
     save_results(scores,
                 predictions=predictions,
-                representation=representation,
+                representation=unroll_single_feat["representation"],
                 target_features=target_features,
                 regressor_type=regressor_type,
                 numerical_feats=numerical_feats,
@@ -95,21 +95,23 @@ if __name__ == "__main__":
     for targ in all_targets:
                 main_structural_numerical(
                     dataset=w_data,
-                    representation="SMILES",
+                    representation="MG",
                     # radius=3,
                     # vector="count",
-                    regressor_type="GPytorchMAP",
+                    regressor_type="MGK",
                     # GPytorchMixMCMC
                     # GPMixMCMC
                     polymer_unit=polymer_unit,
                     target_features=[targ],  
-                    feat_transformer='Standard',
+                    feat_transformer=None,
                     target_transformer='Standard',
                     numerical_feats=feats,
                     hyperparameter_optimization=False,
                     kernel_type={
-                        "fp":args.K_fp,
-                        "count":args.K_count
+                        "fp": "Graph",
+                        "count": "RBF"
+                        # "fp":args.K_fp,
+                        # "count":args.K_count
                                 },
                     kernel_mixing_method=args.Kernel_mixing_method,
                     # imputer="mean",

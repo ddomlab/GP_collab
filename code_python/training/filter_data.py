@@ -169,8 +169,8 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
                                 "col_names": fp_features,
                                 }
             return fp_features, unrolling_featurs
-        if fp == "SMILES":
-            fp_features = [f"{unit} {fp}" for unit in poly_unit_name]
+        if fp == "SSK" or fp == "MG":
+            fp_features = [f"{unit} SMILES" for unit in poly_unit_name]
             unrolling_featurs = {
                                 "representation": fp,
                                 "unit_name": poly_unit_name,

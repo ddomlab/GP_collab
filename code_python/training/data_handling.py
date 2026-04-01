@@ -61,25 +61,6 @@ def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str) -
         model_info = f'({regressor_name}_{kernel_type["fp"]}-{kernel_type["count"]}_{kernel_mixing_method})' if kernel_mixing_method else regressor_name
         return model_info
 
-    # if isinstance(model_info, dict):
-    #     name = model_info.get('model', 'unknown-model')
-    #     kernel_info = model_info.get('kernel', {})
-    #     kernel_fp = kernel_info.get('fP', None)
-    #     kernel_count = kernel_info.get('count', None)
-    #     mixing = model_info.get('mixing', None)
-
-    #     if mixing is None:
-    #         active = 'fp' if kernel_fp else 'count'
-    #         kernel_name = kernel_fp or kernel_count
-    #         return f"{name}_{active}-{kernel_name}"
-
-    #     return f"{name}_{mixing}-mix_{kernel_fp}-{kernel_count}"
-
-    # raise TypeError(f"Unsupported model_info type: {type(model_info)}")
-
-
-
-
 def _save(
         scores: Optional[Dict[int, Dict[str, float]]],
         predictions: Optional[pd.DataFrame],

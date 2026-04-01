@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import time
 from typing import Callable, Optional, Union, Dict, Tuple
+import torch
 
 import numpy as np
 import pandas as pd
@@ -35,11 +36,22 @@ from scoring import (
     gp_cross_validate_regressor,
     mgk_cross_validate_regressor
 )
-
 from utils import split_for_training
+
+## imports for MGK
+from mgktools.data.data import Dataset
+from mgktools.kernels.utils import get_kernel_config
+from mgktools.hyperparameters import *
 
 
 HERE: Path = Path(__file__).resolve().parent
+
+graph_kerenel_files = {
+    "product": [product],
+    "sum": [additive],
+}
+
+
 
 
 def set_globals(Test: bool=False) -> None:
@@ -63,7 +75,7 @@ def train_regressor(
     numerical_feats: Optional[list[str]],
     unroll: Union[dict[str, str], list[dict[str, str]], None],
     regressor_type: str,
-    target_features: str,
+    target_features: list[str],
     feat_transformer: str=None,
     target_transformer:str=None,
     hyperparameter_optimization: bool=True,
@@ -97,8 +109,6 @@ def train_regressor(
         scores = process_scores(scores)
         end = time.time()
         scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
-        # if ls is not None:
-        #     ls = _average_ls(ls)
   
         return scores, predictions
         
@@ -135,7 +145,7 @@ def create_feature_groups(
 
 def _prepare_data(
     dataset: pd.DataFrame,
-    target_features: str,
+    target_features: list[str],
     regressor_type: str,
     features_impute: Optional[list[str]]=None,
     special_impute: Optional[str]=None,
@@ -157,63 +167,85 @@ def _prepare_data(
     here you should change the names
     """
 
-
-    
-    X, y, unrolled_feats, kernel_parameters = filter_dataset(
-                                            raw_dataset=dataset,
-                                            structure_feats=structural_features,
-                                            scalar_feats=numerical_feats,
-                                            target_feats=target_features,
-                                            cutoff=cutoff,
-                                            dropna = True,
-                                            unroll=unroll,
-                                            kernel_type=kernel_type,
-                                            )
-
-    # Pipline workflow here and preprocessor
-    preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
-                                                    feat_to_impute=features_impute,
-                                                    numerical_feat=numerical_feats,
-                                                    structural_feat=unrolled_feats,
-                                                    special_column=special_impute,
-                                                    scaler=transform_type
-                                                    )
-    
-
-
-    preprocessor.set_output(transform="pandas")
-    # if isinstance(regressor_type, dict):
-    feat_group = create_feature_groups(unrolled_feats, unroll, numerical_feats)
-    # else:
-    #     feat_idx = None
-   
-    score,predication = run(
-                            X,
-                            y,
-                            features_group=feat_group,
-                            preprocessor=preprocessor,
-                            second_transformer=second_transformer,
-                            regressor_type=regressor_type,
-                            hyperparameter_optimization=hyperparameter_optimization,
-                            kernel_parameters=kernel_parameters,
-                            kernel_type=kernel_type,
-                            kernel_mixing_method=kernel_mixing_method,
-                            **kwargs,
+    if "mgk" in regressor_type.lower():
+            df = dataset[structural_features + numerical_feats + target_features]
+            mgk_dataset = Dataset.from_df(
+                              df=df,
+                              smiles_columns=structural_features,
+                              features_columns=numerical_feats,
+                              targets_columns=target_features
+                              )
+            mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
+            mgk_dataset.create_graphs(n_jobs=4)
+            mgk_dataset.unify_datatype()
+            mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
+                            graph_kernel_type='graph',
+                            mgk_hyperparameters_files=graph_kerenel_files[kernel_mixing_method]*len(structural_features),
+                            features_kernel_type='rbf',
+                            features_hyperparameters_file="rbf.json",
+                            hybrid_rule=kernel_mixing_method,
+                            feature_mode="per_feature",
                             )
-    # print(X_y_shape)
+            X, y = mgk_dataset.X, mgk_dataset.y
+            score,predication = run(
+                                X,
+                                y,
+                                regressor_type=regressor_type,
+                                hyperparameter_optimization=hyperparameter_optimization,
+                                kernel_parameters=mgk_kernel_config,
+                                # kernel_type=kernel_type,
+                                )
+    else:
+        X, y, unrolled_feats, kernel_parameters = filter_dataset(
+                                                raw_dataset=dataset,
+                                                structure_feats=structural_features,
+                                                scalar_feats=numerical_feats,
+                                                target_feats=target_features,
+                                                cutoff=cutoff,
+                                                dropna = True,
+                                                unroll=unroll,
+                                                kernel_type=kernel_type,
+                                                )
+
+        # Pipline workflow here and preprocessor
+        preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
+                                                        feat_to_impute=features_impute,
+                                                        numerical_feat=numerical_feats,
+                                                        structural_feat=unrolled_feats,
+                                                        special_column=special_impute,
+                                                        scaler=transform_type
+                                                        )
+        
+
+
+        preprocessor.set_output(transform="pandas")
+        feat_group = create_feature_groups(unrolled_feats, unroll, numerical_feats)
+        score,predication = run(
+                                X,
+                                y,
+                                features_group=feat_group,
+                                preprocessor=preprocessor,
+                                second_transformer=second_transformer,
+                                regressor_type=regressor_type,
+                                hyperparameter_optimization=hyperparameter_optimization,
+                                kernel_parameters=kernel_parameters,
+                                kernel_type=kernel_type,
+                                kernel_mixing_method=kernel_mixing_method,
+                                **kwargs,
+                                )
+
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = pd.concat([predication, y_frame], axis=1)
-
     return score, combined_prediction_ground_truth
 
 
 def run(
     X, y, 
-    features_group: Optional[dict[str, list[int]]],
-    preprocessor: Union[ColumnTransformer, Pipeline], 
-    second_transformer:str, 
     regressor_type: str,
-    hyperparameter_optimization: bool = True,
+    features_group: Optional[dict[str, list[int]]]=None,
+    preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
+    second_transformer:str=None, 
+    hyperparameter_optimization: bool = False,
     kernel_parameters: Optional[dict]=None,
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
@@ -281,43 +313,43 @@ def run(
 
         else:
             print("No hyperparameter optimization")
-            # if isinstance(regressor_type, dict):
-            #     kernel = _get_gp_kernel(regressor_type, idx=features_group)
-            #     model = optimized_models(regressor_type['model'], kernel=kernel)
-            # else:
-            model = optimized_models(
-                                    regressor_type,
-                                    feat_group=features_group,
-                                    kernel_parameters=kernel_parameters,
-                                    kernel_type=kernel_type,
-                                    kernel_mixing_method=kernel_mixing_method,
-                                    **kwargs,
-                                    )
+            if "mgk" in regressor_type.lower():
 
-            y_transform_regressor = TransformedTargetRegressor(
-                        regressor=model,
-                        transformer=y_transform,
-                )
-            new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
-            regressor :Pipeline= Pipeline(steps=[
-                        ("preprocessor", new_preprocessor),
-                        ("regressor", y_transform_regressor),
-                            ]
-                        )
-            regressor.set_output(transform="pandas")
-            y = y.flatten()
-            # return_importance = False if "GP" in regressor_type else True
-            if "gp" in regressor_type.lower():
-                scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
-            elif "mgk" in regressor_type.lower():
-                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+                model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
+                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, return_ls=False)
             else:
-                scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
-                                                                custom=True,
-                                                                early_stopping=False,
-                                                                return_estimator=False,
-                                                                return_feature_importances=True,
-                                                                )
+                model = optimized_models(
+                                        regressor_type,
+                                        feat_group=features_group,
+                                        kernel_parameters=kernel_parameters,
+                                        kernel_type=kernel_type,
+                                        kernel_mixing_method=kernel_mixing_method,
+                                        **kwargs,
+                                        )
+
+                y_transform_regressor = TransformedTargetRegressor(
+                            regressor=model,
+                            transformer=y_transform,
+                    )
+                new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                regressor :Pipeline= Pipeline(steps=[
+                            ("preprocessor", new_preprocessor),
+                            ("regressor", y_transform_regressor),
+                                ]
+                            )
+                regressor.set_output(transform="pandas")
+                y = y.flatten()
+                # return_importance = False if "GP" in regressor_type else True
+                if "gp" in regressor_type.lower():
+                    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+
+                else:
+                    scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
+                                                                    custom=True,
+                                                                    early_stopping=False,
+                                                                    return_estimator=False,
+                                                                    return_feature_importances=True,
+                                                                    )
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
@@ -336,7 +368,6 @@ def run(
 
 
 
-import torch
 def _to_torch_tensor(data):
     """
     Converts feature data (X) from DataFrame/NumPy to a float tensor
@@ -430,20 +461,11 @@ def _pd_to_np(data):
     else:
         raise ValueError("Data must be either a pandas DataFrame or a numpy array.")
 
-# def custom_function(x):
-#     x = x.astype(float)  
-#     x[:, 2] = np.log10(x[:, 2] + 1e-6)  
-#     return x
-
-
-
 
 def get_target_transformer(y_transformer:str) -> Pipeline:
     return Pipeline(steps=[
             ("y scaler", transforms[y_transformer])  # StandardScaler to standardize the target
             ])
-
-
 
 def get_default_kfold_splitter(n_splits: int,random_state:int):
         

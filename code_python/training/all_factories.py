@@ -37,6 +37,9 @@ from Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
                             AdditiveMatern, ProductKernel,
                             AddKernel, weighted_jaccard)
 
+## import MGK
+from mgktools.models import GaussianProcessRegressor as MGKGPRegressor
+
 cutoffs = {
             # "Rh1 (nm)":1000,
             # "Rg1 (nm)":1000,
@@ -122,8 +125,13 @@ regressor_factory: dict[str, type]={
     # "GPMixR": GPMixRegressor(),
 }
 
-def optimized_models(model_name:str, kernel_parameters:dict, random_state:int=42, 
-                     kernel_type:Optional[str]=None, kernel_mixing_method:Optional[str]=None,
+def optimized_models(
+                    model_name:str,
+                    kernel_parameters:dict=None,
+                    random_state:int=42, 
+                    kernel_type:Optional[str]=None,
+                    kernel_mixing_method:Optional[str]=None,
+                    graph_kernel_config:Optional[str]=None,
                      **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
@@ -175,7 +183,16 @@ def optimized_models(model_name:str, kernel_parameters:dict, random_state:int=42
     if "GpyroMCMC" == model_name:
         return GPMixMCMCRegressor(**kwargs)
     
-    return None
+    if "MGK" == model_name:
+        return MGKGPRegressor(
+                kernel=graph_kernel_config.kernel,
+                optimizer="L-BFGS-B",
+                alpha=0.01,
+                normalize_y=True
+                )
+    
+    else:
+        raise ValueError(f"Model {model_name} not recognized in optimized_models factory.")
 
 
 kernel_space = {

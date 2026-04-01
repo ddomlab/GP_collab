@@ -47,34 +47,29 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
     dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
-
-    print(dataset.X.shape)          # check dimensions
-    print(dataset.X[0])             # inspect first row — col 0 should be a graph object
-    print(type(dataset.X[0, 0]))    # should be a graph/mol object, not a float
-
-    print("Raw X col 0:", dataset.X[:3, 0])   # should be graph objects
-    print("Raw X col 1:", dataset.X[:3, 1])   # should be numerical
-    # kernel_config = get_kernel_config(dataset=dataset,
-    #                                   graph_kernel_type='graph',
-    #                                   mgk_hyperparameters_files=[mgk_file],
-    #                                   features_kernel_type='rbf',
-    #                                 #   features_hyperparameters=[rbf],
-    #                                 #   features_hyperparameters_bounds=,
-    #                                   features_hyperparameters_file="rbf.json",
-    #                                   hybrid_rule="product",
-    #                                   feature_mode="per_feature",
-    #                                   )
-    # gpr = GaussianProcessRegressor(kernel=kernel_config.kernel,
-    #                                optimizer=optimizer,
-    #                                alpha=0.01,
-    #                                normalize_y=True)
+    kernel_config = get_kernel_config(dataset=dataset,
+                                      graph_kernel_type='graph',
+                                      mgk_hyperparameters_files=[mgk_file],
+                                      features_kernel_type='rbf',
+                                    #   features_hyperparameters=[rbf],
+                                    #   features_hyperparameters_bounds=,
+                                      features_hyperparameters_file="rbf.json",
+                                      hybrid_rule="product",
+                                      feature_mode="per_feature",
+                                      )
+    gpr = GaussianProcessRegressor(
+        kernel=kernel_config.kernel,
+        optimizer=optimizer,
+        alpha=0.01,
+        normalize_y=True
+                                   )
     
-    # X_train, X_test, y_train, y_test = train_test_split(dataset.X, dataset.y, test_size=0.2, random_state=42, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(dataset.X, dataset.y, test_size=0.2, random_state=42, shuffle=True)
     
-    # gpr.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=400)
-    # # gpr.predict(X_test, return_std=True)
+    gpr.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=400)
+    # gpr.predict(X_test, return_std=True)
 
-    # r2_score_calc = r2_score(y_test, gpr.predict(X_test))
-    # rmse_calc = root_mean_squared_error(y_test, gpr.predict(X_test))
-    # print(f"R^2 Score: {r2_score_calc}")
-    # print(f"RMSE: {rmse_calc}")
+    r2_score_calc = r2_score(y_test, gpr.predict(X_test))
+    rmse_calc = root_mean_squared_error(y_test, gpr.predict(X_test))
+    print(f"R^2 Score: {r2_score_calc}")
+    print(f"RMSE: {rmse_calc}")
