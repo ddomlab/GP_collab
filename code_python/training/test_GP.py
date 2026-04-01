@@ -48,8 +48,12 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
     dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
 
-    print(dataset.X.columns.tolist())
-    print(dataset.X.shape)
+    print(dataset.X.shape)          # check dimensions
+    print(dataset.X[0])             # inspect first row — col 0 should be a graph object
+    print(type(dataset.X[0, 0]))    # should be a graph/mol object, not a float
+
+    print("Raw X col 0:", dataset.X[:3, 0])   # should be graph objects
+    print("Raw X col 1:", dataset.X[:3, 1])   # should be numerical
     # kernel_config = get_kernel_config(dataset=dataset,
     #                                   graph_kernel_type='graph',
     #                                   mgk_hyperparameters_files=[mgk_file],
