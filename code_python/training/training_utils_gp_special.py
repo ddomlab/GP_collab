@@ -305,7 +305,6 @@ def run(
                             ]
                         )
             regressor.set_output(transform="pandas")
-            # y = y.ravel()
             y = y.flatten()
             # return_importance = False if "GP" in regressor_type else True
             if "gp" in regressor_type.lower():

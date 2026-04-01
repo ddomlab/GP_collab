@@ -78,15 +78,17 @@ def preprocessing_workflow(imputer: Optional[str]=None,
         
     if scaler:
         transformers = []
+        if structural_feat:
+            transformers.append(
+            ("structural_scaling", "passthrough", structural_feat)  # graphs stay at front
+            )
+            
         if numerical_feat:
             transformers.append(
                 ("numerical_scaling", transforms[scaler], numerical_feat)
             )
         # elif representation_scaling_factory[representation]['callable']:
-        if structural_feat:
-            transformers.append(
-                ("structural_scaling", "passthrough", structural_feat)
-                )
+
             
         scaling = ("scaling features",
                 ColumnTransformer(transformers=[*transformers],
