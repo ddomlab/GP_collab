@@ -1,0 +1,1080 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu03>
+Subject: Job 596497: <structure_numerical_20260402> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:41:40 2026
+Job was executed on host(s) <4*gpu03>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:41:42 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 09:41:42 2026
+Terminated at Thu Apr  2 09:42:05 2026
+Results reported at Thu Apr  2 09:42:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 15
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   8.78 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   46 sec.
+    Turnaround time :                            25 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu03>
+Subject: Job 596508: <structure_numerical_20260402> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:47:02 2026
+Job was executed on host(s) <4*gpu03>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:47:04 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 09:47:04 2026
+Terminated at Thu Apr  2 09:47:20 2026
+Results reported at Thu Apr  2 09:47:20 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 15
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   8.61 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   42 sec.
+    Turnaround time :                            18 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu03>
+Subject: Job 596514: <structure_numerical_20260402> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:48:53 2026
+Job was executed on host(s) <4*gpu03>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:48:55 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 09:48:55 2026
+Terminated at Thu Apr  2 09:49:31 2026
+Results reported at Thu Apr  2 09:49:31 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 15
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   36.05 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   38 sec.
+    Turnaround time :                            38 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu03>
+Subject: Job 596520: <structure_numerical_20260402> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:53:59 2026
+Job was executed on host(s) <4*gpu03>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:54:00 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 09:54:00 2026
+Terminated at Thu Apr  2 09:54:30 2026
+Results reported at Thu Apr  2 09:54:30 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 15
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   36.00 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   56 sec.
+    Turnaround time :                            31 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu03>
+Subject: Job 596554: <structure_numerical_20260402> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:59:27 2026
+Job was executed on host(s) <4*gpu03>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 09:59:29 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 09:59:29 2026
+Terminated at Thu Apr  2 10:14:05 2026
+Results reported at Thu Apr  2 10:14:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 15
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   882.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.97 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                15
+    Run time :                                   901 sec.
+    Turnaround time :                            878 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+Running seed: 6
+No hyperparameter optimization
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      13.511|      36.392|      171.98|     -158.47|        1201|       8.8|    0.0075|
+|     -9.3138|      143.91|      511.22|     -520.53|      1890.3|       3.1|    0.0054|
+|      10.656|      37.966|      170.42|     -159.77|        1201|       3.1|    0.0056|
+|     -170.21|      97.667|       154.4|     -324.62|      1539.4|       3.1|    0.0053|
+|     -92.694|      84.289|      374.03|     -466.72|      1845.5|       3.1|    0.0055|
+|     -154.73|      95.211|      246.88|     -401.61|      1747.4|       3.1|    0.0054|
+|     -170.44|      108.82|      194.83|     -365.27|      1661.8|       3.1|    0.0057|
+|     -172.86|      105.59|      170.09|     -342.95|      1597.8|       3.1|    0.0055|
+|     -8.7704|      144.16|      512.74|     -521.51|      1903.3|       3.1|    0.0054|
+|     -139.38|      88.468|      284.29|     -423.67|      1787.1|       3.1|    0.0057|
+|      -167.7|      106.76|      208.23|     -375.93|      1688.7|       3.1|    0.0054|
+|     -172.09|      108.77|      185.38|     -357.47|        1640|       3.1|    0.0054|
+|      -172.8|      107.56|      177.25|     -350.05|      1618.9|       3.1|    0.0055|
+|     -172.91|      106.71|      173.77|     -346.68|        1609|       3.1|    0.0055|
+|     -190.38|      74.884|      185.11|     -375.49|      1628.6|       3.1|    0.0053|
+|     -198.14|      35.195|      152.49|     -350.63|      1550.6|       3.1|    0.0053|
+|     -200.56|      28.734|      154.79|     -355.34|      1550.5|       3.1|    0.0056|
+|     -202.52|      17.526|      175.49|     -378.01|      1489.3|       3.1|    0.0053|
+|      -204.3|      18.579|      161.65|     -365.95|        1531|       3.1|    0.0053|
+|     -208.09|      15.877|      167.99|     -376.07|      1481.3|       3.1|    0.0062|
+|      -212.6|      11.233|      163.21|     -375.82|      1456.4|       3.1|    0.0052|
+|     -214.57|      6.4301|      158.63|      -373.2|      1455.1|       3.1|    0.0053|
+|     -214.94|      6.2733|       158.6|     -373.53|      1463.9|       3.1|    0.0056|
+|     -217.28|      9.5063|      158.91|      -376.2|      1519.6|       3.1|    0.0052|
+|     -218.75|      10.665|      159.32|     -378.08|      1529.6|       3.1|    0.0052|
+|     -223.99|      14.264|      161.81|      -385.8|      1568.3|       3.1|    0.0054|
+|     -218.27|       68.25|      185.11|     -403.37|        1691|       3.1|    0.0052|
+|     -225.83|      35.531|      170.48|      -396.3|      1633.6|       3.1|    0.0054|
+|     -225.98|      20.696|      164.49|     -390.46|      1594.7|       3.1|    0.0053|
+|     -222.07|      54.833|      180.31|     -402.38|      1669.5|       3.1|    0.0055|
+|     -226.23|      34.732|       170.9|     -397.13|      1631.9|       3.1|    0.0054|
+|     -226.75|      26.514|      167.14|     -393.89|      1612.3|       3.1|    0.0053|
+|     -228.14|      18.738|      169.01|     -397.15|      1575.8|       3.1|    0.0053|
+|     -227.83|      21.839|      167.76|     -395.59|      1596.7|       3.1|    0.0054|
+|     -228.93|      20.403|      165.74|     -394.66|        1591|       3.1|    0.0053|
+|     -229.78|      15.518|      167.82|     -397.59|      1547.9|       3.1|    0.0054|
+|     -230.77|      3.2547|      159.08|     -389.85|      1525.6|       3.1|    0.0052|
+|     -230.82|      2.6982|      158.75|     -389.57|      1518.6|       3.1|    0.0054|
+|     -230.84|      2.4374|      158.64|     -389.48|      1512.3|       3.1|    0.0056|
+|     -230.84|      2.4207|      158.69|     -389.52|      1511.8|       3.1|    0.0053|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -230.8359936973491
+        x: [-4.605e+00 -2.877e-01 ...  2.407e+00  2.377e+00]
+      nit: 20
+      jac: [ 1.776e-06 -7.093e-05 ...  5.844e-02 -5.201e-02]
+     nfev: 40
+     njev: 40
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|       6.165|      25.718|      168.65|     -162.48|        1201|       8.4|    0.0055|
+|     -25.316|      145.97|      508.33|     -533.64|      1929.2|       3.1|    0.0054|
+|      4.7432|      26.641|      167.98|     -163.23|        1201|       3.1|    0.0054|
+|     -173.37|      73.409|       150.1|     -323.47|      1572.8|       3.1|    0.0054|
+|     -124.73|      83.949|      353.24|     -477.97|      1852.1|       3.1|    0.0054|
+|     -174.19|      49.604|      240.78|     -414.97|        1773|       3.1|    0.0054|
+|     -178.35|      61.513|      192.24|     -370.59|      1687.9|       3.1|    0.0056|
+|     -105.63|      71.453|      394.76|     -500.38|      1867.4|       3.1|    0.0054|
+|     -169.35|      58.228|      268.68|     -438.03|      1801.3|       3.1|    0.0054|
+|     -178.41|      52.613|      229.16|     -407.57|      1755.8|       3.1|    0.0055|
+|     -179.12|      57.953|      208.13|     -387.25|      1720.1|       3.1|    0.0056|
+|     -197.51|      65.419|       237.1|     -434.61|      1560.5|       3.1|    0.0054|
+|     -201.55|      53.627|      207.71|     -409.26|      1691.4|       3.1|    0.0054|
+|      -180.1|      44.576|       142.3|      -322.4|        1201|       3.1|    0.0054|
+|     -214.21|      15.488|      163.11|     -377.32|      1414.1|       3.1|    0.0054|
+|     -217.76|       8.458|       182.8|     -400.56|      1423.2|       3.1|    0.0055|
+|      -219.6|      11.456|      182.94|     -402.55|      1412.1|       3.1|    0.0057|
+|     -220.17|      6.4863|      173.98|     -394.15|      1388.7|       3.1|    0.0058|
+|     -220.33|      4.6933|      174.35|     -394.68|      1377.6|       3.1|    0.0057|
+|     -220.39|      9.4681|       175.5|      -395.9|      1332.7|       3.1|    0.0055|
+|     -220.48|      9.4438|      174.04|     -394.52|      1324.2|       3.1|    0.0055|
+|     -218.64|      22.601|      166.25|     -384.88|      1290.4|       3.1|    0.0055|
+|     -220.41|      12.433|      171.85|     -392.26|      1315.6|       3.1|    0.0055|
+|     -220.49|      9.9959|      173.54|     -394.03|      1322.3|       3.1|    0.0055|
+|     -220.46|      11.533|      172.42|     -392.87|      1317.9|       3.1|    0.0055|
+|     -220.49|      10.299|      173.29|     -393.78|      1321.3|       3.1|    0.0057|
+|     -220.49|      10.059|      173.49|     -393.98|      1322.1|       3.1|    0.0054|
+|     -220.49|      10.216|      173.36|     -393.85|      1321.6|       3.1|    0.0055|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0055|
+|     -220.49|      10.173|      173.39|     -393.88|      1321.7|       3.1|    0.0055|
+|     -220.49|      10.109|      173.45|     -393.93|      1321.9|       3.1|    0.0055|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0055|
+|     -217.36|      25.606|      164.37|     -381.74|      1269.5|       3.1|    0.0056|
+|      -220.2|      14.274|      170.78|     -390.98|      1308.7|       3.1|    0.0055|
+|     -220.46|      10.895|      172.85|     -393.31|      1319.1|       3.1|    0.0057|
+|     -220.48|      10.251|      173.33|     -393.82|      1321.4|       3.1|    0.0055|
+|     -220.49|      10.124|      173.43|     -393.92|      1321.8|       3.1|    0.0054|
+|     -220.49|      10.098|      173.45|     -393.94|      1321.9|       3.1|    0.0054|
+|     -220.49|      10.093|      173.46|     -393.95|        1322|       3.1|    0.0054|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0054|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0054|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0056|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0056|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0058|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0056|
+|     -220.49|      10.092|      173.46|     -393.95|        1322|       3.1|    0.0054|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -220.4889260308707
+        x: [-4.605e+00 -2.877e-01 ...  2.796e+00  2.145e+00]
+      nit: 12
+      jac: [-1.429e-06  2.982e-05 ... -2.647e+01 -9.928e+00]
+     nfev: 46
+     njev: 46
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      39.762|      34.167|      189.29|     -149.52|        1101|       8.5|    0.0054|
+|       8.596|      165.64|      548.12|     -539.52|      1798.7|       3.2|    0.0054|
+|      37.687|      35.516|      188.16|     -150.48|        1101|       3.2|    0.0056|
+|     -152.89|      89.266|      175.02|     -327.91|      1440.4|       3.2|    0.0054|
+|     -96.522|      87.655|      387.71|     -484.23|      1662.4|       3.2|    0.0055|
+|     -142.45|      71.342|      276.45|      -418.9|      1598.8|       3.2|    0.0056|
+|     -154.12|      86.129|      219.59|     -373.71|      1530.6|       3.2|    0.0062|
+|     -156.73|      87.202|      194.02|     -350.76|      1488.1|       3.2|    0.0055|
+|      8.6141|      165.52|      550.03|     -541.42|      1798.8|       3.2|    0.0061|
+|     -136.16|      63.889|      304.59|     -440.75|      1623.2|       3.2|    0.0056|
+|     -150.07|       82.44|      241.25|     -391.32|      1558.5|       3.2|    0.0054|
+|     -155.52|        86.4|      212.69|     -368.22|      1520.3|       3.2|    0.0054|
+|      -156.6|      86.613|       202.5|      -359.1|      1503.9|       3.2|    0.0057|
+|     -156.77|      86.835|      198.33|     -355.11|      1496.4|       3.2|    0.0056|
+|     -156.78|      87.012|      196.05|     -352.83|        1492|       3.2|    0.0055|
+|     -165.02|       53.12|      182.39|     -347.41|      1437.7|       3.2|    0.0058|
+|     -172.26|      38.999|      189.85|      -362.1|      1428.4|       3.2|    0.0056|
+|     -174.44|      31.678|      215.69|     -390.12|      1396.9|       3.2|    0.0056|
+|     -180.72|      30.143|      202.79|     -383.51|      1417.2|       3.2|    0.0057|
+|     -186.08|      28.163|      197.77|     -383.86|      1425.4|       3.2|    0.0056|
+|     -194.94|      27.464|      193.37|     -388.31|      1438.2|       3.2|    0.0056|
+|     -197.53|      18.785|      194.94|     -392.47|      1401.5|       3.2|    0.0055|
+|     -204.86|      11.975|      199.55|     -404.41|      1310.4|       3.2|    0.0056|
+|     -209.63|      9.5824|      200.12|     -409.76|      1216.7|       3.2|    0.0056|
+|     -210.58|      15.981|      199.62|      -410.2|        1169|       3.2|    0.0058|
+|     -211.46|      12.252|      194.12|     -405.58|      1179.3|       3.2|    0.0057|
+|     -212.14|      9.3239|      195.85|        -408|      1194.4|       3.2|    0.0056|
+|     -212.55|      5.2709|      199.68|     -412.22|      1233.5|       3.2|    0.0055|
+|     -212.56|      5.0358|      199.02|     -411.58|      1229.6|       3.2|    0.0056|
+|     -212.57|      5.0085|      198.67|     -411.24|      1227.2|       3.2|    0.0056|
+|     -212.57|      5.0021|       198.7|     -411.27|      1227.1|       3.2|    0.0056|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -212.56564666086663
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.268e+00]
+      nit: 17
+      jac: [-1.563e-06 -7.841e-05 ... -1.520e+01 -4.910e-01]
+     nfev: 31
+     njev: 31
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      29.517|      27.026|      187.54|     -158.02|        1001|       8.3|    0.0054|
+|     -30.884|      175.37|       496.7|     -527.59|      1721.4|         3|    0.0057|
+|      28.132|      27.801|      186.89|     -158.76|        1001|         3|    0.0054|
+|     -143.87|        96.9|      175.09|     -318.96|      1269.4|         3|    0.0056|
+|     -127.48|      80.982|      343.83|     -471.31|      1573.5|         3|    0.0056|
+|      -159.2|      76.247|      249.77|     -408.97|      1473.2|         3|    0.0056|
+|     -158.92|      95.705|      208.28|      -367.2|      1392.9|         3|    0.0057|
+|      -160.8|      84.634|      230.51|     -391.31|      1442.3|         3|    0.0056|
+|      -166.3|      72.487|      259.14|     -425.44|      1486.5|         3|    0.0056|
+|     -154.31|      77.197|      202.95|     -357.26|      1721.4|         3|    0.0056|
+|     -207.79|      25.232|      171.84|     -379.63|      1603.6|       3.1|    0.0058|
+|     -218.07|      24.074|      181.33|     -399.41|      1637.9|         3|    0.0056|
+|     -209.37|      83.117|      258.89|     -468.26|      1721.4|         3|    0.0056|
+|     -227.42|      48.654|      209.17|      -436.6|      1690.3|         3|    0.0056|
+|     -220.83|      27.395|      185.26|     -406.09|      1648.7|         3|    0.0057|
+|     -215.03|      54.162|      196.12|     -411.15|      1695.2|         3|    0.0056|
+|     -219.94|      38.273|      190.29|     -410.23|      1674.8|         3|    0.0053|
+|     -221.09|      31.247|       187.5|     -408.58|      1661.4|         3|    0.0055|
+|     -223.78|      24.448|      184.03|     -407.81|      1645.6|         3|    0.0055|
+|      -230.6|      21.261|      180.31|     -410.91|      1618.4|         3|    0.0056|
+|     -233.22|      28.314|      199.76|     -432.98|        1586|         3|    0.0058|
+|      -235.3|      18.901|      181.43|     -416.73|      1608.6|         3|    0.0055|
+|     -57.055|      166.57|       423.6|     -480.65|      1584.3|         3|    0.0055|
+|     -202.46|      82.663|      248.04|     -450.51|      1562.3|         3|    0.0054|
+|     -234.21|      25.283|      197.09|      -431.3|      1588.9|         3|    0.0053|
+|     -237.61|      8.3286|      186.28|     -423.89|      1598.4|         3|    0.0055|
+|     -237.83|      10.792|      176.69|     -414.52|      1596.5|         3|    0.0055|
+|     -238.32|      4.4581|       180.1|     -418.42|        1595|         3|    0.0053|
+|     -238.32|      4.5222|      180.45|     -418.77|      1597.5|         3|    0.0054|
+|     -238.33|      4.4158|      180.76|     -419.08|      1599.3|       3.1|    0.0056|
+|     -238.33|      4.3483|      180.85|     -419.18|      1600.6|         3|    0.0053|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -238.3271277854909
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.055e+00]
+      nit: 15
+      jac: [-3.789e-06 -1.114e-05 ... -2.122e+01  4.562e-01]
+     nfev: 31
+     njev: 31
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      29.766|      28.463|      191.92|     -162.15|        1101|       8.3|    0.0056|
+|     -108.82|      107.93|      420.73|     -529.55|      1734.4|         3|    0.0056|
+|      26.953|      30.049|       190.6|     -163.65|        1101|         3|    0.0058|
+|     -154.49|      84.627|      173.06|     -327.55|      1404.7|         3|    0.0056|
+|     -162.64|      63.761|      309.21|     -471.86|      1655.1|         3|    0.0056|
+|     -170.69|      80.841|      219.57|     -390.26|      1546.8|         3|    0.0056|
+|     -169.51|      60.754|      274.11|     -443.62|      1627.4|         3|    0.0056|
+|     -171.59|       67.85|      248.09|     -419.68|      1596.2|         3|    0.0058|
+|     -173.11|      56.016|      301.16|     -474.27|      1649.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -130.87|      59.318|      157.61|     -288.48|        1101|         3|    0.0056|
+|     -202.21|      35.958|      166.47|     -368.68|      1295.6|         3|    0.0056|
+|     -215.73|       21.55|      180.44|     -396.17|      1500.5|         3|    0.0056|
+|     -218.63|      19.737|      191.14|     -409.77|        1632|         3|    0.0056|
+|      -219.5|      20.738|      198.47|     -417.97|      1702.1|         3|    0.0056|
+|      -219.7|      20.865|      200.34|     -420.04|      1718.5|         3|    0.0056|
+|     -219.74|      20.889|      200.73|     -420.47|      1721.8|         3|    0.0064|
+|     -219.75|      20.894|      200.81|     -420.56|      1722.5|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.6|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0056|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0054|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0055|
+|     -219.75|      20.895|      200.83|     -420.58|      1722.7|         3|    0.0058|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -219.7501080704421
+        x: [-4.605e+00 -2.877e-01 ...  2.863e+00  2.788e+00]
+      nit: 4
+      jac: [ 1.275e-05 -1.827e-05 ... -2.795e+01  5.448e+01]
+     nfev: 27
+     njev: 27
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+Running seed: 13
+No hyperparameter optimization
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      42.557|       35.18|      174.04|     -131.48|        1101|       8.4|    0.0052|
+|     -64.049|      98.183|      458.58|     -522.63|      1787.2|       3.1|    0.0052|
+|      39.382|      36.593|      172.57|     -133.19|        1101|       3.1|    0.0052|
+|      -165.1|       53.33|      144.85|     -309.95|      1366.4|       3.1|    0.0052|
+|     -145.88|      65.418|      321.15|     -467.03|      1564.7|       3.1|    0.0055|
+|     -184.64|      22.859|      220.75|     -405.38|      1510.4|       3.1|    0.0058|
+|      -179.7|      29.611|      173.85|     -353.54|      1440.9|       3.1|    0.0053|
+|     -184.16|      27.657|      196.98|     -381.14|      1480.6|       3.1|    0.0054|
+|     -184.64|      22.859|      220.75|     -405.38|      1510.4|       3.1|    0.0053|
+|     -141.86|       75.24|      126.65|     -268.51|      1193.3|       3.1|    0.0053|
+|     -182.17|      29.504|      162.74|      -344.9|      1404.5|       3.1|    0.0053|
+|     -186.52|      26.566|       190.5|     -377.03|      1468.3|       3.1|    0.0053|
+|     -167.59|      45.344|      225.99|     -393.58|      1550.1|       3.1|    0.0054|
+|     -190.52|      42.609|      201.07|     -391.59|      1321.1|       3.1|    0.0054|
+|     -195.98|      12.801|       189.8|     -385.78|      1423.1|       3.1|    0.0054|
+|     -199.07|      12.472|      192.57|     -391.65|      1349.5|       3.1|    0.0054|
+|     -199.34|      9.7499|      184.05|      -383.4|      1332.3|       3.1|    0.0054|
+|     -199.73|      4.1096|      188.75|     -388.48|      1346.9|       3.1|    0.0054|
+|     -199.77|      5.1614|      192.64|     -392.41|      1367.5|       3.1|    0.0054|
+|     -199.83|      2.1491|      190.67|      -390.5|      1357.5|       3.1|    0.0054|
+|     -199.89|      1.8891|      190.74|     -390.63|      1360.5|       3.1|    0.0056|
+|     -200.08|      1.4072|      189.99|     -390.08|        1367|       3.1|    0.0056|
+|     -200.12|      2.1028|      189.55|     -389.67|      1369.4|       3.1|    0.0056|
+|     -200.16|      1.9394|      189.91|     -390.07|      1371.5|       3.1|    0.0054|
+|     -200.26|     0.86506|       190.6|     -390.85|      1364.6|       3.1|    0.0054|
+|     -200.28|       1.127|      190.67|     -390.96|      1355.5|       3.1|    0.0054|
+|      -200.3|     0.87839|      190.32|     -390.62|      1349.5|       3.1|    0.0056|
+|     -200.31|       1.106|      188.96|     -389.26|      1328.1|       3.1|    0.0054|
+|      -199.9|      7.1223|      184.02|     -383.92|      1239.2|       3.1|    0.0054|
+|     -200.29|      1.3848|      188.61|      -388.9|      1322.3|       3.1|    0.0054|
+|      -200.3|      1.1429|      188.91|     -389.21|      1327.3|       3.1|    0.0061|
+|      -200.3|      1.1114|      188.95|     -389.25|        1328|       3.1|    0.0056|
+|     -200.31|      1.1066|      188.95|     -389.26|      1328.1|       3.1|    0.0054|
+|     -200.31|      1.1061|      188.96|     -389.26|      1328.1|       3.1|    0.0054|
+|     -200.31|      1.1061|      188.96|     -389.26|      1328.1|       3.1|    0.0055|
+|      -200.3|      1.1061|      188.96|     -389.26|      1328.1|       3.1|    0.0054|
+|     -200.31|      1.1061|      188.96|     -389.26|      1328.1|       3.1|    0.0054|
+|      -200.3|       1.106|      188.96|     -389.26|      1328.1|       3.1|    0.0054|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -200.3049473009231
+        x: [-4.605e+00 -2.877e-01 ...  2.089e+00  2.188e+00]
+      nit: 16
+      jac: [-1.407e-06  2.383e-05 ...  8.502e-02  4.702e+00]
+     nfev: 38
+     njev: 38
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      16.946|      28.116|      192.11|     -175.16|        1301|       8.4|    0.0054|
+|     -41.277|      185.91|      484.14|     -525.41|      1927.3|       3.1|    0.0056|
+|      15.459|      28.857|       191.4|     -175.94|        1301|       3.1|    0.0054|
+|      -157.9|       85.42|      164.24|     -322.14|      1557.9|       3.1|    0.0054|
+|     -135.29|      88.318|      332.72|     -468.01|      1847.2|       3.1|    0.0054|
+|     -170.83|      72.315|      235.67|      -406.5|      1765.6|       3.1|    0.0054|
+|        -172|      89.354|       194.2|     -366.19|      1680.9|       3.1|    0.0054|
+|      -173.1|      81.016|      216.49|     -389.59|      1733.4|       3.1|    0.0054|
+|     -181.66|      82.337|      167.47|     -349.13|      1608.4|       3.1|    0.0054|
+|     -208.91|      56.694|      238.44|     -447.35|      1524.7|       3.1|    0.0054|
+|     -220.81|      28.818|      166.38|     -387.19|      1581.5|       3.1|    0.0056|
+|     -226.47|      16.567|       194.4|     -420.86|      1537.8|       3.1|    0.0054|
+|      -229.6|      10.936|      174.73|     -404.33|      1485.2|       3.1|    0.0055|
+|     -229.79|      21.036|      156.81|      -386.6|        1409|       3.1|    0.0055|
+|     -231.76|      10.161|      162.77|     -394.53|      1441.4|       3.1|    0.0056|
+|     -232.45|        3.37|      170.23|     -402.68|      1484.2|       3.1|    0.0055|
+|     -232.52|      3.1989|      169.83|     -402.35|      1483.9|       3.1|    0.0057|
+|     -232.99|      5.9975|      167.83|     -400.82|      1477.4|       3.1|    0.0054|
+|     -233.32|       5.218|      167.28|     -400.61|      1461.4|       3.1|    0.0054|
+|     -232.24|      16.786|      163.66|     -395.89|      1382.3|       3.1|    0.0056|
+|      -233.4|      4.7742|      165.78|     -399.18|      1436.1|       3.1|    0.0054|
+|     -233.39|      6.4907|      166.55|     -399.95|      1423.4|       3.1|    0.0054|
+|     -233.41|      4.9799|      165.95|     -399.37|      1433.1|       3.1|    0.0055|
+|     -233.41|      5.6018|      166.25|     -399.66|      1428.2|       3.1|    0.0054|
+|     -233.48|      3.9283|      169.97|     -403.45|      1442.3|       3.1|    0.0054|
+|      -233.5|      3.9849|      167.73|     -401.23|      1434.5|       3.1|    0.0054|
+|     -233.52|      3.4203|      167.73|     -401.24|      1437.6|       3.1|    0.0054|
+|     -233.53|      2.9196|      168.03|     -401.56|      1448.7|       3.1|    0.0054|
+|     -233.54|      2.7544|      168.12|     -401.66|      1446.8|       3.1|    0.0054|
+|     -233.54|      2.7244|      168.15|     -401.69|      1444.4|       3.1|    0.0057|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -233.5385614613802
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.060e+00]
+      nit: 19
+      jac: [-6.853e-07 -1.205e-04 ... -8.424e+00 -5.522e-02]
+     nfev: 30
+     njev: 30
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      26.086|      33.486|      181.99|      -155.9|      901.01|       8.3|    0.0055|
+|      16.754|      143.65|      560.54|     -543.79|      1705.5|       3.1|    0.0056|
+|      23.674|      34.931|      180.78|     -157.11|      901.01|       3.1|    0.0056|
+|     -162.48|      96.384|      173.58|     -336.06|      1256.6|       3.1|    0.0055|
+|       -74.4|      88.722|      414.64|     -489.04|      1549.6|       3.1|    0.0055|
+|     -147.53|       95.97|      273.98|      -421.5|      1458.2|       3.1|    0.0056|
+|     -164.16|      107.21|      218.32|     -382.48|      1377.6|       3.1|    0.0056|
+|     -166.15|      104.69|      193.86|        -360|      1322.2|       3.1|    0.0058|
+|      16.728|      143.64|      560.53|     -543.81|      1705.5|       3.1|    0.0055|
+|     -127.66|      95.712|      317.98|     -445.64|      1497.6|       3.1|    0.0056|
+|     -160.45|      104.45|      235.52|     -395.97|      1407.8|       3.1|    0.0054|
+|     -165.25|      107.32|      210.91|     -376.16|      1362.6|       3.1|    0.0054|
+|     -166.04|      106.42|      201.85|     -367.89|      1342.3|       3.1|    0.0054|
+|     -166.17|      105.66|      197.83|        -364|      1332.5|       3.1|    0.0054|
+|      -196.7|      81.012|      224.16|     -420.85|      1349.5|       3.1|    0.0054|
+|     -213.65|      20.722|      166.77|     -380.41|      1224.9|       3.1|    0.0054|
+|     -218.01|      12.553|      174.52|     -392.53|      1226.6|       3.1|    0.0057|
+|      -221.2|      21.556|      192.27|     -413.47|      1207.2|       3.1|    0.0054|
+|     -223.99|      15.626|      181.63|     -405.62|      1185.8|       3.1|    0.0054|
+|     -224.69|      9.3552|      176.25|     -400.93|      1161.5|       3.1|    0.0054|
+|     -224.98|      6.8689|      173.51|     -398.49|      1139.9|       3.1|    0.0054|
+|     -225.21|      5.9539|      170.58|     -395.78|      1106.1|       3.1|    0.0054|
+|     -224.74|      13.756|      166.04|     -390.78|      1030.4|       3.1|    0.0054|
+|     -225.24|      6.9713|       169.4|     -394.65|      1088.4|       3.1|    0.0054|
+|     -220.58|      24.906|      162.41|     -382.99|      974.81|       3.1|    0.0054|
+|     -225.08|      11.161|      167.23|     -392.31|      1048.1|       3.1|    0.0054|
+|     -225.24|      7.6841|      168.91|     -394.16|      1079.8|       3.1|    0.0057|
+|     -225.16|      9.8965|      167.77|     -392.94|      1058.8|       3.1|    0.0054|
+|     -225.24|      8.0944|      168.67|     -393.91|      1075.5|       3.1|    0.0054|
+|     -225.24|      7.7667|      168.86|     -394.11|      1078.9|       3.1|    0.0053|
+|     -225.24|      7.6841|      168.91|     -394.16|      1079.8|       3.1|    0.0055|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -225.24491677677952
+        x: [-4.605e+00 -2.877e-01 ...  2.722e+00  2.283e+00]
+      nit: 12
+      jac: [ 1.218e-06  8.420e-05 ... -3.629e+01 -8.285e+00]
+     nfev: 31
+     njev: 31
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|       3.352|      27.699|      175.37|     -172.02|        1001|       8.3|    0.0054|
+|     -172.84|      138.44|      355.11|     -527.95|      1730.4|         3|    0.0054|
+|     0.83908|      29.074|      174.23|     -173.39|        1001|         3|    0.0054|
+|     -183.22|      81.797|       145.9|     -329.12|      1384.8|         3|    0.0057|
+|     -222.14|       65.28|         249|     -471.14|      1652.3|         3|    0.0054|
+|     -221.66|      62.692|      186.21|     -407.86|        1570|         3|    0.0054|
+|     -226.24|      57.012|      218.75|     -444.98|        1625|         3|    0.0054|
+|     -226.29|      56.706|      214.75|     -441.03|      1620.1|         3|    0.0054|
+|     -200.57|      102.33|      320.64|     -521.21|      1716.5|         3|    0.0055|
+|     -222.44|      68.574|      263.81|     -486.25|      1663.2|         3|    0.0054|
+|     -226.34|      59.614|       239.8|     -466.14|      1645.8|         3|    0.0054|
+|     -226.96|       57.16|      225.82|     -452.78|        1633|         3|    0.0054|
+|     -273.07|      46.061|      219.97|     -493.04|      1614.3|         3|    0.0054|
+|     -282.71|      19.691|      159.41|     -442.12|      1528.8|         3|    0.0056|
+|     -286.38|      7.2768|      172.98|     -459.36|      1614.3|         3|    0.0055|
+|     -287.07|      3.3556|      174.24|     -461.31|      1601.9|         3|    0.0054|
+|     -287.24|      3.6447|      180.05|     -467.29|      1605.2|         3|    0.0054|
+|     -287.44|       4.321|      179.86|      -467.3|      1606.6|         3|    0.0054|
+|      -281.7|      19.756|      162.97|     -444.67|      1608.4|         3|    0.0054|
+|     -286.91|      9.0268|      171.75|     -458.66|      1607.5|         3|    0.0054|
+|     -287.58|      5.7535|      176.44|     -464.01|        1607|         3|    0.0054|
+|     -280.59|      21.261|      162.96|     -443.55|      1608.5|         3|    0.0054|
+|     -286.81|      9.4027|      171.65|     -458.46|      1607.5|         3|    0.0057|
+|      -287.4|      7.0717|      174.52|     -461.92|      1607.2|         3|    0.0055|
+|     -287.52|      6.2879|      175.62|     -463.14|      1607.1|         3|    0.0054|
+|     -287.56|      5.9518|      176.13|     -463.69|        1607|         3|    0.0054|
+|     -287.57|      5.7971|      176.37|     -463.94|        1607|         3|    0.0054|
+|     -287.57|      5.7607|      176.43|        -464|        1607|         3|    0.0054|
+|     -287.58|      5.7546|      176.44|     -464.01|        1607|         3|    0.0055|
+|     -287.58|      5.7586|      176.43|     -464.01|        1607|         3|    0.0054|
+|     -287.58|       5.755|      176.44|     -464.01|        1607|         3|    0.0058|
+|     -287.58|      5.7575|      176.43|     -464.01|        1607|         3|    0.0054|
+|     -287.58|      5.7553|      176.44|     -464.01|        1607|         3|    0.0057|
+|     -287.58|      5.7551|      176.44|     -464.01|        1607|         3|    0.0054|
+|     -287.58|       5.755|      176.44|     -464.01|        1607|         3|    0.0056|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -287.57538626631333
+        x: [-4.605e+00 -2.877e-01 ...  2.629e+00  2.670e+00]
+      nit: 10
+      jac: [-1.029e-06  2.565e-05 ...  8.134e+00 -8.095e+00]
+     nfev: 35
+     njev: 35
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      19.886|      27.349|      187.16|     -167.28|        1301|       8.5|    0.0054|
+|      31.997|       160.1|      565.48|     -533.48|      2017.3|       3.2|    0.0054|
+|      -142.2|      115.34|      218.27|     -360.47|        1759|       3.2|    0.0054|
+|      4.7921|      34.309|      179.55|     -174.75|      1301.1|       3.2|    0.0054|
+|     -134.96|      81.025|      158.67|     -293.63|      1567.3|       3.2|    0.0054|
+|     -147.23|      98.181|      181.92|     -329.14|      1676.4|       3.2|    0.0057|
+|      -146.1|      108.48|      201.24|     -347.34|      1726.1|       3.2|    0.0054|
+|     -147.23|      98.181|      181.92|     -329.14|      1676.4|       3.2|    0.0054|
+|        -121|      23.062|      307.41|     -428.41|      1717.8|       3.2|    0.0054|
+|     -176.96|        28.5|      193.52|     -370.48|      1365.8|       3.2|    0.0054|
+|     -163.66|      47.661|       248.8|     -412.46|      1633.1|       3.2|    0.0059|
+|     -176.34|      47.737|      216.76|      -393.1|      1519.7|       3.2|    0.0054|
+|     -178.87|      28.684|      202.63|      -381.5|      1442.5|       3.2|    0.0054|
+|     -184.27|      37.609|      208.29|     -392.56|      1489.3|       3.2|    0.0054|
+|     -189.06|       33.41|      205.28|     -394.35|      1480.7|       3.2|    0.0056|
+|     -191.66|      28.702|      189.18|     -380.84|      1325.5|       3.2|    0.0054|
+|     -192.96|       23.42|       192.7|     -385.66|      1379.7|       3.2|    0.0055|
+|     -194.18|      22.989|      196.32|      -390.5|      1426.7|       3.2|    0.0054|
+|     -195.37|      22.836|      195.07|     -390.44|      1419.1|       3.2|    0.0054|
+|     -206.14|      23.413|      195.85|     -401.99|      1532.6|       3.2|    0.0054|
+|     -202.57|      24.102|      190.98|     -393.56|        1401|       3.2|    0.0055|
+|     -207.81|      14.465|      190.72|     -398.52|      1425.9|       3.2|    0.0054|
+|     -208.27|      11.056|      195.76|     -404.03|      1477.2|       3.2|    0.0054|
+|     -206.57|      20.038|       202.2|     -408.77|      1433.1|       3.2|    0.0057|
+|     -208.56|      8.5389|      197.81|     -406.37|      1417.4|       3.2|    0.0056|
+|     -208.76|      5.6866|      198.36|     -407.12|      1438.4|       3.2|    0.0054|
+|     -208.79|      5.0342|      199.34|     -408.13|      1453.1|       3.2|    0.0054|
+|     -208.79|      5.3028|      199.88|     -408.67|      1458.7|       3.2|    0.0055|
+|     -208.79|      5.0698|      199.46|     -408.26|      1454.4|       3.2|    0.0054|
+|     -208.79|      5.2041|      199.74|     -408.53|      1457.2|       3.2|    0.0054|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -208.79360056820312
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.177e+00]
+      nit: 15
+      jac: [-2.414e-06  2.839e-05 ... -9.986e+00  1.969e+00]
+     nfev: 30
+     njev: 30
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+Running seed: 42
+No hyperparameter optimization
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      30.819|      25.164|      184.38|     -153.56|        1101|       8.2|    0.0052|
+|      6.0039|      193.16|      512.65|     -506.65|      1748.9|         3|    0.0055|
+|      29.496|       25.94|      183.81|     -154.32|        1101|         3|    0.0052|
+|     -137.22|      81.019|       163.2|     -300.42|      1439.2|         3|    0.0053|
+|     -96.996|      115.05|      349.89|     -446.88|        1662|         3|    0.0052|
+|     -146.22|      94.873|      237.67|     -383.89|      1600.6|         3|    0.0052|
+|     -151.38|      89.994|      185.67|     -337.05|      1523.4|         3|    0.0052|
+|     -151.86|      92.939|      212.91|     -364.77|      1572.8|         3|    0.0052|
+|      -41.14|      58.704|      156.99|     -198.13|      1119.2|         3|    0.0052|
+|      -143.6|      80.762|      163.43|     -307.03|      1448.5|         3|    0.0053|
+|     -153.05|      88.659|      183.94|     -336.99|      1520.6|         3|    0.0052|
+|     -199.59|      31.859|      229.18|     -428.77|        1678|         3|    0.0055|
+|     -207.49|      22.253|      193.55|     -401.04|      1529.1|         3|    0.0052|
+|     -209.19|      20.448|      162.91|     -372.09|      1391.9|         3|    0.0052|
+|     -212.41|      11.501|      172.49|     -384.89|      1413.8|         3|    0.0052|
+|     -213.28|       8.325|      178.35|     -391.63|        1488|         3|    0.0052|
+|     -213.55|      6.4124|      175.37|     -388.92|      1479.5|         3|    0.0053|
+|     -213.91|      4.1852|      171.66|     -385.57|        1482|         3|    0.0052|
+|     -214.09|      4.5584|      169.71|     -383.81|      1484.9|         3|    0.0052|
+|     -212.55|      17.672|      164.58|     -377.13|      1491.4|         3|    0.0053|
+|     -214.14|      6.9137|      168.15|     -382.29|      1486.5|         3|    0.0061|
+|     -208.37|      24.461|      163.49|     -371.86|      1490.4|         3|    0.0054|
+|      -213.8|      11.721|      166.42|     -380.22|      1487.3|         3|    0.0055|
+|     -214.12|      7.8136|      167.76|     -381.88|      1486.7|         3|    0.0054|
+|     -214.14|      7.0913|      168.07|     -382.21|      1486.5|         3|    0.0054|
+|     -214.14|      6.9497|      168.13|     -382.28|      1486.5|         3|    0.0054|
+|     -214.14|       6.921|      168.15|     -382.29|      1486.5|         3|    0.0054|
+|     -214.14|      6.9151|      168.15|     -382.29|      1486.5|         3|    0.0054|
+|     -214.14|       6.914|      168.15|     -382.29|      1486.5|         3|    0.0058|
+|     -214.14|      6.9137|      168.15|     -382.29|      1486.5|         3|    0.0054|
+|     -214.14|      6.9137|      168.15|     -382.29|      1486.5|         3|    0.0056|
+|     -214.14|      6.9137|      168.15|     -382.29|      1486.5|         3|    0.0054|
+|     -214.14|      6.9137|      168.15|     -382.29|      1486.5|         3|    0.0055|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -214.14444860201
+        x: [-4.605e+00 -2.877e-01 ...  2.576e+00  2.164e+00]
+      nit: 12
+      jac: [-7.950e-06 -1.508e-05 ... -2.437e+01 -2.581e+01]
+     nfev: 33
+     njev: 33
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      13.038|      29.093|      185.72|     -172.68|        1401|       8.3|    0.0055|
+|      14.501|       164.1|      555.77|     -541.27|      2013.7|         3|    0.0055|
+|     -146.81|      93.516|      227.73|     -374.54|      1760.3|         3|    0.0055|
+|     -6.2054|       36.78|      176.55|     -182.76|      1401.1|         3|    0.0055|
+|     -138.47|      88.115|      168.83|      -307.3|      1579.5|         3|    0.0055|
+|      -150.6|       95.07|      193.08|     -343.68|      1680.7|         3|    0.0055|
+|     -150.03|      94.002|      211.82|     -361.84|      1728.8|         3|    0.0057|
+|      -150.6|       95.07|      193.08|     -343.68|      1680.7|         3|    0.0055|
+|     -101.51|      52.772|         334|     -435.51|      1773.3|         3|    0.0056|
+|     -167.69|      36.636|      223.23|     -390.92|        1401|         3|    0.0055|
+|     -172.71|      18.383|      173.04|     -345.75|        1401|         3|    0.0056|
+|     -167.83|      43.375|      163.03|     -330.86|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -153.93|      50.083|      163.11|     -317.05|        1401|         3|    0.0055|
+|     -170.18|      25.727|      166.09|     -336.27|        1401|         3|    0.0055|
+|     -172.43|      18.834|      168.43|     -340.85|        1401|         3|    0.0057|
+|     -172.79|      18.008|      168.96|     -341.76|        1401|         3|    0.0055|
+|     -172.86|      17.886|      169.06|     -341.92|        1401|         3|    0.0055|
+|     -172.87|      17.866|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0054|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0054|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0054|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0054|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0057|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0055|
+|     -172.87|      17.862|      169.08|     -341.95|        1401|         3|    0.0054|
+|      181.37|      224.82|      611.64|     -430.28|      1607.8|         3|    0.0057|
+|     -136.36|      47.726|       201.8|     -338.15|        1534|         3|    0.0056|
+|     -170.53|      45.162|      166.96|      -337.5|        1401|         3|    0.0058|
+|     -175.05|      29.602|      165.61|     -340.66|        1401|         3|    0.0057|
+|     -174.57|      17.942|      167.23|      -341.8|        1401|         3|    0.0055|
+|     -177.47|      18.025|      169.61|     -347.08|        1401|         3|    0.0057|
+|     -179.14|      17.325|      170.48|     -349.62|        1401|         3|    0.0055|
+|     -182.37|      20.664|       172.5|     -354.87|        1401|         3|    0.0054|
+|     -190.28|      23.694|      171.13|      -361.4|      1401.1|         3|    0.0054|
+|     -193.47|      21.346|       169.6|     -363.07|      1401.4|         3|    0.0054|
+|     -201.22|      18.848|      168.82|     -370.04|      1433.1|         3|    0.0054|
+|     -201.78|      18.814|       178.3|     -380.08|        1559|         3|    0.0054|
+|     -202.42|      15.336|      170.19|     -372.61|      1458.2|         3|    0.0054|
+|     -203.34|       10.11|      176.81|     -380.15|        1526|         3|    0.0054|
+|     -203.81|      5.5558|      175.63|     -379.45|      1498.3|         3|    0.0057|
+|     -203.86|      4.3017|      175.32|     -379.18|      1505.1|         3|    0.0054|
+|     -203.86|      4.2568|      175.35|     -379.21|      1505.3|         3|    0.0054|
+|     -203.86|      4.2923|      175.36|     -379.22|      1505.9|         3|    0.0054|
+|     -203.87|      4.6182|      175.52|     -379.39|      1506.8|         3|    0.0056|
+|     -203.87|      5.2626|      175.67|     -379.54|      1507.2|         3|    0.0055|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -203.86856431548395
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.126e+00]
+      nit: 19
+      jac: [-4.534e-06 -4.352e-06 ... -9.453e+00 -1.069e+01]
+     nfev: 50
+     njev: 50
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      1.9353|      27.429|         172|     -170.07|        1101|       8.3|    0.0054|
+|     -156.54|      71.701|      381.28|     -537.82|      1915.6|       3.1|    0.0054|
+|     -1.0602|      29.116|      170.43|     -171.49|        1101|       3.1|    0.0054|
+|     -202.27|      85.464|      131.41|     -333.68|      1524.9|       3.1|    0.0056|
+|      -211.2|      43.585|      268.87|     -480.07|      1842.1|       3.1|    0.0054|
+|     -230.71|      69.703|      154.76|     -385.46|      1679.1|       3.1|    0.0056|
+|     -232.09|      38.088|      212.67|     -444.77|      1797.6|       3.1|    0.0058|
+|     -236.87|      53.786|       174.3|     -411.17|      1737.9|       3.1|    0.0054|
+|     -235.87|      40.213|      195.96|     -431.83|      1776.8|       3.1|    0.0054|
+|     -236.87|      53.786|       174.3|     -411.17|      1737.9|       3.1|    0.0054|
+|     -127.73|      35.588|      197.61|     -325.34|      1622.6|       3.1|    0.0054|
+|     -202.09|      50.014|      137.14|     -339.23|      1426.2|       3.1|    0.0056|
+|     -255.08|      40.994|      136.31|     -391.38|      1619.7|       3.1|    0.0057|
+|     -266.13|      12.909|      166.18|     -432.31|      1559.6|       3.1|    0.0055|
+|     -269.04|      11.463|      159.89|     -428.93|      1486.3|       3.1|    0.0055|
+|     -272.11|      20.795|      148.59|      -420.7|        1426|       3.1|    0.0054|
+|     -273.57|       19.33|      133.45|     -407.02|      1293.9|       3.1|    0.0054|
+|      -275.1|      8.8915|      142.22|     -417.32|      1342.4|       3.1|    0.0054|
+|     -275.44|      5.9626|      144.08|     -419.52|      1339.5|       3.1|    0.0054|
+|     -275.84|      5.5769|      146.13|     -421.97|      1375.7|       3.1|    0.0055|
+|     -276.38|      4.5281|      145.17|     -421.55|      1350.3|       3.1|    0.0054|
+|     -275.31|      15.709|       141.6|     -416.91|      1337.9|       3.1|    0.0054|
+|      -276.5|       5.421|      143.87|     -420.38|      1335.6|       3.1|    0.0058|
+|     -276.66|      5.8394|      145.71|     -422.37|      1350.2|       3.1|    0.0058|
+|     -276.42|      9.5549|      143.02|     -419.44|      1335.2|       3.1|    0.0055|
+|     -276.64|      6.5397|      144.91|     -421.55|        1346|       3.1|    0.0054|
+|     -276.66|      5.9584|      145.53|     -422.19|      1349.3|       3.1|    0.0053|
+|     -276.66|      5.8626|      145.67|     -422.33|        1350|       3.1|    0.0055|
+|     -276.66|      5.8442|      145.71|     -422.36|      1350.2|       3.1|    0.0055|
+|     -276.66|      5.8404|      145.71|     -422.37|      1350.2|       3.1|    0.0055|
+|     -276.66|       5.843|      145.71|     -422.37|      1350.2|       3.1|    0.0054|
+|     -276.66|      5.8408|      145.71|     -422.37|      1350.2|       3.1|    0.0056|
+|     -276.66|      5.8404|      145.71|     -422.37|      1350.2|       3.1|    0.0054|
+|     -276.66|      5.8407|      145.71|     -422.37|      1350.2|       3.1|    0.0054|
+|     -276.66|      5.8406|      145.71|     -422.37|      1350.2|       3.1|    0.0054|
+|     -276.66|      5.8405|      145.71|     -422.37|      1350.2|       3.1|    0.0054|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -276.6582531790424
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.317e+00]
+      nit: 12
+      jac: [-1.142e-05  1.173e-05 ... -1.929e+01  1.565e+00]
+     nfev: 36
+     njev: 36
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      18.353|      34.498|      189.61|     -171.25|        1201|       8.4|    0.0054|
+|     -3.4734|      167.93|      533.64|     -537.12|        1806|       3.1|    0.0054|
+|       16.26|      35.645|      188.56|      -172.3|        1201|       3.1|    0.0054|
+|     -159.86|      95.623|      176.29|     -336.15|      1496.1|       3.1|    0.0054|
+|     -100.28|      91.552|      383.93|     -484.21|      1753.1|       3.1|    0.0056|
+|     -154.26|      69.192|       267.4|     -421.66|      1676.4|       3.1|    0.0056|
+|     -165.34|      83.967|      216.49|     -381.83|      1603.3|       3.1|    0.0055|
+|     -165.63|      92.814|      194.11|     -359.74|      1554.5|       3.1|    0.0054|
+|     -104.87|      38.535|      331.18|     -436.06|      1720.3|       3.1|    0.0054|
+|     -176.42|      60.817|      216.74|     -393.16|      1465.3|       3.1|    0.0054|
+|     -179.94|      35.619|      173.67|     -353.61|        1201|       3.1|    0.0055|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0054|
+|     -174.89|      22.275|      193.69|     -368.58|        1237|       3.1|    0.0054|
+|     -180.11|      22.684|      182.36|     -362.47|        1201|       3.1|    0.0057|
+|     -180.94|      24.237|      179.81|     -360.75|        1201|       3.1|    0.0054|
+|     -181.09|      24.798|      179.28|     -360.37|        1201|       3.1|    0.0054|
+|     -181.12|      24.922|      179.17|     -360.29|        1201|       3.1|    0.0054|
+|     -181.13|      24.947|      179.15|     -360.28|        1201|       3.1|    0.0054|
+|     -181.13|      24.952|      179.15|     -360.28|        1201|       3.1|    0.0056|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0054|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0054|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0054|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0057|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0057|
+|     -181.13|      24.953|      179.14|     -360.28|        1201|       3.1|    0.0054|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -181.1315136026637
+        x: [-4.605e+00 -2.877e-01 ...  2.469e+00  2.552e+00]
+      nit: 5
+      jac: [-2.085e-06 -1.408e-05 ... -3.892e+01  7.212e+01]
+     nfev: 25
+     njev: 25
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      37.102|      37.227|      176.81|     -139.71|      801.01|       8.6|    0.0054|
+|      1.9857|       133.4|      519.96|     -517.98|      1766.4|       3.4|    0.0054|
+|      34.269|      38.757|      175.25|     -140.98|      801.02|       3.4|    0.0054|
+|     -153.26|      88.479|      160.36|     -313.62|      1118.8|       3.4|    0.0055|
+|     -80.169|      74.836|      382.47|     -462.63|      1358.6|       3.4|    0.0055|
+|     -143.97|      72.417|      253.73|      -397.7|      1286.1|       3.4|    0.0058|
+|      -157.5|        84.9|      201.81|     -359.31|      1220.2|       3.4|    0.0054|
+|     -158.17|      90.601|      178.32|     -336.49|      1172.7|       3.4|    0.0062|
+|     -90.682|      36.576|      322.66|     -413.34|      1766.4|       3.4|    0.0055|
+|      -153.6|      74.778|       212.2|     -365.81|      1213.7|       3.4|    0.0054|
+|     -195.81|      24.362|      151.66|     -347.47|      1008.3|       3.4|    0.0058|
+|     -200.03|      21.382|      153.35|     -353.37|      984.33|       3.4|    0.0054|
+|     -203.28|      31.943|      164.21|     -367.49|         896|       3.4|    0.0054|
+|     -208.67|      17.058|      164.76|     -373.42|      983.63|       3.4|    0.0056|
+|     -210.65|      9.1602|      158.87|     -369.51|      979.29|       3.4|    0.0054|
+|     -211.07|      5.9126|      159.84|     -370.91|      1002.9|       3.4|    0.0054|
+|     -211.43|      3.6567|      160.76|     -372.19|      1021.2|       3.4|    0.0054|
+|     -211.73|      4.0088|      162.56|     -374.29|      1027.8|       3.4|    0.0055|
+|     -212.06|      4.0908|      162.17|     -374.23|      1017.9|       3.4|    0.0054|
+|     -212.28|       3.495|      162.34|     -374.62|        1006|       3.4|    0.0054|
+|     -212.34|      3.8275|      161.13|     -373.47|      999.09|       3.4|    0.0054|
+|     -212.37|       3.075|      162.07|     -374.44|      1008.3|       3.4|    0.0054|
+|     -212.37|      3.0156|      161.93|     -374.29|      1009.7|       3.4|    0.0056|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -212.3679838519678
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.171e+00]
+      nit: 13
+      jac: [ 8.886e-07 -2.485e-05 ... -5.635e+00  8.465e-01]
+     nfev: 23
+     njev: 23
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+Average scores:	 rmse: 0.23±0.05	 r2: 0.85±0.07
+Filename: (MG-COUNT)_(MGK_Graph-RBF_product)_hypOFF_feat_transformerOFF_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu04>
+Subject: Job 596994: <structure_numerical_20260402> in cluster <Hazel> Done
+
+Job <structure_numerical_20260402> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 10:37:12 2026
+Job was executed on host(s) <4*gpu04>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 10:37:14 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 10:37:14 2026
+Terminated at Thu Apr  2 11:08:01 2026
+Results reported at Thu Apr  2 11:08:01 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 1:20
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1849.32 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.98 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                15
+    Run time :                                   1863 sec.
+    Turnaround time :                            1849 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+

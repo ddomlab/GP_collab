@@ -1,0 +1,77 @@
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.33±0.07	 r2: 0.74±0.09
+Filename: (MG-COUNT)_(MGK_Graph-RBF_product)_hypOFF_feat_transformerOFF_target_transformerOFF
+Running seed: 6
+No hyperparameter optimization
+Running seed: 13
+No hyperparameter optimization
+Running seed: 42
+No hyperparameter optimization
+Average scores:	 rmse: 0.38±0.1	 r2: 0.94±0.03
+Filename: (MG-COUNT)_(MGK_Graph-RBF_product)_hypOFF_feat_transformerOFF_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 597039: <structure_numerical_20260402> in cluster <Hazel> Done
+
+Job <structure_numerical_20260402> was submitted from host <gpu14> by user <sdehgha2> in cluster <Hazel> at Thu Apr  2 11:05:12 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Apr  2 11:05:12 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Apr  2 11:05:12 2026
+Terminated at Thu Apr  2 11:31:00 2026
+Results reported at Thu Apr  2 11:31:00 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 6:40
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260402"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1506.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.96 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                17
+    Run time :                                   1536 sec.
+    Turnaround time :                            1548 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260402/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_product_GPU.err> for stderr output of this job.
+
