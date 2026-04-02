@@ -32,7 +32,7 @@ from sklearn.metrics import (
 )
 
 import inspect
-
+import copy
 
 
 def pearson(y_true: pd.Series, y_pred: np.ndarray) -> float:
@@ -478,7 +478,7 @@ def mgk_cross_validate(
     n_samples = len(y)
     predictions = np.full(n_samples, np.nan)
     for train_idx, test_idx in cv.split(X, y):
-        model = clone(estimator)
+        est = copy.deepcopy(estimator)
 
     # Use safe row selector for all data types
         X_train = split_for_training(X, train_idx)
@@ -486,8 +486,8 @@ def mgk_cross_validate(
         y_train = split_for_training(y, train_idx)
         y_test  = split_for_training(y, test_idx)
 
-        model.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=repeat)
-        y_pred = model.predict(X_test)
+        est.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=repeat)
+        y_pred = est.predict(X_test)
         predictions[test_idx] = y_pred
         for name, scorer in scoring.items():
             results[f"test_{name}"].append(scorer(y_test, y_pred))
