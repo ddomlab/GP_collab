@@ -316,7 +316,7 @@ def run(
             if "mgk" in regressor_type.lower():
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, return_ls=False)
+                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=2,return_importance=False)
             else:
                 model = optimized_models(
                                         regressor_type,
