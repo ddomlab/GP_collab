@@ -78,7 +78,7 @@ def test_gradient_Graph(mgk_file, loss_function, optimizer):
     
     X_train, X_test, y_train, y_test = train_test_split(dataset.X, dataset.y, test_size=0.2, random_state=42, shuffle=True)
     
-    gpr.fit(X_train, y_train, loss=loss_function, verbose=False, repeat=400)
+    gpr.fit(X_train, y_train, loss=loss_function, verbose=True, repeat=400)
     # gpr.predict(X_test, return_std=True)
 
     r2_score_calc = r2_score(y_test, gpr.predict(X_test))
