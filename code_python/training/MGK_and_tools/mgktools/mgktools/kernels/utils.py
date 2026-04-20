@@ -13,7 +13,7 @@ def get_kernel_config(
     dataset: Dataset,
     graph_kernel_type: Literal["graph", "pre-computed", 'no'],
     # arguments for vectorized features.
-    features_kernel_type: Literal["dot_product", "rbf"] = None,
+    features_kernel_type: Literal["dot_product", "RBF", "Matern32", "Matern52"] = None,
     features_hyperparameters: List[float] = None,
     features_hyperparameters_bounds: Tuple[float, float] = None,
     features_hyperparameters_file: str = None,
@@ -55,7 +55,7 @@ def get_kernel_config(
                 features_hyperparameters = features_hyperparameters[0]
             else:
                 assert len(features_hyperparameters) == n_features
-                assert features_kernel_type == 'rbf'
+                assert features_kernel_type == 'RBF'
             hyperdict = {
                 "features_kernel": {
                     features_kernel_type: [

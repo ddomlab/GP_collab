@@ -156,7 +156,7 @@ def _prepare_data(
     hyperparameter_optimization: bool = True,
     imputer: Optional[str] = None,
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
-    kernel_type: Optional[str]=None,
+    kernel_type: Optional[Dict]=None,
     kernel_mixing_method: Optional[str]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
@@ -182,10 +182,10 @@ def _prepare_data(
             mgk_dataset.create_graphs(n_jobs=4)
             mgk_dataset.unify_datatype()
             mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
-                            graph_kernel_type='graph',
+                            graph_kernel_type="graph",
                             mgk_hyperparameters_files=graph_kerenel_files[kernel_mixing_method]*len(structural_features),
-                            features_kernel_type='rbf',
-                            features_hyperparameters_file="rbf.json",
+                            features_kernel_type=kernel_type["count"],
+                            features_hyperparameters_file=f"{kernel_type["count"]}.json",
                             hybrid_rule=kernel_mixing_method,
                             feature_mode="per_feature",
                             )
@@ -196,7 +196,6 @@ def _prepare_data(
                                 regressor_type=regressor_type,
                                 hyperparameter_optimization=hyperparameter_optimization,
                                 kernel_parameters=mgk_kernel_config,
-                                # kernel_type=kernel_type,
                                 )
     else:
         X, y, unrolled_feats, kernel_parameters = filter_dataset(

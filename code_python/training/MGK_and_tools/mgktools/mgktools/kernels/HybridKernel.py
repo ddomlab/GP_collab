@@ -3,7 +3,7 @@
 from typing import Dict, List, Literal, Tuple, Any
 import copy
 import numpy as np
-from sklearn.gaussian_process.kernels import RBF, DotProduct
+from sklearn.gaussian_process.kernels import RBF, DotProduct, Matern
 from mgktools.kernels.base import BaseKernelConfig
 
 
@@ -29,7 +29,7 @@ class HybridKernel:
         X = self._format_X(X)
         X_list = list(map(f, self.composition))
         for i, kernel in enumerate(self.kernel_list):
-            if kernel.__class__ in [RBF, DotProduct]:
+            if kernel.__class__ in [RBF, DotProduct, Matern]:
                 X_list[i] = X_list[i].astype("float64")
         return X_list
 

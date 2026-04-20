@@ -21,7 +21,7 @@ from typing import Tuple, List, Dict, Callable, Any
 import os
 import pickle
 import numpy as np
-from sklearn.gaussian_process.kernels import DotProduct, RBF
+from sklearn.gaussian_process.kernels import DotProduct, RBF, Matern
 from graphdot.microkernel import (
     Additive,
     Constant as Const,
@@ -56,7 +56,7 @@ class MicroKernel:
         Name of the microkernel (e.g., 'atom_Gasteiger_charge').
     kernel_type : str
         Type of kernel function. Supported types:
-        - 'rbf': Radial Basis Function kernel
+        - 'RBF': Radial Basis Function kernel
         - 'dot_product': Dot product kernel
         - 'Const': Constant microkernel
         - 'kDelta': Kronecker Delta microkernel
@@ -143,8 +143,12 @@ class MicroKernel:
             If kernel_type is not supported.
         """
         bounds = self.bounds or "fixed"
-        if self.kernel_type == "rbf":
+        if self.kernel_type == "RBF":
             return RBF(length_scale=self.value, length_scale_bounds=bounds)
+        elif self.kernel_type == "Matern32":
+            return Matern(length_scale=self.value, length_scale_bounds=bounds, nu=1.5)
+        elif self.kernel_type== "Matern52":
+            return Matern(length_scale=self.value, length_scale_bounds=bounds, nu=2.5)
         elif self.kernel_type == "dot_product":
             return DotProduct(sigma_0=self.value, sigma_0_bounds=bounds)
         elif self.kernel_type == "Const":
@@ -358,12 +362,12 @@ class BaseKernelConfig(ABCKernelConfig):
     Base configuration class for sklearn-compatible kernels.
 
     This class provides common functionality for configuring feature-based
-    kernels (RBF, DotProduct) that work with sklearn's GaussianProcessRegressor.
+    kernels (RBF, Matern,DotProduct) that work with sklearn's GaussianProcessRegressor.
 
     Parameters
     ----------
     kernel_type : str
-        Type of kernel ('rbf' or 'dot_product').
+        Type of kernel ('rbf', 'Matern', 'dot_product').
     kernel_hyperparameters : list
         List of hyperparameter values.
     kernel_hyperparameters_bounds : list
