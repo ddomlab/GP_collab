@@ -48,7 +48,7 @@ def test_bayesian_Graph(mgk_file, split_set):
                                       )
 
     save_dir = Path.cwd()/"test_hp_out"   # current folder
-
+    save_dir.mkdir(parents=True, exist_ok=True)
     bayesian_optimization(
         save_dir=str(save_dir),
         datasets=[dataset],
