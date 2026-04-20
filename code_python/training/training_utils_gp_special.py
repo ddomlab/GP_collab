@@ -21,10 +21,9 @@ from data_handling import remove_unserializable_keys, save_results
 from filter_data import filter_dataset
 from all_factories import (
                             regressor_factory,
-                            # regressor_search_space,
                             transforms,
                             get_regressor_search_space,
-                            # _get_gp_kernel
+                            imputer_factory
                             )
 from all_factories import optimized_models
 
@@ -37,7 +36,7 @@ from scoring import (
     mgk_cross_validate_regressor
 )
 from utils import split_for_training
-
+from filter_data import sanitize_dataset
 ## imports for MGK
 from mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
@@ -169,6 +168,10 @@ def _prepare_data(
 
     if "mgk" in regressor_type.lower():
             df = dataset[structural_features + numerical_feats + target_features]
+            df = sanitize_dataset(dataset, target_features, dropna=True)
+            if features_impute:
+                imp = imputer_factory[imputer]
+                df[features_impute] = imp.fit_transform(df[features_impute])
             mgk_dataset = Dataset.from_df(
                               df=df,
                               smiles_columns=structural_features,
