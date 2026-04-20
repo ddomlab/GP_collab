@@ -41,7 +41,8 @@ from filter_data import sanitize_dataset
 from mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
 from mgktools.hyperparameters import *
-
+from mgktools.hyperparameters.optuna import bayesian_optimization
+from mgktools.kernels.base import BaseKernelConfig
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -248,7 +249,7 @@ def run(
     preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
     second_transformer:str=None, 
     hyperparameter_optimization: bool = False,
-    kernel_parameters: Optional[dict]=None,
+    kernel_parameters: Optional[BaseKernelConfig]=None,
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
     **kwargs,
@@ -264,61 +265,82 @@ def run(
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
         y_transform = get_target_transformer(second_transformer)
 
-        if hyperparameter_optimization:
-            search_space = get_regressor_search_space(regressor_type)
-            skop_scoring = "neg_root_mean_squared_error"
 
-            if y.shape[1] > 1:
-                y_transform_regressor = TransformedTargetRegressor(
-                regressor = MultiOutputRegressor(
-                estimator= regressor_factory[regressor_type]
-                ),
-                transformer=y_transform,
+        if "mgk" in regressor_type.lower():
+            if hyperparameter_optimization:
+                alpha = bayesian_optimization(
+                    save_dir=str(save_dir),
+                    datasets=[dataset],
+                    dataset_val=None,
+                    dataset_test=None,
+                    kernel_config=kernel_parameters,
+                    model_type='gpr',
+                    task_type='regression',
+                    metric='rmse',
+                    cross_validation='kFold',
+                    split_type='random',
+                    split_sizes=[.8,.2],
+                    num_folds=N_FOLDS,
+                    n_splits=N_FOLDS,
+                    num_iters=BO_ITER,
+                    alpha=0.01,
+                    alpha_bounds=(0.001, 0.1),
+                    d_alpha=0.001
                 )
-                
-                search_space = {
-                f"regressor__regressor__estimator__{key.split('__')[-1]}": value
-                for key, value in search_space.items()
-                    }
+
+                model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
+                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=1,return_importance=False)
             else:
-                y_transform_regressor = TransformedTargetRegressor(
-                        regressor= regressor_factory[regressor_type],
-                        transformer=y_transform,
-                )
-
-            new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
-            regressor :Pipeline= Pipeline(steps=[
-                        ("preprocessor", new_preprocessor),
-                        ("regressor", y_transform_regressor),
-                            ])
-
-            regressor.set_output(transform="pandas")
-            cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-            best_estimator, regressor_params = _optimize_hyperparams(
-                                                                    X,
-                                                                    y,
-                                                                    cv_outer=cv_outer,
-                                                                    cv_in=cv_in,
-                                                                    n_iter=BO_ITER,
-                                                                    seed=seed,
-                                                                    regressor_type=regressor_type,
-                                                                    search_space=search_space,
-                                                                    regressor=regressor,
-                                                                    scoring=skop_scoring,
-                                                                    )
-            
-            scores, predictions = cross_validate_regressor(
-                                    best_estimator, X, y, cv_outer
-                                    )
-            scores["best_params"] = regressor_params
-
-
-        else:
-            print("No hyperparameter optimization")
-            if "mgk" in regressor_type.lower():
-
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
                 scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=1,return_importance=False)
+        else:
+            if hyperparameter_optimization:
+                search_space = get_regressor_search_space(regressor_type)
+                skop_scoring = "neg_root_mean_squared_error"
+
+                if y.shape[1] > 1:
+                    y_transform_regressor = TransformedTargetRegressor(
+                    regressor = MultiOutputRegressor(
+                    estimator= regressor_factory[regressor_type]
+                    ),
+                    transformer=y_transform,
+                    )
+                    
+                    search_space = {
+                    f"regressor__regressor__estimator__{key.split('__')[-1]}": value
+                    for key, value in search_space.items()
+                        }
+                else:
+                    y_transform_regressor = TransformedTargetRegressor(
+                            regressor= regressor_factory[regressor_type],
+                            transformer=y_transform,
+                    )
+
+                new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                regressor :Pipeline= Pipeline(steps=[
+                            ("preprocessor", new_preprocessor),
+                            ("regressor", y_transform_regressor),
+                                ])
+
+                regressor.set_output(transform="pandas")
+                cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
+                best_estimator, regressor_params = _optimize_hyperparams(
+                                                                        X,
+                                                                        y,
+                                                                        cv_outer=cv_outer,
+                                                                        cv_in=cv_in,
+                                                                        n_iter=BO_ITER,
+                                                                        seed=seed,
+                                                                        regressor_type=regressor_type,
+                                                                        search_space=search_space,
+                                                                        regressor=regressor,
+                                                                        scoring=skop_scoring,
+                                                                        )
+                
+                scores, predictions = cross_validate_regressor(
+                                        best_estimator, X, y, cv_outer
+                                        )
+                scores["best_params"] = regressor_params
             else:
                 model = optimized_models(
                                         regressor_type,

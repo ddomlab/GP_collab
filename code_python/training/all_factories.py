@@ -132,6 +132,7 @@ def optimized_models(
                     kernel_type:Optional[str]=None,
                     kernel_mixing_method:Optional[str]=None,
                     graph_kernel_config:Optional[str]=None,
+                    alpha:Optional[float]=0.01,
                      **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
@@ -187,8 +188,8 @@ def optimized_models(
         return MGKGPRegressor(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
-                alpha=0.01,
-                normalize_y=True
+                alpha=alpha,
+                normalize_y=True,
                 )
     
     else:

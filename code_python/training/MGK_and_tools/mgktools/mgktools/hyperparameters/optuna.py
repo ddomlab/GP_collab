@@ -83,13 +83,18 @@ def evaluate_model(dataset, dataset_val, dataset_test, kernel_config, model_type
 def save_optimization_results(save_dir: str, best_params: Dict, kernel_config) -> None:
     """Save optimization hyperparameters to files."""
     # Save regularization parameters
+    reg_params: Dict[str, float] = {}
     for param in ['alpha', 'C']:
         if param in best_params:
+            value = best_params.pop(param)
             with open(f"{save_dir}/{param}", "w") as f:
-                f.write(str(best_params.pop(param)))
+                f.write(str(value))
+            reg_params[param] = value
+
     
     kernel_config.update_from_trial(best_params)
     kernel_config.save(path=save_dir)
+    return reg_params
 
 
 def bayesian_optimization(
@@ -115,6 +120,7 @@ def bayesian_optimization(
     d_C: float = None,
     load_if_exists: bool = True,
     seed: int = 0,
+    return_alpha:bool=False
 ):
     """ Perform Bayesian optimization for hyperparameter tuning.
 
@@ -275,7 +281,15 @@ def bayesian_optimization(
     n_to_run = num_iters - len(study.trials)
     if n_to_run > 0:
         study.optimize(objective, n_trials=n_to_run)
-    save_optimization_results(save_dir=save_dir, best_params=study.best_params, kernel_config=kernel_config)
+        
+    opt_params  = save_optimization_results(save_dir=save_dir, 
+                                            best_params=study.best_params,
+                                            kernel_config=kernel_config
+                                            )
+    if return_alpha:
+        return opt_params.get("alpha")
+   
+    
     # optuna.delete_study(study_name="optuna-study", storage="sqlite:///%s/optuna.db" % save_dir)
 
 
