@@ -4,8 +4,8 @@ DATE=$(date +%Y%m%d)
 # model="GPMixMCMC"
 # paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
 # dataset="Rg data with clusters aging imputed"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="Beyond molecular structure_seifrid_imputed"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -19,7 +19,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 8:40
+#BSUB -W 10:40
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
