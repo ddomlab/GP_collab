@@ -14,14 +14,13 @@ import tempfile
 
 smiles = ['CCCC', 'CCCCCO', 'c1ccccc1', 'CCNCCO', 'OCCCO']
 targets = [3.1, 14.5, 25.6, 56.7, 12.3]
-df = pd.DataFrame({'smiles': smiles, 'targets': targets})
+features_add = [0.6, 0.1, 0.3, 0.9, 3]
+df = pd.DataFrame({'smiles': smiles, 'targets': targets,'features_add': features_add})
 
 
 @pytest.mark.parametrize('mgk_file', [
                                       product])
 @pytest.mark.parametrize('split_set', [
-    # ('leave-one-out', None, None, 1),
-    # ('Monte-Carlo', None, 'random', 10),
     ('kFold', 5, 'random', 5)
 ])
 def test_bayesian_Graph(mgk_file, split_set):
@@ -32,15 +31,23 @@ def test_bayesian_Graph(mgk_file, split_set):
         split_sizes = None
     dataset = Dataset.from_df(df=df,
                               smiles_columns=['smiles'],
-                              targets_columns=['targets'])
+                              targets_columns=['targets'],
+                              features_columns=['features_add']
+                              )
     dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
     dataset.create_graphs(n_jobs=4)
     dataset.unify_datatype()
     kernel_config = get_kernel_config(dataset=dataset,
                                       graph_kernel_type='graph',
-                                      mgk_hyperparameters_files=[mgk_file])
+                                      mgk_hyperparameters_files=[mgk_file],
+                                      features_kernel_type="RBF",
+                                      hybrid_rule="product",
+                                      feature_mode="per_feature",
+                                      features_hyperparameters=[1.0],
+                                      features_hyperparameters_bounds=(0.1, 10000.0)
+                                      )
 
-    save_dir = Path.cwd()   # current folder
+    save_dir = Path.cwd()/"test_hp_out"   # current folder
 
     bayesian_optimization(
         save_dir=str(save_dir),

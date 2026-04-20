@@ -168,7 +168,7 @@ class Evaluator:
                     dataset_train = get_data_from_index(self.dataset, train_index)
                     dataset_test = get_data_from_index(self.dataset, test_index)
                     df_predict, df_ = self.evaluate_train_test(dataset_train, dataset_test)
-                    df_predict.to_csv("%s/kFold_%d-%d_prediction.csv" % (self.save_dir, i, i_fold), index=False)
+                    # df_predict.to_csv("%s/kFold_%d-%d_prediction.csv" % (self.save_dir, i, i_fold), index=False)
                     df_["seed"] = self.seed + i
                     df_["split"] = i_fold
                     metrics_list.append(df_)
