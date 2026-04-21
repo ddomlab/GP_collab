@@ -292,7 +292,8 @@ def run(
                     alpha=0.01,
                     alpha_bounds=(0.001, 0.1),
                     d_alpha=0.001,
-                    seed=seed
+                    seed=seed,
+                    return_alpha=True
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
