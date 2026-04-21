@@ -283,7 +283,7 @@ def run(
                     model_type='gpr',
                     task_type='regression',
                     metric='rmse',
-                    cross_validation='n-fold',
+                    cross_validation='kFold',
                     split_type='random',
                     # split_sizes=[.8,.2],
                     num_folds=N_FOLDS,
