@@ -84,6 +84,7 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
+    
     args = parse_arguments()
     PAPER = args.paper
     # # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
@@ -93,6 +94,7 @@ if __name__ == "__main__":
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     for targ in all_targets:
+                optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/"Greaph_Matern32"
                 main_structural_numerical(
                     dataset=w_data,
                     representation="MG",
@@ -114,6 +116,7 @@ if __name__ == "__main__":
                         # "count":args.K_count
                                 },
                     kernel_mixing_method=args.Kernel_mixing_method,
+                    hyperparameter_save_dir=optuna_save_dir
                     # imputer="mean",
                     # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                     )

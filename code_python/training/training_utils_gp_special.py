@@ -190,13 +190,15 @@ def _prepare_data(
                             hybrid_rule=kernel_mixing_method,
                             feature_mode="per_feature",
                             )
-            X, y = mgk_dataset.X, mgk_dataset.y
+            # X, y = mgk_dataset.X, mgk_dataset.y
             score,predication = run(
-                                X,
-                                y,
+                                # X,
+                                # y,
+                                full_dataset=mgk_dataset,
                                 regressor_type=regressor_type,
                                 hyperparameter_optimization=hyperparameter_optimization,
                                 kernel_parameters=mgk_kernel_config,
+                                **kwargs
                                 )
     else:
         X, y, unrolled_feats, kernel_parameters = filter_dataset(
@@ -243,8 +245,9 @@ def _prepare_data(
 
 
 def run(
-    X, y, 
-    regressor_type: str,
+    X=None, y=None,
+    regressor_type: str=None,
+    full_dataset:Optional[Dataset]=None,
     features_group: Optional[dict[str, list[int]]]=None,
     preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
     second_transformer:str=None, 
@@ -263,29 +266,33 @@ def run(
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-        y_transform = get_target_transformer(second_transformer)
 
 
         if "mgk" in regressor_type.lower():
+            X, y = full_dataset.X, full_dataset.y
+
             if hyperparameter_optimization:
+                save_dir =kwargs.get("hyperparameter_save_dir")
+                save_dir.mkdir(parents=True, exist_ok=True)
                 alpha = bayesian_optimization(
-                    # save_dir=str(save_dir),
-                    # datasets=[dataset],
+                    save_dir=str(save_dir),
+                    datasets=[full_dataset],
                     dataset_val=None,
                     dataset_test=None,
                     kernel_config=kernel_parameters,
                     model_type='gpr',
                     task_type='regression',
                     metric='rmse',
-                    cross_validation='kFold',
+                    cross_validation='n-fold',
                     split_type='random',
-                    split_sizes=[.8,.2],
+                    # split_sizes=[.8,.2],
                     num_folds=N_FOLDS,
                     n_splits=N_FOLDS,
                     num_iters=BO_ITER,
                     alpha=0.01,
                     alpha_bounds=(0.001, 0.1),
-                    d_alpha=0.001
+                    d_alpha=0.001,
+                    seed=seed
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
@@ -294,6 +301,7 @@ def run(
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
                 scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=1,return_importance=False)
         else:
+            y_transform = get_target_transformer(second_transformer)
             if hyperparameter_optimization:
                 search_space = get_regressor_search_space(regressor_type)
                 skop_scoring = "neg_root_mean_squared_error"
