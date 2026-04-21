@@ -190,7 +190,7 @@ def _prepare_data(
                             hybrid_rule=kernel_mixing_method,
                             feature_mode="per_feature",
                             )
-            # X, y = mgk_dataset.X, mgk_dataset.y
+            
             score,predication = run(
                                 # X,
                                 # y,
@@ -238,7 +238,7 @@ def _prepare_data(
                                 kernel_mixing_method=kernel_mixing_method,
                                 **kwargs,
                                 )
-
+    y = mgk_dataset.y
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = pd.concat([predication, y_frame], axis=1)
     return score, combined_prediction_ground_truth
