@@ -269,8 +269,8 @@ def run(
         if "mgk" in regressor_type.lower():
             if hyperparameter_optimization:
                 alpha = bayesian_optimization(
-                    save_dir=str(save_dir),
-                    datasets=[dataset],
+                    # save_dir=str(save_dir),
+                    # datasets=[dataset],
                     dataset_val=None,
                     dataset_test=None,
                     kernel_config=kernel_parameters,
