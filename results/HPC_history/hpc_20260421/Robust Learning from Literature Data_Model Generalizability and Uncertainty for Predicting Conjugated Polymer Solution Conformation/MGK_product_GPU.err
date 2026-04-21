@@ -249,3 +249,24 @@ Traceback (most recent call last):
     model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
                                                                                           ^^^^^^^^^^^^
 TypeError: float() argument must be a string or a real number, not 'NoneType'
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   22.8s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   22.8s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.4s finished
+[I 2026-04-21 14:59:41,347] Using an existing study with name 'optuna-study' instead of creating a new one.
+[I 2026-04-21 15:47:56,883] Using an existing study with name 'optuna-study' instead of creating a new one.
+[I 2026-04-21 16:28:26,543] Using an existing study with name 'optuna-study' instead of creating a new one.
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 93, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 242, in _prepare_data
+    y_frame = pd.DataFrame(y.flatten(),columns=target_features)
+                           ^
+UnboundLocalError: cannot access local variable 'y' where it is not associated with a value
