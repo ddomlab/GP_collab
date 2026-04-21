@@ -1,0 +1,166 @@
+Running seed: 6
+|        logP|       dlogP|     y^T.K.y|     log|K| |     Cond(K)|  GPU time|  CPU time|
+|------------|------------|------------|------------|------------|----------|----------|
+|      21.392|      25.634|      172.05|     -150.66|        1201|         7|    0.0072|
+|     -131.59|      120.82|      326.01|      -457.6|      1854.5|      0.61|    0.0056|
+|      19.501|      26.752|      170.82|     -151.32|      1201.1|       0.6|    0.0051|
+|     -135.94|      59.987|      119.27|     -255.21|        1416|       0.6|    0.0051|
+|     -191.29|      93.893|      198.33|     -389.62|      1773.6|      0.59|    0.0047|
+|     -178.41|      61.053|      130.38|      -308.8|      1588.3|      0.59|    0.0046|
+|     -195.45|      73.531|      159.13|     -354.59|      1706.4|      0.59|    0.0043|
+|     -194.83|      86.067|      182.05|     -376.87|      1751.3|      0.59|    0.0042|
+|     -195.45|      73.531|      159.13|     -354.59|      1706.3|      0.59|    0.0042|
+|     -171.56|      23.821|      196.67|     -368.23|      1298.2|      0.59|    0.0058|
+|     -214.66|      36.611|         131|     -345.66|        1255|      0.59|    0.0042|
+|     -218.79|      39.653|       167.3|     -386.09|      1285.8|      0.59|    0.0042|
+|     -220.22|      31.788|      145.92|     -366.14|      1257.3|      0.59|    0.0047|
+|     -224.34|       32.09|      154.35|      -378.7|      1267.8|      0.59|    0.0043|
+|     -227.48|       29.63|      149.79|     -377.27|      1290.8|      0.59|    0.0042|
+|     -235.82|      24.451|      142.65|     -378.46|      1401.5|      0.59|    0.0047|
+|     -243.12|      15.826|      143.18|      -386.3|      1595.4|       0.6|    0.0044|
+|     -244.34|       11.88|      146.91|     -391.25|        1628|      0.59|    0.0048|
+|     -244.95|      13.246|       157.3|     -402.25|      1592.1|      0.59|    0.0042|
+|     -245.73|      7.2956|      156.95|     -402.68|      1654.1|      0.59|    0.0059|
+|     -245.89|      6.3302|      154.88|     -400.77|      1634.1|      0.59|    0.0048|
+|     -245.97|      6.3162|      154.27|     -400.24|      1628.9|      0.59|    0.0044|
+|     -246.17|       7.095|      153.16|     -399.33|      1616.7|      0.59|    0.0048|
+|     -246.32|      8.0874|      152.61|     -398.93|      1608.6|       0.6|    0.0064|
+|     -246.43|      7.3327|       153.2|     -399.63|      1616.7|       0.6|    0.0064|
+|     -246.58|      6.1129|      155.39|     -401.98|      1641.3|       0.6|    0.0064|
+|     -246.59|      6.0678|      154.98|     -401.58|      1636.3|       0.6|    0.0064|
+|     -246.59|      6.0795|      154.89|     -401.48|      1635.3|      0.59|    0.0065|
+Optimization result:
+  message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  success: True
+   status: 0
+      fun: -246.59340672042327
+        x: [-4.605e+00 -2.877e-01 ...  3.401e+00  2.902e+00]
+      nit: 18
+      jac: [ 3.118e-07  5.445e-05 ... -1.925e+01  3.992e-02]
+     nfev: 28
+     njev: 28
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu12>
+Subject: Job 831121: <structure_numerical_20260421> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260421> was submitted from host <gpu12> by user <sdehgha2> in cluster <Hazel> at Tue Apr 21 10:00:06 2026
+Job was executed on host(s) <gpu12>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Apr 21 10:00:06 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Apr 21 10:00:06 2026
+Terminated at Tue Apr 21 10:01:49 2026
+Results reported at Tue Apr 21 10:01:49 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 10:40
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260421"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 130.
+
+Resource usage summary:
+
+    CPU time :                                   63.15 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.67 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   103 sec.
+    Turnaround time :                            103 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu12>
+Subject: Job 831139: <structure_numerical_20260421> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260421> was submitted from host <gpu12> by user <sdehgha2> in cluster <Hazel> at Tue Apr 21 10:02:56 2026
+Job was executed on host(s) <gpu12>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Apr 21 10:02:57 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Apr 21 10:02:57 2026
+Terminated at Tue Apr 21 10:04:11 2026
+Results reported at Tue Apr 21 10:04:11 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 10:40
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260421"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   40.43 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.50 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                14
+    Run time :                                   65 sec.
+    Turnaround time :                            75 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260421/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_GPU.err> for stderr output of this job.
+
