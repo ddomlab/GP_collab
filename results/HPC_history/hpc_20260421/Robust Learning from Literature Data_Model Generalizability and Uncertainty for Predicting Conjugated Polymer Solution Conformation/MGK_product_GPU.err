@@ -270,3 +270,11 @@ Traceback (most recent call last):
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
                            ^
 UnboundLocalError: cannot access local variable 'y' where it is not associated with a value
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.3s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   21.4s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.3s finished
+[I 2026-04-21 17:12:59,199] Using an existing study with name 'optuna-study' instead of creating a new one.
+[I 2026-04-21 17:27:11,436] Using an existing study with name 'optuna-study' instead of creating a new one.
+[I 2026-04-21 17:38:22,067] Using an existing study with name 'optuna-study' instead of creating a new one.
