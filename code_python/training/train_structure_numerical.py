@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     feat_transformer=None,
                     target_transformer=None,
                     numerical_feats=feats,
-                    hyperparameter_optimization=False,
+                    hyperparameter_optimization=True,
                     kernel_type={
                         "fp": "Graph",
                         "count": "Matern32"
@@ -117,8 +117,8 @@ if __name__ == "__main__":
                                 },
                     kernel_mixing_method=args.Kernel_mixing_method,
                     hyperparameter_save_dir=optuna_save_dir
-                    # imputer="mean",
-                    # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                    imputer="mean",
+                    columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                     )
 
  
