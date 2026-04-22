@@ -766,25 +766,25 @@ if __name__ == "__main__":
             #                         # comparison_value=['scaler', 'Trimer_scaler'],
             #                         )
             # feat_impt_expert = paper_info["expert_impt"]
-            for model in ["RF","XGBR", "NGB"]:    
+            # for model in ["RF","XGBR", "NGB"]:    
                 paper_loc: Path = RESULTS / paper_name / target
-                file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
-                score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                if not score_path.exists():
-                    file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
-                    score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-                # else:
-                #     print("file not found:", score_path)
-                with open(score_path, "r") as f:
-                    scores = json.load(f)
-                MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
-                                                save_loc=paper_loc,
-                                                file_extension=file_name,
-                                                figsize=(8,7.5)
-                                                )
+            #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
+            #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     if not score_path.exists():
+            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
+            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
+            #     # else:
+            #     #     print("file not found:", score_path)
+            #     with open(score_path, "r") as f:
+            #         scores = json.load(f)
+            #     MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
+            #                                     save_loc=paper_loc,
+            #                                     file_extension=file_name,
+            #                                     figsize=(8,7.5)
+            #                                     )
                 # shap_feature_means = shap_imp.abs().mean()
                 # df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
 
@@ -808,54 +808,54 @@ if __name__ == "__main__":
                 # ls_stats = get_lengthscale_stat(scores, expert_rank=feat_impt_expert, feature_stability=True, mean_std=False)
                 # print(df_ls)
                 # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = ls_stats
-                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = kendalls_w(MDI_imp)["Kendall's W"]
-                model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["SHAP"] = kendalls_w(shap_imp)["Kendall's W"]
+                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = kendalls_w(MDI_imp)["Kendall's W"]
+                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["SHAP"] = kendalls_w(shap_imp)["Kendall's W"]
 
                 # print(pg.friedman(df_top15))
                 # print(MDI_imp)
-    with open(RESULTS / "model_stats" / "tree_model_stability.json", "w") as f:
-        json.dump(model_stats, f, indent=2)
+    # with open(RESULTS / "model_stats" / "tree_model_stability.json", "w") as f:
+    #     json.dump(model_stats, f, indent=2)
 
     # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
     #     json.dump(model_stats, f, indent=2)
 
             
-                # rows_data = []
-                # for count_k in count_kernel:
-                #     for fp_k in baseline_kernel:
-                #         for mix_method in mixing_methods:
-                #             row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
-                #             for model in models:
-                #                 score_file = None
-                #                 file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                #                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                 if not score_path.exists():
-                #                     file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
-                #                     score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                     if not score_path.exists():
-                #                         file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
-                #                         score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                         if not score_path.exists():
-                #                             file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
-                #                             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                 if not score_path.exists():
-                #                     print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+                rows_data = []
+                for count_k in count_kernel:
+                    for fp_k in baseline_kernel:
+                        for mix_method in mixing_methods:
+                            row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
+                            for model in models:
+                                score_file = None
+                                file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
+                                score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                if not score_path.exists():
+                                    file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                                    score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                    if not score_path.exists():
+                                        file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
+                                        score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                        if not score_path.exists():
+                                            file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
+                                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                                if not score_path.exists():
+                                    print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
-                #                 else:
-                #                     with open(score_path, "r") as f:
-                #                         score_file = json.load(f)
+                                else:
+                                    with open(score_path, "r") as f:
+                                        score_file = json.load(f)
 
-                #                 if score_file is None:
-                #                     rmse_value = ""
-                #                     r2_value = ""
-                #                     run_time_value = ""
-                #                 else:
-                #                     score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
-                #                     rmse_value = score_annot["rmse"]
-                #                     r2_value = score_annot["r2"]
-                #                     run_time_value = score_annot["run_time_sec"]
+                                if score_file is None:
+                                    rmse_value = ""
+                                    r2_value = ""
+                                    run_time_value = ""
+                                else:
+                                    score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
+                                    rmse_value = score_annot["rmse"]
+                                    r2_value = score_annot["r2"]
+                                    run_time_value = score_annot["run_time_sec"]
 
-                #                 row.extend([rmse_value, r2_value, run_time_value])
-                #             rows_data.append(row)
-                # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
+                                row.extend([rmse_value, r2_value, run_time_value])
+                            rows_data.append(row)
+                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
                                 
