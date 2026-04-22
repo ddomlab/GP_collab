@@ -721,29 +721,29 @@ PAPER = {
         "target": ["target_log Rg (nm)"],
         "expert_impt": PLS_Ranks
     },
-    # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": {
-    #     "target": ["target_calculated PCE (%)"],
-    #     "expert_impt": BMS_Ranks
-    # },
-    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": {
-    #     "target": ["target_log (Separation factor)", "target_log (Total flux)"],
-    #     "expert_impt": None
-    # },
-    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": {
-    #     "target": ["target_log (Separation factor)", "target_log (Total flux)"],
-    #     "expert_impt": None
-    # },
-    # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": {
-    #     "target": [
-    #         "target_flux decline ratio (%)",
-    #         "target_flux recovery ratio (%)",
-    #         "target_irreversible fouling ratio(%)",
-    #         "target_organic compound removal (%)",
-    #         "target_reversible fouling ratio (%)",
-    #         r"target_water permeability (LMH\bar)"
-    #     ],
-    #     "expert_impt": None
-    # }
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": {
+        "target": ["target_calculated PCE (%)"],
+        "expert_impt": BMS_Ranks
+    },
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": {
+        "target": ["target_log (Separation factor)", "target_log (Total flux)"],
+        "expert_impt": None
+    },
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": {
+        "target": ["target_log (Separation factor)", "target_log (Total flux)"],
+        "expert_impt": None
+    },
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": {
+        "target": [
+            "target_flux decline ratio (%)",
+            "target_flux recovery ratio (%)",
+            "target_irreversible fouling ratio(%)",
+            "target_organic compound removal (%)",
+            "target_reversible fouling ratio (%)",
+            r"target_water permeability (LMH\bar)"
+        ],
+        # "expert_impt": None
+    }
 }
 
 
@@ -758,7 +758,7 @@ models = [
 tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
 count_kernel    = ["Matern32", "Matern52", "RBF"]
 mixing_methods  = ["sum", "product", "averageProduct"]
-mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(co)×FP"}
+mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
 
 
 def load_r2(paper_loc, model, fp_k, count_k, mix_method):
@@ -776,7 +776,7 @@ def load_r2(paper_loc, model, fp_k, count_k, mix_method):
             return data.get("r2_avg")
     return None
 
-def build_heatmap_df(model):
+def build_heatmap_data(model):
     scores = defaultdict(list)
 
     for paper_name, paper_info in PAPER.items():
@@ -791,46 +791,64 @@ def build_heatmap_df(model):
 
     combos = [f"{fp}:\n{c}" for fp in tanimoto_kernel for c in count_kernel]
     rows = [mixing_labels[m] for m in mixing_methods]
+    pairs = [(fp, c) for fp in tanimoto_kernel for c in count_kernel]
 
-    matrix = np.full((len(mixing_methods), len(combos)), np.nan)
-    for j, (fp_k, count_k) in enumerate([(fp, c) for fp in tanimoto_kernel for c in count_kernel]):
+    mean_mat = np.full((len(mixing_methods), len(combos)), np.nan)
+    std_mat  = np.full((len(mixing_methods), len(combos)), np.nan)
+    annot_mat = np.full((len(mixing_methods), len(combos)), "", dtype=object)
+
+    for j, (fp_k, count_k) in enumerate(pairs):
         for i, mix in enumerate(mixing_methods):
             vals = scores[(fp_k, count_k, mix)]
             if vals:
-                matrix[i, j] = np.mean(vals)
+                avg = np.mean(vals)
+                std = np.std(vals)   # or np.std(vals, ddof=1) for sample std if len(vals) > 1
 
-    return pd.DataFrame(matrix, index=rows, columns=combos)
+                mean_mat[i, j] = avg
+                std_mat[i, j] = std
+
+                avg_txt = f"{avg:.2f}"
+                std_txt = f"{std:.2f}"
+                annot_mat[i, j] = f"{avg_txt}\n±{std_txt}"
+
+    mean_df = pd.DataFrame(mean_mat, index=rows, columns=combos)
+    std_df = pd.DataFrame(std_mat, index=rows, columns=combos)
+    annot_df = pd.DataFrame(annot_mat, index=rows, columns=combos)
+
+    return mean_df, std_df, annot_df
 
 
 def plot_heatmap(model, save_dir: Path):
-    df = build_heatmap_df(model).astype(float)
-    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    df, std_df, annot_df = build_heatmap_data(model)
 
-    fig, ax = plt.subplots(figsize=(10, 3))
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    annot_df = annot_df.loc[df.index, df.columns]
+
+    fig, ax = plt.subplots(figsize=(10, 3.5))
 
     sns.heatmap(
         df,
         ax=ax,
         cmap="Reds",
-        vmin=0.6,
+        vmin=0.5,
         vmax=0.9,
         mask=~np.isfinite(df),
-        annot=True,
-        fmt=".3f",
-        annot_kws={"fontsize": 9, "fontweight": "bold"},
+        annot=annot_df,
+        fmt="",
+        annot_kws={"fontsize": 8, "fontweight": "bold"},
         linewidths=0.5,
         linecolor="white",
         cbar_kws={
-            "label": "Mean R²",
-            # "shrink": ,
-            "pad": 0.02,
-            "ticks": [0.6, 0.7, 0.8, 0.9],
+            # "label": "Average R² ± Stdev",
+            # "pad": 0.02,
+            "ticks": [0.5, 0.6, 0.7, 0.8, 0.9],
         },
     )
 
     cbar = ax.collections[0].colorbar
-    cbar.set_ticks([0.6, 0.7, 0.8, 0.9])
-    cbar.set_ticklabels(["0.6", "0.7", "0.8", "0.9"])
+    cbar.set_label("Average R² ± Stdev", rotation=270, labelpad=20, fontsize=14)
+    cbar.set_ticks([0.5, 0.6, 0.7, 0.8, 0.9])
+    cbar.set_ticklabels(["0.5", "0.6", "0.7", "0.8", "0.9"])
 
     n_count = len(count_kernel)
     for g in range(1, len(tanimoto_kernel)):
@@ -839,7 +857,7 @@ def plot_heatmap(model, save_dir: Path):
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, ha="right", rotation=30)
     ax.set_yticklabels(ax.get_yticklabels(), fontsize=10, rotation=0)
     ax.set_xlabel("FP Kernel : Count Kernel", fontsize=11, labelpad=10)
-    ax.set_ylabel("Hybrid Configuration", fontsize=11)
+    ax.set_ylabel("Hybridization Configuration", fontsize=11)
 
     plt.tight_layout()
     save_img_path(save_dir, f"heatmap_r2_{model}.png")
