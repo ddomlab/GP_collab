@@ -116,7 +116,7 @@ if __name__ == "__main__":
                         # "count":args.K_count
                                 },
                     kernel_mixing_method=args.Kernel_mixing_method,
-                    hyperparameter_save_dir=optuna_save_dir
+                    hyperparameter_save_dir=optuna_save_dir,
                     imputer="mean",
                     columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                     )
