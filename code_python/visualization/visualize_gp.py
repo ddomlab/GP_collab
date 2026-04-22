@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import List, Optional, Any, Dict
 import os 
 import re
+from collections import defaultdict
+import matplotlib.colors as mcolors
 
 # visualization imports
 # import cmcrameri.cm as cmc
@@ -750,14 +752,104 @@ models = [
             "GPytorchMAP"
             ]
 
-if __name__ == "__main__":
 
 
-    
 
-    model_stats = {}
+tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
+count_kernel    = ["Matern32", "Matern52", "RBF"]
+mixing_methods  = ["sum", "product", "averageProduct"]
+mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(co)×FP"}
+
+
+def load_r2(paper_loc, model, fp_k, count_k, mix_method):
+    """Return r2_avg or None if the file is missing."""
+    for suffix in ["", "_mean"]:
+        tmpl = (
+            f"(ECFP3_count_512-COUNT)_"
+            f"({model}_{fp_k}-{count_k}_{mix_method})"
+            f"{suffix}_hypOFF_Standard_Standard_scores"
+        )
+        p = ensure_long_path(paper_loc / f"{tmpl}.json")
+        if p.exists():
+            with open(p) as f:
+                data = json.load(f)
+            return data.get("r2_avg")
+    return None
+
+def build_heatmap_df(model):
+    scores = defaultdict(list)
+
     for paper_name, paper_info in PAPER.items():
         for target in paper_info["target"]:
+            paper_loc = RESULTS / paper_name / target
+            for fp_k in tanimoto_kernel:
+                for count_k in count_kernel:
+                    for mix in mixing_methods:
+                        r2 = load_r2(paper_loc, model, fp_k, count_k, mix)
+                        if r2 is not None:
+                            scores[(fp_k, count_k, mix)].append(r2)
+
+    combos = [f"{fp}:\n{c}" for fp in tanimoto_kernel for c in count_kernel]
+    rows = [mixing_labels[m] for m in mixing_methods]
+
+    matrix = np.full((len(mixing_methods), len(combos)), np.nan)
+    for j, (fp_k, count_k) in enumerate([(fp, c) for fp in tanimoto_kernel for c in count_kernel]):
+        for i, mix in enumerate(mixing_methods):
+            vals = scores[(fp_k, count_k, mix)]
+            if vals:
+                matrix[i, j] = np.mean(vals)
+
+    return pd.DataFrame(matrix, index=rows, columns=combos)
+
+
+def plot_heatmap(model, save_dir: Path):
+    df = build_heatmap_df(model).astype(float)
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+
+    fig, ax = plt.subplots(figsize=(10, 3))
+
+    sns.heatmap(
+        df,
+        ax=ax,
+        cmap="Reds",
+        vmin=0.6,
+        vmax=0.9,
+        mask=~np.isfinite(df),
+        annot=True,
+        fmt=".3f",
+        annot_kws={"fontsize": 9, "fontweight": "bold"},
+        linewidths=0.5,
+        linecolor="white",
+        cbar_kws={
+            "label": "Mean R²",
+            # "shrink": ,
+            "pad": 0.02,
+            "ticks": [0.6, 0.7, 0.8, 0.9],
+        },
+    )
+
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([0.6, 0.7, 0.8, 0.9])
+    cbar.set_ticklabels(["0.6", "0.7", "0.8", "0.9"])
+
+    n_count = len(count_kernel)
+    for g in range(1, len(tanimoto_kernel)):
+        ax.axvline(g * n_count, color="white", linewidth=2)
+
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, ha="right", rotation=30)
+    ax.set_yticklabels(ax.get_yticklabels(), fontsize=10, rotation=0)
+    ax.set_xlabel("FP Kernel : Count Kernel", fontsize=11, labelpad=10)
+    ax.set_ylabel("Hybrid Configuration", fontsize=11)
+
+    plt.tight_layout()
+    save_img_path(save_dir, f"heatmap_r2_{model}.png")
+    plt.close(fig)
+
+if __name__ == "__main__":
+
+    # model_stats = {}
+    # for paper_name, paper_info in PAPER.items():
+    #     for target in paper_info["target"]:
     #         print(paper_name, target)
             # creat_count_fp_heatmap(
             #                         target_dir=RESULTS/paper_name/target,
@@ -767,7 +859,7 @@ if __name__ == "__main__":
             #                         )
             # feat_impt_expert = paper_info["expert_impt"]
             # for model in ["RF","XGBR", "NGB"]:    
-                paper_loc: Path = RESULTS / paper_name / target
+                # paper_loc: Path = RESULTS / paper_name / target
             #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
             #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
             #     if not score_path.exists():
@@ -819,43 +911,45 @@ if __name__ == "__main__":
     # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
     #     json.dump(model_stats, f, indent=2)
 
-            
-                rows_data = []
-                for count_k in count_kernel:
-                    for fp_k in baseline_kernel:
-                        for mix_method in mixing_methods:
-                            row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
-                            for model in models:
-                                score_file = None
-                                file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                                score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                                if not score_path.exists():
-                                    file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
-                                    score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                                    if not score_path.exists():
-                                        file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_ARD_scores"
-                                        score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                                        if not score_path.exists():
-                                            file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_ARD_scores"
-                                            score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                                if not score_path.exists():
-                                    print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
+            ### SCORE TABLE CREATION ###
+                # rows_data = []
+                # for count_k in count_kernel:
+                #     for fp_k in baseline_kernel:
+                #         for mix_method in mixing_methods:
+                #             row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
+                #             for model in models:
+                #                 score_file = None
+                #                 file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
+                #                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #                 if not score_path.exists():
+                #                     file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                #                     score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #                     if not score_path.exists():
+                #                         file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
+                #                         score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #                         if not score_path.exists():
+                #                             file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
+                #                             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+                #                 if not score_path.exists():
+                #                     print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
 
-                                else:
-                                    with open(score_path, "r") as f:
-                                        score_file = json.load(f)
+                #                 else:
+                #                     with open(score_path, "r") as f:
+                #                         score_file = json.load(f)
 
-                                if score_file is None:
-                                    rmse_value = ""
-                                    r2_value = ""
-                                    run_time_value = ""
-                                else:
-                                    score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
-                                    rmse_value = score_annot["rmse"]
-                                    r2_value = score_annot["r2"]
-                                    run_time_value = score_annot["run_time_sec"]
+                #                 if score_file is None:
+                #                     rmse_value = ""
+                #                     r2_value = ""
+                #                     run_time_value = ""
+                #                 else:
+                #                     score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
+                #                     rmse_value = score_annot["rmse"]
+                #                     r2_value = score_annot["r2"]
+                #                     run_time_value = score_annot["run_time_sec"]
 
-                                row.extend([rmse_value, r2_value, run_time_value])
-                            rows_data.append(row)
-                create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"baseline_kernel(ARD)_combination_scores.docx")
+                #                 row.extend([rmse_value, r2_value, run_time_value])
+                #             rows_data.append(row)
+                # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
+                for model in models:
+                    plot_heatmap(model, save_dir=HERE/"result_analysis")
                                 
