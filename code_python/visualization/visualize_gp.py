@@ -755,7 +755,8 @@ models = [
 
 
 
-tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
+# tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
+tanimoto_kernel = ["Matern32", "Matern52", "RBF"]
 count_kernel    = ["Matern32", "Matern52", "RBF"]
 mixing_methods  = ["sum", "product", "averageProduct"]
 mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
@@ -820,7 +821,7 @@ def build_heatmap_data(model):
 
 def plot_heatmap(model, save_dir: Path):
     df, std_df, annot_df = build_heatmap_data(model)
-
+    print(df)
     df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
     annot_df = annot_df.loc[df.index, df.columns]
 
@@ -860,7 +861,7 @@ def plot_heatmap(model, save_dir: Path):
     ax.set_ylabel("Hybridization Configuration", fontsize=11)
 
     plt.tight_layout()
-    save_img_path(save_dir, f"heatmap_r2_{model}.png")
+    save_img_path(save_dir, f"heatmap_r2_{model}_ARD.png")
     plt.close(fig)
 
 if __name__ == "__main__":
