@@ -777,6 +777,7 @@ def load_r2(paper_loc, model, fp_k, count_k, mix_method):
             return data.get("r2_avg")
     return None
 
+
 def build_heatmap_data(model):
     scores = defaultdict(list)
 
@@ -863,6 +864,77 @@ def plot_heatmap(model, save_dir: Path):
     plt.tight_layout()
     save_img_path(save_dir, f"heatmap_r2_{model}_ARD.png")
     plt.close(fig)
+
+
+
+def load_r2_simple(paper_loc: Path, model: str):
+    """Return r2_avg or None if file missing."""
+    file_template = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores"
+    score_path = ensure_long_path(paper_loc / f"{file_template}.json")
+    if not score_path.exists():
+        return None
+    with open(score_path) as f:
+        data = json.load(f)
+    return data.get("r2_avg")
+
+models_bar = ["RF", "XGBR", "NGB"]
+
+def build_barplot_data():
+    """Returns dict: {model: [r2_avg per dataset]}"""
+    results = {m: [] for m in models_bar}
+
+    for paper_name, paper_info in PAPER.items():
+        for target in paper_info["target"]:
+            paper_loc = RESULTS / paper_name / target
+            for model in models_bar:
+                r2 = load_r2_simple(paper_loc, model)
+                if r2 is not None:
+                    results[model].append(r2)
+
+    return results
+def plot_barplot(save_dir: Path):
+    data = build_barplot_data()
+
+    means = [np.mean(data[m]) for m in models_bar]
+    stds  = [np.std(data[m]) for m in models_bar]  # std of r2_avg across datasets
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    x = np.arange(len(models_bar))
+    bars = ax.bar(
+        x, means, yerr=stds,
+        capsize=5,
+        color=["#4C72B0", "#DD8452", "#55A868"],
+        edgecolor="white",
+        linewidth=0.8,
+        error_kw={"elinewidth": 1.5, "ecolor": "black", "capthick": 1.5},
+    )
+
+    # annotate mean value above each bar
+    for bar, mean, std in zip(bars, means, stds):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + std + 0.005,
+            f"{mean:.2f}",
+            ha="center", va="bottom", fontsize=13,
+        )
+
+    ax.set_xticks(x)
+    ax.tick_params(axis="both", labelsize=14)
+
+    ax.set_xticklabels(models_bar, fontsize=14)
+    ax.set_ylabel("R²", fontsize=16, fontweight="bold")
+    ax.set_xlabel("Model", fontsize=16,fontweight="bold")
+    ax.set_ylim(0, min(1.05, max(means) + max(stds) + 0.08))
+    # ax.yaxis.grid(True, linestyle="--", alpha=0.6)
+    # ax.set_axisbelow(True)
+    ax.set_ylim(0, 1.0)
+    ax.set_yticks(np.arange(0, 1.1, 0.1))
+    plt.tight_layout()
+    save_img_path(save_dir, "Tree_based_model_result_across_datasets.png")
+    plt.close(fig)
+    print(f"Saved barplot at {save_dir}")
+
 
 if __name__ == "__main__":
 
@@ -969,6 +1041,7 @@ if __name__ == "__main__":
                 #                 row.extend([rmse_value, r2_value, run_time_value])
                 #             rows_data.append(row)
                 # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
-                for model in models:
-                    plot_heatmap(model, save_dir=HERE/"result_analysis")
+                # for model in models:
+                #     plot_heatmap(model, save_dir=HERE/"result_analysis")
                                 
+                plot_barplot(save_dir=HERE / "result_analysis")
