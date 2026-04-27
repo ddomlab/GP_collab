@@ -55,10 +55,11 @@ def get_cv_splits(score_for_indices):
     return indices
 
 
-def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str) -> str:
+def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str, kernel_feature_mode:Optional[str]) -> str:
 
     if isinstance(regressor_name, str):
         model_info = f'({regressor_name}_{kernel_type["fp"]}-{kernel_type["count"]}_{kernel_mixing_method})' if kernel_mixing_method else regressor_name
+        model_info = f"{model_info}_{kernel_feature_mode}" if kernel_feature_mode else model_info
         return model_info
 
 def _save(
@@ -87,7 +88,14 @@ def _save(
 
     # === Case 1: numerical-only features ===
     short_num_feats = f"COUNT{special_numerical_group}" if special_numerical_group else "COUNT"
-    regressor_type = get_model_name(regressor_type, kernel_type=kwargs.get("kernel_type", None), kernel_mixing_method=kwargs.get("kernel_mixing_method", None))
+    kernel_type = kwargs.get("kernel_type", None)
+    kernel_mixing_method = kwargs.get("kernel_mixing_method", None)
+    kernel_feature_mode = kwargs.get("kernel_feature_mode", None)
+    regressor_type = get_model_name(regressor_type,
+                                    kernel_type=kernel_type,
+                                    kernel_mixing_method=kernel_mixing_method,
+                                    kernel_feature_mode=kernel_feature_mode
+                                    )
     if numerical_feats and representation is None:
         fname_root = f"({short_num_feats})_{regressor_type}"
 

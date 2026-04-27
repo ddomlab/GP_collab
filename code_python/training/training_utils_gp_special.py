@@ -182,13 +182,14 @@ def _prepare_data(
             mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
             mgk_dataset.create_graphs(n_jobs=4)
             mgk_dataset.unify_datatype()
+            # "per_feature"
             mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
                             graph_kernel_type="graph",
                             mgk_hyperparameters_files=graph_kerenel_files[kernel_mixing_method]*len(structural_features),
                             features_kernel_type=kernel_type["count"],
                             features_hyperparameters_file=f"{kernel_type["count"]}.json",
                             hybrid_rule=kernel_mixing_method,
-                            feature_mode="per_feature",
+                            feature_mode=kwargs.get("kernel_feature_mode", None)
                             )
             
             score,predication = run(
