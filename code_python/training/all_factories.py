@@ -192,7 +192,7 @@ def optimized_models(
                 normalize_y=True,
                 )
     if "MGK-sklearn" == model_name:
-        return MarginalizedGaussianProcessRegressor(
+        return MGKRegressorSklearn(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
                 alpha=alpha,
