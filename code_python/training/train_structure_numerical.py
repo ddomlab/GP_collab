@@ -100,7 +100,7 @@ if __name__ == "__main__":
                     representation="MG",
                     # radius=3,
                     # vector="count",
-                    regressor_type="MGK",
+                    regressor_type="MGK-sklearn",
                     # GPytorchMixMCMC
                     # GPMixMCMC
                     polymer_unit=polymer_unit,

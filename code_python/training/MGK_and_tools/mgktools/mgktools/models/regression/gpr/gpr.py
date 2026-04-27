@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 from graphdot.model.gaussian_process.nystrom import *
 from graphdot.model.gaussian_process.gpr import GaussianProcessRegressor as GPR
+from sklearn.base import BaseEstimator, RegressorMixin
+import numpy as np
 
 
-class GaussianProcessRegressor(GPR):
+class MarginalizedGaussianProcessRegressor(GPR):
     def predict(self, Z, return_std=False, return_cov=False):
         """Predict using the trained GPR model.
 
@@ -101,3 +103,46 @@ class GaussianProcessRegressor(GPR):
         Ks = self.kernel(Z, self.X, nodal_X=True)
         ymean = (Ks @ self.Ky) * self._ystd + self._ymean
         return ymean
+
+
+
+class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
+    def __init__(self, kernel, alpha, optimizer, normalize_y,
+                 loss, repeat, verbose
+                 ):
+        
+        self.kernel = kernel
+        self.alpha = alpha
+        self.optimizer = optimizer
+        self.normalize_y = normalize_y
+        self.loss = loss
+        self.repeat = repeat
+        self.verbose = verbose
+
+    def fit(self, X, y):
+        # X is a list/array of graphs — DO NOT call check_array on it.
+        # Lazy import so the wrapper module is cheap to import.
+
+        self._estimator = MarginalizedGaussianProcessRegressor(
+            kernel=self.kernel,
+            alpha=self.alpha,
+            optimizer=self.optimizer,
+            normalize_y=self.normalize_y,
+        )
+        # graphdot expects array-like; np.asarray on graphs gives object array
+        self._estimator.fit(
+            X, y,
+            loss=self.loss,
+            repeat=self.repeat,
+            verbose=self.verbose,
+        )
+
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X, return_std=False, return_cov=False):
+        if not getattr(self, "is_fitted_", False):
+            raise RuntimeError("Call fit before predict.")
+        return self._estimator.predict(
+            X, return_std=return_std, return_cov=return_cov
+        )

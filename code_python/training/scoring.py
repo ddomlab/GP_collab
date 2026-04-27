@@ -486,7 +486,7 @@ def mgk_cross_validate(
         y_train = split_for_training(y, train_idx)
         y_test  = split_for_training(y, test_idx)
 
-        est.fit(X_train, y_train, loss=loss_function, verbose=True, repeat=repeat)
+        est.fit(X_train, y_train)
         y_pred = est.predict(X_test)
         predictions[test_idx] = y_pred
         for name, scorer in scoring.items():
