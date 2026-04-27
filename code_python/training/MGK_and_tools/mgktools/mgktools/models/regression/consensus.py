@@ -5,7 +5,7 @@ import numpy as np
 import copy
 import threading
 from joblib import Parallel, delayed
-from mgktools.models.regression.gpr.gpr import GaussianProcessRegressor as GPRgraphdot
+from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor as GPRgraphdot
 
 
 def _parallel_build_models(model, models, X, y, model_idx, n_models,
