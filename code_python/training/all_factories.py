@@ -38,7 +38,7 @@ from Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
                             AddKernel, weighted_jaccard)
 
 ## import MGK
-from mgktools.models import MarginalizedGaussianProcessRegressor, MGKRegressorSklearn
+from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor, MGKRegressorSklearn
 
 cutoffs = {
             # "Rh1 (nm)":1000,
