@@ -1,5 +1,5 @@
 from typing import Literal
-from mgktools.models.regression.gpr.gpr import GaussianProcessRegressor
+from mgktools.models.regression.gpr.gpr import MGKRegressorSklearn
 from graphdot.model.gaussian_process.nystrom import LowRankApproximateGPR
 from mgktools.models.regression.scalable.NLE import NaiveLocalExpertGP
 from mgktools.models.regression.consensus import EnsembleRegressor
@@ -23,11 +23,14 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
               n_jobs: int = 1):
     if model_type == 'gpr':
         assert alpha is not None
-        model = GaussianProcessRegressor(
+        model = MGKRegressorSklearn(
             kernel=kernel,
             optimizer=optimizer,
             alpha=alpha,
             normalize_y=False,
+            loss='likelihood', 
+            repeat=1,
+            verbose=False
         )
         if n_estimators is not None and n_estimators > 1:
             return EnsembleRegressor(
