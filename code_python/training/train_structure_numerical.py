@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = False
+TEST = True
 
 
 def main_structural_numerical(
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     feat_transformer=None,
                     target_transformer=None,
                     numerical_feats=feats,
-                    hyperparameter_optimization=True,
+                    hyperparameter_optimization=False,
                     kernel_type={
                         "fp": "Graph",
                         "count": "Matern32"
