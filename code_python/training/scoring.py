@@ -539,7 +539,7 @@ def mgk_cross_validate(
 #     return results, predictions
 
 def mgk_cross_validate_regressor(
-        regressor, X, y, cv, loss_function, repeat, return_importance: bool = False
+        regressor, X, y, cv
     ) -> tuple[dict[str, float], np.ndarray]:
 
         scorers = {
@@ -554,9 +554,7 @@ def mgk_cross_validate_regressor(
             y,
             cv=cv,
             scoring=scorers,
-            loss_function=loss_function,
-            repeat=repeat,
-            return_importance=return_importance,
+            # return_importance=return_importance,
             )
         return score, predictions
 

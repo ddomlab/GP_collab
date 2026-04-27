@@ -299,10 +299,10 @@ def run(
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
-                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=1,return_importance=False)
+                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer)
             else:
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer, loss_function='likelihood', repeat=1,return_importance=False)
+                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer)
         else:
             y_transform = get_target_transformer(second_transformer)
             if hyperparameter_optimization:
