@@ -256,3 +256,13 @@ ValueError: Input contains NaN.
 [I 2026-04-27 14:34:33,634] Trial 41 finished with value: 12.473363380670694 and parameters: {'0:atom_AtomicNumber:kDelta': 1.0, '0:atom_AtomicNumber_list_1:kConv': 0.8, '0:atom_AtomicNumber_list_2:kConv': 0.9, '0:atom_AtomicNumber_list_3:kConv': 0.95, '0:atom_AtomicNumber_list_4:kConv': 0.75, '0:atom_MorganHash:kDelta': 0.9, '0:atom_Ring_count:kDelta': 0.95, '0:atom_RingSize_list:kConv': 1.0, '0:atom_Hcount:kDelta': 0.85, '0:atom_AtomicNumber_count_1:kDelta': 0.75, '0:atom_AtomicNumber_count_2:kDelta': 0.95, '0:atom_Chiral:kDelta': 0.75, '0:bond_Order:kDelta': 0.85, '0:bond_Stereo:kDelta': 0.75, '0:bond_RingStereo:kDelta': 0.75, '0:q:q': 0.39, '0:features_kernel:Matern32': 29.1, 'alpha': 0.021}. Best is trial 37 with value: 12.466169022899384.
 [I 2026-04-27 14:35:49,792] Using an existing study with name 'optuna-study' instead of creating a new one.
 [I 2026-04-27 14:37:14,086] Using an existing study with name 'optuna-study' instead of creating a new one.
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 5, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 41, in <module>
+    from mgktools.models import MarginalizedGaussianProcessRegressor, MGKRegressorSklearn
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/__init__.py", line 2, in <module>
+    from mgktools.models.regression.gpr.gpr import GaussianProcessRegressor
+ImportError: cannot import name 'GaussianProcessRegressor' from 'mgktools.models.regression.gpr.gpr' (/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py). Did you mean: 'GaussianProcessRegressorBase'?
