@@ -462,41 +462,81 @@ def gp_cross_validate(
     return scores, predictions
 
 
+def mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
+    """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
+    est = copy.deepcopy(estimator)
+
+    X_train = split_for_training(X, train_idx)
+    X_test  = split_for_training(X, test_idx)
+    y_train = split_for_training(y, train_idx)
+    y_test  = split_for_training(y, test_idx)
+
+    est.fit(X_train, y_train)
+    y_pred = est.predict(X_test)
+
+    fold_scores = {name: scorer(y_test, y_pred) for name, scorer in scoring.items()}
+    return test_idx, y_pred, fold_scores
+
+
 def mgk_cross_validate(
-    estimator,
-    X,
-    y,
-    cv,
-    scoring,
-    loss_function,
-    repeat,
-    # n_jobs=-1,
-    return_importance=False,
+    estimator, X, y, cv, scoring,
+    n_jobs=-1, verbose=0,
 ):
-    # Placeholder for MGK-specific cross-validation logic
-    results = {f"test_{name}": [] for name in scoring}
+    splits = list(cv.split(X, y))   # materialize so workers can index
+
+    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
+        delayed(mgk_fit_and_score_fold)(estimator, X, y, tr, te, scoring)
+        for tr, te in splits
+    )
+
+    # Aggregate
     n_samples = len(y)
     predictions = np.full(n_samples, np.nan)
-    for train_idx, test_idx in cv.split(X, y):
-        est = copy.deepcopy(estimator)
+    results = {f"test_{name}": [] for name in scoring}
 
-    # Use safe row selector for all data types
-        X_train = split_for_training(X, train_idx)
-        X_test  = split_for_training(X, test_idx)
-        y_train = split_for_training(y, train_idx)
-        y_test  = split_for_training(y, test_idx)
-
-        est.fit(X_train, y_train)
-        y_pred = est.predict(X_test)
+    for test_idx, y_pred, fold_scores in fold_results:
         predictions[test_idx] = y_pred
-        for name, scorer in scoring.items():
-            results[f"test_{name}"].append(scorer(y_test, y_pred))
+        for name, val in fold_scores.items():
+            results[f"test_{name}"].append(val)
 
-    ## ADD feature importance extraction for MGK if possible
-    if return_importance:
-        # Placeholder for feature importance extraction logic
-        pass
     return results, predictions
+
+
+# def mgk_cross_validate(
+#     estimator,
+#     X,
+#     y,
+#     cv,
+#     scoring,
+#     loss_function,
+#     repeat,
+#     # n_jobs=-1,
+#     return_importance=False,
+# ):
+#     # Placeholder for MGK-specific cross-validation logic
+#     results = {f"test_{name}": [] for name in scoring}
+#     n_samples = len(y)
+#     predictions = np.full(n_samples, np.nan)
+#     for train_idx, test_idx in cv.split(X, y):
+#         est = copy.deepcopy(estimator)
+
+#     # Use safe row selector for all data types
+#         X_train = split_for_training(X, train_idx)
+#         X_test  = split_for_training(X, test_idx)
+#         y_train = split_for_training(y, train_idx)
+#         y_test  = split_for_training(y, test_idx)
+
+#         est.fit(X_train, y_train)
+#         y_pred = est.predict(X_test)
+#         predictions[test_idx] = y_pred
+#         for name, scorer in scoring.items():
+#             results[f"test_{name}"].append(scorer(y_test, y_pred))
+
+#     ## ADD feature importance extraction for MGK if possible
+#     if return_importance:
+#         # Placeholder for feature importance extraction logic
+#         pass
+#     return results, predictions
 
 def mgk_cross_validate_regressor(
         regressor, X, y, cv, loss_function, repeat, return_importance: bool = False
