@@ -271,7 +271,8 @@ def run(
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
-
+            print(f"Dataset shape: {X.shape}, Target shape: {y.shape}")
+            print(" X dataset \n", X)
             if hyperparameter_optimization:
                 save_dir =kwargs.get("hyperparameter_save_dir")
                 save_dir.mkdir(parents=True, exist_ok=True)
