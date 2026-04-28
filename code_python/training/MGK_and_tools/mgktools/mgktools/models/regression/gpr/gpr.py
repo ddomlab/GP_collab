@@ -130,6 +130,8 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
             normalize_y=self.normalize_y,
         )
         # graphdot expects array-like; np.asarray on graphs gives object array
+        for i in range(X.shape[1]):
+            print(f"col {i}: {type(X[0, i]).__name__}")
         self._estimator.fit(
             X, y,
             loss=self.loss,

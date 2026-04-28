@@ -490,16 +490,16 @@ def mgk_cross_validate(
     )
 
     # Aggregate
+    scores = defaultdict(list)
     n_samples = len(y)
     predictions = np.full(n_samples, np.nan)
-    results = {f"test_{name}": [] for name in scoring}
 
     for test_idx, y_pred, fold_scores in fold_results:
         predictions[test_idx] = y_pred
-        for name, val in fold_scores.items():
-            results[f"test_{name}"].append(val)
-
-    return results, predictions
+        for key, val in fold_scores.items():
+            scores[f"test_{key}"].append(val)
+            
+    return scores, predictions
 
 
 # def mgk_cross_validate(
