@@ -12,6 +12,48 @@ from all_factories import (imputer_factory,
 
 
 
+
+class make_array_column_selector:
+    """
+    Like sklearn's make_column_selector, but for 2D numpy object arrays.
+    Selects columns whose first cell is an instance of any type in `dtype_include`
+    and not an instance of any type in `dtype_exclude`.
+
+    Parameters
+    ----------
+    dtype_include : type or tuple of types, default=None
+    dtype_exclude : type or tuple of types, default=None
+    """
+
+    def __init__(self, *, dtype_include=None, dtype_exclude=None):
+        self.dtype_include = dtype_include
+        self.dtype_exclude = dtype_exclude
+
+    @staticmethod
+    def _as_tuple(t):
+        if t is None:
+            return None
+        return tuple(t) if isinstance(t, (list, tuple)) else (t,)
+
+    def __call__(self, X):
+        X = np.asarray(X)
+        if X.ndim != 2:
+            raise ValueError(f"Expected 2D array, got {X.ndim}D.")
+
+        include = self._as_tuple(self.dtype_include)
+        exclude = self._as_tuple(self.dtype_exclude)
+
+        selected = []
+        for j in range(X.shape[1]):
+            sample = X[0, j]            # probe first row
+            if include is not None and not isinstance(sample, include):
+                continue
+            if exclude is not None and isinstance(sample, exclude):
+                continue
+            selected.append(j)
+        return selected
+
+
 def drop_columns(df:pd.DataFrame, columns_to_drop: List):
     return df.drop(columns=columns_to_drop)
 
@@ -22,6 +64,7 @@ def calculate_mw(df: pd.DataFrame,  # df containing Mw, Mn & PDI columns only
 
   df.loc[df[mw].isna(), mw] = df[pdi] * df[mn]  # df.loc may give you some issues
   return df
+
 
 def preprocessing_workflow(imputer: Optional[str]=None,
                            regressor_type: Optional[str]=None,
@@ -42,8 +85,8 @@ def preprocessing_workflow(imputer: Optional[str]=None,
             scaling = ("scaling features",
                     ColumnTransformer(
                         transformers=[
-                            ("pass", "passthrough", make_column_selector(dtype_include=HashGraph)),
-                            ("scaling features", transforms[scaler], make_column_selector(dtype_include=float))
+                            ("pass", "passthrough", make_array_column_selector(dtype_include=HashGraph)),
+                            ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=float))
                         ],
                         # remainder="passthrough",
                         verbose_feature_names_out=False)
