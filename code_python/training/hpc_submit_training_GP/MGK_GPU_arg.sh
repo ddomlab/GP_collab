@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
     bsub <<EOT
 
 
-#BSUB -n 4
+#BSUB -n 1
 #BSUB -W 8:30
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
