@@ -278,10 +278,10 @@ def run(
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
-            print(f"Dataset shape: {X.shape}, Target shape: {y.shape}")
-            print(" X type \n", type(X))
-            for i in range(X.shape[1]):
-                print(f"col {i}: {type(X[0, i]).__name__}")
+            # print(f"Dataset shape: {X.shape}, Target shape: {y.shape}")
+            # print(" X type \n", type(X))
+            # for i in range(X.shape[1]):
+            #     print(f"col {i}: {type(X[0, i]).__name__}")
 
             model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
             y_transform_regressor = TransformedTargetRegressor(
