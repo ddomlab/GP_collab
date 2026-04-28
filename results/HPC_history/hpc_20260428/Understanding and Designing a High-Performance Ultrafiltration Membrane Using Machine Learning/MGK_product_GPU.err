@@ -6,3 +6,264 @@
 /usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2349: RuntimeWarning: invalid value encountered in slogdet
   sign, logdet = _umath_linalg.slogdet(a, signature=signature)
 User defined signal 2
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:    7.6s
+[Parallel(n_jobs=8)]: Done 318 out of 318 | elapsed:    7.6s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  11 out of  11 | elapsed:    1.4s finished
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/_utils.py", line 109, in __call__
+    return self.func(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 607, in __call__
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 474, in mgk_fit_and_score_fold
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 135, in fit
+    self._estimator.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 112, in fit
+    opt = self._hyper_opt(
+          ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 139, in _hyper_opt
+    opt_local = minimize(
+                ^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_minimize.py", line 784, in minimize
+    res = _minimize_lbfgsb(fun, x0, args, jac, bounds,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_lbfgsb_py.py", line 413, in _minimize_lbfgsb
+    sf = _prepare_scalar_function(fun, x0, jac=jac, args=args, epsilon=eps,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 310, in _prepare_scalar_function
+    sf = ScalarFunction(fun, x0, args, grad, hess,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 283, in __init__
+    self._update_fun()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 362, in _update_fun
+    fx = self._wrapped_fun(self.x)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/_lib/_util.py", line 603, in __call__
+    fx = self.f(np.copy(x), *self.args)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 80, in __call__
+    self._compute_if_needed(x, *args)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 74, in _compute_if_needed
+    fg = self.fun(x, *args)
+         ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 114, in <lambda>
+    fun=lambda theta, objective=objective: objective(
+                                           ^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 276, in log_marginal_likelihood
+    K, dK = self._gramian(self.alpha, X, kernel=kernel, jac=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 88, in _gramian
+    K, J = kernel(X, eval_gradient=True, **self.kernel_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 55, in __call__
+    output = kernel(Xi, Y=Yi, eval_gradient=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/fix.py", line 34, in __call__
+    R, dR = self.kernel(X, Y, eval_gradient=True, **options)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/GraphKernel.py", line 55, in __call__
+    return super().__call__(X, Y, eval_gradient=eval_gradient, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_kernel.py", line 188, in __call__
+    jobs = backend.array(
+           ^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 39, in array
+    return umarray(ndarray)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/cuda/array.py", line 29, in umarray
+    u = managed_empty_like(array, ma_flags.GLOBAL)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/driver.py", line 795, in managed_empty_like
+    return managed_empty(array.shape, array.dtype, order, mem_flags)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pycuda._driver.LogicError: cuMemAllocManaged failed: invalid device context
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 89, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 201, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 342, in run
+    scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 552, in mgk_cross_validate_regressor
+    score, predictions = mgk_cross_validate(
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 487, in mgk_cross_validate
+    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch="all",require="sharedmem")(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+pycuda._driver.LogicError: cuMemAllocManaged failed: invalid device context
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:    7.6s
+[Parallel(n_jobs=8)]: Done 318 out of 318 | elapsed:    7.7s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  11 out of  11 | elapsed:    1.4s finished
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/_utils.py", line 109, in __call__
+    return self.func(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 607, in __call__
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 474, in mgk_fit_and_score_fold
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 135, in fit
+    self._estimator.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 112, in fit
+    opt = self._hyper_opt(
+          ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 139, in _hyper_opt
+    opt_local = minimize(
+                ^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_minimize.py", line 784, in minimize
+    res = _minimize_lbfgsb(fun, x0, args, jac, bounds,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_lbfgsb_py.py", line 413, in _minimize_lbfgsb
+    sf = _prepare_scalar_function(fun, x0, jac=jac, args=args, epsilon=eps,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 310, in _prepare_scalar_function
+    sf = ScalarFunction(fun, x0, args, grad, hess,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 283, in __init__
+    self._update_fun()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 362, in _update_fun
+    fx = self._wrapped_fun(self.x)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/_lib/_util.py", line 603, in __call__
+    fx = self.f(np.copy(x), *self.args)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 80, in __call__
+    self._compute_if_needed(x, *args)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 74, in _compute_if_needed
+    fg = self.fun(x, *args)
+         ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 114, in <lambda>
+    fun=lambda theta, objective=objective: objective(
+                                           ^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 276, in log_marginal_likelihood
+    K, dK = self._gramian(self.alpha, X, kernel=kernel, jac=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 88, in _gramian
+    K, J = kernel(X, eval_gradient=True, **self.kernel_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 55, in __call__
+    output = kernel(Xi, Y=Yi, eval_gradient=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/fix.py", line 34, in __call__
+    R, dR = self.kernel(X, Y, eval_gradient=True, **options)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/GraphKernel.py", line 55, in __call__
+    return super().__call__(X, Y, eval_gradient=eval_gradient, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_kernel.py", line 188, in __call__
+    jobs = backend.array(
+           ^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 39, in array
+    return umarray(ndarray)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/cuda/array.py", line 29, in umarray
+    u = managed_empty_like(array, ma_flags.GLOBAL)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/driver.py", line 795, in managed_empty_like
+    return managed_empty(array.shape, array.dtype, order, mem_flags)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pycuda._driver.LogicError: cuMemAllocManaged failed: invalid device context
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 89, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 201, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 342, in run
+    scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 552, in mgk_cross_validate_regressor
+    score, predictions = mgk_cross_validate(
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 487, in mgk_cross_validate
+    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+pycuda._driver.LogicError: cuMemAllocManaged failed: invalid device context
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.0s
+[Parallel(n_jobs=8)]: Done 318 out of 318 | elapsed:   21.1s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  11 out of  11 | elapsed:    1.8s finished
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2349: RuntimeWarning: invalid value encountered in slogdet
+  sign, logdet = _umath_linalg.slogdet(a, signature=signature)
