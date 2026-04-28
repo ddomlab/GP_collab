@@ -22,11 +22,11 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
               ensemble_rule: Literal['smallest_uncertainty', 'weight_uncertainty', 'mean'] = 'weight_uncertainty',
               n_jobs: int = 1,
               target_transformer=None,
-              feature_tranformer=None,
+              feature_transformer=None,
               ):
     if model_type == 'gpr':
         assert alpha is not None
-        if target_transformer or feature_tranformer:
+        if target_transformer or feature_transformer:
             from sklearn.compose import TransformedTargetRegressor
             from sklearn.pipeline import Pipeline
             initial_model = MGKRegressorSklearn(
@@ -43,7 +43,7 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
                         transformer=target_transformer,
                         )
             model :Pipeline= Pipeline(steps=[
-                            ("preprocessor", feature_tranformer),
+                            ("preprocessor", feature_transformer),
                             ("regressor", y_transform_regressor),
                             ])
         else:
