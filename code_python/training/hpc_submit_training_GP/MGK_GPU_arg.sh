@@ -18,10 +18,10 @@ for mixing_method in "${k_mixing_methods[@]}"; do
     bsub <<EOT
 
 
-#BSUB -n 5
+#BSUB -n 4
 #BSUB -W 40
 #BSUB -q gpu
-#BSUB -gpu "num=5:mode=shared:mps=no"
+#BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
 #BSUB -o "${output_dir}/MGK_${mixing_method}_GPU.out"
