@@ -17,8 +17,8 @@ def evaluate_model(dataset, dataset_val, dataset_test, kernel_config, model_type
     """Evaluate model performance for a single dataset."""
     alpha = kwargs.pop('alpha', 0.01)
     C = kwargs.pop('C', 10)
-    target_transformer = kwargs.get('target_transformer', None)
-    feature_transformer = kwargs.get('feature_transformer', None)
+    target_transformer = kwargs.pop('target_transformer', None)
+    feature_transformer = kwargs.pop('feature_transformer', None)
 
     if dataset.graph_kernel_type == "graph":
         dataset_full = copy.copy(dataset)
