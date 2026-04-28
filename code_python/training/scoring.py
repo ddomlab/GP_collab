@@ -495,10 +495,11 @@ def mgk_cross_validate(
     predictions = np.full(n_samples, np.nan)
 
     for test_idx, y_pred, fold_scores in fold_results:
+        y_pred = np.asarray(y_pred).ravel()
         predictions[test_idx] = y_pred
         for key, val in fold_scores.items():
             scores[f"test_{key}"].append(val)
-            
+
     return scores, predictions
 
 
