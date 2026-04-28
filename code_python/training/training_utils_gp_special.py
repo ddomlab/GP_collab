@@ -273,6 +273,7 @@ def run(
             X, y = full_dataset.X, full_dataset.y
             print(f"Dataset shape: {X.shape}, Target shape: {y.shape}")
             print(" X type \n", type(X))
+            print(" value X[0] \n", X[0])
             if hyperparameter_optimization:
                 save_dir =kwargs.get("hyperparameter_save_dir")
                 save_dir.mkdir(parents=True, exist_ok=True)
