@@ -17,7 +17,9 @@ def evaluate_model(dataset, dataset_val, dataset_test, kernel_config, model_type
     """Evaluate model performance for a single dataset."""
     alpha = kwargs.pop('alpha', 0.01)
     C = kwargs.pop('C', 10)
-    
+    target_transformer = kwargs.get('target_transformer', None)
+    feature_transformer = kwargs.get('feature_transformer', None)
+
     if dataset.graph_kernel_type == "graph":
         dataset_full = copy.copy(dataset)
         dataset.graph_kernel_type = "pre-computed"
@@ -34,7 +36,8 @@ def evaluate_model(dataset, dataset_val, dataset_test, kernel_config, model_type
         kernel = kernel_config.kernel
         tag = False
 
-    model = set_model(model_type=model_type, kernel=kernel, alpha=alpha, C=C)
+    model = set_model(model_type=model_type, kernel=kernel, alpha=alpha, C=C,
+                       target_transformer=target_transformer, feature_transformer=feature_transformer)
     evaluator = Evaluator(
         dataset=dataset,
         model=model,
@@ -120,7 +123,9 @@ def bayesian_optimization(
     d_C: float = None,
     load_if_exists: bool = True,
     seed: int = 0,
-    return_alpha:bool=False
+    return_alpha:bool=False,
+    target_transformer:str=None,
+    feature_transformer:str=None,
 ):
     """ Perform Bayesian optimization for hyperparameter tuning.
 
@@ -263,6 +268,8 @@ def bayesian_optimization(
                     num_folds=num_folds,
                     alpha=curr_alpha,
                     C=curr_C,
+                    target_transformer=target_transformer,
+                    feature_transformer=feature_transformer,
                 )
                 scores.append(score)
             score = np.mean(scores)

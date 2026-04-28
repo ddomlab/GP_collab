@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     feat_transformer="Standard",
                     target_transformer="Standard",
                     numerical_feats=feats,
-                    hyperparameter_optimization=False,
+                    hyperparameter_optimization=True,
                     kernel_type={
                         "fp": "Graph",
                         "count": "Matern32"

@@ -96,7 +96,7 @@ def train_regressor(
                                             target_features=target_features,
                                             regressor_type=regressor_type,
                                             transform_type=feat_transformer,
-                                            second_transformer=target_transformer,
+                                            target_transformer=target_transformer,
                                             imputer=imputer,
                                             cutoff=cutoff,
                                             hyperparameter_optimization=hyperparameter_optimization,
@@ -149,7 +149,7 @@ def _prepare_data(
     numerical_feats: Optional[list[str]]=None,
     unroll: Union[dict, list, None] = None,
     transform_type: str = "Standard",
-    second_transformer:str = None,
+    target_transformer:str = None,
     hyperparameter_optimization: bool = True,
     imputer: Optional[str] = None,
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
@@ -238,7 +238,7 @@ def _prepare_data(
                                 y,
                                 features_group=feat_group,
                                 preprocessor=preprocessor,
-                                second_transformer=second_transformer,
+                                target_transformer=target_transformer,
                                 regressor_type=regressor_type,
                                 hyperparameter_optimization=hyperparameter_optimization,
                                 kernel_parameters=kernel_parameters,
@@ -258,7 +258,7 @@ def run(
     full_dataset:Optional[Dataset]=None,
     features_group: Optional[dict[str, list[int]]]=None,
     preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
-    second_transformer:str=None, 
+    target_transformer:str=None, 
     hyperparameter_optimization: bool = False,
     kernel_parameters: Optional[BaseKernelConfig]=None,
     kernel_type: Optional[str]=None,
@@ -274,7 +274,7 @@ def run(
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-        y_transform = get_target_transformer(second_transformer)
+        y_transform = get_target_transformer(target_transformer)
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
@@ -284,15 +284,15 @@ def run(
             #     print(f"col {i}: {type(X[0, i]).__name__}")
 
             model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-            y_transform_regressor = TransformedTargetRegressor(
-                        regressor= model,
-                        transformer=y_transform,
-                        )
+            # y_transform_regressor = TransformedTargetRegressor(
+            #             regressor= model,
+            #             transformer=y_transform,
+            #             )
 
-            regressor :Pipeline= Pipeline(steps=[
-                            ("preprocessor", preprocessor),
-                            ("regressor", y_transform_regressor),
-                            ])
+            # regressor :Pipeline= Pipeline(steps=[
+            #                 ("preprocessor", preprocessor),
+            #                 ("regressor", y_transform_regressor),
+            #                 ])
             if hyperparameter_optimization:
                 from mgktools.hyperparameters.optuna import bayesian_optimization
                 save_dir =kwargs.get("hyperparameter_save_dir")
@@ -316,7 +316,9 @@ def run(
                     alpha_bounds=(0.001, 0.1),
                     d_alpha=0.001,
                     seed=seed,
-                    return_alpha=True
+                    return_alpha=True,
+                    target_transformer=y_transform,
+                    feature_transformer=preprocessor,
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))

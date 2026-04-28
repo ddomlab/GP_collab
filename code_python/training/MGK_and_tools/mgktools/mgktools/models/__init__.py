@@ -20,18 +20,43 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
               n_estimators: int = None,
               n_samples_per_model: int = None,
               ensemble_rule: Literal['smallest_uncertainty', 'weight_uncertainty', 'mean'] = 'weight_uncertainty',
-              n_jobs: int = 1):
+              n_jobs: int = 1,
+              target_transformer=None,
+              feature_tranformer=None,
+              ):
     if model_type == 'gpr':
         assert alpha is not None
-        model = MGKRegressorSklearn(
-            kernel=kernel,
-            optimizer=optimizer,
-            alpha=alpha,
-            normalize_y=False,
-            loss='likelihood', 
-            repeat=1,
-            verbose=False
-        )
+        if target_transformer or feature_tranformer:
+            from sklearn.compose import TransformedTargetRegressor
+            from sklearn.pipeline import Pipeline
+            initial_model = MGKRegressorSklearn(
+                kernel=kernel,
+                optimizer=optimizer,
+                alpha=alpha,
+                normalize_y=False,
+                loss='likelihood', 
+                repeat=1,
+                verbose=False
+                )   
+            y_transform_regressor = TransformedTargetRegressor(
+                        regressor= initial_model,
+                        transformer=target_transformer,
+                        )
+            model :Pipeline= Pipeline(steps=[
+                            ("preprocessor", feature_tranformer),
+                            ("regressor", y_transform_regressor),
+                            ])
+        else:
+            model = MGKRegressorSklearn(
+                kernel=kernel,
+                optimizer=optimizer,
+                alpha=alpha,
+                normalize_y=False,
+                loss='likelihood', 
+                repeat=1,
+                verbose=False
+            )
+        
         if n_estimators is not None and n_estimators > 1:
             return EnsembleRegressor(
                 model,
