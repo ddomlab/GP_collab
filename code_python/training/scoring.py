@@ -484,7 +484,7 @@ def mgk_cross_validate(
 ):
     splits = list(cv.split(X, y))   # materialize so workers can index
 
-    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
+    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch="all",require="sharedmem")(
         delayed(mgk_fit_and_score_fold)(estimator, X, y, tr, te, scoring)
         for tr, te in splits
     )
