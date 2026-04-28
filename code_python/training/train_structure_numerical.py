@@ -105,8 +105,8 @@ if __name__ == "__main__":
                     # GPMixMCMC
                     polymer_unit=polymer_unit,
                     target_features=[targ],  
-                    feat_transformer=None,
-                    target_transformer=None,
+                    feat_transformer="Standard",
+                    target_transformer="Standard",
                     numerical_feats=feats,
                     hyperparameter_optimization=False,
                     kernel_type={

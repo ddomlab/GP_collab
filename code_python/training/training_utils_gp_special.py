@@ -41,17 +41,13 @@ from filter_data import sanitize_dataset
 from mgktools.data.data import Dataset
 from mgktools.kernels.utils import get_kernel_config
 from mgktools.hyperparameters import *
-from mgktools.hyperparameters.optuna import bayesian_optimization
 from mgktools.kernels.base import BaseKernelConfig
-
-HERE: Path = Path(__file__).resolve().parent
-
 graph_kerenel_files = {
     "product": [product],
     "sum": [additive],
 }
 
-
+HERE: Path = Path(__file__).resolve().parent
 
 
 def set_globals(Test: bool=False) -> None:
@@ -192,9 +188,20 @@ def _prepare_data(
                             feature_mode=kwargs.get("kernel_feature_mode", None)
                             )
             
+            preprocessor: Pipeline = preprocessing_workflow(
+                                                        # imputer=imputer,
+                                                        # feat_to_impute=features_impute,
+                                                        # numerical_feat=numerical_feats,
+                                                        # structural_feat=unrolled_feats,
+                                                        # special_column=special_impute,
+                                                        regressor_type=regressor_type,
+                                                        scaler=transform_type
+                                                        )
+            
             score,predication = run(
                                 # X,
                                 # y,
+                                preprocessor=preprocessor,
                                 full_dataset=mgk_dataset,
                                 regressor_type=regressor_type,
                                 hyperparameter_optimization=hyperparameter_optimization,
@@ -267,7 +274,7 @@ def run(
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-
+        y_transform = get_target_transformer(second_transformer)
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
@@ -275,7 +282,19 @@ def run(
             print(" X type \n", type(X))
             for i in range(X.shape[1]):
                 print(f"col {i}: {type(X[0, i]).__name__}")
+
+            model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
+            y_transform_regressor = TransformedTargetRegressor(
+                        regressor= model,
+                        transformer=y_transform,
+                        )
+
+            regressor :Pipeline= Pipeline(steps=[
+                            ("preprocessor", preprocessor),
+                            ("regressor", y_transform_regressor),
+                            ])
             if hyperparameter_optimization:
+                from mgktools.hyperparameters.optuna import bayesian_optimization
                 save_dir =kwargs.get("hyperparameter_save_dir")
                 save_dir.mkdir(parents=True, exist_ok=True)
                 alpha = bayesian_optimization(
@@ -301,12 +320,28 @@ def run(
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
-                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer)
+                y_transform_regressor = TransformedTargetRegressor(
+                        regressor= model,
+                        transformer=y_transform,
+                        )
+                regressor :Pipeline= Pipeline(steps=[
+                                ("preprocessor", preprocessor),
+                                ("regressor", y_transform_regressor),
+                                ])
+                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
             else:
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-                scores, predictions = mgk_cross_validate_regressor(model, X, y, cv_outer)
+                y_transform_regressor = TransformedTargetRegressor(
+                        regressor= model,
+                        transformer=y_transform,
+                        )
+                regressor :Pipeline= Pipeline(steps=[
+                                ("preprocessor", preprocessor),
+                                ("regressor", y_transform_regressor),
+                                ])
+                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
         else:
-            y_transform = get_target_transformer(second_transformer)
+            
             if hyperparameter_optimization:
                 search_space = get_regressor_search_space(regressor_type)
                 skop_scoring = "neg_root_mean_squared_error"
@@ -329,9 +364,9 @@ def run(
                             transformer=y_transform,
                     )
 
-                new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
                 regressor :Pipeline= Pipeline(steps=[
-                            ("preprocessor", new_preprocessor),
+                            ("preprocessor", preprocessor),
                             ("regressor", y_transform_regressor),
                                 ])
 
@@ -368,9 +403,9 @@ def run(
                             regressor=model,
                             transformer=y_transform,
                     )
-                new_preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
                 regressor :Pipeline= Pipeline(steps=[
-                            ("preprocessor", new_preprocessor),
+                            ("preprocessor", preprocessor),
                             ("regressor", y_transform_regressor),
                                 ]
                             )
