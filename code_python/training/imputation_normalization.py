@@ -10,7 +10,7 @@ from all_factories import (imputer_factory,
                            representation_scaling_factory,
                            transforms)
 
-
+import numbers
 
 
 class make_array_column_selector:
@@ -86,7 +86,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
                     ColumnTransformer(
                         transformers=[
                             ("pass", "passthrough", make_array_column_selector(dtype_include=HashGraph)),
-                            ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=float))
+                            ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=numbers.Real))
                         ],
                         # remainder="passthrough",
                         verbose_feature_names_out=False)
