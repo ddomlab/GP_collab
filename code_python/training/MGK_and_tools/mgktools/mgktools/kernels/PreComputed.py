@@ -16,6 +16,9 @@ class PreComputedKernel:
         self.theta_ = theta
         self.hyperparameters_ = np.exp(self.theta_)
 
+    def __sklearn_clone__(self):          # ← add this
+        return copy.deepcopy(self)
+
     def __call__(self, X, Y=None, eval_gradient=False, *args, **kwargs):
         X_idx = np.searchsorted(self.X, X.ravel())
         Y_idx = np.searchsorted(self.X, Y.ravel()) if Y is not None else X_idx

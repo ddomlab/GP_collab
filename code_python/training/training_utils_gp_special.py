@@ -283,7 +283,7 @@ def run(
             # for i in range(X.shape[1]):
             #     print(f"col {i}: {type(X[0, i]).__name__}")
 
-            model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
+            # model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
             # y_transform_regressor = TransformedTargetRegressor(
             #             regressor= model,
             #             transformer=y_transform,
@@ -296,6 +296,7 @@ def run(
             if hyperparameter_optimization:
                 from mgktools.hyperparameters.optuna import bayesian_optimization
                 save_dir =kwargs.get("hyperparameter_save_dir")
+                save_dir = Path(save_dir) / f"_seed({seed})"
                 save_dir.mkdir(parents=True, exist_ok=True)
                 alpha = bayesian_optimization(
                     save_dir=str(save_dir),
