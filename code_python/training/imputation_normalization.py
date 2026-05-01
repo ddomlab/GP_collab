@@ -88,7 +88,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
                             ("pass", "passthrough", make_array_column_selector(dtype_include=HashGraph)),
                             ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=numbers.Real))
                         ],
-                        # remainder="passthrough",
+                        remainder="passthrough",
                         verbose_feature_names_out=False)
                     )
             steps.append(scaling)
