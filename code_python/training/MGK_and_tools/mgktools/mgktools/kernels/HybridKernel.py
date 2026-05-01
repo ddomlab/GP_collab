@@ -23,8 +23,8 @@ class HybridKernel:
         return len(self.kernel_list)
 
     def get_X_list(self, X: np.ndarray) -> List[np.ndarray]:
-        for i in range(X.shape[1]):
-            print(f"col {i}: {type(X[0, i]).__name__}")
+        # for i in range(X.shape[1]):
+        #     print(f"col {i}: {type(X[0, i]).__name__}")
         
         def f(c):
             return X[:, c]
