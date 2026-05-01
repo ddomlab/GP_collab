@@ -86,7 +86,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
             scaling = ("scaling features",
                     ColumnTransformer(
                         transformers=[
-                            ("pass", "passthrough", make_array_column_selector(dtype_include=HashGraph)),
+                            ("pass", "passthrough", make_array_column_selector(dtype_include=(HashGraph,str))),
                             ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=numbers.Real))
                         ],
                         # remainder="passthrough",
