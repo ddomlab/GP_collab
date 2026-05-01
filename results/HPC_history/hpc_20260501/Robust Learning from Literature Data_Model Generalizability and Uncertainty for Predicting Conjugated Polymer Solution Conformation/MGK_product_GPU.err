@@ -123,3 +123,122 @@ Traceback (most recent call last):
     return X[:, c]
            ~^^^^^^
 IndexError: index 11 is out of bounds for axis 1 with size 11
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.1s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   21.2s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.3s finished
+[I 2026-05-01 10:02:39,148] Using an existing study with name 'optuna-study' instead of creating a new one.
+/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/base.py:225: UserWarning: The distribution is specified by [0.1, 30] and step=1, but the range is not divisible by `step`. It will be replaced with [0.1, 29.1].
+  self.unique_name: trial.suggest_float(
+[W 2026-05-01 10:02:43,083] Trial 3 failed with parameters: {'0:atom_AtomicNumber:kDelta': 1.0, '0:atom_AtomicNumber_list_1:kConv': 0.8, '0:atom_AtomicNumber_list_2:kConv': 0.95, '0:atom_AtomicNumber_list_3:kConv': 0.75, '0:atom_AtomicNumber_list_4:kConv': 0.75, '0:atom_MorganHash:kDelta': 0.9, '0:atom_Ring_count:kDelta': 0.9, '0:atom_RingSize_list:kConv': 0.85, '0:atom_Hcount:kDelta': 0.85, '0:atom_AtomicNumber_count_1:kDelta': 0.9, '0:atom_AtomicNumber_count_2:kDelta': 0.85, '0:atom_Chiral:kDelta': 0.95, '0:bond_Order:kDelta': 0.9, '0:bond_Stereo:kDelta': 0.9, '0:bond_RingStereo:kDelta': 0.9, '0:q:q': 0.5, '0:features_kernel:Matern32': 24.1, 'alpha': 0.042} because of the following error: ValueError("could not convert string to float: '*/C=C/c1cc(OCC(CC)CCCC)c(*)cc1OC'").
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/_optimize.py", line 206, in _run_trial
+    value_or_values = func(trial)
+                      ^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/hyperparameters/optuna.py", line 255, in objective
+    score = evaluate_model(
+            ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/hyperparameters/optuna.py", line 68, in evaluate_model
+    score = evaluator.run_cross_validation()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 170, in run_cross_validation
+    df_predict, df_ = self.evaluate_train_test(dataset_train, dataset_test)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 278, in evaluate_train_test
+    self.fit(dataset_train.X, dataset_train.y[:, i])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 328, in fit
+    self.model.fit(X, y)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 135, in fit
+    self._estimator.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 132, in fit
+    K = self._gramian(self.alpha, self._X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 94, in _gramian
+    K = kernel(X, **self.kernel_options)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 49, in __call__
+    X_list = self.get_X_list(X)
+             ^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 36, in get_X_list
+    X_list[i] = X_list[i].astype("float64")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: '*/C=C/c1cc(OCC(CC)CCCC)c(*)cc1OC'
+[W 2026-05-01 10:02:43,138] Trial 3 failed with value None.
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 89, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 201, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 301, in run
+    alpha = bayesian_optimization(
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/hyperparameters/optuna.py", line 290, in bayesian_optimization
+    study.optimize(objective, n_trials=n_to_run)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/study.py", line 490, in optimize
+    _optimize(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/_optimize.py", line 68, in _optimize
+    _optimize_sequential(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/_optimize.py", line 165, in _optimize_sequential
+    frozen_trial_id = _run_trial(study, func, catch)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/_optimize.py", line 263, in _run_trial
+    raise func_err
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/optuna/study/_optimize.py", line 206, in _run_trial
+    value_or_values = func(trial)
+                      ^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/hyperparameters/optuna.py", line 255, in objective
+    score = evaluate_model(
+            ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/hyperparameters/optuna.py", line 68, in evaluate_model
+    score = evaluator.run_cross_validation()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 170, in run_cross_validation
+    df_predict, df_ = self.evaluate_train_test(dataset_train, dataset_test)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 278, in evaluate_train_test
+    self.fit(dataset_train.X, dataset_train.y[:, i])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/evaluators/cross_validation.py", line 328, in fit
+    self.model.fit(X, y)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/compose/_target.py", line 293, in fit
+    self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 135, in fit
+    self._estimator.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 132, in fit
+    K = self._gramian(self.alpha, self._X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 94, in _gramian
+    K = kernel(X, **self.kernel_options)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 49, in __call__
+    X_list = self.get_X_list(X)
+             ^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 36, in get_X_list
+    X_list[i] = X_list[i].astype("float64")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: '*/C=C/c1cc(OCC(CC)CCCC)c(*)cc1OC'
