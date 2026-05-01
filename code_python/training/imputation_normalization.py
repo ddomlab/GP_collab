@@ -42,7 +42,8 @@ class make_array_column_selector:
 
         include = self._as_tuple(self.dtype_include)
         exclude = self._as_tuple(self.dtype_exclude)
-
+        for i in range(X.shape[1]):
+            print(f"col {i}: {type(X[0, i]).__name__}")
         selected = []
         for j in range(X.shape[1]):
             sample = X[0, j]            # probe first row
@@ -88,7 +89,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
                             ("pass", "passthrough", make_array_column_selector(dtype_include=HashGraph)),
                             ("scaling features", transforms[scaler], make_array_column_selector(dtype_include=numbers.Real))
                         ],
-                        remainder="passthrough",
+                        # remainder="passthrough",
                         verbose_feature_names_out=False)
                     )
             steps.append(scaling)
