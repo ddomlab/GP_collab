@@ -131,7 +131,13 @@ def parse_arguments():
         '--Kernel_mixing_method',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
-        help="Specify a single target for the analysis."
+        help="Specify a hybridization method for the analysis."
+    )
+
+    parser.add_argument(
+        '--kernel_feature_mode',
+        required=False,
+        help="Specify a kernel feature mode (joint(ARD)/per_feature) for the analysis."
     )
 
     parser.add_argument(

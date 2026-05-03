@@ -94,7 +94,7 @@ if __name__ == "__main__":
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     for targ in all_targets:
-                optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/"Graph_Matern32_per_feature"
+                optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
                 main_structural_numerical(
                     dataset=w_data,
                     representation="MG",
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                         # "fp":args.K_fp,
                         # "count":args.K_count
                         },
-                    kernel_feature_mode = "per_feature", #joint, per_feature
+                    kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
                     kernel_mixing_method=args.Kernel_mixing_method,
                     hyperparameter_save_dir=optuna_save_dir,
                     # imputer="mean",
