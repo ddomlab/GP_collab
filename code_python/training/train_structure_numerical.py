@@ -115,7 +115,7 @@ if __name__ == "__main__":
                         # "fp":args.K_fp,
                         # "count":args.K_count
                         },
-                    kernel_feature_mode = "joint", #joint
+                    kernel_feature_mode = "per_feature", #joint, per_feature
                     kernel_mixing_method=args.Kernel_mixing_method,
                     hyperparameter_save_dir=optuna_save_dir,
                     # imputer="mean",
