@@ -1,0 +1,35 @@
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.1s
+[Parallel(n_jobs=8)]: Done 558 out of 558 | elapsed:   21.2s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  42 tasks      | elapsed:    6.4s
+[Parallel(n_jobs=4)]: Done 192 tasks      | elapsed:   24.8s
+[Parallel(n_jobs=4)]: Done 404 out of 404 | elapsed:   58.2s finished
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 89, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 182, in _prepare_data
+    mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/utils.py", line 45, in get_kernel_config
+    features_kernel_config = FeatureKernelConfig.load(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/FeatureKernel.py", line 73, in load
+    return cls(
+           ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/FeatureKernel.py", line 21, in __init__
+    microkernel = MicroKernel.from_microdict(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/base.py", line 319, in from_microdict
+    return cls(
+           ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/base.py", line 129, in __init__
+    assert isinstance(self.value, float)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
