@@ -1,0 +1,67 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.8±0.29	 r2: 0.17±0.12
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu17>
+Subject: Job 106666: <structure_numerical_20260503> in cluster <Hazel> Done
+
+Job <structure_numerical_20260503> was submitted from host <gpu17> by user <sdehgha2> in cluster <Hazel> at Sun May  3 17:21:03 2026
+Job was executed on host(s) <gpu17>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun May  3 17:21:03 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun May  3 17:21:03 2026
+Terminated at Mon May  4 10:36:44 2026
+Results reported at Mon May  4 10:36:44 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 35:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260503"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260503/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260503/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --kernel_feature_mode "per_feature"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   61252.03 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.01 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   62141 sec.
+    Turnaround time :                            62141 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260503/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
