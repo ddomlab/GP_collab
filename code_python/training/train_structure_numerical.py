@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
-    for targ in all_targets:
+    for targ in ["flux recovery ratio (%)"]:
                 optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
                 main_structural_numerical(
                     dataset=w_data,
