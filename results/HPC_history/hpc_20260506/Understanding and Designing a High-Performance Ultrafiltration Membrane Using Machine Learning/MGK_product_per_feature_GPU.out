@@ -61,3 +61,70 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260506/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_product_per_feature_GPU.err> for stderr output of this job.
 
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.78±1.31	 r2: 0.4±0.13
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_mean_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 122338: <structure_numerical_20260506> in cluster <Hazel> Done
+
+Job <structure_numerical_20260506> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Wed May  6 23:40:24 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May  6 23:40:24 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May  6 23:40:24 2026
+Terminated at Thu May  7 00:14:43 2026
+Results reported at Thu May  7 00:14:43 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 8:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260506"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260506/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260506/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1937.68 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.97 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              13
+    Max Threads :                                19
+    Run time :                                   2058 sec.
+    Turnaround time :                            2059 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260506/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
