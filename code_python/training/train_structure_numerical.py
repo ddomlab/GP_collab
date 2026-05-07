@@ -93,34 +93,34 @@ if __name__ == "__main__":
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
-    for targ in ["flux recovery ratio (%)"]:
-                optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
-                main_structural_numerical(
-                    dataset=w_data,
-                    representation="MG",
-                    # radius=3,
-                    # vector="count",
-                    regressor_type="MGK-sklearn",
-                    # GPytorchMixMCMC
-                    # GPMixMCMC
-                    polymer_unit=polymer_unit,
-                    target_features=[targ],  
-                    feat_transformer="Standard",
-                    target_transformer="Standard",
-                    numerical_feats=feats,
-                    hyperparameter_optimization=False,
-                    kernel_type={
-                        "fp": "Graph",
-                        "count": "Matern32"
-                        # "fp":args.K_fp,
-                        # "count":args.K_count
-                        },
-                    kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
-                    kernel_mixing_method=args.Kernel_mixing_method,
-                    hyperparameter_save_dir=optuna_save_dir,
-                    imputer="mean",
-                    columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-                    )
+    for targ in all_targets:
+        optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
+        main_structural_numerical(
+            dataset=w_data,
+            representation="MG",
+            # radius=3,
+            # vector="count",
+            regressor_type="MGK-sklearn",
+            # GPytorchMixMCMC
+            # GPMixMCMC
+            polymer_unit=polymer_unit,
+            target_features=[targ],  
+            feat_transformer="Standard",
+            target_transformer="Standard",
+            numerical_feats=feats,
+            hyperparameter_optimization=False,
+            kernel_type={
+                "fp": "Graph",
+                "count": "Matern32"
+                # "fp":args.K_fp,
+                # "count":args.K_count
+                },
+            kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
+            kernel_mixing_method=args.Kernel_mixing_method,
+            hyperparameter_save_dir=optuna_save_dir,
+            imputer="mean",
+            columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+            )
 
  
         # 'log (Total flux)',
