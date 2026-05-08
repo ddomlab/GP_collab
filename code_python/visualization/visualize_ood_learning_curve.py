@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from visualization_setting import set_plot_style, save_img_path
-from utils_uncertainty_calibration import compute_all_uncertainty_metrics
+from training.utils_uncertainty_calibration import compute_all_uncertainty_metrics
 set_plot_style()
 
 #--------------HELPER FUNCTIONS----------------#

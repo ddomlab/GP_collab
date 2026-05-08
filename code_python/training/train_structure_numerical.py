@@ -106,7 +106,7 @@ if __name__ == "__main__":
             polymer_unit=polymer_unit,
             target_features=[targ],  
             feat_transformer="Standard",
-            target_transformer="Standard",
+            target_transformer=None,
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={

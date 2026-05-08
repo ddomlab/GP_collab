@@ -33,7 +33,6 @@ from scoring import (
     process_scores,
     # _average_ls,
     gp_cross_validate_regressor,
-    mgk_cross_validate_regressor
 )
 from utils import split_for_training
 from filter_data import sanitize_dataset
@@ -274,7 +273,7 @@ def run(
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-        y_transform = get_target_transformer(target_transformer)
+
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
@@ -288,6 +287,7 @@ def run(
             #             regressor= model,
             #             transformer=y_transform,
             #             )
+            y_transform = get_target_transformer(target_transformer) if target_transformer else None
 
             # regressor :Pipeline= Pipeline(steps=[
             #                 ("preprocessor", preprocessor),
@@ -323,26 +323,34 @@ def run(
                 )
 
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
-                y_transform_regressor = TransformedTargetRegressor(
-                        regressor= model,
-                        transformer=y_transform,
-                        )
+                if target_transformer:
+                    y_transform = get_target_transformer(target_transformer)
+                    y_transform_regressor = TransformedTargetRegressor(
+                            regressor= model,
+                            transformer=y_transform,
+                            )
+                else:
+                    y_transform_regressor = model
                 regressor :Pipeline= Pipeline(steps=[
                                 ("preprocessor", preprocessor),
                                 ("regressor", y_transform_regressor),
                                 ])
-                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer)
             else:
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-                y_transform_regressor = TransformedTargetRegressor(
-                        regressor= model,
-                        transformer=y_transform,
-                        )
+                if target_transformer:
+                    y_transform = get_target_transformer(target_transformer)
+                    y_transform_regressor = TransformedTargetRegressor(
+                            regressor= model,
+                            transformer=y_transform,
+                            )
+                else:
+                    y_transform_regressor = model
                 regressor :Pipeline= Pipeline(steps=[
                                 ("preprocessor", preprocessor),
                                 ("regressor", y_transform_regressor),
                                 ])
-                scores, predictions = mgk_cross_validate_regressor(regressor, X, y, cv_outer)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer)
         else:
             
             if hyperparameter_optimization:
@@ -402,10 +410,13 @@ def run(
                                         **kwargs,
                                         )
 
-                y_transform_regressor = TransformedTargetRegressor(
-                            regressor=model,
-                            transformer=y_transform,
-                    )
+                if target_transformer:
+                    y_transform_regressor = TransformedTargetRegressor(
+                                regressor=model,
+                                transformer=y_transform,
+                        )
+                else:
+                    y_transform_regressor = model
                 preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
                 regressor :Pipeline= Pipeline(steps=[
                             ("preprocessor", preprocessor),
@@ -416,7 +427,7 @@ def run(
                 y = y.flatten()
                 # return_importance = False if "GP" in regressor_type else True
                 if "gp" in regressor_type.lower():
-                    scores, predictions = gp_cross_validate_regressor(regressor, X, y, cv_outer, return_ls=True)
+                    scores, predictions = gp_cross_validate_regressor(regressor, regressor_type, X, y, cv_outer, return_ls=True)
 
                 else:
                     scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
@@ -429,10 +440,14 @@ def run(
         seed_scores[seed].pop("estimator", None)
         # seed_indices[seed] = indices
         # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
-        seed_predictions[seed] = predictions.flatten()
+        seed_predictions[f"seed_{seed}_y_pred"] = np.asarray(predictions["y_pred"]).ravel()
 
-        seed_predictions: pd.DataFrame = pd.DataFrame.from_dict(
-                        seed_predictions, orient="columns")
+        if "y_std" in predictions:
+            seed_predictions[f"seed_{seed}_y_std"] = np.asarray(predictions["y_std"]).ravel()
+    seed_predictions = pd.DataFrame.from_dict(
+        seed_predictions,
+        orient="columns",
+    )
     # seed_indices_full_dropped_nans.json
     
     # save_folder = Path(r"C:\Users\sdehgha2\Desktop\phd-code\gp_collab\GP_collab\results\Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation\target_log Rg (nm)")

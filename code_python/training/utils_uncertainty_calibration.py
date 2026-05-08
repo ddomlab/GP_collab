@@ -5,9 +5,66 @@ from scipy.stats import pearsonr, spearmanr, norm
 from sklearn.metrics import root_mean_squared_error
 
 
+
+
+def compute_ece(y_true, y_pred, y_std, n_bins=10):
+    # Binned Expected Calibration Error (ECE)
+    cdf_vals = norm.cdf(y_true, loc=y_pred, scale=y_std)
+    ece = 0.0
+    for i in range(1, n_bins + 1):
+        p_expected = i / n_bins
+        p_observed = np.mean(cdf_vals <= p_expected)
+        ece += np.abs(p_expected - p_observed)
+    return ece / n_bins
+
+
+def compute_pit_values(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    z_scores = (y_true - y_pred) / (y_std + eps)
+    return norm.cdf(z_scores)
+
+
+def compute_pit_cdf_curve(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    eps: float = 1e-8,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Empirical CDF of PIT values.
+    """
+    cdf_vals = compute_pit_values(y_true, y_pred, y_std, eps=eps)
+
+    sorted_pit = np.sort(cdf_vals)
+    empirical_cdf = np.arange(1, len(sorted_pit) + 1) / len(sorted_pit)
+
+    return sorted_pit, empirical_cdf
+
+
+def compute_cdf_ama(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    eps: float = 1e-8,
+) -> float:
+    """
+    Area between the empirical PIT CDF and the ideal uniform CDF.
+    """
+    sorted_pit, empirical_cdf = compute_pit_cdf_curve(
+        y_true, y_pred, y_std, eps=eps
+    )
+
+    return simpson(np.abs(empirical_cdf - sorted_pit), x=sorted_pit)
+
+
+
 def compute_cvpp(y_true: np.ndarray, 
                 y_pred: np.ndarray,
-                y_err: np.ndarray,
+                y_std: np.ndarray,
                 step: float = 0.05
                 ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -16,7 +73,7 @@ def compute_cvpp(y_true: np.ndarray,
     Parameters:
         y_true (np.ndarray): True target values.
         y_pred (np.ndarray): Predicted means.
-        y_err (np.ndarray): Predicted standard deviations.
+        y_std (np.ndarray): Predicted standard deviations.
         step (float): Step size for confidence levels (default: 0.05).
 
     Returns:
@@ -29,15 +86,15 @@ def compute_cvpp(y_true: np.ndarray,
 
     for i, q in enumerate(qs):
         z = norm.ppf((1.0 + q) / 2.0)
-        standardized_error  = np.abs((y_pred - y_true) / y_err)
+        standardized_error  = np.abs((y_pred - y_true) / y_std)
         Cqs[i] = np.mean(standardized_error  < z)
 
     return qs, Cqs
 
 
-def compute_ama(y_true: np.ndarray, 
+def compute_cvpp_ama(y_true: np.ndarray, 
                 y_pred: np.ndarray,
-                y_err: np.ndarray,
+                y_std: np.ndarray,
                 step: float = 0.05) -> float:
     
     """
@@ -46,25 +103,25 @@ def compute_ama(y_true: np.ndarray,
     Returns:
         float: The AMA score.
     """
-    qs, Cqs = compute_cvpp(y_true, y_pred, y_err, step=step)
+    qs, Cqs = compute_cvpp(y_true, y_pred, y_std, step=step)
     ama = simpson(np.abs(Cqs - qs), qs)
     return ama
 
 
 def compute_residual_error_cal(y_true: np.ndarray, 
                                 y_pred: np.ndarray,
-                                y_err: np.ndarray,
+                                y_std: np.ndarray,
                                 ):
 
     res = np.abs(y_true-y_pred)
-    correlation = spearmanr(res, y_err)[0]
+    correlation = spearmanr(res, y_std)[0]
     return correlation
 
 
 def gaussian_nll(
                 y_true,
                 y_pred,
-                y_err,
+                y_std,
                 eps:float=1e-6, 
                 reduce='mean'
                 ):
@@ -88,9 +145,9 @@ def gaussian_nll(
         The computed NLL value(s)
     """
     eps = 1e-6 
-    y_err = np.clip(y_err, eps, None)
+    y_std = np.clip(y_std, eps, None)
 
-    log_probs = norm.logpdf(y_true, loc=y_pred, scale=y_err)
+    log_probs = norm.logpdf(y_true, loc=y_pred, scale=y_std)
     nll = -log_probs  
 
     if reduce == 'mean':

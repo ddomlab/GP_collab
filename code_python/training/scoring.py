@@ -31,6 +31,14 @@ from sklearn.metrics import (
     precision_score,
 )
 
+from utils_uncertainty_calibration import (
+    compute_ece,
+    compute_cdf_ama,
+    compute_cvpp_ama,
+    gaussian_nll
+    )
+
+
 import inspect
 import copy
 
@@ -211,8 +219,6 @@ def _average_ls(ls_data: Dict) -> None:
     return ls_data
 
 
-
-
 def compute_summary_stats(metrics: Dict[str, list[float]]) -> Dict[str, float]:
     """
     Helper function to compute the mean and standard deviation of the test/train metrics.
@@ -316,8 +322,6 @@ def process_ood_learning_curve_score(scores: dict) -> dict:
 
 
 
-
-
 def process_learning_score(score: dict[int, dict[str, np.ndarray]]):
      # Initialize arrays for aggregation
     train_scores_mean = None
@@ -389,7 +393,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 
-def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool):
+def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool, UQ: bool):
     """
     Runs inside a parallel worker:
     - clone estimator
@@ -410,59 +414,29 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     model.fit(X_train, y_train)
 
     # Predict
-    y_pred = model.predict(X_test)
-    scores = {}
+    y_result = model.predict(X_test)
+    results = {}
     if return_ls: 
-        scores["lengthscale"] = model.named_steps["regressor"].regressor_._get_lengthscale()
+        results["lengthscale"] = model.named_steps["regressor"].regressor_._get_lengthscale()
     # Compute scoring: scoring[name] is a scorer from make_scorer
+
+
     for name, scorer in scoring.items():
-        scores[name] = scorer(y_test, y_pred)
+        results[name] = scorer(y_test, y_result["y_pred"])
+    if UQ:
+        UQ_scorers = {
+            "ece": compute_ece,
+            "cdf_ama": compute_cdf_ama,
+            "cvpp_ama": compute_cvpp_ama,
+            "nll": gaussian_nll,
+        }
+        for name, uq_scorer in UQ_scorers.items():
+            results[name] = uq_scorer(y_test, y_result["y_pred"], y_result["y_std"])
 
-    return test_idx, y_pred, scores
-
-
-def gp_cross_validate(
-    estimator,
-    X,
-    y,
-    cv,
-    scoring,
-    n_jobs=-1,
-    return_ls=False,
-):
-    """
-    Returns:
-        scores (dict): Dictionary of lists (metrics and lengthscales).
-        predictions_all (np.ndarray): A single array of shape (n_samples,) containing 
-                                      the prediction for each sample when it was in the test set.
-    """
-    
-    # 1. Run Parallel Folds
-    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
-        delayed(_gp_fit_predict_score)(
-            estimator, X, y, train_idx, test_idx, scoring, return_ls
-        )
-        for train_idx, test_idx in cv.split(X, y)
-    )
-
-    scores = defaultdict(list)
-    n_samples = len(y)
-    predictions = np.full(n_samples, np.nan)
-
-    for test_idx, y_pred, fold_scores in parallel_results:
-        predictions[test_idx] = y_pred
-
-        for key, val in fold_scores.items():
-            # print(val)
-            if key == "lengthscale":
-                scores[f"test_lengthscale"].append(val)
-            else:
-                scores[f"test_{key}"].append(val)
-                
-    return scores, predictions
+    return test_idx, y_result, results
 
 
-def mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
+def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
     """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
     est = copy.deepcopy(estimator)
 
@@ -478,90 +452,110 @@ def mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
     return test_idx, y_pred, fold_scores
 
 
-def mgk_cross_validate(
-    estimator, X, y, cv, scoring,
-    n_jobs=-1, verbose=0,
+
+def gp_cross_validate(
+    estimator,
+    model_type:str,
+    X,
+    y,
+    cv,
+    scoring,
+    UQ,
+    return_ls,
+    n_jobs=-1,
 ):
-    splits = list(cv.split(X, y))   # materialize so workers can index
+    """
+    Returns:
+        scores: Dictionary of lists containing fold-wise metrics.
+        predictions: Dictionary containing out-of-fold predictions:
+            - predictions["y_pred"]: predicted means, shape (n_samples,)
+            - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
+              only available when returned by the model.
+    """
+    if "mgk" in model_type.lower():
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+        delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring)
+        for train_idx, test_idx in cv.split(X, y)
+        )
+    else:
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+            delayed(_gp_fit_predict_score)(
+                estimator, X, y, train_idx, test_idx, scoring, return_ls, UQ
+            )
+            for train_idx, test_idx in cv.split(X, y)
+        )
 
-    fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
-        delayed(mgk_fit_and_score_fold)(estimator, X, y, tr, te, scoring)
-        for tr, te in splits
-    )
-
-    # Aggregate
     scores = defaultdict(list)
     n_samples = len(y)
-    predictions = np.full(n_samples, np.nan)
 
-    for test_idx, y_pred, fold_scores in fold_results:
-        y_pred = np.asarray(y_pred).ravel()
-        predictions[test_idx] = y_pred
+    predictions = {
+        "y_pred": np.full(n_samples, np.nan),
+        "y_std": np.full(n_samples, np.nan),
+    }
+
+    for test_idx, y_result, fold_scores in parallel_results:
+        predictions["y_pred"][test_idx] = np.asarray(y_result["y_pred"]).ravel()
+
+        if "y_std" in y_result:
+            predictions["y_std"][test_idx] = np.asarray(y_result["y_std"]).ravel()
+
         for key, val in fold_scores.items():
             scores[f"test_{key}"].append(val)
 
     return scores, predictions
 
 
+
+
+
 # def mgk_cross_validate(
-#     estimator,
-#     X,
-#     y,
-#     cv,
-#     scoring,
-#     loss_function,
-#     repeat,
-#     # n_jobs=-1,
-#     return_importance=False,
+#     estimator, X, y, cv, scoring,
+#     n_jobs=-1, verbose=0,
 # ):
-#     # Placeholder for MGK-specific cross-validation logic
-#     results = {f"test_{name}": [] for name in scoring}
+#     splits = list(cv.split(X, y))   # materialize so workers can index
+
+#     fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
+#         delayed(_mgk_fit_and_score_fold)(estimator, X, y, tr, te, scoring)
+#         for tr, te in splits
+#     )
+
+#     # Aggregate
+#     scores = defaultdict(list)
 #     n_samples = len(y)
 #     predictions = np.full(n_samples, np.nan)
-#     for train_idx, test_idx in cv.split(X, y):
-#         est = copy.deepcopy(estimator)
 
-#     # Use safe row selector for all data types
-#         X_train = split_for_training(X, train_idx)
-#         X_test  = split_for_training(X, test_idx)
-#         y_train = split_for_training(y, train_idx)
-#         y_test  = split_for_training(y, test_idx)
-
-#         est.fit(X_train, y_train)
-#         y_pred = est.predict(X_test)
+#     for test_idx, y_pred, fold_scores in fold_results:
+#         y_pred = np.asarray(y_pred).ravel()
 #         predictions[test_idx] = y_pred
-#         for name, scorer in scoring.items():
-#             results[f"test_{name}"].append(scorer(y_test, y_pred))
+#         for key, val in fold_scores.items():
+#             scores[f"test_{key}"].append(val)
 
-#     ## ADD feature importance extraction for MGK if possible
-#     if return_importance:
-#         # Placeholder for feature importance extraction logic
-#         pass
-#     return results, predictions
+#     return scores, predictions
 
-def mgk_cross_validate_regressor(
-        regressor, X, y, cv
-    ) -> tuple[dict[str, float], np.ndarray]:
 
-        scorers = {
-        "rmse": root_mean_squared_error,
-        "mae": mean_absolute_error,
-        "r2": r2_score,
-        }
+# def mgk_cross_validate_regressor(
+#         regressor, X, y, cv
+#     ) -> tuple[dict[str, float], np.ndarray]:
 
-        score, predictions = mgk_cross_validate(
-            regressor,
-            X,
-            y,
-            cv=cv,
-            scoring=scorers,
-            # return_importance=return_importance,
-            )
-        return score, predictions
+#         scorers = {
+#         "rmse": root_mean_squared_error,
+#         "mae": mean_absolute_error,
+#         "r2": r2_score,
+#         }
+
+#         score, predictions = mgk_cross_validate(
+#             regressor,
+#             X,
+#             y,
+#             cv=cv,
+#             scoring=scorers,
+#             # return_importance=return_importance,
+#             )
+#         return score, predictions
 
 
 def gp_cross_validate_regressor(
-    regressor, X, y, cv, return_ls: bool = False
+    regressor, model_type:str, X, y, cv, return_ls: bool = False, UQ: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
 
@@ -570,17 +564,20 @@ def gp_cross_validate_regressor(
             "mae": mean_absolute_error,
             "r2": r2_score,
             }
-            
+        
         score, predictions = gp_cross_validate(
             regressor,
+            model_type,
             X,
             y,
             cv=cv,
             scoring=scorers,
             n_jobs=1,
-            return_ls=return_ls
+            return_ls=return_ls,
+            UQ=UQ
             )
         return score, predictions
+
 
 
 def _custom_fit_predict_score(
