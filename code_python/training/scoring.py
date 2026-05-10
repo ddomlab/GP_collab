@@ -494,7 +494,7 @@ def gp_cross_validate(
     }
 
     for test_idx, y_result, fold_scores in parallel_results:
-        predictions["y_pred"][test_idx] = np.asarray(y_result["y_pred"]).ravel()
+        predictions["y_pred"][test_idx] = np.asarray(y_result).ravel()
 
         if "y_std" in y_result:
             predictions["y_std"][test_idx] = np.asarray(y_result["y_std"]).ravel()
