@@ -34,11 +34,13 @@ class MarginalizedGaussianProcessRegressor(GPR):
             raise RuntimeError('Model not trained.')
         Ks = self._gramian(None, Z, self._X)[:, self._y_mask]
         ymean = (Ks @ self.Ky) * self._ystd + self._ymean
+        ymean = np.asarray(ymean).ravel()
         if return_std is True:
             Kss = self._gramian(self.alpha, Z, diag=True)
             std = np.sqrt(
                 np.maximum(0, Kss - (Ks @ (self.Kinv @ Ks.T)).diagonal())
             )
+            std = np.asarray(std).ravel()
             return ymean, std
         elif return_cov is True:
             Kss = self._gramian(self.alpha, Z)
