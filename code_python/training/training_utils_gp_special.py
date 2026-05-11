@@ -335,7 +335,7 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", y_transform_regressor),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer, UQ=True)
             else:
                 model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
                 if target_transformer:
