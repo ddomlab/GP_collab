@@ -151,13 +151,11 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
             raise RuntimeError("Call fit before predict.")
         
         if return_std:
-            print("returning std on")
             y_pred, y_std = self._estimator.predict(
                 X, return_std=return_std, return_cov=return_cov
             )
 
         else:
-            print("returning std off")
             y_pred = self._estimator.predict(
                 X, return_std=return_std, return_cov=return_cov
             )
