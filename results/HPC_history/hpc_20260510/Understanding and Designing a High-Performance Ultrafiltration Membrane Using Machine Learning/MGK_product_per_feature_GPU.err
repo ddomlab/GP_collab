@@ -1,13 +1,10 @@
 [Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
-[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.8s
-[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   21.8s finished
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   20.8s
+[Parallel(n_jobs=8)]: Done 318 out of 318 | elapsed:   20.9s finished
 [Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
-[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.3s finished
-[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
-[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   23.3s
-[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   23.3s finished
-[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
-[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    1.9s finished
+[Parallel(n_jobs=4)]: Done  11 out of  11 | elapsed:    1.8s finished
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2349: RuntimeWarning: invalid value encountered in slogdet
+  sign, logdet = _umath_linalg.slogdet(a, signature=signature)
 Traceback (most recent call last):
   File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
     main_structural_numerical(
@@ -35,14 +32,25 @@ Traceback (most recent call last):
   File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
     res = func(*args, **kwargs)
           ^^^^^^^^^^^^^^^^^^^^^
-TypeError: _mgk_fit_and_score_fold() missing 1 required positional argument: 'UQ'
-[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
-[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   22.8s
-[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   22.8s finished
-[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
-[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    1.9s finished
-[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
-[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   21.0s
-[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   21.1s finished
-[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
-[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.3s finished
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 448, in _mgk_fit_and_score_fold
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 137, in fit
+    self._estimator.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 126, in fit
+    raise RuntimeError(
+RuntimeError: Training using the likelihood loss did not converge, got:
+  message: ABNORMAL: 
+  success: False
+   status: 2
+      fun: nan
+        x: [-4.605e+00 -2.877e-01 ...  2.303e+00  2.303e+00]
+      nit: 0
+      jac: [       nan        nan ...        nan        nan]
+     nfev: 21
+     njev: 21
+ hess_inv: <27x27 LbfgsInvHessProduct with dtype=float64>
