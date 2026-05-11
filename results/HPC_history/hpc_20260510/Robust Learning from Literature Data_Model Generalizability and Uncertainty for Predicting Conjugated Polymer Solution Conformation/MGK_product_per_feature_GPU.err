@@ -3,3 +3,41 @@
 [Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   21.8s finished
 [Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
 [Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    2.3s finished
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   23.3s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   23.3s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    1.9s finished
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 88, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 200, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 353, in run
+    scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 581, in gp_cross_validate_regressor
+    score, predictions = gp_cross_validate(
+                         ^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 489, in gp_cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+TypeError: _mgk_fit_and_score_fold() missing 1 required positional argument: 'UQ'
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   22.8s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   22.8s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    1.9s finished
