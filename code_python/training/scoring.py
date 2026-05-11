@@ -487,7 +487,7 @@ def gp_cross_validate(
     """
     if "mgk" in model_type.lower():
         parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
-        delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring)
+        delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring, UQ)
         for train_idx, test_idx in cv.split(X, y)
         )
     else:
