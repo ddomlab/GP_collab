@@ -155,6 +155,7 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
             )
 
         else:
+            print("returning std off")
             y_pred = self._estimator.predict(
                 X, return_std=return_std, return_cov=return_cov
             )

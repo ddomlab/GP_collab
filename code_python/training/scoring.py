@@ -453,6 +453,7 @@ def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: b
         results[name] = scorer(y_test, y_result["y_pred"])
         
     if UQ:
+        print("UQ scoring on in MGK fold...")
         UQ_scorers = {
             "ece": compute_ece,
             "cdf_ama": compute_cdf_ama,
