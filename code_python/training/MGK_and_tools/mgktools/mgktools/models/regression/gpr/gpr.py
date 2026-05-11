@@ -81,8 +81,10 @@ class MarginalizedGaussianProcessRegressor(GPR):
         Kinv, _ = self._invert(K, rcond=self.beta)
         Kinv_diag = Kinv.diagonal()
         ymean = (z - Kinv @ z / Kinv_diag) * z_std + z_mean
+        ymean = np.asarray(ymean).ravel()
         if return_std is True:
             std = np.sqrt(1 / np.maximum(Kinv_diag, 1e-14))
+            std = np.asarray(std).ravel()
             return ymean, std
         else:
             return ymean
@@ -145,6 +147,19 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
     def predict(self, X, return_std=False, return_cov=False):
         if not getattr(self, "is_fitted_", False):
             raise RuntimeError("Call fit before predict.")
-        return self._estimator.predict(
-            X, return_std=return_std, return_cov=return_cov
-        )
+        
+        if return_std:
+            y_pred, y_std = self._estimator.predict(
+                X, return_std=return_std, return_cov=return_cov
+            )
+
+        else:
+            y_pred = self._estimator.predict(
+                X, return_std=return_std, return_cov=return_cov
+            )
+            y_std = None
+
+        return {
+            "y_pred": y_pred,
+            "y_stddev": y_std,
+        }

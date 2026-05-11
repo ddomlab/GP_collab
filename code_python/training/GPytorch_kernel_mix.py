@@ -433,8 +433,8 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         ssk_parameters:dict=None,
         progbar:bool=True,
         prior=False,
-        return_mll=False,
-        return_std=False
+        # return_mll=False,
+        # return_std=False
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -446,8 +446,8 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self.ssk_parameters = ssk_parameters
         self.progbar = progbar
         self.prior = prior
-        self.return_mll = return_mll
-        self.return_std = return_std
+        # self.return_mll = return_mll
+        # self.return_std = return_std
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.cuda_avail = {"dtype": torch.float, "device": device} 
         
@@ -524,7 +524,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
             pbar.close()
 
 
-    def predict(self, X_test):
+    def predict(self, X_test, return_std=False):
         if isinstance(X_test, pd.DataFrame):
             X_test = X_test.to_numpy()
 
@@ -542,15 +542,16 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         with torch.no_grad():
             posterior = self._likelihood(self._gp_model(X_t))
             y_pred = posterior.mean.cpu().numpy()
-            if self.return_std:
-                y_std = posterior.stddev.cpu().numpy()
+            # if return_std:
+            y_std = posterior.stddev.cpu().numpy() if return_std else None
+            # y_mll = posterior.log_prob(y_test).mean().item() if return_mll and y_test is not None else None
+            # test_mll = posterior.log_prob(self._gp_model._y_train).mean().item
             # if self.return_mll:
             #     # test_mll = posterior.log_prob(y_test).mean().item()
 
         return {
-            "y_pred": y_pred,
-            "y_stddev": y_std if self.return_std else None,
-            # "mll": test_mll if self.return_mll else None
+            "y_pred": np.asarray(y_pred).ravel(),
+            "y_stddev": np.asarray(y_std).ravel() if y_std is not None else None,
         }
 
     def _get_lengthscale(self):

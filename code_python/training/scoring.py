@@ -414,7 +414,7 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     model.fit(X_train, y_train)
 
     # Predict
-    y_result = model.predict(X_test)
+    y_result = model.predict(X_test, return_std=UQ)
     results = {}
     if return_ls: 
         results["lengthscale"] = model.named_steps["regressor"].regressor_._get_lengthscale()
@@ -436,7 +436,7 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     return test_idx, y_result, results
 
 
-def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
+def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: bool):
     """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
     est = copy.deepcopy(estimator)
 
@@ -446,10 +446,23 @@ def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring):
     y_test  = split_for_training(y, test_idx)
 
     est.fit(X_train, y_train)
-    y_pred = est.predict(X_test)
+    y_result = est.predict(X_test, return_std=UQ)
 
-    fold_scores = {name: scorer(y_test, y_pred) for name, scorer in scoring.items()}
-    return test_idx, y_pred, fold_scores
+    results = {}
+    for name, scorer in scoring.items():
+        results[name] = scorer(y_test, y_result["y_pred"])
+        
+    if UQ:
+        UQ_scorers = {
+            "ece": compute_ece,
+            "cdf_ama": compute_cdf_ama,
+            "cvpp_ama": compute_cvpp_ama,
+            "nll": gaussian_nll,
+        }
+        for name, uq_scorer in UQ_scorers.items():
+            results[name] = uq_scorer(y_test, y_result["y_pred"], y_result["y_std"])
+            
+    return test_idx, y_result, results
 
 
 
@@ -494,10 +507,10 @@ def gp_cross_validate(
     }
 
     for test_idx, y_result, fold_scores in parallel_results:
-        predictions["y_pred"][test_idx] = np.asarray(y_result).ravel()
+        predictions["y_pred"][test_idx] = y_result["y_pred"]
 
         if "y_std" in y_result:
-            predictions["y_std"][test_idx] = np.asarray(y_result["y_std"]).ravel()
+            predictions["y_std"][test_idx] = y_result["y_std"]
 
         for key, val in fold_scores.items():
             scores[f"test_{key}"].append(val)
