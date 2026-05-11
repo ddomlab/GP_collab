@@ -161,5 +161,5 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
 
         return {
             "y_pred": y_pred,
-            "y_stddev": y_std,
+            "y_std": y_std,
         }

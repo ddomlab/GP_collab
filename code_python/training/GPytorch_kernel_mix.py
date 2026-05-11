@@ -551,7 +551,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
 
         return {
             "y_pred": np.asarray(y_pred).ravel(),
-            "y_stddev": np.asarray(y_std).ravel() if y_std is not None else None,
+            "y_std": np.asarray(y_std).ravel() if y_std is not None else None,
         }
 
     def _get_lengthscale(self):
