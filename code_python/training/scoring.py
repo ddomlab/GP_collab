@@ -452,15 +452,15 @@ def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: b
     for name, scorer in scoring.items():
         results[name] = scorer(y_test, y_result["y_pred"])
         
-    if UQ:
-        UQ_scorers = {
-            "ece": compute_ece,
-            "cdf_ama": compute_cdf_ama,
-            "cvpp_ama": compute_cvpp_ama,
-            "nll": gaussian_nll,
-        }
-        for name, uq_scorer in UQ_scorers.items():
-            results[name] = np.asarray(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"])).ravel()
+    # if UQ:
+    #     UQ_scorers = {
+    #         "ece": compute_ece,
+    #         "cdf_ama": compute_cdf_ama,
+    #         "cvpp_ama": compute_cvpp_ama,
+    #         "nll": gaussian_nll,
+    #     }
+    #     for name, uq_scorer in UQ_scorers.items():
+    #         results[name] = np.asarray(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"])).ravel()
             
     return test_idx, y_result, results
 
