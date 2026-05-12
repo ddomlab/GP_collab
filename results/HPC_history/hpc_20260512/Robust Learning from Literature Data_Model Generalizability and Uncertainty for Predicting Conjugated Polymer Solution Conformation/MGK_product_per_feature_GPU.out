@@ -1,0 +1,70 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+score: defaultdict(<class 'list'>, {'test_rmse': [0.1205465917031246, 0.18297710670536813, 0.2280847378053877, 0.16867318025881323, 0.24955583413426097], 'test_mae': [0.07683906556130951, 0.1128180254312895, 0.11036608241342184, 0.09258916888858144, 0.1286345197776013], 'test_r2': [0.9547696393591459, 0.9205528499338466, 0.8302821031494924, 0.9185722766105673, 0.8454482179138364]})
+Running seed: 13
+score: defaultdict(<class 'list'>, {'test_rmse': [0.14662290082093274, 0.22462463471417068, 0.15840158552240055, 0.20128212683813684, 0.36167621250131965], 'test_mae': [0.08413699141164453, 0.10437315335577722, 0.0957726012200932, 0.12273204353902327, 0.1396566654884138], 'test_r2': [0.935783156576734, 0.8737609063234006, 0.9235055968293805, 0.8960791859660469, 0.6283444587363153]})
+Running seed: 42
+score: defaultdict(<class 'list'>, {'test_rmse': [0.14166139987438967, 0.13239191301220601, 0.21643859201242724, 0.22629056446313947, 0.13741134901695887], 'test_mae': [0.0876599380725762, 0.07954752043686297, 0.12625773202286164, 0.1065455905869429, 0.07762080771990516], 'test_r2': [0.95491289422835, 0.9490656287565276, 0.8420882379849055, 0.8665767934589642, 0.9426209920009778]})
+Average scores:	 rmse: 0.19±0.06	 r2: 0.89±0.08
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_hypOFF_Standard_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 154871: <structure_numerical_20260512> in cluster <Hazel> Done
+
+Job <structure_numerical_20260512> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Tue May 12 09:32:00 2026
+Job was executed on host(s) <4*gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Tue May 12 09:32:57 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue May 12 09:32:57 2026
+Terminated at Tue May 12 10:41:19 2026
+Results reported at Tue May 12 10:41:19 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 6:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260512"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260512/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260512/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4106.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.99 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                16
+    Run time :                                   4126 sec.
+    Turnaround time :                            4159 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260512/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
