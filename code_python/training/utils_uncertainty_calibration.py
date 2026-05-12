@@ -24,6 +24,9 @@ def compute_pit_values(
     y_std: np.ndarray,
     eps: float = 1e-8,
 ) -> np.ndarray:
+    y_true = np.asarray(y_true, dtype=float).ravel()
+    y_pred = np.asarray(y_pred, dtype=float).ravel()
+    y_std = np.asarray(y_std, dtype=float).ravel()
     z_scores = (y_true - y_pred) / (y_std + eps)
     return norm.cdf(z_scores)
 
@@ -34,10 +37,9 @@ def compute_pit_cdf_curve(
     y_std: np.ndarray,
     eps: float = 1e-8,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Empirical CDF of PIT values.
-    """
+
     cdf_vals = compute_pit_values(y_true, y_pred, y_std, eps=eps)
+    cdf_vals = np.asarray(cdf_vals, dtype=float).ravel()
 
     sorted_pit = np.sort(cdf_vals)
     empirical_cdf = np.arange(1, len(sorted_pit) + 1) / len(sorted_pit)
@@ -51,14 +53,11 @@ def compute_cdf_ama(
     y_std: np.ndarray,
     eps: float = 1e-8,
 ) -> float:
-    """
-    Area between the empirical PIT CDF and the ideal uniform CDF.
-    """
     sorted_pit, empirical_cdf = compute_pit_cdf_curve(
         y_true, y_pred, y_std, eps=eps
     )
 
-    return simpson(np.abs(empirical_cdf - sorted_pit), x=sorted_pit)
+    return float(simpson(np.abs(empirical_cdf - sorted_pit), x=sorted_pit))
 
 
 
@@ -103,7 +102,7 @@ def compute_cvpp_ama(y_true: np.ndarray,
     Returns:
         float: The AMA score.
     """
-    qs, Cqs = compute_cvpp(y_true, y_pred, y_std, step=step)
+    qs, Cqs = compute_cvpp(y_test, y_pred, y_std, step=step)
     ama = simpson(np.abs(Cqs - qs), qs)
     return ama
 
