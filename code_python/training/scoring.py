@@ -452,15 +452,15 @@ def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: b
     for name, scorer in scoring.items():
         results[name] = scorer(y_test, y_result["y_pred"])
         
-    # if UQ:
-    #     UQ_scorers = {
-    #         "ece": compute_ece,
-    #         "cdf_ama": compute_cdf_ama,
-    #         "cvpp_ama": compute_cvpp_ama,
-    #         "nll": gaussian_nll,
-    #     }
-    #     for name, uq_scorer in UQ_scorers.items():
-    #         results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
+    if UQ:
+        UQ_scorers = {
+            "ece": compute_ece,
+            "cdf_ama": compute_cdf_ama,
+            "cvpp_ama": compute_cvpp_ama,
+            "nll": gaussian_nll,
+        }
+        for name, uq_scorer in UQ_scorers.items():
+            results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
             
     return test_idx, y_result, results
 
@@ -517,54 +517,6 @@ def gp_cross_validate(
 
     return scores, predictions
 
-
-
-
-
-# def mgk_cross_validate(
-#     estimator, X, y, cv, scoring,
-#     n_jobs=-1, verbose=0,
-# ):
-#     splits = list(cv.split(X, y))   # materialize so workers can index
-
-#     fold_results = Parallel(n_jobs=n_jobs, verbose=verbose, require="sharedmem")(
-#         delayed(_mgk_fit_and_score_fold)(estimator, X, y, tr, te, scoring)
-#         for tr, te in splits
-#     )
-
-#     # Aggregate
-#     scores = defaultdict(list)
-#     n_samples = len(y)
-#     predictions = np.full(n_samples, np.nan)
-
-#     for test_idx, y_pred, fold_scores in fold_results:
-#         y_pred = np.asarray(y_pred).ravel()
-#         predictions[test_idx] = y_pred
-#         for key, val in fold_scores.items():
-#             scores[f"test_{key}"].append(val)
-
-#     return scores, predictions
-
-
-# def mgk_cross_validate_regressor(
-#         regressor, X, y, cv
-#     ) -> tuple[dict[str, float], np.ndarray]:
-
-#         scorers = {
-#         "rmse": root_mean_squared_error,
-#         "mae": mean_absolute_error,
-#         "r2": r2_score,
-#         }
-
-#         score, predictions = mgk_cross_validate(
-#             regressor,
-#             X,
-#             y,
-#             cv=cv,
-#             scoring=scorers,
-#             # return_importance=return_importance,
-#             )
-#         return score, predictions
 
 
 def gp_cross_validate_regressor(
