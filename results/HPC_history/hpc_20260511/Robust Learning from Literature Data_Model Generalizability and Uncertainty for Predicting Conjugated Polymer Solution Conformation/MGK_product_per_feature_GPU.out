@@ -129,3 +129,751 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
 
+MGK regressor, only scaling numerical features
+Running seed: 6
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Running seed: 13
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Running seed: 42
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Average scores:	 rmse: 0.24±0.05	 r2: 0.83±0.08
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 144838: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 12:11:21 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 12:11:45 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 12:11:45 2026
+Terminated at Mon May 11 12:19:53 2026
+Results reported at Mon May 11 12:19:53 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 2:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   431.52 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.89 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   485 sec.
+    Turnaround time :                            512 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Running seed: 13
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Running seed: 42
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+returning std on
+UQ scoring on in MGK fold...
+Average scores:	 rmse: 0.24±0.05	 r2: 0.83±0.07
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 144919: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu15> by user <sdehgha2> in cluster <Hazel> at Mon May 11 12:31:58 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 12:31:58 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 12:31:58 2026
+Terminated at Mon May 11 12:39:31 2026
+Results reported at Mon May 11 12:39:31 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 2:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   403.36 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             0.94 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   450 sec.
+    Turnaround time :                            453 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 147707: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 14:38:57 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 14:38:57 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 14:38:57 2026
+Terminated at Mon May 11 17:09:06 2026
+Results reported at Mon May 11 17:09:06 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 2:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   8977.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   9009 sec.
+    Turnaround time :                            9009 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+score: defaultdict(<class 'list'>, {'test_rmse': [0.17831068301312336, 0.3063633805583737, 0.30796751021821517, 0.19608631828886958, 0.2893317478254127], 'test_mae': [0.09908242903905277, 0.15997329040938787, 0.1393694546254151, 0.11197784809094305, 0.17216310755226474], 'test_r2': [0.9010365319626086, 0.7772803595881852, 0.6905824136515595, 0.8899538608554635, 0.7922549216881172], 'test_ece': [array([0.1375]), array([0.12935409]), array([0.11874279]), array([0.12270281]), array([0.1422722])], 'test_cdf_ama': [array([ 2.83191982e-01,  5.52276097e-01,  3.63273222e-01,  3.70233644e-01,
+        2.04550519e-01,  3.61287374e-01,  3.53639850e-01, -3.25203348e-01,
+        1.59126740e-01,  2.80540715e-01,  2.95234301e-01,  2.23218240e-01,
+        1.92477208e-01, -1.22772319e+00,  1.56364258e-01,  3.65063927e-01,
+        6.25058847e-01, -5.34345922e-02,  2.01479344e-01,  1.64648321e-01,
+        1.53195659e-01,  1.72259366e-01,  2.04280962e-01,  2.05738793e-01,
+        1.98866938e-01,  1.17047543e+02,  1.96399333e-01,  1.59524829e-01,
+       -1.59677673e+00, -1.05147956e+00,  1.26716378e+00, -1.59677673e+00,
+       -2.43896605e-01, -3.19498560e+00, -6.67747350e-01, -3.47126883e-02,
+        2.02375751e-01,  1.98007000e-01, -1.21724569e-01,  2.23018877e-01,
+        1.86668989e-01,  1.96399333e-01, -8.78230444e-01,  3.76245172e-01,
+       -1.13128706e+02,  1.07496603e+01, -9.77783723e+01,  3.48666666e-01,
+        1.51088267e-01,  2.30651741e-01, -5.27819205e+02,  2.53627162e-01]), array([ 1.79958244e+01,  1.08404125e+02,  5.81249093e+01,  1.06435129e+02,
+        4.97182252e+00,  6.23492757e+00,  5.69223663e+01,  5.30599136e+01,
+        2.05962719e-01,  3.36768292e+00,  3.60305135e+00,  7.09479832e+02,
+        4.39128142e+01,  1.49201236e-01,  2.72070076e+00,  9.17272473e+00,
+        9.59313470e+00,  1.57472070e-01,  1.23621143e+04,  2.95565127e-01,
+        1.75381502e-01,  3.91567251e+01,  4.76889504e+01,  1.40617913e+00,
+        4.34209907e+01,  2.72716254e+00,  4.71936798e-01,  3.81726160e-01,
+        1.83432236e+00,  3.73257611e-01,  4.26139298e-01, -3.76382832e-01,
+       -1.93991638e-01, -3.65278506e+00,  2.59018502e-01, -3.65278506e+00,
+        5.50335577e-01,  2.13937429e-01, -3.77212468e-01,  1.78321447e-01,
+       -1.27562325e+01, -1.27976780e+00,  1.33995987e+01,  4.56714922e+01,
+        4.16239046e+01,  2.51467667e+00,  4.40654244e+01,  5.63758425e+01,
+        4.21113712e-01,  9.95841958e+01,  1.08271945e+02]), array([ 2.42665383e-01,  3.62864332e-01,  2.33958466e-01,  9.69497458e-01,
+       -6.78632387e+00, -1.65835692e+01,  1.47688210e-01,  1.29107209e-01,
+       -3.55293382e+01,  6.48446537e-01,  3.47828797e-01,  3.64459232e-01,
+        3.73214823e-01,  1.53167218e-01,  1.64118833e-01,  1.14126254e-01,
+        2.31160638e-02,  1.34153851e-01,  4.08789389e-01,  3.67204541e-01,
+        2.25585533e-01,  2.07409312e-01,  2.81184178e-01,  1.45427701e-01,
+        1.84792317e-01,  2.44841975e-01,  2.74722802e-01,  2.07585353e-01,
+        1.21110176e-01,  1.46200636e-01,  1.10937984e+00,  2.23275427e+00,
+       -1.40799427e+00,  3.43344608e-01,  1.98253686e-01, -6.36604744e+00,
+       -3.28139330e+00, -5.25755081e+00, -6.36604744e+00, -4.67069807e+01,
+       -6.49868606e+01, -5.93522429e-01, -1.95316984e+00, -1.83595174e-01,
+        3.30109359e-01,  3.27929018e-01,  3.61456516e-01,  1.99084089e-01,
+       -2.29729996e+00, -3.74892648e+00, -3.02173939e+01]), array([3.57606888e-01, 4.51641805e-01, 4.76039829e-01, 3.33101388e-01,
+       7.29103931e+00, 1.39474762e-01, 1.37980897e-01, 3.56854912e-01,
+       2.78073011e-01, 2.00307743e+01, 3.19294595e-01, 1.92457842e+01,
+       5.03823071e-01, 5.15122988e-01, 1.06292270e+00, 3.39993915e-01,
+       3.21161287e-01, 3.15558337e-01, 1.66655409e-01, 1.45563056e+01,
+       1.38764306e-01, 5.40010104e-02, 3.31935784e-01, 1.68868216e-01,
+       1.70924080e-01, 1.20058574e+01, 1.13750937e+01, 7.16831042e+00,
+       1.33596775e+01, 3.31224509e-01, 8.34306422e+00, 2.90366664e+00,
+       1.55713403e-01, 4.54073707e+01, 5.78062048e+00, 5.31673403e-02,
+       4.93126388e+01, 2.21938856e+01, 2.49213788e+01, 2.71735329e+01,
+       2.70263601e+01, 3.20944501e+01, 7.94109342e+01, 3.23845099e-01,
+       3.09759111e-01, 7.67702783e-01, 1.01275865e+00, 6.66432400e-01,
+       2.43178360e-01, 2.65154026e-01, 2.99418279e+01]), array([ 2.67785932e-01,  3.09386924e-01,  4.61016598e-01,  2.43443871e-01,
+        2.08905685e-01,  2.25396784e-01,  9.55792378e+00,  2.35246786e-01,
+        1.54618246e-01,  2.28537822e-01,  4.33208352e-01,  4.51896007e-01,
+        2.02981213e-01,  2.07472959e-01,  3.96916535e-02,  2.62623488e-01,
+        1.26814527e+00,  4.03522940e-01,  1.83170225e-01,  2.29298141e-01,
+        2.02967649e-01,  2.13245851e-01,  1.64223895e-01,  1.91071733e-01,
+        2.11588191e-01,  1.69627002e-01, -2.46800434e-01,  2.10960670e-01,
+        7.71949222e-01,  7.14995024e-02, -4.97449984e-01,  3.88284515e-01,
+        2.17996094e-01,  2.25396784e-01,  8.85977200e+00,  1.55805671e+01,
+       -2.46966375e-01,  1.28254958e+02,  3.40842172e+01,  4.70865717e+00,
+       -8.60667678e+00, -1.79658923e+01,  3.69882849e-01,  3.49846905e-01,
+       -2.81981122e-01,  3.18832974e-01, -7.65468817e+00, -1.70974688e+01,
+        2.47086123e-01,  3.78952956e-01,  3.64383538e-01])], 'test_cvpp_ama': [array([0.32100592]), array([0.30809304]), array([0.28144944]), array([0.29195822]), array([0.32494553])], 'test_nll': [array([12.20027948]), array([17.14067296]), array([12.44318909]), array([16.04097748]), array([18.47867653])]})
+Running seed: 13
+score: defaultdict(<class 'list'>, {'test_rmse': [0.22420894296889102, 0.25863823724816976, 0.16129899155281832, 0.22545557458663618, 0.3066039661566988], 'test_mae': [0.11313219494790284, 0.11730758411802668, 0.09444038498350639, 0.14805377445465143, 0.12801332822282924], 'test_r2': [0.8498410573360304, 0.8326350301899941, 0.9206816052871514, 0.8696190711478458, 0.732910843112468], 'test_ece': [array([0.13461538]), array([0.13915802]), array([0.12389466]), array([0.12197232]), array([0.13162245])], 'test_cdf_ama': [array([ 1.18901028e+00,  1.19141242e+00,  1.74982984e+00,  2.57677848e+00,
+        1.95870274e+00, -2.83908806e+00,  1.13089927e+00,  4.19665906e-01,
+        3.82363695e-02,  3.63646615e-01,  2.85478311e-01,  3.89145858e-01,
+        1.89216181e-03,  7.08050015e-01, -1.08543943e-01,  2.94335143e-01,
+       -2.69422691e-01, -2.14699436e+01,  5.14590164e-01, -2.98124549e+01,
+       -2.30964298e+01,  2.66816915e+00,  1.83209272e+02, -1.79980669e+01,
+        8.55774958e-01, -2.92160398e+00, -5.22435609e-01,  2.87740380e+00,
+        4.26537309e-01, -1.42644470e+00, -1.28186914e+02,  1.00334461e-01,
+        2.20131812e-01,  1.00334461e-01, -6.58866673e+00,  5.42827979e-01,
+        1.72161013e+00, -2.55643353e-01,  1.60620572e+00,  1.75091140e+00,
+        1.34859673e+00,  1.13520961e+00,  4.94196922e+00,  3.41924497e+00,
+        1.46149021e+01,  3.53656459e-01,  1.64365053e+00,  1.43781259e-01,
+        1.40811837e+00,  1.49325668e+00,  1.36573850e+00,  1.19775038e+01]), array([  0.33647065,   0.4037094 ,   0.21769352,   0.42194997,
+         0.45662732,   0.31771913,   0.32132267,   0.22544697,
+       -10.35990133,   0.17238977,   0.1669483 ,   0.29694861,
+         0.12246226,   7.54935967,  -0.48558085,   0.21395562,
+         0.16863258,   0.37402229,   0.44194372,   0.36262997,
+         0.23680254,   0.26265808,   0.18613811,   0.23726235,
+         0.2928248 ,   0.17460506,   0.19094415,   0.21280867,
+         0.17401633,   0.08708304,  -1.03092746,  -0.89711357,
+         0.14339228,  -1.98170961,  -0.08421857,  -0.29603726,
+        -0.28682925,   0.1998526 ,   0.19386877,   0.22544697,
+         0.59385201,   0.21135548,   0.3990005 ,  -4.90739417,
+       -17.89143912, -19.26025636, -61.4894527 , -45.64212493,
+        -0.73621179,   0.18729171,   0.27868448]), array([-3.44431619e+01,  3.54197224e-01,  4.32622022e-01,  3.83230413e-01,
+       -8.16803433e-02,  7.58109241e-02,  1.92865324e+03,  9.68760743e+01,
+        8.11859184e+02,  8.53445754e-01,  3.56486638e-01,  3.59091648e-01,
+       -1.32889176e+01,  3.50294294e+01,  3.08686636e-01,  3.95461072e-01,
+       -4.18499688e+01, -2.14099965e+01, -2.20349246e+01, -1.74716502e+01,
+       -8.79079180e+00, -1.17724002e+02, -3.32502643e+01, -1.97493977e+01,
+        1.74797385e+03, -1.43680634e+00,  5.96086634e+00,  4.84837510e-01,
+       -8.50463754e-01,  6.70729701e-01,  1.38042621e+03,  1.49346886e+03,
+        1.44509538e+03,  1.83640503e-01,  1.55455087e+03,  1.87795881e+03,
+        1.94808718e+03,  1.85972773e+03,  1.98161136e+03,  2.00213924e+03,
+        2.00314277e+03,  1.80555551e+03, -6.75908773e-01,  1.93556074e-01,
+       -1.59882674e+01, -5.89256225e+00,  1.92707539e+03,  4.28751106e+02,
+        1.05607568e+03,  3.16060716e-01,  3.49295277e-01]), array([  0.17721698,   0.16619967,   0.26228487,   0.40042119,
+         0.41630176,   0.29541521,   0.16793014,  11.62356904,
+         0.21699788,  -0.20954584,   0.36003457,   0.19068518,
+         0.20820205,   0.14322591,  -0.2092568 ,   0.47856653,
+         0.51991766,   0.36003457,   0.41642144,   0.39467939,
+         0.38312251,   3.75438854,   0.16621974,   0.15456153,
+         0.1657816 ,   0.5169489 ,   0.13524909,  -0.08741151,
+         0.20275075,   0.13797994,   1.05168946,   0.13151678,
+        -0.12416212,   7.4296591 ,   0.22651259,   0.62503231,
+         0.17409234,   3.79550832,  -0.67964634,   0.17775769,
+         0.19563239,   0.05295267,   0.13745447,   0.52871119,
+         0.31501179,   0.38818745,   0.23026616,   0.38035686,
+         0.17597273,   0.26447925, -23.29130924]), array([  0.69501146,  -0.21395485,   8.72350458,   2.47669992,
+       -10.65346412,   1.17155223,   0.32612569,   0.21269076,
+         6.76943732,   1.67373718,   0.19236512,   0.2132514 ,
+         0.13364565,   0.15231058,   0.12361456,   0.31024366,
+         0.40947832,   0.9696425 ,  45.08397131,   0.27917279,
+         0.2399921 ,   0.15231058,   0.15774199,   0.41085067,
+         0.31191294,   0.20387019,   0.47082647,   0.21652393,
+         0.26093018,   0.28338725,   0.24363304,   0.24363304,
+         0.21652393,   0.23665667,   0.18675799,   0.2959983 ,
+         3.19313436,   0.12521792,   0.40334073,   0.42138246,
+         0.279808  ,   0.22842282,  -0.82028756,  11.44006605,
+         6.32236073,   7.16258798,   6.24485221,   0.42205168,
+         0.39772723,   0.37281651,   0.19833306])], 'test_cvpp_ama': [array([0.31311637]), array([0.32922594]), array([0.28916442]), array([0.28425606]), array([0.30691401])], 'test_nll': [array([15.49284286]), array([16.32785396]), array([13.55120624]), array([15.49444394]), array([15.11791275])]})
+Running seed: 42
+score: defaultdict(<class 'list'>, {'test_rmse': [0.14154324848526667, 0.2077637993742279, 0.2817842003556877, 0.20535532772436216, 0.26500153938785687], 'test_mae': [0.09060280779008376, 0.11576981150613391, 0.1658647784528975, 0.1073918793982833, 0.11083489123646774], 'test_r2': [0.9549880718373815, 0.8745623839954546, 0.7323431537244585, 0.8901220794997138, 0.7865949842476754], 'test_ece': [array([0.14234467]), array([0.11939639]), array([0.12566321]), array([0.11782007]), array([0.13819685])], 'test_cdf_ama': [array([ 2.41532176e+01,  2.43523923e+01, -1.50879238e-01,  9.31198606e-02,
+        1.87366743e-01,  2.33387911e+01,  5.99751065e-01,  2.19240592e+01,
+       -1.93472337e+00,  1.09099618e+00, -1.14300625e+00,  1.89147832e-01,
+        8.14615779e-01, -4.45804384e-01,  4.41539303e-01,  4.61545350e-01,
+        6.33057179e+00, -3.29732574e+00,  6.11015203e+00,  2.35223294e-01,
+        2.02799136e-01, -5.34601417e+01,  6.33642386e+00,  2.75293723e+00,
+        1.89254947e-01,  3.51380507e-01, -1.48221755e+01,  2.55734577e+01,
+       -1.42682651e+01,  1.25540282e+00,  7.84981391e+00,  7.90784844e+00,
+        2.31836253e-01,  2.15126093e-01,  4.82131080e+00, -3.78982216e+00,
+       -9.35488420e+00,  2.61818286e+01,  3.40204878e+00,  7.71196385e+00,
+        5.70825852e+00,  4.78403023e-01,  5.92183166e+00,  1.02308833e+02,
+       -4.90195703e+00, -4.51718521e+00, -3.48458788e-01,  5.10839208e-01,
+        5.19163615e-02, -3.55858181e+00, -3.59343451e+00, -5.17646265e+00]), array([ 3.85453268e+01,  5.75158014e-01,  1.33553834e+01, -1.97135223e+00,
+        1.09603917e+02, -2.44117554e+00,  3.12370086e+02, -5.84375976e+00,
+        7.23016469e+01, -8.28679148e-01, -6.81015060e+00,  1.61056415e+00,
+        1.63352549e+01, -1.30549892e-01, -3.21311218e-01,  4.26610593e-01,
+        4.30231717e-01,  1.78940923e+01,  3.64878400e+01, -1.00444851e+00,
+       -6.89208831e+00,  3.88266247e+01, -9.35553618e-01,  1.08274768e+02,
+        8.16224830e+00,  9.72304475e+00,  4.17168846e-01,  3.83271558e+02,
+        3.03250464e+01, -5.79844107e-02, -2.24673267e+00,  4.95873580e+02,
+        3.18320557e-01,  3.76618043e+01,  5.03238731e+02,  5.73134547e+02,
+        6.61275247e+01,  1.19945462e+02,  4.48644346e+02,  3.73869287e-01,
+        4.01594514e+01,  2.75329750e+02, -1.92698939e+00,  1.31988788e+01,
+        1.25982847e+00,  8.19512406e-01,  2.41639650e+00,  7.64399370e-01,
+        1.17080112e-01,  1.47718976e+00,  7.16006137e-01]), array([ 5.93783249e+02,  4.35738183e+03,  3.90967171e+03,  2.15250660e+02,
+        5.05460383e+03,  1.91485730e-01, -5.55252761e+01,  2.10284033e-01,
+        7.25283040e+03, -6.48006149e+01,  5.48719601e+02,  4.95740347e-01,
+        1.51214937e-01,  2.28849424e-01,  2.68661082e+01,  1.50457530e-01,
+        1.99570072e-01,  1.96518440e-01,  1.20977550e+00,  7.13835877e+01,
+        2.14872702e+03,  2.01060291e-01,  1.76147705e-01,  1.59834665e-01,
+       -1.33343229e+00,  2.11390551e-01,  2.34168813e-01,  3.38821101e-01,
+        1.72046259e+00,  6.34722404e-02,  1.47312522e-01, -4.56501277e-01,
+        3.21355977e-01, -4.57646398e-01,  1.61486267e-01,  1.76601710e-01,
+        1.59834665e-01, -7.89144366e-01,  1.07193103e+00,  4.00631882e+00,
+       -2.29053976e+01, -5.31628009e+01, -5.79769988e+01,  4.09423301e+03,
+        4.90219575e+02,  2.82267995e+00,  3.24899437e+02, -1.15282260e+01,
+       -9.69443079e+00,  7.39483422e+03,  4.44767096e+03]), array([-8.31169962e-01,  5.01825203e+02,  4.91374030e+02, -2.43725841e+00,
+       -3.76306899e-02,  1.00216133e+01,  1.65801149e+01,  2.13703446e+00,
+        2.23883120e+00,  1.42687582e-01,  1.02329941e+00, -3.08673949e+00,
+        2.95834783e+01, -4.15140074e+02,  1.92170211e-01,  2.49965390e-01,
+        1.66875315e+01, -4.61263948e+01,  7.86650347e-01,  1.15684106e-01,
+        3.32322284e+02, -1.59049002e-01,  8.19565755e+00, -8.09050175e-01,
+        2.80419314e-01,  4.88948828e+00,  1.88414433e-01,  1.84621426e-01,
+       -1.04889372e+00,  9.02469227e+00,  7.52605245e+00,  7.94957923e+00,
+       -2.45263470e+00,  3.01821825e-01, -6.61884517e-02, -4.61830601e+00,
+        9.26844989e+00,  4.98324531e-01,  7.02867488e-01, -7.93923268e+00,
+        2.38417358e-01,  2.29170481e-01, -6.46555780e-01,  1.56198483e+00,
+        7.13147952e+00,  3.24093519e+02,  2.95264190e+00,  1.48229668e-01,
+        3.88706329e-01,  6.70167289e+00,  5.18396514e-01]), array([ 1.73137747e-01,  3.81008983e-01,  3.49450491e-01,  3.82191967e-01,
+        1.89360281e-01,  2.65094764e-01,  3.12964741e-01,  3.09104843e-01,
+        3.22031361e-01,  1.06327256e-01,  2.01964411e-01,  2.21886416e-01,
+        3.97530015e-01,  2.46122122e-01,  3.07335403e-01,  2.29919533e-01,
+        2.92925086e-01,  2.24538419e-01,  2.43964656e-01,  2.31978497e-01,
+        1.51927444e-01,  1.64728951e-01,  1.78793943e-01,  2.17622895e-01,
+        1.79501865e-01,  1.90555271e-01,  2.14578400e+00,  5.40214109e-02,
+        3.41134108e+00,  2.68866135e+00,  2.77465434e-01,  1.32752142e+00,
+        2.14165932e-01,  1.66538911e+00,  2.17818049e+00,  1.74814743e-01,
+        2.16421652e-01, -7.87772032e+01, -4.47872246e+02, -1.01078343e+02,
+       -9.86163546e+00, -9.29648659e+00, -3.10239371e+01,  1.72938883e+00,
+        2.15786912e+00,  3.81041916e-01,  2.14129220e+01,  2.20533862e-01,
+        4.41606219e+00,  2.37094326e-01,  2.38365693e-01])], 'test_cvpp_ama': [array([0.34049556]), array([0.28068051]), array([0.2920223]), array([0.27856594]), array([0.32295912])], 'test_nll': [array([18.76419121]), array([10.81679774]), array([13.42413804]), array([13.00946172]), array([15.78717912])]})
+Average scores:	 rmse: 0.24±0.05	 r2: 0.83±0.08
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 150544: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 19:26:38 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 19:26:38 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 19:26:38 2026
+Terminated at Mon May 11 20:49:18 2026
+Results reported at Mon May 11 20:49:18 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 6:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   4937.17 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   4958 sec.
+    Turnaround time :                            4960 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+score: defaultdict(<class 'list'>, {'test_rmse': [0.17743850227237484, 0.30637979222967743, 0.30796921842443714, 0.1953384813013975, 0.28973255584092816], 'test_mae': [0.09915515612402984, 0.1599753905965773, 0.13928479265546356, 0.11163729169378549, 0.17143693364649942], 'test_r2': [0.9020022950133508, 0.77725649707937, 0.6905789811432947, 0.8907916514972114, 0.79167894918009], 'test_ece': [array([0.13786982]), array([0.12935409]), array([0.11893502]), array([0.12262591]), array([0.1428489])], 'test_cdf_ama': [array([  0.29180218,   0.52478139,   0.36462062,   0.37050653,
+         0.21059274,   0.40250108,   0.31705762,  -5.51775297,
+         1.4505579 ,   0.26713859,   0.29663455,   0.22663054,
+         0.14728147,   0.18807695,   0.15690201,   0.36521959,
+         0.4998649 ,   0.48410393,   0.1861125 ,   0.18306718,
+         0.14103219,   0.17075883,   0.21372582,   0.20996017,
+         0.20061367,  16.72175814,   0.2671859 ,   0.21165475,
+        -0.17516842,  -0.02316267,   0.48167969,  -0.17516842,
+         0.17504214,  -0.30617067,   0.13765116,   0.49023685,
+         0.21599091,   0.24219892,   0.22185282,   0.1993558 ,
+         0.16425073,   0.2671859 ,  -0.29174519,   0.24520966,
+        -8.66698573,   4.4809492 ,  -8.12897206,   0.38046042,
+         0.15758816,   0.22909693, -13.97416815,   0.2465844 ]), array([ 1.76859382e+01,  1.08396225e+02,  5.64473696e+01,  1.03509096e+02,
+        7.05485070e+00,  8.80335831e+01,  6.19960036e+01,  5.32603645e+01,
+        2.01607402e-01,  9.80948063e-01,  8.11482819e-01,  1.34147789e+02,
+        6.86227474e+01,  1.64496376e-01,  1.36310659e+00,  6.34816972e+00,
+        8.99380471e+01,  1.68723838e-01,  1.20653644e+02,  2.95241233e-01,
+        1.75546424e-01,  3.82584625e+01,  4.64736424e+01,  5.11462712e-01,
+        5.97826786e+00,  1.30770504e+00,  3.41604653e-01,  2.75158483e-01,
+        1.42329658e+00,  3.73324709e-01,  4.26230633e-01,  4.89801707e-02,
+        9.48666350e-02, -6.36702479e-01,  3.72149229e-01, -6.36702479e-01,
+        1.14992479e+00,  2.08604162e-01,  4.73321076e-02,  1.78302012e-01,
+       -1.29469808e+01, -2.09834010e-02,  2.41239646e+00,  2.27549510e+00,
+        1.48622408e+00,  9.39739428e-01,  4.36403956e+01,  5.79023632e+01,
+        3.96921819e-01,  1.05913813e+01,  1.08179780e+02]), array([ 2.43151282e-01,  3.63205206e-01,  1.52269220e-01,  2.26018510e-01,
+        2.20996444e+00, -1.03707513e+01,  1.38869178e-01,  1.33288640e-01,
+       -6.31127179e+01, -1.76607323e+01,  3.48793372e-01,  3.64628365e-01,
+        3.73428304e-01,  1.54701146e-01,  1.63009508e-01,  1.21513095e-01,
+       -1.39670680e+00,  1.38546941e-01,  4.33208925e-01,  3.65607179e-01,
+        2.56376736e-01,  1.67035292e-01,  2.75956551e-01,  1.05604097e-01,
+        1.92831395e-01,  2.45114608e-01,  2.29945888e-01,  4.63522460e-01,
+        1.19469067e-01,  1.09711422e-01, -1.35540744e+00, -1.90857759e-01,
+       -2.13156365e+00,  1.60834464e+00,  2.06052497e-01, -2.96831119e+01,
+       -1.35797239e+02, -1.53815851e+02, -2.96831119e+01, -1.28041650e+00,
+       -2.13099329e-02, -1.10292598e+03, -2.82914452e+00, -8.52806525e-01,
+        3.30314514e-01,  3.27860002e-01,  3.61624157e-01,  1.86656766e-01,
+       -4.88279950e+01, -2.20096837e+01, -1.84167120e+00]), array([  0.34866876,   0.45607481,   0.49854497,   0.33432   ,
+        10.99879947,   0.13823041,   0.13618756,   0.39246947,
+         0.26738392,  46.87210302,   0.32167108,  38.0449754 ,
+         0.51336271,   0.52504698,   1.68564957,   0.44364395,
+         0.19864984,   0.30548779,   0.16714219,  28.06010343,
+         0.14782042,   0.12012854,   0.45628033,   0.1675794 ,
+         0.17563578,  32.19822668,  30.48063292,  15.16174764,
+        35.7165555 ,   0.38636455,  20.83376506,   4.94989899,
+         0.15614463, 102.53294712, -20.55536634, -60.47374045,
+       111.36335569,  53.18778399,  63.12939735,  69.6509205 ,
+        69.41909373, -56.32953923, -39.75838604,   0.27254932,
+         0.31405439,   1.67121294,   1.59962397,   3.96928637,
+         0.2441341 ,   0.27064899,  74.38713507]), array([  0.28316913,   0.31024833,   0.44093066,   0.23625957,
+         0.20922894,   0.20062228,  -3.02838732,   0.22668856,
+         0.19221546,   0.19846889,   0.4532826 ,   0.45134234,
+         0.19571572,   0.19458994,   0.22973525,   0.07654683,
+        -4.01955319,  -2.0288024 ,   0.20299979,   0.28412538,
+         0.21774851,   0.22036689,   0.14364527,   0.23444255,
+         0.20378312,   0.18130136,  -0.53886007,   0.18927115,
+         0.4120705 ,  -0.09658187,  -2.03652622,   0.1123995 ,
+         0.22145894,   0.20062228,   5.14355328,   9.20701592,
+         1.91926938,  -0.16496088,   1.14364039,  -5.81898534,
+        -7.88904337, -11.51462502,   0.35166047,  -0.26198787,
+         0.32605059,   1.51940028,   0.27278202, -11.08961779,
+         0.2988949 ,   0.23221194,   0.24110729])], 'test_cvpp_ama': [array([0.32098126]), array([0.30809304]), array([0.28146226]), array([0.29188133]), array([0.32571447])], 'test_nll': [array([12.21693255]), array([17.13962854]), array([12.45066839]), array([16.05677065]), array([18.63207277])]})
+Running seed: 13
+score: defaultdict(<class 'list'>, {'test_rmse': [0.2246641134865103, 0.25882731337218823, 0.16181587908633382, 0.2254377009029826, 0.30686666287732645], 'test_mae': [0.11137375260546493, 0.11797300362699281, 0.09463658360589206, 0.1480246757008158, 0.128015560475212], 'test_r2': [0.8492307578545522, 0.8323902381826096, 0.9201724343396462, 0.8696397430261679, 0.7324529657774073], 'test_ece': [array([0.13232249]), array([0.13869666]), array([0.12397155]), array([0.12208766]), array([0.13158401])], 'test_cdf_ama': [array([ 9.23579814e-01,  9.31642108e-01,  1.29675914e+01,  2.14111496e-01,
+        2.04427821e-01, -8.24423773e-01,  6.55347864e-01,  1.93417910e-01,
+        1.04747636e-01, -1.25218801e-01, -7.14956864e+00,  4.41740156e-01,
+        1.03984360e-01,  1.98228842e+00,  6.90562688e-02,  1.58514646e+00,
+        2.14654282e-02,  8.91440654e+00, -2.08905128e+00, -7.48205386e+00,
+       -3.10392045e+00,  2.09216333e+00, -1.38137969e+00, -4.00109282e+00,
+        6.00125993e-02, -8.44530295e-01, -6.50201255e-02,  9.44560711e-01,
+       -1.81656423e-02, -1.11544019e-01,  7.41940650e-01,  4.33358381e-01,
+        1.32679147e+00,  4.33358381e-01,  1.58435909e-01, -4.51172894e+00,
+        2.48696318e-01,  4.23870490e-01, -9.24538677e-01, -1.99710760e-01,
+       -3.69643778e-03, -1.69192771e-01,  2.21122967e-01, -8.95911865e-01,
+        2.47518756e+01,  1.91429109e+01,  8.20355000e+00,  1.67611013e-01,
+        5.09496830e-01, -1.20358370e+00,  4.93983572e-01,  2.18476407e+01]), array([ 0.32868241,  0.39656616,  0.40026046,  0.40346698,  0.4696826 ,
+        0.30974432,  0.32063164,  0.21137282,  0.033097  ,  0.17161485,
+        0.17131506,  0.27441271,  0.12139207,  1.10779549,  0.36647984,
+        0.28346779,  0.16458196,  0.37228838,  0.44119902,  0.36498863,
+        0.23834185,  0.25821649,  0.2689141 ,  0.19588092,  0.16759267,
+        0.18064322,  0.18453623,  0.20185767,  0.26540035,  0.18549641,
+       -0.05993618,  0.00921997,  0.21613708, -0.14859116,  0.13230807,
+        0.08398805,  0.28177742,  0.18061565,  0.16234577,  0.21137282,
+        0.21232194,  0.17650671,  0.18772802,  0.38820296, -0.34488321,
+       -0.43047871, -3.71558739, -2.30629661,  0.26963289,  0.1968854 ,
+        0.33628268]), array([  0.20186641,   0.35683327,   0.43284369,   0.39043983,
+         0.28081161,   0.14727789,   0.32378753,   0.12969476,
+         3.95215248,   0.34578001,   0.3626884 ,   0.36083126,
+         0.10220096,   0.16179364,   0.30501179,   0.39558072,
+         0.15701693,   0.14238284,   0.2095727 ,   0.22761926,
+         0.25317994,   0.14883416,   0.17790427,   0.21645242,
+         0.24845151,   0.24081124,   0.14512991,   0.1539526 ,
+         0.73128295,   0.67108588,   3.41331696,   9.82887336,
+         6.7028816 ,   0.3099115 ,  19.98717879,  13.08034192,
+         0.32466928,   2.92170721,  -3.03975642,  11.7218985 ,
+        12.19609463,   0.29774782,   0.31765025,   0.16739284,
+         0.12647078,   0.29715726,   0.3428593 ,  65.22935518,
+       -11.59910239,   0.32722612,   0.33379537]), array([-2.67320573e+00,  3.19264282e+00,  1.77561743e+01,  3.99703356e-01,
+        4.14682638e-01,  2.95100182e-01,  7.93996482e+00,  4.32965407e+00,
+        2.42383410e+01, -2.44042885e-01,  3.68299268e-01,  1.31732155e+01,
+        3.52554828e-01,  1.09795771e-01, -1.89062090e+01,  4.81738580e-01,
+        5.20309630e-01,  3.68299268e-01,  3.57883247e-01,  3.79117686e-01,
+        3.81077194e-01,  9.47409076e+00,  1.65948741e-01,  2.79415437e+01,
+        8.83172477e-03,  3.82056804e-01,  7.91543675e-02, -1.42807370e+01,
+        3.66484621e-01,  1.38761927e-01,  1.05224065e+00, -9.12463934e+02,
+       -5.54098470e+00,  2.69645507e+00,  1.51536538e-01,  5.46402173e-01,
+        1.76949344e+00,  1.40021197e+00, -1.15278520e+00,  3.10254844e-01,
+        3.49503953e-01, -4.17704134e-02,  4.31658176e-02,  3.38182623e-01,
+        3.08176447e-01,  3.42141124e-01,  9.28918138e+00,  3.73206306e-01,
+        7.95705237e-02,  5.93599053e+00, -5.05183800e+00]), array([ 0.20760338, -0.05907491,  3.13449303,  1.87794667, -2.29561199,
+        0.33481482,  0.32636649,  0.20722575,  1.02880768,  0.36001643,
+        0.17255278,  0.15547364,  0.93168614,  0.15081194,  0.12474907,
+        0.31232839,  0.4094507 ,  0.3228092 ,  0.45603572,  0.26174015,
+        0.21367418,  0.15081194,  0.26250989,  0.26254627,  0.31419853,
+        0.20351058,  1.21985143,  0.21910548,  0.25857878,  0.27526755,
+        0.24668731,  0.24668731,  0.21910548,  0.27394397,  0.150215  ,
+        0.35089072,  0.40026813,  0.11810322,  0.40328595,  0.42310779,
+        0.32844599,  0.23312907, -0.34734319,  5.36860629,  1.1322466 ,
+        1.81968022,  1.88766677,  0.42160402,  0.37498278,  0.37299338,
+        0.19164177])], 'test_cvpp_ama': [array([0.30793886]), array([0.32855953]), array([0.28927976]), array([0.2843714]), array([0.30736255])], 'test_nll': [array([15.36987484]), array([16.19334326]), array([13.55509752]), array([15.49957807]), array([15.12471587])]})
+Running seed: 42
+score: defaultdict(<class 'list'>, {'test_rmse': [0.14537549602615152, 0.20775659819207704, 0.2860687145245057, 0.20505611837633947, 0.2652424820051033], 'test_mae': [0.09223570225105529, 0.11576796142470883, 0.16673274525732149, 0.10683530291255597, 0.11080074361860406], 'test_r2': [0.9525177031391839, 0.8745710792876062, 0.7241418570540492, 0.8904420375963158, 0.7862067469699018], 'test_ece': [array([0.14286243]), array([0.11939639]), array([0.12643214]), array([0.11878124]), array([0.13827374])], 'test_cdf_ama': [array([ 3.99288375e-01, -8.52406498e-01,  1.03062871e+03, -2.29644078e+00,
+       -1.47565160e+00,  8.71351521e-01,  3.79574504e-01,  1.53005477e+01,
+       -8.55909658e+00,  1.27317219e+00, -2.09123455e+00,  1.94561703e-01,
+        8.40660793e-01,  8.21587915e+00,  9.09207220e-02,  1.67314366e-01,
+        3.22176541e+00,  5.77689652e+00, -3.85436934e+00,  2.55720760e-01,
+        1.19028691e-01, -2.31509563e+01,  1.40264819e+00,  1.91366168e-01,
+        2.10814411e-01,  3.47207178e-01, -3.64038580e+01, -1.33268938e+01,
+       -3.72682172e+01, -1.56107976e+01,  2.24858907e+00,  2.25707447e+00,
+        2.76588156e-01,  2.20304509e-01,  1.19265158e+01, -1.26657959e+01,
+       -4.02369099e+00,  1.52352034e+01,  6.70034103e+00,  7.80198790e+00,
+        4.49706333e-03,  6.61795247e-01,  2.39018054e+01,  1.81522216e+01,
+        3.70015732e+00,  4.10632323e+00,  1.13239011e+01,  2.93515266e-01,
+       -1.52706634e+00, -1.37886426e+01,  5.40036130e+00,  9.80321883e-01]), array([ 2.12562096e+01,  4.96119954e-01,  3.81663289e+00, -8.57943201e-01,
+        1.07684975e+02, -1.66644274e+02,  8.24385651e+01, -5.79597785e+00,
+        2.64063892e+01, -3.04545250e-02,  3.41772337e+01,  8.59168435e-01,
+        4.64855056e+00, -6.16969251e-04,  3.75096167e-01,  4.77483913e-01,
+        4.43384936e-01,  1.29577908e+01,  2.83122888e+01, -1.70565421e+00,
+       -4.34687907e+00,  9.98077669e+02,  1.79325658e+00,  7.29004868e+00,
+        1.56863781e+01,  1.06361929e+01, -3.70076456e-01,  1.02600162e+02,
+        1.87903651e+02,  3.84740038e-02, -8.65994941e-01,  1.59713604e+02,
+        3.17794095e-01,  2.57277540e+02,  1.37775881e+02,  1.59096668e+02,
+       -1.43043655e+02,  3.26175873e+01,  1.21750148e+02,  6.76727937e-01,
+        2.21176989e+01,  7.22185400e+01, -6.29682284e-01,  5.32059542e+01,
+        8.32496537e+00, -8.78031184e+00,  2.63275886e+00,  6.67334893e-01,
+       -5.02449665e+00,  9.06397387e+00,  5.48423835e+00]), array([ 4.09923890e+02,  2.70843521e+03,  2.75086296e+03,  1.56258697e+02,
+        3.57235843e+03,  9.13338442e-02, -4.34227534e-01,  1.80122692e-01,
+        5.04373208e+03,  1.33608663e+01,  3.84110763e+02,  3.81753709e-01,
+        1.10896426e-01,  1.54441837e-01,  2.08133711e+01,  1.50473637e-01,
+        1.58031406e-01,  1.50963167e-01,  8.91157510e-01,  4.87327697e+01,
+        1.50019054e+03, -4.15967322e-03, -3.97670539e-01,  1.75283498e-01,
+       -2.65236786e+00,  1.51646261e-01,  2.25283010e-01,  3.31027661e-01,
+        1.21820757e+00, -8.06987456e-01, -5.81514888e-01, -1.45077727e+00,
+        2.66445618e-02, -1.35387383e+00,  1.58717704e-01,  3.03306578e-01,
+        1.75283498e-01, -1.05840241e+00,  7.53750784e-01,  1.71683406e+00,
+       -8.54534699e+00,  6.19751152e+00,  1.11733746e+01,  2.55731942e+03,
+        3.44706835e+02,  2.07045816e+00,  2.23414935e+02, -5.96910816e+00,
+       -5.42718663e+00,  4.90356656e+03,  2.76003738e+03]), array([-1.43775132e+00,  7.15012371e+02,  7.01348408e+02, -4.78672187e+00,
+        5.85843984e-01,  1.40294068e+01, -9.69252382e-01,  3.09833682e+00,
+        3.23476688e+00,  1.53153621e-01,  1.17231168e+00, -3.00962237e+00,
+        2.95489870e+01, -4.36308174e+02,  2.98746052e-01,  2.76367175e-01,
+        1.97360664e+00, -1.00622584e+02,  5.87824715e-01,  1.84076029e-01,
+        4.87594192e+02, -3.78684140e-01,  7.97477075e+00, -1.40271925e+00,
+        3.50886988e-01,  4.33050814e+00,  1.59722667e-01,  2.02121010e-01,
+       -4.19307667e-02,  1.36146251e+00,  1.61341305e+00,  1.72276346e+00,
+       -3.19852551e-01,  3.25497153e-01,  7.27778807e-01, -7.24866456e+00,
+        2.07977785e+00,  1.29943276e-01, -2.36077232e+00, -6.20639613e+00,
+       -6.65115541e-01, -6.71359185e-01,  1.05960886e-02, -3.39326771e+00,
+        7.86018050e+00,  4.76197573e+02,  3.46006524e+00,  1.46303230e-01,
+        8.90996297e-01,  4.81926449e+00, -4.08109097e+00]), array([  0.17439135,   0.38168258,   0.34759678,   0.38399154,
+         0.18785045,   0.26536416,   0.31282373,   0.30912347,
+         0.32774218,   0.15522546,   0.20284081,   0.2217026 ,
+         0.39074158,   0.248427  ,   0.3317121 ,   0.29788244,
+         0.29279058,   0.22177559,   0.24494024,   0.23214739,
+         0.15303877,   0.16407644,   0.13187371,   0.21760589,
+         0.17941362,   0.17415289,  18.74185091,  -0.09276066,
+        49.73898978,  29.07863048,   0.28500208,   8.83815115,
+         0.20479273,   0.48778154,   1.019232  ,   0.16421647,
+         0.21540647, -24.84258535, -19.47001855,  -4.84132668,
+        -2.10591426,  -2.03770841,  -3.54259933,  13.31637331,
+         4.70514937,   0.38187969,  14.08774143,   0.22069578,
+         7.6476198 ,   0.23972191,   0.24001183])], 'test_cvpp_ama': [array([0.34148176]), array([0.28068051]), array([0.29306036]), array([0.28069332]), array([0.32299757])], 'test_nll': [array([18.87448812]), array([10.81762804]), array([13.45167257]), array([13.07567846]), array([15.78423783])]})
+Average scores:	 rmse: 0.24±0.05	 r2: 0.83±0.08
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 150794: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 20:49:23 2026
+Job was executed on host(s) <4*gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 20:50:20 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 20:50:20 2026
+Terminated at Mon May 11 22:10:10 2026
+Results reported at Mon May 11 22:10:10 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 6:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   4791.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.99 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                18
+    Run time :                                   4813 sec.
+    Turnaround time :                            4847 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
