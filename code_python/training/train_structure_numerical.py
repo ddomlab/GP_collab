@@ -118,8 +118,8 @@ if __name__ == "__main__":
             kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
             kernel_mixing_method=args.Kernel_mixing_method,
             hyperparameter_save_dir=optuna_save_dir,
-            # imputer="mean",
-            # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+            imputer="mean",
+            columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
             )
 
  
