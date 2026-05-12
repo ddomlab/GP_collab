@@ -589,7 +589,6 @@ def gp_cross_validate_regressor(
             return_ls=return_ls,
             UQ=UQ
             )
-        print("score:", score)
         return score, predictions
 
 
