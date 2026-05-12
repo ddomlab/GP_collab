@@ -877,3 +877,136 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
 
+MGK regressor, only scaling numerical features
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 151818: <structure_numerical_20260511> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 22:49:56 2026
+Job was executed on host(s) <4*gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 22:50:53 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 22:50:53 2026
+Terminated at Mon May 11 22:54:47 2026
+Results reported at Mon May 11 22:54:47 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 6:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   240.65 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.70 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                16
+    Run time :                                   258 sec.
+    Turnaround time :                            291 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+score: defaultdict(<class 'list'>, {'test_rmse': [0.17742114414916965, 0.3088340126051489, 0.30777915294328745, 0.19547823975999745, 0.2821954539052582], 'test_mae': [0.0991446244417953, 0.16035240399940395, 0.1392032044152328, 0.11185540049719733, 0.16890874770858055], 'test_r2': [0.9020214675493149, 0.7736736816153054, 0.6909607862310612, 0.8906353254075299, 0.8023764990019975], 'test_ece': [array([0.13786982]), array([0.12977701]), array([0.11893502]), array([0.12293349]), array([0.14084967])], 'test_cdf_ama': [array([0.10851088]), array([0.07065622]), array([0.09235306]), array([0.1141414]), array([0.09340839])], 'test_cvpp_ama': [array([0.32105523]), array([0.30856722]), array([0.28139818]), array([0.29190696]), array([0.32060105])], 'test_nll': [array([12.21815154]), array([17.17076006]), array([12.45232279]), array([15.9853691]), array([18.42760906])]})
+Running seed: 13
+score: defaultdict(<class 'list'>, {'test_rmse': [0.22452450866903645, 0.2583285627716454, 0.16172789129008577, 0.22528779048410347, 0.3064463187842068], 'test_mae': [0.11135256544673362, 0.1177128983069412, 0.09465673932557434, 0.14783564716658107, 0.12801372441840922], 'test_r2': [0.8494180736890555, 0.833035571363223, 0.920259223621432, 0.8698130579868859, 0.7331854323780937], 'test_ece': [array([0.1322855]), array([0.13896578]), array([0.12404844]), array([0.122203]), array([0.13139177])], 'test_cdf_ama': [array([43108.37625448]), array([0.13673702]), array([0.10737299]), array([0.09313712]), array([0.19390744])], 'test_cvpp_ama': [array([0.30830868]), array([0.32904652]), array([0.28934384]), array([0.28479431]), array([0.30678585])], 'test_nll': [array([15.3846441]), array([16.23916604]), array([13.5541688]), array([15.50232425]), array([15.11679212])]})
+Running seed: 42
+score: defaultdict(<class 'list'>, {'test_rmse': [0.14410892629358632, 0.2080270506695611, 0.28176480206036425, 0.2054383757298521, 0.26505098179917075], 'test_mae': [0.0918999206309563, 0.11584011693772428, 0.16585573724638805, 0.10701806594677814, 0.11084480898187095], 'test_r2': [0.9533414686473946, 0.8742443061075217, 0.7323800039653784, 0.8900331897942345, 0.786515345141539], 'test_ece': [array([0.14289941]), array([0.11928105]), array([0.12566321]), array([0.11855056]), array([0.13819685])], 'test_cdf_ama': [array([0.09685525]), array([0.11941973]), array([0.09023257]), array([0.12136657]), array([4.27949391])], 'test_cvpp_ama': [array([0.34124753]), array([0.28071895]), array([0.29199667]), array([0.28052672]), array([0.32298475])], 'test_nll': [array([18.89163126]), array([10.81381636]), array([13.42351836]), array([13.07063296]), array([15.78738358])]})
+Average scores:	 rmse: 0.24±0.05	 r2: 0.83±0.07
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_hypOFF_Standard_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 151831: <structure_numerical_20260511> in cluster <Hazel> Done
+
+Job <structure_numerical_20260511> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 11 22:57:38 2026
+Job was executed on host(s) <4*gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 11 22:58:35 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 11 22:58:35 2026
+Terminated at Tue May 12 00:14:28 2026
+Results reported at Tue May 12 00:14:28 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 4
+#BSUB -W 6:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260511"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4557.23 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.99 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                16
+    Run time :                                   4577 sec.
+    Turnaround time :                            4610 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260511/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
