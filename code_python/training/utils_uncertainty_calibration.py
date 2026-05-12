@@ -91,7 +91,8 @@ def compute_cvpp(y_true: np.ndarray,
     return qs, Cqs
 
 
-def compute_cvpp_ama(y_true: np.ndarray, 
+def compute_cvpp_ama(
+                y_true: np.ndarray, 
                 y_pred: np.ndarray,
                 y_std: np.ndarray,
                 step: float = 0.05) -> float:
@@ -102,7 +103,7 @@ def compute_cvpp_ama(y_true: np.ndarray,
     Returns:
         float: The AMA score.
     """
-    qs, Cqs = compute_cvpp(y_test, y_pred, y_std, step=step)
+    qs, Cqs = compute_cvpp(y_true, y_pred, y_std, step=step)
     ama = simpson(np.abs(Cqs - qs), qs)
     return ama
 
