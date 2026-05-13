@@ -98,10 +98,10 @@ if __name__ == "__main__":
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
         main_structural_numerical(
             dataset=w_data,
-            representation="ECFP", #"ECFP" # MG
-            radius=3,
-            vector="count",
-            regressor_type="GPytorchMAP", #MGK-sklearn
+            representation="MG", #"ECFP" # MG
+            # radius=3,
+            # vector="count",
+            regressor_type="MGK-sklearn", #MGK-sklearn GPytorchMAP
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
-                "fp": "TanimotoRBF", #Graph
+                "fp": "Graph", #Graph TanimotoRBF
                 "count": "Matern32"
                 # "fp":args.K_fp,
                 # "count":args.K_count
