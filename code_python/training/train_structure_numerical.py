@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = True
+TEST = False
 
 
 def main_structural_numerical(
@@ -78,7 +78,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='GPU',
+                special_file_name='target_trasnformer_off',
                 **kwargs,
                 )
 
