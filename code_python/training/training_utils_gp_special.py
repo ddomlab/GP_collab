@@ -449,11 +449,6 @@ def run(
         seed_predictions,
         orient="columns",
     )
-    # seed_indices_full_dropped_nans.json
-    
-    # save_folder = Path(r"C:\Users\sdehgha2\Desktop\phd-code\gp_collab\GP_collab\results\Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation\target_log Rg (nm)")
-    # with open(save_folder / "seed_indices_full_dropped_nans.json", "w") as f:
-    #     json.dump(seed_indices, f, cls=NumpyArrayEncoder, indent=2)
 
     return seed_scores, seed_predictions
 
