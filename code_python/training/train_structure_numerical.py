@@ -78,7 +78,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                # special_file_name='noPriors',
+                special_file_name='internal_target_transformer_off',
                 **kwargs,
                 )
 
