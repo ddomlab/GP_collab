@@ -128,6 +128,7 @@ regressor_factory: dict[str, type]={
 def optimized_models(
                     model_name:str,
                     kernel_parameters:dict=None,
+                    feat_group:dict[str, list[int]]=None,
                     random_state:int=42, 
                     kernel_type:Optional[str]=None,
                     kernel_mixing_method:Optional[str]=None,
@@ -136,7 +137,7 @@ def optimized_models(
                      **kwargs):
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
-                             random_state=None, verbose=False,
+                             random_state=random_state, verbose=False,
                             #  early_stopping_rounds=50,
                             #  **kwargs,
                              
@@ -145,7 +146,7 @@ def optimized_models(
         # params = callback.EarlyStopping(rounds=50, metric_name="rmse")
         return  XGBRegressor(
                             eval_metric="rmse", 
-                            random_state=None, 
+                            random_state=random_state, 
                             n_jobs=-1,
                             n_estimators=100,
                             verbose=False,
@@ -156,14 +157,14 @@ def optimized_models(
     
     if 'RF'==model_name:
         return RandomForestRegressor(n_estimators=100, max_depth=None, 
-                                        random_state=None, n_jobs=-1,
+                                        random_state=random_state, n_jobs=-1,
                                         max_features="sqrt"
                                         )
     if 'HGBR'==model_name:
         return HistGradientBoostingRegressor(max_iter=2000, max_depth=None, 
                                             #  min_samples_leaf=20, max_leaf_nodes=1000,
                                              learning_rate=0.01, l2_regularization=1e-6,
-                                             scoring='neg_root_mean_squared_error', random_state=None,**kwargs)
+                                             scoring='neg_root_mean_squared_error', random_state=random_state,**kwargs)
     if 'MLP'==model_name:
         return MLPRegressor(max_iter=200)
 
@@ -173,13 +174,15 @@ def optimized_models(
     
     if "GPytorchMAP"==model_name:
         return GPytorchMAPRegressor(
+                                    feat_group=feat_group,
                                     kernel_type=kernel_type,
                                     kernel_mixing_method=kernel_mixing_method,
                                     ssk_parameters=kernel_parameters,
-                                    n_epochs=100,
-                                    progbar=False,
-                                    prior=True
-                                    **kwargs
+                                    n_epochs=kwargs.get('n_epochs', 100),
+                                    lr=kwargs.get('lr', 0.01),
+                                    progbar=kwargs.get('progbar', False),
+                                    prior=kwargs.get('prior', True),
+                                    random_state=random_state,
                                     )
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
