@@ -78,7 +78,7 @@ def preprocessing_workflow(imputer: Optional[str]=None,
     # imputation of columns
     steps = []
     # imputation
-    if "mgk" in regressor_type.lower():
+    if "mgk" in regressor_type.lower() and regressor_type is not None:
         from mgktools.graph.hashgraph import HashGraph
         if scaler:
             scaling = ("scaling features",
