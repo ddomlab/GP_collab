@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = False
+TEST = True
 
 
 def main_structural_numerical(
@@ -78,7 +78,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='target_trasnformer_off',
+                special_file_name='GPU',
                 **kwargs,
                 )
 
@@ -98,10 +98,10 @@ if __name__ == "__main__":
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
         main_structural_numerical(
             dataset=w_data,
-            representation="MG", #"ECFP" # MG
-            # radius=3,
-            # vector="count",
-            regressor_type="MGK-sklearn", #MGK-sklearn GPytorchMAP
+            representation="ECFP", #"ECFP" # MG
+            radius=3,
+            vector="count",
+            regressor_type="GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
-                "fp": "Graph", #Graph TanimotoRBF
+                "fp": "TanimotoRBF", #Graph
                 "count": "Matern32"
                 # "fp":args.K_fp,
                 # "count":args.K_count

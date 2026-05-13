@@ -199,7 +199,7 @@ def optimized_models(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
                 alpha=alpha,
-                normalize_y=False,
+                normalize_y=True,
                 loss='likelihood', 
                 repeat=1,
                 verbose=False
