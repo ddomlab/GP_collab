@@ -26,8 +26,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/MGK_${mixing_method}_${feature_mode}_GPU.out"
-#BSUB -e "${output_dir}/MGK_${mixing_method}_${feature_mode}_GPU.err"
+#BSUB -o "${output_dir}/MAP_${mixing_method}_${feature_mode}_GPU.out"
+#BSUB -e "${output_dir}/MAP_${mixing_method}_${feature_mode}_GPU.err"
 
 source ~/.bashrc
 module load cuda/12.1
