@@ -1,0 +1,256 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu13>
+Subject: Job 183501: <structure_numerical_20260513> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260513> was submitted from host <gpu13> by user <sdehgha2> in cluster <Hazel> at Wed May 13 10:38:44 2026
+Job was executed on host(s) <gpu13>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 13 10:38:44 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 13 10:38:44 2026
+Terminated at Wed May 13 10:40:12 2026
+Results reported at Wed May 13 10:40:12 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 35:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260513"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   42.38 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.60 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   85 sec.
+    Turnaround time :                            88 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu13>
+Subject: Job 183502: <structure_numerical_20260513> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260513> was submitted from host <gpu13> by user <sdehgha2> in cluster <Hazel> at Wed May 13 10:38:44 2026
+Job was executed on host(s) <gpu13>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 13 10:40:12 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 13 10:40:12 2026
+Terminated at Wed May 13 10:41:30 2026
+Results reported at Wed May 13 10:41:30 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 35:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260513"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   42.56 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.20 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   75 sec.
+    Turnaround time :                            166 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.32±0.02	 r2: 0.81±0.03
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_hypOFF_Standard_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 183666: <structure_numerical_20260513> in cluster <Hazel> Done
+
+Job <structure_numerical_20260513> was submitted from host <gpu15> by user <sdehgha2> in cluster <Hazel> at Wed May 13 11:42:37 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 13 11:43:34 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 13 11:43:34 2026
+Terminated at Wed May 13 12:29:56 2026
+Results reported at Wed May 13 12:29:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 35:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260513"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2732.77 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.34 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                16
+    Run time :                                   2804 sec.
+    Turnaround time :                            2839 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.39±0.03	 r2: 0.82±0.02
+Filename: (MG-COUNT)_(MGK-sklearn_Graph-Matern32_product)_per_feature_hypOFF_Standard_target_transformerOFF
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 183667: <structure_numerical_20260513> in cluster <Hazel> Done
+
+Job <structure_numerical_20260513> was submitted from host <gpu15> by user <sdehgha2> in cluster <Hazel> at Wed May 13 11:42:37 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 13 11:47:19 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 13 11:47:19 2026
+Terminated at Wed May 13 12:33:43 2026
+Results reported at Wed May 13 12:33:43 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 35:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260513"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --Kernel_mixing_method product                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --kernel_feature_mode per_feature
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2735.20 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.35 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                17
+    Run time :                                   2793 sec.
+    Turnaround time :                            3066 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260513/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_product_per_feature_GPU.err> for stderr output of this job.
+

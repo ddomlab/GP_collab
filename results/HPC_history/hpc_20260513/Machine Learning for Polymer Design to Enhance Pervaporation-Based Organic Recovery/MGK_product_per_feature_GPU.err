@@ -1,0 +1,104 @@
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   24.4s
+[Parallel(n_jobs=8)]: Done 2136 tasks      | elapsed:   24.5s
+[Parallel(n_jobs=8)]: Done 2268 out of 2283 | elapsed:   24.5s remaining:    0.2s
+[Parallel(n_jobs=8)]: Done 2283 out of 2283 | elapsed:   24.5s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  46 out of  53 | elapsed:    2.2s remaining:    0.3s
+[Parallel(n_jobs=4)]: Done  53 out of  53 | elapsed:    2.4s finished
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 88, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 181, in _prepare_data
+    mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/utils.py", line 72, in get_kernel_config
+    from mgktools.kernels.GraphKernel import GraphKernelConfig
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/GraphKernel.py", line 7, in <module>
+    from graphdot.kernel.marginalized import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/__init__.py", line 3, in <module>
+    from .molecular import Tang2019MolecularKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/molecular.py", line 4, in <module>
+    from graphdot.kernel.marginalized import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/__init__.py", line 3, in <module>
+    from ._kernel import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_kernel.py", line 14, in <module>
+    from ._backend_factory import backend_factory
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_factory.py", line 4, in <module>
+    from ._backend_cuda import CUDABackend
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 11, in <module>
+    import graphdot.cuda
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/cuda/__init__.py", line 3, in <module>
+    import pycuda.autoinit
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/autoinit.py", line 15, in <module>
+    context = make_default_context()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/tools.py", line 226, in make_default_context
+    raise RuntimeError(
+RuntimeError: make_default_context() wasn't able to create a context on any of the 1 detected devices
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   24.7s
+[Parallel(n_jobs=8)]: Done 2128 tasks      | elapsed:   24.8s
+[Parallel(n_jobs=8)]: Done 2296 out of 2311 | elapsed:   24.8s remaining:    0.2s
+[Parallel(n_jobs=8)]: Done 2311 out of 2311 | elapsed:   24.8s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  46 out of  53 | elapsed:    2.3s remaining:    0.3s
+[Parallel(n_jobs=4)]: Done  53 out of  53 | elapsed:    2.4s finished
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 98, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 49, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 88, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 181, in _prepare_data
+    mgk_kernel_config = get_kernel_config(dataset=mgk_dataset,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/utils.py", line 72, in get_kernel_config
+    from mgktools.kernels.GraphKernel import GraphKernelConfig
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/GraphKernel.py", line 7, in <module>
+    from graphdot.kernel.marginalized import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/__init__.py", line 3, in <module>
+    from .molecular import Tang2019MolecularKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/molecular.py", line 4, in <module>
+    from graphdot.kernel.marginalized import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/__init__.py", line 3, in <module>
+    from ._kernel import MarginalizedGraphKernel
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_kernel.py", line 14, in <module>
+    from ._backend_factory import backend_factory
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_factory.py", line 4, in <module>
+    from ._backend_cuda import CUDABackend
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 11, in <module>
+    import graphdot.cuda
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/cuda/__init__.py", line 3, in <module>
+    import pycuda.autoinit
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/autoinit.py", line 15, in <module>
+    context = make_default_context()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/tools.py", line 226, in make_default_context
+    raise RuntimeError(
+RuntimeError: make_default_context() wasn't able to create a context on any of the 1 detected devices
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   23.5s
+[Parallel(n_jobs=8)]: Done 2136 tasks      | elapsed:   23.6s
+[Parallel(n_jobs=8)]: Done 2268 out of 2283 | elapsed:   23.6s remaining:    0.2s
+[Parallel(n_jobs=8)]: Done 2283 out of 2283 | elapsed:   23.6s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  46 out of  53 | elapsed:    2.0s remaining:    0.3s
+[Parallel(n_jobs=4)]: Done  53 out of  53 | elapsed:    2.1s finished
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   23.5s
+[Parallel(n_jobs=8)]: Done 2136 tasks      | elapsed:   23.6s
+[Parallel(n_jobs=8)]: Done 2296 out of 2311 | elapsed:   23.6s remaining:    0.2s
+[Parallel(n_jobs=8)]: Done 2311 out of 2311 | elapsed:   23.6s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  46 out of  53 | elapsed:    2.1s remaining:    0.3s
+[Parallel(n_jobs=4)]: Done  53 out of  53 | elapsed:    2.2s finished
