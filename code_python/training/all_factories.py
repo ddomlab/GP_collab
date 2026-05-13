@@ -176,6 +176,9 @@ def optimized_models(
                                     kernel_type=kernel_type,
                                     kernel_mixing_method=kernel_mixing_method,
                                     ssk_parameters=kernel_parameters,
+                                    n_epochs=100,
+                                    progbar=False,
+                                    prior=True
                                     **kwargs
                                     )
     if "GPytorchMCMC" == model_name:

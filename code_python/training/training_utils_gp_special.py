@@ -207,6 +207,7 @@ def _prepare_data(
                                 kernel_parameters=mgk_kernel_config,
                                 **kwargs
                                 )
+            y = mgk_dataset.y
     else:
         X, y, unrolled_feats, kernel_parameters = filter_dataset(
                                                 raw_dataset=dataset,
@@ -245,7 +246,7 @@ def _prepare_data(
                                 kernel_mixing_method=kernel_mixing_method,
                                 **kwargs,
                                 )
-    y = mgk_dataset.y
+    
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = pd.concat([predication, y_frame], axis=1)
     return score, combined_prediction_ground_truth
@@ -427,7 +428,7 @@ def run(
                 y = y.flatten()
                 # return_importance = False if "GP" in regressor_type else True
                 if "gp" in regressor_type.lower():
-                    scores, predictions = gp_cross_validate_regressor(regressor, regressor_type, X, y, cv_outer, return_ls=True, UQ=True)
+                    scores, predictions = gp_cross_validate_regressor(regressor, regressor_type, X, y, cv_outer, return_ls=False, UQ=True)
 
                 else:
                     scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,

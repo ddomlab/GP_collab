@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = False
+TEST = True
 
 
 def main_structural_numerical(
@@ -78,7 +78,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='internal_target_transformer_off',
+                special_file_name='GPU',
                 **kwargs,
                 )
 
@@ -92,15 +92,16 @@ if __name__ == "__main__":
     # # "cleaned_dataset_pervaporation_membranes_wang"
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"\nUsing device: {device}")
     for targ in all_targets:
-        optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
+        # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
         main_structural_numerical(
             dataset=w_data,
-            representation="MG",
-            # radius=3,
-            # vector="count",
-            regressor_type="MGK-sklearn",
+            representation="ECFP", #"ECFP" # MG
+            radius=3,
+            vector="count",
+            regressor_type="GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
@@ -110,14 +111,14 @@ if __name__ == "__main__":
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
-                "fp": "Graph",
+                "fp": "TanimotoRBF", #Graph
                 "count": "Matern32"
                 # "fp":args.K_fp,
                 # "count":args.K_count
                 },
             kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
             kernel_mixing_method=args.Kernel_mixing_method,
-            hyperparameter_save_dir=optuna_save_dir,
+            # hyperparameter_save_dir=optuna_save_dir,
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
             )

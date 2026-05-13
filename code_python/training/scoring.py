@@ -431,7 +431,7 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
             "nll": gaussian_nll,
         }
         for name, uq_scorer in UQ_scorers.items():
-            results[name] = np.asarray(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"])).ravel()
+            results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
 
     return test_idx, y_result, results
 

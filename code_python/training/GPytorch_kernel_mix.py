@@ -484,7 +484,7 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         ).view(-1)
                 
         # Pyro GP model with priors
-        self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
+        self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive()).to(**self.cuda_avail)
         self._gp_model = GPMix(X_train, y_train, self.feat_idx,
                                 self.kernel_mixing_method,
                                 self.kernel_type,
@@ -492,11 +492,9 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
                                 prior=self.prior,
                                 ssk_parameters=self.ssk_parameters,
                                 cuda_avail=self.cuda_avail
-                                )
+                                ).to(**self.cuda_avail)
         
         # if self.use_cuda and torch.cuda.is_available():
-        self._gp_model = self._gp_model.to(self.cuda_avail["device"])
-        self._likelihood = self._likelihood.to(self.cuda_avail["device"])
         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
 
@@ -532,10 +530,6 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
                     np.asarray(X_test),
                     **self.cuda_avail
                     )
-
-        # if torch.cuda.is_available() and self.use_cuda:
-        # self._gp_model = self._gp_model.to(**self.cuda_avail["device"])
-        # self._likelihood = self._likelihood.to(**self.cuda_avail["device"])
 
         self._gp_model.eval()
         self._likelihood.eval()
