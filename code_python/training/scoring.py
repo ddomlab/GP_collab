@@ -475,7 +475,7 @@ def gp_cross_validate(
     scoring,
     UQ,
     return_ls,
-    n_jobs=-1,
+    n_jobs,
 ):
     """
     Returns:
@@ -491,7 +491,7 @@ def gp_cross_validate(
         for train_idx, test_idx in cv.split(X, y)
         )
     else:
-        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
             delayed(_gp_fit_predict_score)(
                 estimator, X, y, train_idx, test_idx, scoring, return_ls, UQ
             )
@@ -520,7 +520,7 @@ def gp_cross_validate(
 
 
 def gp_cross_validate_regressor(
-    regressor, model_type:str, X, y, cv, return_ls: bool = False, UQ: bool = False
+    regressor, model_type:str, X, y, cv, n_jobs=1, return_ls: bool = False, UQ: bool = False
     ) -> tuple[dict[str, float], np.ndarray]:
 
 
@@ -537,7 +537,7 @@ def gp_cross_validate_regressor(
             y,
             cv=cv,
             scoring=scorers,
-            n_jobs=1,
+            n_jobs=n_jobs,
             return_ls=return_ls,
             UQ=UQ
             )

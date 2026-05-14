@@ -429,7 +429,14 @@ def run(
                 y = y.flatten()
                 # return_importance = False if "GP" in regressor_type else True
                 if "gp" in regressor_type.lower():
-                    scores, predictions = gp_cross_validate_regressor(regressor, regressor_type, X, y, cv_outer, return_ls=False, UQ=True)
+                    scores, predictions = gp_cross_validate_regressor(
+                                                            regressor,
+                                                            regressor_type, X, y,
+                                                            cv_outer,
+                                                            n_jobs=1,
+                                                            return_ls=False,
+                                                            UQ=True
+                                                            )
 
                 else:
                     scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
