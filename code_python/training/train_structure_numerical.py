@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = True
+TEST = False
 
 
 def main_structural_numerical(
@@ -78,7 +78,7 @@ def main_structural_numerical(
                 output_dir_name= PAPER,
                 TEST=TEST,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='GPU',
+                # special_file_name='GPU',
                 **kwargs,
                 )
 
@@ -92,8 +92,7 @@ if __name__ == "__main__":
     # # "cleaned_dataset_pervaporation_membranes_wang"
     # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"\nUsing device: {device}")
+
     for targ in all_targets:
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
         main_structural_numerical(

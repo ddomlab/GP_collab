@@ -426,15 +426,12 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         feat_group:dict,
         lr=1e-2,
         n_epoch=400,
-        # use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
-        ssk_parameters:dict=None,
+        ssk_parameters:dict| None=None,
         progbar:bool=True,
         prior=False,
-        # return_mll=False,
-        # return_std=False
     ):
         self.feat_group = feat_group
         self.lr = lr
