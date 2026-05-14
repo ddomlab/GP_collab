@@ -222,6 +222,7 @@ def _prepare_data(
 
         # Pipline workflow here and preprocessor
         preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
+                                                        regressor_type=regressor_type,
                                                         feat_to_impute=features_impute,
                                                         numerical_feat=numerical_feats,
                                                         structural_feat=unrolled_feats,
