@@ -420,91 +420,370 @@ class CVProgressBar:
         self.pbar.close()
 
 
-class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
+# class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
+#     def __init__(
+#         self,
+#         feat_group:dict,
+#         lr=1e-2,
+#         n_epoch=400,
+#         random_state=42,
+#         kernel_mixing_method:str="product",
+#         kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
+#         ssk_parameters:dict| None=None,
+#         progbar:bool=True,
+#         prior=False,
+#     ):
+#         self.feat_group = feat_group
+#         self.lr = lr
+#         self.n_epoch = n_epoch
+#         # self.use_cuda = use_cuda
+#         self.random_state = random_state
+#         self.kernel_mixing_method = kernel_mixing_method
+#         self.kernel_type = kernel_type
+#         self.ssk_parameters = ssk_parameters
+#         self.progbar = progbar
+#         self.prior = prior
+#         # self.return_mll = return_mll
+#         # self.return_std = return_std
+#         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#         self.cuda_avail = {"dtype": torch.float, "device": device} 
+        
+#     def fit(self, X_train, y_train):
+#         if isinstance(X_train, pd.DataFrame):
+#             # Map all fp_{unit} and count to integer indices
+#             self.feat_idx = {}
+#             for key, cols in self.feat_group.items():
+#                 if cols:
+#                     self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
+            
+#             self.count_feat_name_idx = {
+#                 c: X_train.columns.get_loc(c) 
+#                 for c in self.feat_group.get("count", [])
+#             }
+#             X_train = X_train.to_numpy()
+
+#         if isinstance(y_train, (pd.DataFrame, pd.Series)):
+#             y_train = y_train.to_numpy()
+
+#         X_train = torch.as_tensor(
+#             np.asarray(X_train),
+#             **self.cuda_avail
+#         )
+
+#         y_train = torch.as_tensor(
+#             np.asarray(y_train),    
+#             **self.cuda_avail
+#         ).view(-1)
+                
+#         # Pyro GP model with priors
+#         self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive()).to(**self.cuda_avail)
+#         self._gp_model = GPMix(X_train, y_train, self.feat_idx,
+#                                 self.kernel_mixing_method,
+#                                 self.kernel_type,
+#                                 self._likelihood,
+#                                 prior=self.prior,
+#                                 ssk_parameters=self.ssk_parameters,
+#                                 cuda_avail=self.cuda_avail
+#                                 ).to(**self.cuda_avail)
+        
+#         # if self.use_cuda and torch.cuda.is_available():
+#         optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
+#         mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
+
+#         # if torch.cuda.is_available():
+
+#         self._gp_model.train()
+#         self._likelihood.train()
+#         pbar = None
+#         if self.progbar:
+#             position=0
+#             pbar = CVProgressBar(total_steps=self.n_epoch, position=position)
+#         for _ in range(self.n_epoch):
+#             optimizer.zero_grad()
+#             y_pred = self._gp_model(X_train)
+#             loss = -mll(y_pred, y_train)
+#             loss.backward()
+#             optimizer.step()
+            
+#             if pbar is not None:
+#                 pbar.update(1)
+
+#         if pbar is not None:
+#             pbar.close()
+
+#         self.is_fitted_ = True
+#         return self
+
+#     def predict(self, X_test, return_std=False):
+#         if isinstance(X_test, pd.DataFrame):
+#             X_test = X_test.to_numpy()
+
+#         X_test = torch.as_tensor(
+#                 np.asarray(X_test),
+#                 **self.cuda_avail
+#                 )
+
+#         self._gp_model.eval()
+#         self._likelihood.eval()
+#         with torch.no_grad(), gpytorch.settings.fast_pred_var():
+#             posterior = self._likelihood(self._gp_model(X_test))
+#             y_pred = posterior.mean.cpu().numpy()
+#             y_std = posterior.stddev.cpu().numpy() if return_std else None
+#             # y_mll = posterior.log_prob(y_test).mean().item() if return_mll and y_test is not None else None
+#             # test_mll = posterior.log_prob(self._gp_model._y_train).mean().item
+#             # if self.return_mll:
+#             #     # test_mll = posterior.log_prob(y_test).mean().item()
+
+#         return {
+#             "y_pred": np.asarray(y_pred).ravel(),
+#             "y_std": np.asarray(y_std).ravel() if y_std is not None else None,
+#         }
+
+#     def _get_lengthscale(self):
+#         summary = {}
+#         root_kernel = self._gp_model.covar_module.base_kernel
+#         fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
+#         count_names = sorted(list(self.count_feat_name_idx.keys()))
+
+#         def _extract_ls(kernel, key_prefix):
+#             if not hasattr(kernel, "lengthscale") or kernel.lengthscale is None:
+#                 raise RuntimeError(f"No lengthscale found for kernel '{key_prefix}'")
+#             ls = kernel.lengthscale.detach().cpu().numpy()
+#             # If ARD, return one key per dimension
+#             if ls.shape[-1] > 1:
+
+#                 return {f"{key_prefix}[{i}]": ls_i for i, ls_i in enumerate(ls.squeeze(0))}
+#             else:
+#                 return {key_prefix: ls}
+
+#         if self.kernel_mixing_method in ("sum", "product"):
+#             for i, (_, sk) in enumerate(root_kernel.named_sub_kernels()):
+#                 if i < len(fp_keys):
+#                     fp_key = fp_keys[i]
+#                     if self.kernel_type["fp"].lower() == "tanimoto":
+#                         summary[fp_key] = None
+#                     else:
+#                         summary.update(_extract_ls(sk, fp_key))
+#                 else:
+#                     count_key = count_names[i - len(fp_keys)]
+#                     summary.update(_extract_ls(sk, count_key))
+
+#         elif self.kernel_mixing_method == "averageProduct":
+#             fp_product_kernel = root_kernel.kernels[0]
+#             count_sum_kernel = root_kernel.kernels[1].base_kernel
+
+#             for i, (_, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
+#                 count_key = count_names[i]
+#                 summary.update(_extract_ls(sk, count_key))
+
+#             # FP kernels
+#             for i, (_, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
+#                 fp_key = fp_keys[i]
+#                 if self.kernel_type["fp"].lower() == "tanimoto":
+#                     summary[fp_key] = None
+#                 else:
+#                     summary.update(_extract_ls(sk, fp_key))
+                
+#         else:
+#             raise ValueError(f"Unknown mixing_method: {self.kernel_mixing_method}")
+        
+#         return summary
+
+
+class GPytorchMAPRegressor:
     def __init__(
         self,
-        feat_group:dict,
+        feat_group: dict,
         lr=1e-2,
         n_epoch=400,
         random_state=42,
-        kernel_mixing_method:str="product",
-        kernel_type:dict={"fp":"TanimotoRBF", "count":"Matern32"},
-        ssk_parameters:dict| None=None,
-        progbar:bool=True,
+        kernel_mixing_method: str = "product",
+        kernel_type: dict | None = None,
+        ssk_parameters: dict | None = None,
+        progbar: bool = True,
         prior=False,
+        normalize_y: bool = False,
+        cuda_avail: dict | None = None,
     ):
         self.feat_group = feat_group
         self.lr = lr
         self.n_epoch = n_epoch
-        # self.use_cuda = use_cuda
         self.random_state = random_state
         self.kernel_mixing_method = kernel_mixing_method
-        self.kernel_type = kernel_type
+        self.kernel_type = (
+            kernel_type
+            if kernel_type is not None
+            else {"fp": "TanimotoRBF", "count": "Matern32"}
+        )
         self.ssk_parameters = ssk_parameters
         self.progbar = progbar
         self.prior = prior
-        # self.return_mll = return_mll
-        # self.return_std = return_std
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.cuda_avail = {"dtype": torch.float, "device": device} 
-        
-    def fit(self, X_train, y_train):
-        if isinstance(X_train, pd.DataFrame):
-            # Map all fp_{unit} and count to integer indices
-            self.feat_idx = {}
+        self.normalize_y = normalize_y
+
+        if cuda_avail is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            cuda_avail = {"dtype": torch.float, "device": device}
+
+        self.cuda_avail = cuda_avail
+
+    @property
+    def y(self):
+        """
+        Return training targets on the original, unnormalized scale.
+        """
+        if not hasattr(self, "_y_train"):
+            raise AttributeError("Training targets do not exist. Call fit() first.")
+
+        y_original = self._y_train.detach().cpu().numpy() * self.y_std_ + self.y_mean_
+        return np.asarray(y_original).ravel()
+
+    @y.setter
+    def y(self, y):
+        """
+        Store normalized y internally if normalize_y=True.
+        """
+        if isinstance(y, (pd.DataFrame, pd.Series)):
+            y = y.to_numpy()
+
+        y = np.asarray(y, dtype=float).reshape(-1)
+
+        if self.normalize_y:
+            self.y_mean_ = float(np.mean(y))
+            self.y_std_ = float(np.std(y))
+
+            if self.y_std_ == 0:
+                self.y_std_ = 1.0
+
+            y_scaled = (y - self.y_mean_) / self.y_std_
+        else:
+            self.y_mean_ = 0.0
+            self.y_std_ = 1.0
+            y_scaled = y
+
+        self._y_train = torch.as_tensor(
+            y_scaled,
+            **self.cuda_avail,
+        ).view(-1)
+
+    def _prepare_X(self, X: pd.DataFrame, fit: bool = False):
+        """
+        Convert a DataFrame X to a torch tensor.
+
+        This model assumes X is always a pandas DataFrame.
+        During fit, feature group names are mapped to column indices.
+        """
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError(
+                "GPytorchMAPModel expects X to be a pandas DataFrame. "
+                f"Got {type(X).__name__} instead."
+            )
+
+        if fit:
+            self.feat_idx_ = {}
+
             for key, cols in self.feat_group.items():
                 if cols:
-                    self.feat_idx[key] = [X_train.columns.get_loc(c) for c in cols]
-            
-            self.count_feat_name_idx = {
-                c: X_train.columns.get_loc(c) 
-                for c in self.feat_group.get("count", [])
+                    missing_cols = [c for c in cols if c not in X.columns]
+                    if missing_cols:
+                        raise ValueError(
+                            f"Columns for feature group '{key}' are missing "
+                            f"from X: {missing_cols}"
+                        )
+
+                    self.feat_idx_[key] = [
+                        X.columns.get_loc(c) for c in cols
+                    ]
+
+            count_cols = self.feat_group.get("count", [])
+
+            missing_count_cols = [
+                c for c in count_cols if c not in X.columns
+            ]
+            if missing_count_cols:
+                raise ValueError(
+                    f"Count columns are missing from X: {missing_count_cols}"
+                )
+
+            self.count_feat_name_idx_ = {
+                c: X.columns.get_loc(c)
+                for c in count_cols
             }
-            X_train = X_train.to_numpy()
 
-        if isinstance(y_train, (pd.DataFrame, pd.Series)):
-            y_train = y_train.to_numpy()
+            self.feature_names_in_ = np.asarray(X.columns, dtype=object)
 
-        X_train = torch.as_tensor(
-            np.asarray(X_train),
-            **self.cuda_avail
+        else:
+            if not hasattr(self, "feature_names_in_"):
+                raise RuntimeError("Model is not fitted. Call fit() first.")
+
+            missing_cols = [
+                c for c in self.feature_names_in_
+                if c not in X.columns
+            ]
+            if missing_cols:
+                raise ValueError(
+                    f"Prediction X is missing columns seen during fit: {missing_cols}"
+                )
+
+            # Keep prediction column order identical to training.
+            X = X.loc[:, self.feature_names_in_]
+
+        return torch.as_tensor(
+            X.to_numpy(),
+            **self.cuda_avail,
         )
 
-        y_train = torch.as_tensor(
-            np.asarray(y_train),    
-            **self.cuda_avail
-        ).view(-1)
-                
-        # Pyro GP model with priors
-        self._likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive()).to(**self.cuda_avail)
-        self._gp_model = GPMix(X_train, y_train, self.feat_idx,
-                                self.kernel_mixing_method,
-                                self.kernel_type,
-                                self._likelihood,
-                                prior=self.prior,
-                                ssk_parameters=self.ssk_parameters,
-                                cuda_avail=self.cuda_avail
-                                ).to(**self.cuda_avail)
-        
-        # if self.use_cuda and torch.cuda.is_available():
-        optimizer = torch.optim.Adam(self._gp_model.parameters(), lr=self.lr)
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self._likelihood, self._gp_model)
+    def fit(self, X_train: pd.DataFrame, y_train):
+        torch.manual_seed(self.random_state)
+        np.random.seed(self.random_state)
 
-        # if torch.cuda.is_available():
+        X_train = self._prepare_X(X_train, fit=True)
 
-        self._gp_model.train()
-        self._likelihood.train()
+        # Calls the y setter.
+        self.y = y_train
+        y_train = self._y_train
+
+        self.likelihood_ = gpytorch.likelihoods.GaussianLikelihood(
+            noise_constraint=gpytorch.constraints.Positive()
+        ).to(**self.cuda_avail)
+
+        self.gp_model_ = GPMix(
+            X_train,
+            y_train,
+            self.feat_idx_,
+            self.kernel_mixing_method,
+            self.kernel_type,
+            self.likelihood_,
+            prior=self.prior,
+            ssk_parameters=self.ssk_parameters,
+            cuda_avail=self.cuda_avail,
+        ).to(**self.cuda_avail)
+
+        optimizer = torch.optim.Adam(
+            self.gp_model_.parameters(),
+            lr=self.lr,
+        )
+
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(
+            self.likelihood_,
+            self.gp_model_,
+        )
+
+        self.gp_model_.train()
+        self.likelihood_.train()
+
         pbar = None
         if self.progbar:
-            position=0
-            pbar = CVProgressBar(total_steps=self.n_epoch, position=position)
+            pbar = CVProgressBar(total_steps=self.n_epoch, position=0)
+
         for _ in range(self.n_epoch):
             optimizer.zero_grad()
-            y_pred = self._gp_model(X_train)
+
+            y_pred = self.gp_model_(X_train)
             loss = -mll(y_pred, y_train)
+
             loss.backward()
             optimizer.step()
-            
+
             if pbar is not None:
                 pbar.update(1)
 
@@ -514,25 +793,31 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         self.is_fitted_ = True
         return self
 
-    def predict(self, X_test, return_std=False):
-        if isinstance(X_test, pd.DataFrame):
-            X_test = X_test.to_numpy()
+    def predict(self, X_test: pd.DataFrame, return_std=False):
+        if not hasattr(self, "is_fitted_"):
+            raise RuntimeError("Model is not fitted. Call fit() first.")
 
-        X_test = torch.as_tensor(
-                np.asarray(X_test),
-                **self.cuda_avail
-                )
+        X_test = self._prepare_X(X_test, fit=False)
 
-        self._gp_model.eval()
-        self._likelihood.eval()
+        self.gp_model_.eval()
+        self.likelihood_.eval()
+
         with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            posterior = self._likelihood(self._gp_model(X_test))
-            y_pred = posterior.mean.cpu().numpy()
-            y_std = posterior.stddev.cpu().numpy() if return_std else None
-            # y_mll = posterior.log_prob(y_test).mean().item() if return_mll and y_test is not None else None
-            # test_mll = posterior.log_prob(self._gp_model._y_train).mean().item
-            # if self.return_mll:
-            #     # test_mll = posterior.log_prob(y_test).mean().item()
+            posterior = self.likelihood_(self.gp_model_(X_test))
+
+            y_pred_scaled = posterior.mean.detach().cpu().numpy()
+            y_std_scaled = (
+                posterior.stddev.detach().cpu().numpy()
+                if return_std
+                else None
+            )
+
+        y_pred = y_pred_scaled * self.y_std_ + self.y_mean_
+
+        if return_std:
+            y_std = y_std_scaled * self.y_std_
+        else:
+            y_std = None
 
         return {
             "y_pred": np.asarray(y_pred).ravel(),
@@ -540,32 +825,59 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         }
 
     def _get_lengthscale(self):
+        if not hasattr(self, "gp_model_"):
+            raise RuntimeError("Model is not fitted. Call fit() first.")
+
         summary = {}
-        root_kernel = self._gp_model.covar_module.base_kernel
-        fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-        count_names = sorted(list(self.count_feat_name_idx.keys()))
+
+        root_kernel = self.gp_model_.covar_module.base_kernel
+
+        fp_keys = sorted(
+            [k for k in self.feat_idx_.keys() if k.startswith("fp_")]
+        )
+
+        count_names = sorted(
+            list(self.count_feat_name_idx_.keys())
+        )
 
         def _extract_ls(kernel, key_prefix):
             if not hasattr(kernel, "lengthscale") or kernel.lengthscale is None:
-                raise RuntimeError(f"No lengthscale found for kernel '{key_prefix}'")
-            ls = kernel.lengthscale.detach().cpu().numpy()
-            # If ARD, return one key per dimension
-            if ls.shape[-1] > 1:
+                raise RuntimeError(
+                    f"No lengthscale found for kernel '{key_prefix}'"
+                )
 
-                return {f"{key_prefix}[{i}]": ls_i for i, ls_i in enumerate(ls.squeeze(0))}
-            else:
-                return {key_prefix: ls}
+            ls = kernel.lengthscale.detach().cpu().numpy()
+
+            if ls.shape[-1] > 1:
+                return {
+                    f"{key_prefix}[{i}]": float(ls_i)
+                    for i, ls_i in enumerate(ls.squeeze(0))
+                }
+
+            return {
+                key_prefix: float(np.asarray(ls).squeeze())
+            }
 
         if self.kernel_mixing_method in ("sum", "product"):
             for i, (_, sk) in enumerate(root_kernel.named_sub_kernels()):
                 if i < len(fp_keys):
                     fp_key = fp_keys[i]
+
                     if self.kernel_type["fp"].lower() == "tanimoto":
                         summary[fp_key] = None
                     else:
                         summary.update(_extract_ls(sk, fp_key))
+
                 else:
-                    count_key = count_names[i - len(fp_keys)]
+                    count_idx = i - len(fp_keys)
+
+                    if count_idx >= len(count_names):
+                        raise IndexError(
+                            "More sub-kernels were found than expected from "
+                            "`feat_idx_` and `count_feat_name_idx_`."
+                        )
+
+                    count_key = count_names[count_idx]
                     summary.update(_extract_ls(sk, count_key))
 
         elif self.kernel_mixing_method == "averageProduct":
@@ -573,22 +885,109 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
             count_sum_kernel = root_kernel.kernels[1].base_kernel
 
             for i, (_, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
+                if i >= len(count_names):
+                    raise IndexError(
+                        "More count sub-kernels were found than expected from "
+                        "`count_feat_name_idx_`."
+                    )
+
                 count_key = count_names[i]
                 summary.update(_extract_ls(sk, count_key))
 
-            # FP kernels
             for i, (_, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
+                if i >= len(fp_keys):
+                    raise IndexError(
+                        "More fingerprint sub-kernels were found than expected "
+                        "from `feat_idx_`."
+                    )
+
                 fp_key = fp_keys[i]
+
                 if self.kernel_type["fp"].lower() == "tanimoto":
                     summary[fp_key] = None
                 else:
                     summary.update(_extract_ls(sk, fp_key))
-                
+
         else:
-            raise ValueError(f"Unknown mixing_method: {self.kernel_mixing_method}")
-        
+            raise ValueError(
+                f"Unknown mixing_method: {self.kernel_mixing_method}"
+            )
+
         return summary
     
+
+class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
+    def __init__(
+        self,
+        feat_group: dict,
+        lr=1e-2,
+        n_epoch=400,
+        random_state=42,
+        kernel_mixing_method: str = "product",
+        kernel_type: dict | None = None,
+        ssk_parameters: dict | None = None,
+        progbar: bool = True,
+        prior=False,
+        normalize_y: bool = False,
+    ):
+        self.feat_group = feat_group
+        self.lr = lr
+        self.n_epoch = n_epoch
+        self.random_state = random_state
+        self.kernel_mixing_method = kernel_mixing_method
+        self.kernel_type = kernel_type
+        self.ssk_parameters = ssk_parameters
+        self.progbar = progbar
+        self.prior = prior
+        self.normalize_y = normalize_y
+
+    def fit(self, X, y):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError(
+                "GPytorchMAPRegressor expects X to be a pandas DataFrame. "
+                f"Got {type(X).__name__} instead."
+            )
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        cuda_avail = {"dtype": torch.float, "device": device}
+
+        self.regressor_ = GPytorchMAPRegressor(
+            feat_group=self.feat_group,
+            lr=self.lr,
+            n_epoch=self.n_epoch,
+            random_state=self.random_state,
+            kernel_mixing_method=self.kernel_mixing_method,
+            kernel_type=self.kernel_type,
+            ssk_parameters=self.ssk_parameters,
+            progbar=self.progbar,
+            prior=self.prior,
+            normalize_y=self.normalize_y,
+            cuda_avail=cuda_avail,
+        )
+
+        self.regressor_.fit(X, y)
+
+        self.feature_names_in_ = np.asarray(X.columns, dtype=object)
+        self.n_features_in_ = X.shape[1]
+        self.is_fitted_ = True
+
+        return self
+
+    def predict(self, X, return_std=False):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError(
+                "GPytorchMAPRegressor expects X to be a pandas DataFrame. "
+                f"Got {type(X).__name__} instead."
+            )
+
+        return self.regressor_.predict(X, return_std=return_std)
+
+    def _get_lengthscale(self):
+        return self.regressor_._get_lengthscale()
+
+
+
+
 
 
 class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
