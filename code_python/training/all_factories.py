@@ -178,7 +178,7 @@ def optimized_models(
                                     kernel_type=kernel_type,
                                     kernel_mixing_method=kernel_mixing_method,
                                     ssk_parameters=kernel_parameters,
-                                    n_epochs=kwargs.get('n_epochs', 100),
+                                    n_epoch=kwargs.get('n_epochs', 400),
                                     lr=kwargs.get('lr', 0.01),
                                     progbar=kwargs.get('progbar', False),
                                     prior=kwargs.get('prior', True),
