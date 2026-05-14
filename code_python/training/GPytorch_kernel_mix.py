@@ -468,11 +468,6 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         if isinstance(y_train, (pd.DataFrame, pd.Series)):
             y_train = y_train.to_numpy()
 
-        # X_t = torch.as_tensor(np.asarray(X_train), dtype=torch.float32)
-        # y_t = torch.as_tensor(np.asarray(y_train), dtype=torch.float32).view(-1)
-
-        # if self.use_cuda and torch.cuda.is_available():
-            # device = torch.device("cuda")
         X_train = torch.as_tensor(
             np.asarray(X_train),
             **self.cuda_avail
@@ -508,19 +503,19 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
             pbar = CVProgressBar(total_steps=self.n_epoch, position=position)
         for _ in range(self.n_epoch):
             optimizer.zero_grad()
-
             y_pred = self._gp_model(X_train)
             loss = -mll(y_pred, y_train)
-
             loss.backward()
             optimizer.step()
             
             if pbar is not None:
-                # postfix = {"loss": f"{loss.item():.3f}", "log_prior": f"{self._gp_model.log_prior().item():.3f}"}
                 pbar.update(1)
+
         if pbar is not None:
             pbar.close()
 
+        self.is_fitted_ = True
+        return self
 
     def predict(self, X_test, return_std=False):
         if isinstance(X_test, pd.DataFrame):
@@ -536,7 +531,6 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         with torch.no_grad():
             posterior = self._likelihood(self._gp_model(X_t))
             y_pred = posterior.mean.cpu().numpy()
-            # if return_std:
             y_std = posterior.stddev.cpu().numpy() if return_std else None
             # y_mll = posterior.log_prob(y_test).mean().item() if return_mll and y_test is not None else None
             # test_mll = posterior.log_prob(self._gp_model._y_train).mean().item
