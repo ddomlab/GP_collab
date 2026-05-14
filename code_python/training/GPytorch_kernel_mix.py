@@ -521,15 +521,15 @@ class GPytorchMAPRegressor(BaseEstimator, RegressorMixin):
         if isinstance(X_test, pd.DataFrame):
             X_test = X_test.to_numpy()
 
-            X_t = torch.as_tensor(
-                    np.asarray(X_test),
-                    **self.cuda_avail
-                    )
+        X_test = torch.as_tensor(
+                np.asarray(X_test),
+                **self.cuda_avail
+                )
 
         self._gp_model.eval()
         self._likelihood.eval()
-        with torch.no_grad():
-            posterior = self._likelihood(self._gp_model(X_t))
+        with torch.no_grad(), gpytorch.settings.fast_pred_var():
+            posterior = self._likelihood(self._gp_model(X_test))
             y_pred = posterior.mean.cpu().numpy()
             y_std = posterior.stddev.cpu().numpy() if return_std else None
             # y_mll = posterior.log_prob(y_test).mean().item() if return_mll and y_test is not None else None
