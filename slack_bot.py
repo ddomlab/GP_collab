@@ -23,14 +23,14 @@ def send_message(message: str, channel: str="C0B3TPZF21Z"):
     ) # Sends the message to slack servers
 
 # if __name__ == "__main__":
-        # PAPER = "Sina"
-        # dataset_name = "PoreMaker"
-        # targ = "permeability (GPU)"
+#         PAPER = "Sina"
+#         dataset_name = "PoreMaker"
+#         targ = "permeability (GPU)"
 
-        # send_message(f"""
-        # Finished training
-        # PAPER: {PAPER}
-        # Dataset: {dataset_name}
-        # Target: {targ}
-        # Regressor: GPytorchMAP
-        # """)
+#         send_message(f"""
+#         Finished training
+#         PAPER: {PAPER}
+#         Dataset: {dataset_name}
+#         Target: {targ}
+#         Regressor: GPytorchMAP
+#         """)
