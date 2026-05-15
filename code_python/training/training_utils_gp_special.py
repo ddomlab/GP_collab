@@ -269,7 +269,7 @@ def run(
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
-
+    n_jobs = 1 if kwargs.get("use_cuda", False) and torch.cuda.is_available() else -1
     for seed in SEEDS:
 
         print(f"Running seed: {seed}")
@@ -316,7 +316,7 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer, UQ=True)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv_outer=cv_outer, UQ=True)
             else:
                 model = optimized_models(regressor_type, 
                                          graph_kernel_config=kernel_parameters,
@@ -327,7 +327,7 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer, UQ=True)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv_outer=cv_outer, UQ=True)
         else:
             
             if hyperparameter_optimization:
@@ -403,7 +403,7 @@ def run(
                                             regressor_type, 
                                             X, y,
                                             cv_outer,
-                                            n_jobs=-1,
+                                            n_jobs=n_jobs,
                                             return_ls=False,
                                             UQ=True
                                             )
@@ -425,7 +425,7 @@ def run(
                                             early_stopping=False,
                                             return_estimator=False,
                                             return_feature_importances=True,
-                                            n_jobs=-1
+                                            n_jobs=n_jobs
                                             )
 
         seed_scores[seed] = scores.copy()
