@@ -26,9 +26,9 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
               ):
     if model_type == 'gpr':
         assert alpha is not None
-        if target_transformer or feature_transformer:
-            from sklearn.compose import TransformedTargetRegressor
+        if feature_transformer:
             from sklearn.pipeline import Pipeline
+            normalize_y = True if target_transformer else False
             initial_model = MGKRegressorSklearn(
                 kernel=kernel,
                 optimizer=optimizer,
@@ -36,17 +36,16 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
                 normalize_y=False,
                 loss='likelihood', 
                 repeat=1,
-                verbose=False
+                verbose=False,
+                normalize_y=normalize_y
                 )   
-            y_transform_regressor = TransformedTargetRegressor(
-                        regressor= initial_model,
-                        transformer=target_transformer,
-                        )
+
             model :Pipeline= Pipeline(steps=[
                             ("preprocessor", feature_transformer),
-                            ("regressor", y_transform_regressor),
+                            ("regressor", initial_model),
                             ])
         else:
+            normalize_y = True if target_transformer else False
             model = MGKRegressorSklearn(
                 kernel=kernel,
                 optimizer=optimizer,
@@ -54,7 +53,8 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
                 normalize_y=False,
                 loss='likelihood', 
                 repeat=1,
-                verbose=False
+                verbose=False,
+                normalize_y=normalize_y
             )
         
         if n_estimators is not None and n_estimators > 1:

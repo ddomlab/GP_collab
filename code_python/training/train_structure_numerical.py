@@ -106,7 +106,7 @@ if __name__ == "__main__":
             polymer_unit=polymer_unit,
             target_features=[targ],  
             feat_transformer="Standard",
-            target_transformer=None,
+            target_transformer="Standard",
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
@@ -117,6 +117,7 @@ if __name__ == "__main__":
                 },
             # kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
             kernel_mixing_method=args.Kernel_mixing_method,
+            use_cuda=True,
             # hyperparameter_save_dir=optuna_save_dir,
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]

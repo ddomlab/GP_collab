@@ -269,7 +269,6 @@ def run(
 
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
-    # seed_indices: dict[int, np.ndarray] = {}
 
     for seed in SEEDS:
 
@@ -279,22 +278,6 @@ def run(
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
-            # print(f"Dataset shape: {X.shape}, Target shape: {y.shape}")
-            # print(" X type \n", type(X))
-            # for i in range(X.shape[1]):
-            #     print(f"col {i}: {type(X[0, i]).__name__}")
-
-            # model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-            # y_transform_regressor = TransformedTargetRegressor(
-            #             regressor= model,
-            #             transformer=y_transform,
-            #             )
-            y_transform = get_target_transformer(target_transformer) if target_transformer else None
-
-            # regressor :Pipeline= Pipeline(steps=[
-            #                 ("preprocessor", preprocessor),
-            #                 ("regressor", y_transform_regressor),
-            #                 ])
             if hyperparameter_optimization:
                 from mgktools.hyperparameters.optuna import bayesian_optimization
                 save_dir =kwargs.get("hyperparameter_save_dir")
@@ -324,33 +307,25 @@ def run(
                     feature_transformer=preprocessor,
                 )
 
-                model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters, alpha=float(alpha))
-                if target_transformer:
-                    y_transform = get_target_transformer(target_transformer)
-                    y_transform_regressor = TransformedTargetRegressor(
-                            regressor= model,
-                            transformer=y_transform,
-                            )
-                else:
-                    y_transform_regressor = model
+                model = optimized_models(regressor_type, 
+                                         graph_kernel_config=kernel_parameters, 
+                                         alpha=float(alpha),
+                                         target_transformer=target_transformer
+                                         )
                 regressor :Pipeline= Pipeline(steps=[
                                 ("preprocessor", preprocessor),
-                                ("regressor", y_transform_regressor),
+                                ("regressor", model),
                                 ])
                 scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer, UQ=True)
             else:
-                model = optimized_models(regressor_type, graph_kernel_config=kernel_parameters)
-                if target_transformer:
-                    y_transform = get_target_transformer(target_transformer)
-                    y_transform_regressor = TransformedTargetRegressor(
-                            regressor= model,
-                            transformer=y_transform,
-                            )
-                else:
-                    y_transform_regressor = model
+                model = optimized_models(regressor_type, 
+                                         graph_kernel_config=kernel_parameters,
+                                         target_transformer=target_transformer,
+                                         **kwargs)
+
                 regressor :Pipeline= Pipeline(steps=[
                                 ("preprocessor", preprocessor),
-                                ("regressor", y_transform_regressor),
+                                ("regressor", model),
                                 ])
                 scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, cv_outer, UQ=True)
         else:
@@ -409,46 +384,52 @@ def run(
                                         kernel_parameters=kernel_parameters,
                                         kernel_type=kernel_type,
                                         kernel_mixing_method=kernel_mixing_method,
+                                        target_transformer=target_transformer,
                                         **kwargs,
                                         )
-
-                if target_transformer:
-                    y_transform_regressor = TransformedTargetRegressor(
-                                regressor=model,
-                                transformer=y_transform,
-                        )
-                else:
-                    y_transform_regressor = model
+                
                 preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
-                regressor :Pipeline= Pipeline(steps=[
-                            ("preprocessor", preprocessor),
-                            ("regressor", y_transform_regressor),
-                                ]
-                            )
-                regressor.set_output(transform="pandas")
                 y = y.flatten()
-                # return_importance = False if "GP" in regressor_type else True
-                if "gp" in regressor_type.lower():
-                    scores, predictions = gp_cross_validate_regressor(
-                                                            regressor,
-                                                            regressor_type, X, y,
-                                                            cv_outer,
-                                                            n_jobs=1,
-                                                            return_ls=False,
-                                                            UQ=True
-                                                            )
 
+                if "gp" in regressor_type.lower():
+                    regressor :Pipeline= Pipeline(steps=[
+                                            ("preprocessor", preprocessor),
+                                            ("regressor", model),
+                                                ]
+                                            )
+                    regressor.set_output(transform="pandas")
+                    scores, predictions = gp_cross_validate_regressor(
+                                            regressor,
+                                            regressor_type, 
+                                            X, y,
+                                            cv_outer,
+                                            n_jobs=1,
+                                            return_ls=False,
+                                            UQ=True
+                                            )
+                    
                 else:
-                    scores, predictions = cross_validate_regressor(regressor, X, y, cv_outer,
-                                                                    custom=True,
-                                                                    early_stopping=False,
-                                                                    return_estimator=False,
-                                                                    return_feature_importances=True,
-                                                                    )
+                    y_transform = get_target_transformer(target_transformer)
+                    y_transform_regressor = TransformedTargetRegressor(
+                                            regressor= model,
+                                            transformer=y_transform,
+                                            )
+                    regressor :Pipeline= Pipeline(steps=[
+                                            ("preprocessor", preprocessor),
+                                            ("regressor", y_transform_regressor),
+                                            ])
+                    scores, predictions = cross_validate_regressor(
+                                            regressor, X, y, 
+                                            cv_outer,
+                                            custom=True,
+                                            early_stopping=False,
+                                            return_estimator=False,
+                                            return_feature_importances=True,
+                                            n_jobs=-1
+                                            )
+
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
-        # seed_indices[seed] = indices
-        # length_scale_fitted_model = regressor.named_steps["regressor"].regressor.get_params()["estimator"].kernel_.length_scale
         seed_predictions[f"seed_{seed}_y_pred"] = np.asarray(predictions["y_pred"]).ravel()
 
         if "y_std" in predictions:

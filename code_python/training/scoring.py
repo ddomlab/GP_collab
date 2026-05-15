@@ -718,7 +718,8 @@ def cross_validate_regressor(
     early_stopping: bool = False,
     return_estimator: bool = False,
     return_feature_importances: bool = False,
-    return_indices: bool = False
+    return_indices: bool = False,
+    n_jobs: int = -1
     ) -> tuple[dict[str, float], np.ndarray]:
 
         # MULTIOUPUT 
@@ -757,7 +758,7 @@ def cross_validate_regressor(
                 y,
                 cv=cv,
                 scoring=scorers,
-                n_jobs=-1,
+                n_jobs=n_jobs,
                 return_estimator=return_estimator,
                 return_feature_importances=return_feature_importances,
                 early_stopping=early_stopping
@@ -776,7 +777,7 @@ def cross_validate_regressor(
                 cv=cv,
                 scoring=scorers,
                 return_estimator=True,
-                n_jobs=-1,
+                n_jobs=n_jobs,
                 return_indices=return_indices,
                 )
             predictions: np.ndarray = cross_val_predict(
@@ -784,7 +785,7 @@ def cross_validate_regressor(
                 X,
                 y,
                 cv=cv,
-                n_jobs=-1,
+                n_jobs=n_jobs,
             )
             if return_feature_importances:
                 get_feature_importances_from_cv(score, X=X)

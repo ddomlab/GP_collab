@@ -603,6 +603,7 @@ class GPytorchMAPRegressor:
         progbar: bool = True,
         prior=False,
         normalize_y: bool = False,
+        use_cuda: bool = True,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -618,8 +619,10 @@ class GPytorchMAPRegressor:
         self.progbar = progbar
         self.prior = prior
         self.normalize_y = normalize_y
-
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.use_cuda= use_cuda
+        device = torch.device(
+            "cuda" if self.use_cuda and torch.cuda.is_available() else "cpu"
+        )
         self.cuda_avail = {"dtype": torch.float, "device": device} 
 
     @property
@@ -925,6 +928,7 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         progbar: bool = True,
         prior=False,
         normalize_y: bool = False,
+        use_cuda: bool = True,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -936,7 +940,7 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         self.progbar = progbar
         self.prior = prior
         self.normalize_y = normalize_y
-
+        self.use_cuda = use_cuda
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
             raise TypeError(
@@ -955,6 +959,7 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
             progbar=self.progbar,
             prior=self.prior,
             normalize_y=self.normalize_y,
+            use_cuda=self.use_cuda,
         )
 
         self.regressor_.fit(X, y)

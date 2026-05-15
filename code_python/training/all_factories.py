@@ -134,7 +134,9 @@ def optimized_models(
                     kernel_mixing_method:Optional[str]=None,
                     graph_kernel_config:Optional[str]=None,
                     alpha:Optional[float]=0.01,
+                    target_transformer:str|None=None,
                      **kwargs):
+    normalize_y = bool(target_transformer)
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=random_state, verbose=False,
@@ -183,7 +185,8 @@ def optimized_models(
                                     progbar=kwargs.get('progbar', False),
                                     prior=kwargs.get('prior', True),
                                     random_state=random_state,
-                                    normalize_y=kwargs.get('target_transform', True),
+                                    normalize_y=normalize_y,
+                                    use_cuda=kwargs.get('use_cuda', True),
                                     )
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
@@ -196,14 +199,14 @@ def optimized_models(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
                 alpha=alpha,
-                normalize_y=True,
+                normalize_y=normalize_y,
                 )
     if "MGK-sklearn" == model_name:
         return MGKRegressorSklearn(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
                 alpha=alpha,
-                normalize_y=True,
+                normalize_y=normalize_y,
                 loss='likelihood', 
                 repeat=1,
                 verbose=False

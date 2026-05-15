@@ -126,7 +126,6 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
     def fit(self, X, y):
         # X is a list/array of graphs — DO NOT call check_array on it.
         # Lazy import so the wrapper module is cheap to import.
-
         self._estimator = MarginalizedGaussianProcessRegressor(
             kernel=self.kernel,
             alpha=self.alpha,
