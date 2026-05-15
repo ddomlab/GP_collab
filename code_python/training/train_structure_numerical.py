@@ -100,7 +100,6 @@ if __name__ == "__main__":
 
     for targ in all_targets:
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
-        try:
             main_structural_numerical(
                 dataset=w_data,
                 representation="ECFP", #"ECFP" # MG
@@ -129,35 +128,16 @@ if __name__ == "__main__":
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
                 )
 
-        except Exception as e:
-            error_traceback = traceback.format_exc()
+
 
             send_message(f"""
-        ######## HPC Training FAILED ########
-        PAPER: {PAPER}
-        Dataset: {dataset_name}
-        Target: {targ}
-        Regressor: GPytorchMAP
-        Kernel mixing method: {args.Kernel_mixing_method}
-
-        Error:
-        {type(e).__name__}: {e}
-
-        Traceback:
-        {error_traceback}
-        """)
-
-            raise
-
-        else:
-            send_message(f"""
-        ######## HPC Training Finished ########
-        PAPER: {PAPER}
-        Dataset: {dataset_name}
-        Target: {targ}
-        Regressor: GPytorchMAP
-        Kernel mixing method: {args.Kernel_mixing_method}
-        """)
+                        ######## HPC Training Finished ########
+                        PAPER: {PAPER}
+                        Dataset: {dataset_name}
+                        Target: {targ}
+                        Regressor: GPytorchMAP
+                        """
+                        )
         
 
  
