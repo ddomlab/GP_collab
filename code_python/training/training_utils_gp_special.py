@@ -403,7 +403,7 @@ def run(
                                             regressor_type, 
                                             X, y,
                                             cv_outer,
-                                            n_jobs=1,
+                                            n_jobs=-1,
                                             return_ls=False,
                                             UQ=True
                                             )

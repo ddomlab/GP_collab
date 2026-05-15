@@ -128,6 +128,7 @@ def _save(
     fname_root = f"{fname_root}_{target_transformer}" if target_transformer else f"{fname_root}_target_transformerOFF"
     fname_root = f"{fname_root}_lc" if learning_curve else fname_root
     fname_root = f"{fname_root}_{special_file_name}" if special_file_name else fname_root
+    fname_root = f"{fname_root}_GPU" if kwargs.get("use_cuda") else fname_root
     print("Filename:", fname_root)
 
     if scores:
