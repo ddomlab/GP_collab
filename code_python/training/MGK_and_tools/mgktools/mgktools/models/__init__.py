@@ -28,12 +28,11 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
         assert alpha is not None
         if feature_transformer:
             from sklearn.pipeline import Pipeline
-            normalize_y = True if target_transformer else False
+            normalize_y = bool(target_transformer)
             initial_model = MGKRegressorSklearn(
                 kernel=kernel,
                 optimizer=optimizer,
                 alpha=alpha,
-                normalize_y=False,
                 loss='likelihood', 
                 repeat=1,
                 verbose=False,
@@ -45,12 +44,11 @@ def set_model(model_type: Literal['gpr', 'gpr-nystrom', 'gpr-nle', 'svr', 'gpc',
                             ("regressor", initial_model),
                             ])
         else:
-            normalize_y = True if target_transformer else False
+            normalize_y = bool(target_transformer)
             model = MGKRegressorSklearn(
                 kernel=kernel,
                 optimizer=optimizer,
                 alpha=alpha,
-                normalize_y=False,
                 loss='likelihood', 
                 repeat=1,
                 verbose=False,

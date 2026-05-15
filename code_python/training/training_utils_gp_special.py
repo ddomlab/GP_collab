@@ -303,7 +303,7 @@ def run(
                     d_alpha=0.001,
                     seed=seed,
                     return_alpha=True,
-                    target_transformer=y_transform,
+                    target_transformer=target_transformer,
                     feature_transformer=preprocessor,
                 )
 
