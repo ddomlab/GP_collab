@@ -9,8 +9,13 @@ import numpy as np
 import sys
 from data_handling import save_results
 from utils import parse_arguments
+from slack_bot import send_message
+import sys
 
-# import sys
+## tools
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+from slack_bot import send_message
 
 # sys.modules.setdefault("numpy._core",         np.core)
 # sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
@@ -122,6 +127,14 @@ if __name__ == "__main__":
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
             )
+        send_message(f"""
+        ######## HPC Training Finished ########
+        PAPER: {PAPER}
+        Dataset: {dataset_name}
+        Target: {targ}
+        Regressor: GPytorchMAP
+        """)
+        
 
  
         # 'log (Total flux)',
