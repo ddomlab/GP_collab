@@ -21,7 +21,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 45
+#BSUB -W 1:05
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"

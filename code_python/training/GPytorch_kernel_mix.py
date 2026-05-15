@@ -944,9 +944,6 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
                 f"Got {type(X).__name__} instead."
             )
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        cuda_avail = {"dtype": torch.float, "device": device}
-
         self.regressor_ = GPytorchMAPRegressor(
             feat_group=self.feat_group,
             lr=self.lr,
@@ -958,7 +955,6 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
             progbar=self.progbar,
             prior=self.prior,
             normalize_y=self.normalize_y,
-            cuda_avail=cuda_avail,
         )
 
         self.regressor_.fit(X, y)
