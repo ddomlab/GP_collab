@@ -603,7 +603,6 @@ class GPytorchMAPRegressor:
         progbar: bool = True,
         prior=False,
         normalize_y: bool = False,
-        cuda_avail: dict | None = None,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -620,11 +619,8 @@ class GPytorchMAPRegressor:
         self.prior = prior
         self.normalize_y = normalize_y
 
-        if cuda_avail is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            cuda_avail = {"dtype": torch.float, "device": device}
-
-        self.cuda_avail = cuda_avail
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.cuda_avail = {"dtype": torch.float, "device": device} 
 
     @property
     def y(self):
