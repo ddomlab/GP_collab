@@ -35,7 +35,8 @@ from utils_uncertainty_calibration import (
     compute_ece,
     compute_cdf_ama,
     compute_cvpp_ama,
-    gaussian_nll
+    gaussian_nll,
+    compute_RUSC,
     )
 
 
@@ -426,6 +427,7 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     if UQ:
         UQ_scorers = {
             "ece": compute_ece,
+            "RUSC": compute_RUSC,
             "cdf_ama": compute_cdf_ama,
             "cvpp_ama": compute_cvpp_ama,
             "nll": gaussian_nll,
@@ -455,6 +457,7 @@ def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: b
     if UQ:
         UQ_scorers = {
             "ece": compute_ece,
+            "RUSC": compute_RUSC,
             "cdf_ama": compute_cdf_ama,
             "cvpp_ama": compute_cvpp_ama,
             "nll": gaussian_nll,

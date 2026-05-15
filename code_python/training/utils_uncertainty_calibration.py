@@ -92,10 +92,11 @@ def compute_cvpp(y_true: np.ndarray,
 
 
 def compute_cvpp_ama(
-                y_true: np.ndarray, 
-                y_pred: np.ndarray,
-                y_std: np.ndarray,
-                step: float = 0.05) -> float:
+    y_true: np.ndarray, 
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    step: float = 0.05
+) -> float:
     
     """
     Computes the Absolute Miscalibration Area (AMA) using CVPP.
@@ -108,23 +109,23 @@ def compute_cvpp_ama(
     return ama
 
 
-def compute_residual_error_cal(y_true: np.ndarray, 
-                                y_pred: np.ndarray,
-                                y_std: np.ndarray,
-                                ):
-
-    res = np.abs(y_true-y_pred)
+def compute_RUSC(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+):
+    res = np.abs(y_true - y_pred)
     correlation = spearmanr(res, y_std)[0]
     return correlation
 
 
 def gaussian_nll(
-                y_true,
-                y_pred,
-                y_std,
-                eps:float=1e-6, 
-                reduce='mean'
-                ):
+    y_true,
+    y_pred,
+    y_std,
+    eps:float=1e-6, 
+    reduce='mean'
+):
     """
     Computes Negative Log-Likelihood (NLL) using scipy.stats.norm.logpdf.
 
@@ -197,8 +198,8 @@ def compute_all_uncertainty_metrics(
         'NLL': lambda: gaussian_nll(y_true, y_pred, y_err, reduce='mean'),
         'Sharpness': lambda: sharpness(y_err),
         'Cv': lambda: compute_cv(y_err),
-        'RUSC': lambda: compute_residual_error_cal(y_true, y_pred, y_err),
-        'AMA': lambda: compute_ama(y_true, y_pred, y_err, step=step)
+        'RUSC': lambda: compute_RUSC(y_true, y_pred, y_err),
+        'AMA': lambda: compute_cvpp_ama(y_true, y_pred, y_err, step=step)
     }
 
     if method:

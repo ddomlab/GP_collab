@@ -86,10 +86,7 @@ if __name__ == "__main__":
     
     args = parse_arguments()
     PAPER = args.paper
-    # # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
     dataset_name = args.dataset
-    # # "cleaned_dataset_pervaporation_membranes_wang"
-    # #non_imputed_dropped_nan_Rg_data
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     for targ in all_targets:
@@ -109,15 +106,13 @@ if __name__ == "__main__":
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
-                "fp": "TanimotoRBF", #Graph
-                "count": "Matern32"
-                # "fp":args.K_fp,
-                # "count":args.K_count
+                "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+                "count": args.K_count #"Matern32"   #args.K_count
                 },
-            # kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
             kernel_mixing_method=args.Kernel_mixing_method,
             use_cuda=False,
-            # hyperparameter_save_dir=optuna_save_dir,
+            # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
+            # hyperparameter_save_dir=optuna_save_dir, # for MGK
             # imputer="mean",
             # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
             )
