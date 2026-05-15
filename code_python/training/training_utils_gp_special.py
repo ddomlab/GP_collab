@@ -409,7 +409,7 @@ def run(
                                             X, y,
                                             cv_outer,
                                             n_jobs=n_jobs,
-                                            return_ls=False,
+                                            return_ls=True,
                                             UQ=True
                                             )
                     

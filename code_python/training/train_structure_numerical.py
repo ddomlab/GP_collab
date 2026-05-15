@@ -11,6 +11,7 @@ from data_handling import save_results
 from utils import parse_arguments
 from slack_bot import send_message
 import sys
+import traceback
 
 ## tools
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -100,39 +101,63 @@ if __name__ == "__main__":
 
     for targ in all_targets:
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
-        main_structural_numerical(
-            dataset=w_data,
-            representation="ECFP", #"ECFP" # MG
-            radius=3,
-            vector="count",
-            regressor_type="GPytorchMAP", #MGK-sklearn
-            # GPytorchMixMCMC
-            # GPMixMCMC
-            polymer_unit=polymer_unit,
-            target_features=[targ],  
-            feat_transformer="Standard",
-            target_transformer="Standard",
-            numerical_feats=feats,
-            hyperparameter_optimization=False,
-            kernel_type={
-                "fp": "TanimotoRBF", #Graph
-                "count": "Matern32"
-                # "fp":args.K_fp,
-                # "count":args.K_count
-                },
-            # kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
-            kernel_mixing_method=args.Kernel_mixing_method,
-            use_cuda=False,
-            # hyperparameter_save_dir=optuna_save_dir,
-            # imputer="mean",
-            # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-            )
-        send_message(f"""
+        try:
+            main_structural_numerical(
+                dataset=w_data,
+                representation="ECFP", #"ECFP" # MG
+                radius=3,
+                vector="count",
+                regressor_type="GPytorchMAP", #MGK-sklearn
+                # GPytorchMixMCMC
+                # GPMixMCMC
+                polymer_unit=polymer_unit,
+                target_features=[targ],  
+                feat_transformer="Standard",
+                target_transformer="Standard",
+                numerical_feats=feats,
+                hyperparameter_optimization=False,
+                kernel_type={
+                    "fp": "TanimotoRBF", #Graph
+                    "count": "Matern32"
+                    # "fp":args.K_fp,
+                    # "count":args.K_count
+                    },
+                # kernel_feature_mode = args.kernel_feature_mode, #joint, per_feature
+                kernel_mixing_method=args.Kernel_mixing_method,
+                use_cuda=False,
+                # hyperparameter_save_dir=optuna_save_dir,
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )
+
+        except Exception as e:
+            error_traceback = traceback.format_exc()
+
+            send_message(f"""
+        ######## HPC Training FAILED ########
+        PAPER: {PAPER}
+        Dataset: {dataset_name}
+        Target: {targ}
+        Regressor: GPytorchMAP
+        Kernel mixing method: {args.Kernel_mixing_method}
+
+        Error:
+        {type(e).__name__}: {e}
+
+        Traceback:
+        {error_traceback}
+        """)
+
+            raise
+
+        else:
+            send_message(f"""
         ######## HPC Training Finished ########
         PAPER: {PAPER}
         Dataset: {dataset_name}
         Target: {targ}
         Regressor: GPytorchMAP
+        Kernel mixing method: {args.Kernel_mixing_method}
         """)
         
 
