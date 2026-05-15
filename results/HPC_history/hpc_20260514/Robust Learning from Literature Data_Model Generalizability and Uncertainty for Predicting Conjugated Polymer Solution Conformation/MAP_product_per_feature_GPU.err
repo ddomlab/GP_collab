@@ -205,3 +205,14 @@ Traceback (most recent call last):
     self.regressor_ = GPytorchMAPRegressor(
                       ^^^^^^^^^^^^^^^^^^^^^
 TypeError: GPytorchMAPRegressor.__init__() got an unexpected keyword argument 'cuda_avail'
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 5, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 41, in <module>
+    from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor, MGKRegressorSklearn
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/__init__.py", line 40
+    normalize_y=normalize_y
+    ^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: normalize_y
