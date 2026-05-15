@@ -1,0 +1,122 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.28±0.03	 r2: 0.78±0.04
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoRBF-RBF_sum)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c042n01>
+Subject: Job 201666: <structure_numerical_20260515> in cluster <Hazel> Done
+
+Job <structure_numerical_20260515> was submitted from host <c046n02> by user <sdehgha2> in cluster <Hazel> at Fri May 15 10:44:09 2026
+Job was executed on host(s) <6*c042n01>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 15 10:44:13 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 15 10:44:13 2026
+Terminated at Fri May 15 10:47:23 2026
+Results reported at Fri May 15 10:47:23 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 30
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260515"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method sum                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   651.04 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.89 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   199 sec.
+    Turnaround time :                            194 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.28±0.03	 r2: 0.78±0.04
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoRBF-RBF_sum)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c042n01>
+Subject: Job 201675: <structure_numerical_20260515> in cluster <Hazel> Done
+
+Job <structure_numerical_20260515> was submitted from host <c046n02> by user <sdehgha2> in cluster <Hazel> at Fri May 15 10:49:38 2026
+Job was executed on host(s) <6*c042n01>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 15 10:49:41 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 15 10:49:41 2026
+Terminated at Fri May 15 10:52:44 2026
+Results reported at Fri May 15 10:52:44 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 30
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260515"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method sum                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   641.30 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.88 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   200 sec.
+    Turnaround time :                            186 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260515/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoRBF_RBF_sum.err> for stderr output of this job.
+
