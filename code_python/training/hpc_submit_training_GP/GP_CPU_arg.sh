@@ -21,7 +21,7 @@ bsub <<EOT
 #BSUB -e "${output_dir}/MAP_${mixing_method}_CPU.err"
 
 source ~/.bashrc
-conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 python ../train_structure_numerical.py --dataset "$dataset" \
                                         --paper "$paper" \
                                         --Kernel_mixing_method $mixing_method
