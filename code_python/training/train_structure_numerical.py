@@ -9,7 +9,6 @@ import numpy as np
 import sys
 from data_handling import save_results
 from utils import parse_arguments
-from slack_bot import send_message
 import sys
 import traceback
 

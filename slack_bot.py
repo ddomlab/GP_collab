@@ -1,7 +1,7 @@
 import requests
 from pathlib import Path
 
-def send_message(message: str, channel: str="C0B0TD3LD3N"):
+def send_message(message: str, channel: str="C0B3TPZF21Z"):
     DATA_DIR = Path(__file__).parent 
     BOT_TOKEN: str = (DATA_DIR / "slack_api.key").read_text().strip()
     headers: dict = {
