@@ -17,8 +17,8 @@ bsub <<EOT
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/MAP_${mixing_method}_${feature_mode}_CPU.out"
-#BSUB -e "${output_dir}/MAP_${mixing_method}_${feature_mode}_CPU.err"
+#BSUB -o "${output_dir}/MAP_${mixing_method}_CPU.out"
+#BSUB -e "${output_dir}/MAP_${mixing_method}_CPU.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
