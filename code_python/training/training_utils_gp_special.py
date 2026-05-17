@@ -322,7 +322,7 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv_outer=cv_outer, UQ=True)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv=cv_outer, UQ=True)
             else:
                 model = optimized_models(regressor_type, 
                                          graph_kernel_config=kernel_parameters,
@@ -333,7 +333,7 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv_outer=cv_outer,return_ls=True, UQ=True)
+                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv=cv_outer,return_ls=True, UQ=True)
         else:
             
             if hyperparameter_optimization:
