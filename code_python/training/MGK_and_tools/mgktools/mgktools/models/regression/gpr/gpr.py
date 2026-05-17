@@ -164,3 +164,6 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
             "y_pred": y_pred,
             "y_std": y_std,
         }
+    
+    def _get_lengthscale(self):
+        return self.kernel_config.get_feature_length_scale()

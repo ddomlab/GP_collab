@@ -214,3 +214,23 @@ class HybridKernelConfig(BaseKernelConfig):
     def save(self, path: str):
         for i, kernel_config in enumerate(self.kernel_configs):
             kernel_config.save(path=path, name=f'kernel_{i}.json')
+    
+    def get_feature_length_scale(self):
+        out = {}
+
+        for i, kernel_config in enumerate(self.kernel_configs):
+            # FeatureKernelConfig has microkernels_feature.
+            # GraphKernelConfig does not.
+            if not hasattr(kernel_config, "microkernels_feature"):
+                continue
+
+            kernel_config.update_from_theta()
+
+            for microkernel in kernel_config.microkernels_feature:
+                kernel_type = list(microkernel.microdict.keys())[0]
+
+                out[f"kernel_{i}.{kernel_type}"] = microkernel.value
+
+        return out
+
+

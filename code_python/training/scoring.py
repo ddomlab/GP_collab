@@ -394,7 +394,7 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
 
 
 
-def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_ls: bool, UQ: bool):
+def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls: bool, UQ: bool):
     """
     Runs inside a parallel worker:
     - clone estimator
@@ -402,8 +402,10 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     - predict on test
     - compute scores with provided scorers
     """
-
-    model = clone(estimator)
+    if "mgk" in model_type.lower():
+        est = copy.deepcopy(estimator)
+    else:
+        est = clone(estimator)
 
     # Use safe row selector for all data types
     X_train = split_for_training(X, train_idx)
@@ -412,13 +414,13 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     y_test  = split_for_training(y, test_idx)
 
     # Fit model (with Pyro MCMC)
-    model.fit(X_train, y_train)
+    est.fit(X_train, y_train)
 
     # Predict
-    y_result = model.predict(X_test, return_std=UQ)
+    y_result = est.predict(X_test, return_std=UQ)
     results = {}
     if return_ls: 
-        results["lengthscale"] = model.named_steps["regressor"].regressor_._get_lengthscale()
+        results["lengthscale"] = est.named_steps["regressor"].regressor_._get_lengthscale()
     # Compute scoring: scoring[name] is a scorer from make_scorer
 
 
@@ -438,34 +440,34 @@ def _gp_fit_predict_score(estimator, X, y, train_idx, test_idx, scoring, return_
     return test_idx, y_result, results
 
 
-def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: bool):
-    """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
-    est = copy.deepcopy(estimator)
+# def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: bool):
+#     """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
+#     est = copy.deepcopy(estimator)
 
-    X_train = split_for_training(X, train_idx)
-    X_test  = split_for_training(X, test_idx)
-    y_train = split_for_training(y, train_idx)
-    y_test  = split_for_training(y, test_idx)
+#     X_train = split_for_training(X, train_idx)
+#     X_test  = split_for_training(X, test_idx)
+#     y_train = split_for_training(y, train_idx)
+#     y_test  = split_for_training(y, test_idx)
 
-    est.fit(X_train, y_train)
-    y_result = est.predict(X_test, return_std=UQ)
+#     est.fit(X_train, y_train)
+#     y_result = est.predict(X_test, return_std=UQ)
 
-    results = {}
-    for name, scorer in scoring.items():
-        results[name] = scorer(y_test, y_result["y_pred"])
+#     results = {}
+#     for name, scorer in scoring.items():
+#         results[name] = scorer(y_test, y_result["y_pred"])
         
-    if UQ:
-        UQ_scorers = {
-            "ece": compute_ece,
-            "RUSC": compute_RUSC,
-            "cdf_ama": compute_cdf_ama,
-            "cvpp_ama": compute_cvpp_ama,
-            "nll": gaussian_nll,
-        }
-        for name, uq_scorer in UQ_scorers.items():
-            results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
+#     if UQ:
+#         UQ_scorers = {
+#             "ece": compute_ece,
+#             "RUSC": compute_RUSC,
+#             "cdf_ama": compute_cdf_ama,
+#             "cvpp_ama": compute_cvpp_ama,
+#             "nll": gaussian_nll,
+#         }
+#         for name, uq_scorer in UQ_scorers.items():
+#             results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
             
-    return test_idx, y_result, results
+#     return test_idx, y_result, results
 
 
 
@@ -488,15 +490,15 @@ def gp_cross_validate(
             - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
               only available when returned by the model.
     """
-    if "mgk" in model_type.lower():
-        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
-        delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring, UQ)
-        for train_idx, test_idx in cv.split(X, y)
-        )
-    else:
-        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+    # if "mgk" in model_type.lower():
+    #     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+    #     delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring, UQ)
+    #     for train_idx, test_idx in cv.split(X, y)
+    #     )
+    # else:
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
             delayed(_gp_fit_predict_score)(
-                estimator, X, y, train_idx, test_idx, scoring, return_ls, UQ
+                estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls, UQ
             )
             for train_idx, test_idx in cv.split(X, y)
         )
@@ -519,7 +521,6 @@ def gp_cross_validate(
             scores[f"test_{key}"].append(val)
 
     return scores, predictions
-
 
 
 def gp_cross_validate_regressor(
