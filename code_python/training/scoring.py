@@ -37,6 +37,8 @@ from utils_uncertainty_calibration import (
     compute_cvpp_ama,
     gaussian_nll,
     compute_RUSC,
+    compute_Cv,
+    compute_sharpness
     )
 
 
@@ -433,9 +435,14 @@ def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scor
             "cdf_ama": compute_cdf_ama,
             "cvpp_ama": compute_cvpp_ama,
             "nll": gaussian_nll,
+            "Cv": compute_Cv,
+            "sharpness": compute_sharpness
         }
         for name, uq_scorer in UQ_scorers.items():
-            results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
+            if name in ["Cv", "sharpness"]:
+                results[name] = float(uq_scorer(y_result["y_std"]))
+            else:
+                results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
 
     return test_idx, y_result, results
 

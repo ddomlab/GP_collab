@@ -162,7 +162,7 @@ def gaussian_nll(
 
 
 
-def compute_cv(stdevs):
+def compute_Cv(y_std):
     """
     Calculates the coefficient of variation (Cv) of predicted uncertainties.
 
@@ -176,12 +176,18 @@ def compute_cv(stdevs):
     cv : float
         Coefficient of variation of the uncertainty estimates
     """
-    stdevs = np.asarray(stdevs)
+    y_std = np.asarray(y_std)
     eps = 1e-8  # prevent division by zero
-    mean_std = np.mean(stdevs)
-    std_std = np.std(stdevs, ddof=1)  # unbiased estimator
+    mean_std = np.mean(y_std)
+    std_std = np.std(y_std, ddof=1)  # unbiased estimator
     cv = std_std / (mean_std + eps)
     return cv
+
+
+
+def compute_sharpness(y_std):
+    y_std = np.asarray(y_std)
+    return np.mean(y_std)
 
 
 def compute_all_uncertainty_metrics(
