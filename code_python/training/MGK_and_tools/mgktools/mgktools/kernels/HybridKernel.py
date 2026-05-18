@@ -178,7 +178,7 @@ class HybridKernel:
                 kernel.load(result_dir)
 
 
-    def _get_lengthscale(self):
+    def get_lengthscale(self):
         out = {}
 
         for i, kernel in enumerate(self.kernel_list):
