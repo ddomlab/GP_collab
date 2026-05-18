@@ -126,7 +126,7 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
     def fit(self, X, y):
         # X is a list/array of graphs — DO NOT call check_array on it.
         # Lazy import so the wrapper module is cheap to import.
-        self._estimator = MarginalizedGaussianProcessRegressor(
+        self.regressor_ = MarginalizedGaussianProcessRegressor(
             kernel=self.kernel,
             alpha=self.alpha,
             optimizer=self.optimizer,
@@ -135,7 +135,7 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
         # graphdot expects array-like; np.asarray on graphs gives object array
         # for i in range(X.shape[1]):
         #     print(f"col {i}: {type(X[0, i]).__name__}")
-        self._estimator.fit(
+        self.regressor_.fit(
             X, y,
             loss=self.loss,
             repeat=self.repeat,
@@ -150,12 +150,12 @@ class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
             raise RuntimeError("Call fit before predict.")
         
         if return_std:
-            y_pred, y_std = self._estimator.predict(
+            y_pred, y_std = self.regressor_.predict(
                 X, return_std=return_std, return_cov=return_cov
             )
 
         else:
-            y_pred = self._estimator.predict(
+            y_pred = self.regressor_.predict(
                 X, return_std=return_std, return_cov=return_cov
             )
             y_std = None
