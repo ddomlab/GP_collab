@@ -178,7 +178,7 @@ class HybridKernel:
                 kernel.load(result_dir)
 
 
-    def get_lengthscale(self):
+    def _get_lengthscale(self):
         out = {}
 
         for i, kernel in enumerate(self.kernel_list):
@@ -187,17 +187,10 @@ class HybridKernel:
 
             params = kernel.get_params()
 
-            if not isinstance(params, dict):
+            if "length_scale" not in params:
                 continue
 
-            if any(k in params for k in ("kernel_list", "composition", "hybrid_rule")):
-                continue
-
-            for name, value in params.items():
-                try:
-                    out[f"kernel_{i}.{name}"] = float(value)
-                except (TypeError, ValueError):
-                    continue
+            out[f"kernel_{i}.length_scale"] = float(params["length_scale"])
 
         return out
 
