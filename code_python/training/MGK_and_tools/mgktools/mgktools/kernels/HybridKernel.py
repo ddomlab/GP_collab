@@ -178,6 +178,29 @@ class HybridKernel:
                 kernel.load(result_dir)
 
 
+    def get_lengthscale(self):
+        out = {}
+
+        for i, kernel in enumerate(self.kernel_list):
+            if not hasattr(kernel, "get_params"):
+                continue
+
+            params = kernel.get_params()
+
+            if not isinstance(params, dict):
+                continue
+
+            if any(k in params for k in ("kernel_list", "composition", "hybrid_rule")):
+                continue
+
+            for name, value in params.items():
+                try:
+                    out[f"kernel_{i}.{name}"] = float(value)
+                except (TypeError, ValueError):
+                    continue
+
+        return out
+
 class HybridKernelConfig(BaseKernelConfig):
     def __init__(
         self,
@@ -215,22 +238,23 @@ class HybridKernelConfig(BaseKernelConfig):
         for i, kernel_config in enumerate(self.kernel_configs):
             kernel_config.save(path=path, name=f'kernel_{i}.json')
     
-    def get_feature_length_scale(self):
-        out = {}
 
-        for i, kernel_config in enumerate(self.kernel_configs):
-            # FeatureKernelConfig has microkernels_feature.
-            # GraphKernelConfig does not.
-            if not hasattr(kernel_config, "microkernels_feature"):
-                continue
+    # def get_feature_length_scale(self):
+    #     out = {}
 
-            kernel_config.update_from_theta()
+    #     for i, kernel_config in enumerate(self.kernel_configs):
+    #         # FeatureKernelConfig has microkernels_feature.
+    #         # GraphKernelConfig does not.
+    #         if not hasattr(kernel_config, "microkernels_feature"):
+    #             continue
 
-            for microkernel in kernel_config.microkernels_feature:
-                kernel_type = list(microkernel.microdict.keys())[0]
+    #         kernel_config.update_from_theta()
 
-                out[f"kernel_{i}.{kernel_type}"] = microkernel.value
+    #         for microkernel in kernel_config.microkernels_feature:
+    #             kernel_type = list(microkernel.microdict.keys())[0]
 
-        return out
+    #             out[f"kernel_{i}.{kernel_type}"] = microkernel.value
+
+    #     return out
 
 
