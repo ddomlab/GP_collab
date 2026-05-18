@@ -440,37 +440,6 @@ def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scor
     return test_idx, y_result, results
 
 
-# def _mgk_fit_and_score_fold(estimator, X, y, train_idx, test_idx, scoring, UQ: bool):
-#     """Run a single fold. Returns (test_idx, y_pred, scores_dict)."""
-#     est = copy.deepcopy(estimator)
-
-#     X_train = split_for_training(X, train_idx)
-#     X_test  = split_for_training(X, test_idx)
-#     y_train = split_for_training(y, train_idx)
-#     y_test  = split_for_training(y, test_idx)
-
-#     est.fit(X_train, y_train)
-#     y_result = est.predict(X_test, return_std=UQ)
-
-#     results = {}
-#     for name, scorer in scoring.items():
-#         results[name] = scorer(y_test, y_result["y_pred"])
-        
-#     if UQ:
-#         UQ_scorers = {
-#             "ece": compute_ece,
-#             "RUSC": compute_RUSC,
-#             "cdf_ama": compute_cdf_ama,
-#             "cvpp_ama": compute_cvpp_ama,
-#             "nll": gaussian_nll,
-#         }
-#         for name, uq_scorer in UQ_scorers.items():
-#             results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
-            
-#     return test_idx, y_result, results
-
-
-
 def gp_cross_validate(
     estimator,
     model_type:str,
