@@ -109,7 +109,7 @@ class MarginalizedGaussianProcessRegressor(GPR):
         return ymean
     
     def _get_lengthscale(self):
-        return self.kernel._get_lengthscale()
+        return self.kernel.get_feature_length_scale()
 
 
 class MGKRegressorSklearn(BaseEstimator, RegressorMixin):
