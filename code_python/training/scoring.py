@@ -420,7 +420,7 @@ def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scor
     y_result = est.predict(X_test, return_std=UQ)
     results = {}
     if return_ls: 
-        results["lengthscale"] = est.named_steps["regressor"].regressor_._get_lengthscale()
+        results["lengthscale"] = est.named_steps["regressor"]._get_lengthscale()
     # Compute scoring: scoring[name] is a scorer from make_scorer
 
 
