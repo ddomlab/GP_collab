@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "averageProduct") 
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 45
+#BSUB -W 4:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"

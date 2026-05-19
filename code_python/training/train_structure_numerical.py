@@ -112,7 +112,7 @@ if __name__ == "__main__":
                 # "count": "Matern32"
                 },
             kernel_mixing_method=args.Kernel_mixing_method,
-            use_cuda=True,
+            use_cuda=False,
             # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
             # hyperparameter_save_dir=optuna_save_dir, # for MGK
             # imputer="mean",
