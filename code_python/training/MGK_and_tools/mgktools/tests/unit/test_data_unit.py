@@ -295,6 +295,24 @@ class TestDataset:
         )
         assert dataset[0].features_add == [0.1]
 
+    def test_from_df_preserves_column_metadata(self, simple_df):
+        """Test from_df stores dataframe column metadata."""
+        dataset = Dataset.from_df(
+            simple_df,
+            smiles_columns=['smiles'],
+            features_columns=['feature1'],
+            targets_columns=['target'],
+            preserve_dataframe=True,
+            n_jobs=1
+        )
+        dataset.set_status(graph_kernel_type='graph')
+
+        assert dataset.smiles_columns == ['smiles']
+        assert dataset.features_columns == ['feature1']
+        assert dataset.targets_columns == ['target']
+        assert dataset.X_column_names == ['graph_smiles', 'feature1']
+        pd.testing.assert_frame_equal(dataset.df, simple_df)
+
     def test_from_df_with_multiple_smiles(self, multi_smiles_df):
         """Test from_df with multiple SMILES columns."""
         dataset = Dataset.from_df(

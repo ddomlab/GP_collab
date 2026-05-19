@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Literal, Tuple, Any
+from typing import Dict, List, Literal, Tuple, Any, Optional
 import copy
 import numpy as np
 from sklearn.gaussian_process.kernels import RBF, DotProduct, Matern
@@ -13,10 +13,26 @@ class HybridKernel:
         kernel_list: List,
         composition: List[Tuple[int]],
         hybrid_rule: Literal["product", "sum"] = "product",
+        kernel_names: List[str] = None,
+        composition_names: List[Tuple[str, ...]] = None,
+        lengthscale_names: List[Optional[Tuple[str, ...]]] = None,
     ):
         self.kernel_list = kernel_list
         self.composition = composition
         self.hybrid_rule = hybrid_rule
+        self.kernel_names = list(kernel_names) if kernel_names is not None else [
+            f"kernel_{i}" for i in range(len(kernel_list))
+        ]
+        self.composition_names = (
+            [tuple(names) for names in composition_names]
+            if composition_names is not None
+            else None
+        )
+        self.lengthscale_names = (
+            [None if names is None else tuple(names) for names in lengthscale_names]
+            if lengthscale_names is not None
+            else None
+        )
 
     @property
     def nkernel(self) -> int:
@@ -170,6 +186,9 @@ class HybridKernel:
             kernel_list=self.kernel_list,
             composition=self.composition,
             hybrid_rule=self.hybrid_rule,
+            kernel_names=self.kernel_names,
+            composition_names=self.composition_names,
+            lengthscale_names=self.lengthscale_names,
         )
 
     def load(self, result_dir):
@@ -190,7 +209,28 @@ class HybridKernel:
             if "length_scale" not in params:
                 continue
 
-            out[f"kernel_{i}.length_scale"] = float(params["length_scale"])
+            kernel_name = self.kernel_names[i] if i < len(self.kernel_names) else f"kernel_{i}"
+            length_scale = np.asarray(params["length_scale"], dtype=float).ravel()
+            names = None
+
+            if self.lengthscale_names is not None:
+                names = self.lengthscale_names[i] if i < len(self.lengthscale_names) else None
+                if names is None:
+                    continue
+
+            if length_scale.size == 1:
+                name = names[0] if names is not None and len(names) == 1 else kernel_name
+                out[f"{name}.length_scale"] = float(length_scale[0])
+                continue
+
+            if names is None and self.composition_names is not None and i < len(self.composition_names):
+                names = self.composition_names[i]
+            elif names is None:
+                names = tuple(f"{kernel_name}_{j}" for j in range(length_scale.size))
+
+            for j, value in enumerate(length_scale):
+                name = names[j] if j < len(names) else f"{kernel_name}_{j}"
+                out[f"{name}.length_scale"] = float(value)
 
         return out
 
@@ -200,11 +240,27 @@ class HybridKernelConfig(BaseKernelConfig):
         kernel_configs: List[BaseKernelConfig],
         composition: List[Tuple[int]],
         hybrid_rule: Literal["product", "sum"] = "product",
+        kernel_names: List[str] = None,
+        composition_names: List[Tuple[str, ...]] = None,
+        lengthscale_names: List[Optional[Tuple[str, ...]]] = None,
     ):
         assert len(kernel_configs) == len(composition) >= 2
         self.kernel_configs = kernel_configs
         self.composition = composition
         self.hybrid_rule = hybrid_rule
+        self.kernel_names = list(kernel_names) if kernel_names is not None else [
+            f"kernel_{i}" for i in range(len(kernel_configs))
+        ]
+        self.composition_names = (
+            [tuple(names) for names in composition_names]
+            if composition_names is not None
+            else None
+        )
+        self.lengthscale_names = (
+            [None if names is None else tuple(names) for names in lengthscale_names]
+            if lengthscale_names is not None
+            else None
+        )
         self.update_kernel()
 
     def update_kernel(self):
@@ -212,7 +268,14 @@ class HybridKernelConfig(BaseKernelConfig):
         for kernel_config in self.kernel_configs:
             kernel_config.update_kernel()
             kernels.append(kernel_config.kernel)
-        self.kernel = HybridKernel(kernels, self.composition, self.hybrid_rule)
+        self.kernel = HybridKernel(
+            kernels,
+            self.composition,
+            self.hybrid_rule,
+            kernel_names=self.kernel_names,
+            composition_names=self.composition_names,
+            lengthscale_names=self.lengthscale_names,
+        )
 
     def get_trial(self, trial) -> Dict:
         return self.combine_dicts(

@@ -177,12 +177,14 @@ def _prepare_data(
                               df=df,
                               smiles_columns=structural_features,
                               features_columns=numerical_feats,
-                              targets_columns=target_features
+                              targets_columns=target_features,
+                              preserve_dataframe=True,
                               )
             mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
             mgk_dataset.create_graphs(n_jobs=4)
             mgk_dataset.unify_datatype()
             # "per_feature"
+            # print(mgk_dataset)
             mgk_kernel_config = get_kernel_config(
                             dataset=mgk_dataset,
                             graph_kernel_type="graph",

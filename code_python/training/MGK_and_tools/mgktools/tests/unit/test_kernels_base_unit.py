@@ -11,7 +11,10 @@ import tempfile
 import os
 from unittest.mock import Mock, MagicMock, patch
 
+from sklearn.gaussian_process.kernels import RBF
+
 from mgktools.kernels.base import MicroKernel, ABCKernelConfig, BaseKernelConfig
+from mgktools.kernels.HybridKernel import HybridKernel
 
 
 # =============================================================================
@@ -167,6 +170,37 @@ class TestMicroKernelInit:
                 value='Invalid',
                 available_values=['Tensorproduct', 'Additive']
             )
+
+
+class TestHybridKernelLengthScaleNames:
+    """Tests for named feature length-scale reporting."""
+
+    def test_get_lengthscale_skips_graph_kernels_and_names_features(self):
+        kernel = HybridKernel(
+            kernel_list=[
+                RBF(length_scale=9.0),
+                RBF(length_scale=2.0),
+                RBF(length_scale=np.array([1.0, 3.0])),
+            ],
+            composition=[(0,), (1,), (2, 3)],
+            kernel_names=['graph_smiles', 'PDI', 'features'],
+            composition_names=[
+                ('graph_smiles',),
+                ('PDI',),
+                ('Mw (g/mol)', 'Temperature'),
+            ],
+            lengthscale_names=[
+                None,
+                ('PDI',),
+                ('Mw (g/mol)', 'Temperature'),
+            ],
+        )
+
+        assert kernel.get_lengthscale() == {
+            'PDI.length_scale': 2.0,
+            'Mw (g/mol).length_scale': 1.0,
+            'Temperature.length_scale': 3.0,
+        }
 
 
 # =============================================================================

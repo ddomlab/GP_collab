@@ -406,11 +406,19 @@ class Dataset:
     def __init__(self, data: List[Datapoint] = None,
                  features_mol_scaler: StandardScaler = None,
                  features_add_scaler: StandardScaler = None,
-                 cache: CachedDict = None):
+                 cache: CachedDict = None,
+                 smiles_columns: List[str] = None,
+                 features_columns: List[str] = None,
+                 targets_columns: List[str] = None,
+                 df: pd.DataFrame = None):
         """Initialize a Dataset with optional data and scalers."""
         self.data = data
         self.features_mol_scaler = features_mol_scaler
         self.features_add_scaler = features_add_scaler
+        self.smiles_columns = list(smiles_columns or [])
+        self.features_columns = list(features_columns or [])
+        self.targets_columns = list(targets_columns or [])
+        self.df = df.copy() if df is not None else None
         self.set_cache(cache or CachedDict())
 
     def __len__(self) -> int:
@@ -550,6 +558,19 @@ class Dataset:
         return np.array([d.smiles_list for d in self.data])
 
     @property
+    def X_smiles_names(self) -> List[str]:
+        """Get names for SMILES columns before graph conversion."""
+        n_smiles = self.X_smiles.shape[1]
+        if len(self.smiles_columns) == n_smiles:
+            return self.smiles_columns
+        return [f"smiles_{i}" for i in range(n_smiles)]
+
+    @property
+    def X_graph_names(self) -> List[str]:
+        """Get names for graph columns in the processed X matrix."""
+        return [f"graph_{name}" for name in self.X_smiles_names]
+
+    @property
     def X_features_mol_raw(self) -> np.ndarray:
         """
         Get raw (unnormalized) molecular features.
@@ -578,6 +599,11 @@ class Dataset:
             return self.X_features_mol_raw
 
     @property
+    def X_features_mol_names(self) -> List[str]:
+        """Get names for generated molecular feature columns in X."""
+        return [f"features_mol_{i}" for i in range(self.N_features_mol)]
+
+    @property
     def X_features_add_raw(self) -> np.ndarray:
         """
         Get raw (unnormalized) additional features.
@@ -604,6 +630,36 @@ class Dataset:
             return self.features_add_scaler.transform(self.X_features_add_raw)
         else:
             return self.X_features_add_raw
+
+    @property
+    def X_features_add_names(self) -> List[str]:
+        """Get names for additional dataframe feature columns in X."""
+        n_features = self.N_features_add
+        if len(self.features_columns) == n_features:
+            return self.features_columns
+        return [f"features_add_{i}" for i in range(n_features)]
+
+    @property
+    def X_feature_names(self) -> List[str]:
+        """Get names for all non-graph feature columns in X."""
+        return self.X_features_mol_names + self.X_features_add_names
+
+    @property
+    def X_column_names(self) -> List[str]:
+        """Get column names in the same order as X."""
+        if self.graph_kernel_type == 'no':
+            return self.X_feature_names
+        elif self.graph_kernel_type == 'graph':
+            return self.X_graph_names + self.X_feature_names
+        elif self.graph_kernel_type == 'pre-computed':
+            return self.X_smiles_names + self.X_features_add_names
+        else:
+            raise ValueError(f'Invalid graph_kernel_type: {self.graph_kernel_type}')
+
+    @property
+    def processed_df(self) -> pd.DataFrame:
+        """Get the processed X matrix as a DataFrame with processed column names."""
+        return pd.DataFrame(self.X, columns=self.X_column_names)
 
     @property
     def X_mol(self) -> np.ndarray:
@@ -854,7 +910,8 @@ class Dataset:
                 features_columns: List[str] = None,
                 targets_columns: List[str] = None,
                 n_jobs: int = 8,
-                cache: CachedDict = None) -> 'Dataset':
+                cache: CachedDict = None,
+                preserve_dataframe: bool = False) -> 'Dataset':
         """
         Create a Dataset from a pandas DataFrame.
 
@@ -872,6 +929,8 @@ class Dataset:
             Number of parallel jobs for data point creation, by default 8.
         cache : CachedDict, optional
             Cache instance to use, by default None (creates new cache).
+        preserve_dataframe : bool, optional
+            Whether to keep a copy of the input DataFrame on the Dataset.
 
         Returns
         -------
@@ -902,4 +961,11 @@ class Dataset:
         data = Parallel(
             n_jobs=n_jobs, verbose=True, prefer='processes')(
             delayed(Datapoint)(I1[i], I2[i], I3[i]) for i in range(len(df)))
-        return cls(data=data, cache=cache)
+        return cls(
+            data=data,
+            cache=cache,
+            smiles_columns=smiles_columns,
+            features_columns=features_columns,
+            targets_columns=targets_columns,
+            df=df if preserve_dataframe else None,
+        )
