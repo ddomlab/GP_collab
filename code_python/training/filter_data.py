@@ -116,7 +116,16 @@ DATASET_CONFIG = {
         ],
         "polymer_unit": ["polymer"],
         "target": ['log (Total flux)', 'log (Separation factor)'],
-    }
+    },
+        
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation": {
+        "features": [
+            "Equiv. AcOH", "Equiv. TTIP", "Solvent_Encoded", "Reaction Conc [mM]"
+        ],
+        "polymer_unit": ["Substrate"],
+        "target": ["Approx Conv (%)"],
+    },
+
 }
 
 
