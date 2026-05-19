@@ -106,8 +106,8 @@ if __name__ == "__main__":
             numerical_feats=feats,
             hyperparameter_optimization=False,
             kernel_type={
-                # "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-                # "count": args.K_count #"Matern32"   #args.K_count
+                "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+                "count": args.K_count #"Matern32"   #args.K_count
                 # "fp": "Graph", 
                 # "count": "Matern32"
                 },
