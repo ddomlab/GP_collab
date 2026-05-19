@@ -4,9 +4,9 @@ DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
 paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
 dataset="Rg data with clusters aging imputed"
-k_fps=("TanimotoRBF")
-k_counts=("RBF")
-k_mixing_methods=("product") 
+k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
+k_counts=("RBF" "Matern32" "Matern52")
+k_mixing_methods=("sum" "product" "averageProduct") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 30
+#BSUB -W 45
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"

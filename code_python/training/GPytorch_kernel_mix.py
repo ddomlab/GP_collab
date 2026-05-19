@@ -25,7 +25,6 @@ import gc
 # from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
 
 #Torch modules
-import torch
 # from torch.distributions import Gamma
 # from gpytorch.priors import Prior
 # from gpytorch.module import Module as TModule
@@ -33,64 +32,17 @@ import torch
 
 from Gpytorch_sskkernel import SubsequenceStringKernel
 
-# class InverseGammaPrior(Prior, Gamma):
-#     r"""
-#     Inverse-Gamma prior parameterized by concentration (alpha) and rate (beta).
-
-#     If X ~ InverseGamma(alpha, beta), then 1/X ~ Gamma(alpha, beta).
-
-#     log p_X(x) = log p_Gamma(1/x) + log|d(1/x)/dx|
-#                = log p_Gamma(1/x) - 2 log x
-#     """
-
-#     def __init__(self, concentration, rate, validate_args=False, transform=None):
-#         TModule.__init__(self)
-#         Gamma.__init__(self, concentration=concentration, rate=rate, validate_args=validate_args)
-#         _bufferize_attributes(self, ("concentration", "rate"))
-#         self._transform = transform
-
-#     def expand(self, batch_shape):
-#         batch_shape = torch.Size(batch_shape)
-#         return InverseGammaPrior(
-#             self.concentration.expand(batch_shape),
-#             self.rate.expand(batch_shape),
-#             transform=self._transform,
-#         )
-
-#     def log_prob(self, x):
-#         # Apply any gpytorch transform first (same convention as Prior.log_prob)
-#         x = self.transform(x)
-
-#         inv_x = x.reciprocal()
-#         # Gamma.log_prob on inv_x (use super(Prior, self) to jump to Gamma in the MRO)
-#         gamma_lp = super(Prior, self).log_prob(inv_x)
-
-#         # Jacobian term for inv_x = 1/x is |d(1/x)/dx| = 1/x^2  -> log = -2 log x
-#         return gamma_lp - 2.0 * torch.log(x)
-
-#     def rsample(self, sample_shape=torch.Size()):
-#         # Sample from Gamma then invert
-#         s = super(Prior, self).rsample(sample_shape)
-#         return s.reciprocal()
-
-#     def __call__(self, *args, **kwargs):
-#         # Match gpytorch's torch_priors pattern
-#         return super(Gamma, self).__call__(*args, **kwargs)
-
-
-    
-
-
-def weighted_tanimoto_distance(x1, x2, eps=1e-6):
+def weighted_tanimoto(x1, x2, eps=1e-6, dist=True):
     x1e = x1.unsqueeze(-2)
     x2e = x2.unsqueeze(-3)
 
     numerator = torch.min(x1e, x2e).sum(dim=-1)
     denominator = torch.max(x1e, x2e).sum(dim=-1)
 
-    sim = (numerator + eps) / (denominator + eps)
-    dist = 1.0 - sim
-    return torch.clamp(dist, min=0.)
+    w_t = (numerator + eps) / (denominator + eps)
+    if dist:
+        w_t = 1.0 - w_t
+    return torch.clamp(w_t, min=0.)
 
 
 class Tanimoto(Kernel):
@@ -107,15 +59,15 @@ class Tanimoto(Kernel):
                 )
             num = torch.min(x1, x2).sum(dim=-1)
             den = torch.max(x1, x2).sum(dim=-1)
-            dist = 1.0 - (num + 1e-6) / (den + 1e-6)
+            sim = (num + 1e-6) / (den + 1e-6)
 
-            return torch.clamp(dist, min=0.)
+            return torch.clamp(sim, min=0.)
         
         else:
             # if self.last_dim_is_batch:
                 # x1 = x1.transpose(-1, -2).unsqueeze(-1)
                 # x2 = x2.transpose(-1, -2).unsqueeze(-1)
-            return weighted_tanimoto_distance(x1, x2)
+            return weighted_tanimoto(x1, x2, dist=False)
 
 class TanimotoRBF(Kernel):
     is_stationary = False
@@ -141,7 +93,7 @@ class TanimotoRBF(Kernel):
                 -0.5 * (dist.clamp(min=0.) / self.lengthscale).pow(2)
             )
 
-        dist = weighted_tanimoto_distance(x1, x2)
+        dist = weighted_tanimoto(x1, x2)
         return torch.exp(
             -0.5 * (dist / self.lengthscale).pow(2)
         )
@@ -177,7 +129,7 @@ class TanimotoMatern(Kernel):
                 raise RuntimeError("nu expected to be 1.5 or 2.5")
             return K
 
-        dist = weighted_tanimoto_distance(x1, x2)
+        dist = weighted_tanimoto(x1, x2)
         r = dist / self.lengthscale
         if self.nu == 1.5:
             sqrt3_r = 3**0.5 * r
