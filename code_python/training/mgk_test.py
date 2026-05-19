@@ -4,10 +4,6 @@ from pathlib import Path
 import pytest
 import pandas as pd
 import numpy as np
-from mgktools.data.data import Dataset
-from mgktools.kernels.utils import get_kernel_config
-from mgktools.hyperparameters import *
-from mgktools.models import GaussianProcessRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, root_mean_squared_error
 
@@ -20,6 +16,8 @@ RESULTS = HERE.parent.parent / "results"
 
 
 def prepare_mgk_dataset(df, smiles_col, features_cols, targets_cols):
+    from mgktools.data.data import Dataset
+
     dataset = Dataset.from_df(df=df,
                               smiles_columns=[smiles_col],
                               features_columns=features_cols,
@@ -48,12 +46,19 @@ df = pd.concat([smiles, w_data[feats],w_data[all_targets]], axis=1)
 
 
 # print(df.head())
-@pytest.mark.parametrize('mgk_file', [
-                                      product
-                                      ])
+@pytest.mark.parametrize('mgk_file_name', ['product'])
 @pytest.mark.parametrize('loss_function', ['likelihood'])
 @pytest.mark.parametrize('optimizer', ['L-BFGS-B'])
-def test_gradient_Graph(mgk_file, loss_function, optimizer):
+def test_gradient_Graph(mgk_file_name, loss_function, optimizer):
+    from mgktools.data.data import Dataset
+    from mgktools.hyperparameters import product
+    from mgktools.kernels.utils import get_kernel_config
+    from mgktools.models import GaussianProcessRegressor
+
+    mgk_file = {
+        "product": product,
+    }[mgk_file_name]
+
     dataset = Dataset.from_df(df=df,
                               smiles_columns=[f"{polymer_unit[0]} SMILES"],
                               features_columns=feats,

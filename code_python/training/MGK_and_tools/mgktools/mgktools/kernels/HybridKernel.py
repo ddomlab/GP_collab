@@ -220,7 +220,7 @@ class HybridKernel:
 
             if length_scale.size == 1:
                 name = names[0] if names is not None and len(names) == 1 else kernel_name
-                out[f"{name}.length_scale"] = float(length_scale[0])
+                out[f"{name}"] = float(length_scale[0])
                 continue
 
             if names is None and self.composition_names is not None and i < len(self.composition_names):
@@ -230,7 +230,7 @@ class HybridKernel:
 
             for j, value in enumerate(length_scale):
                 name = names[j] if j < len(names) else f"{kernel_name}_{j}"
-                out[f"{name}.length_scale"] = float(value)
+                out[f"{name}"] = float(value)
 
         return out
 

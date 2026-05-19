@@ -835,9 +835,13 @@ class GPytorchMAPRegressor:
             [k for k in self.feat_idx_.keys() if k.startswith("fp_")]
         )
 
-        count_names = sorted(
-            list(self.count_feat_name_idx_.keys())
-        )
+        count_names = [
+            name
+            for name, _ in sorted(
+                self.count_feat_name_idx_.items(),
+                key=lambda item: item[1],
+            )
+        ]
 
         def _extract_ls(kernel, key_prefix):
             if not hasattr(kernel, "lengthscale") or kernel.lengthscale is None:
@@ -1140,7 +1144,13 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
     def _get_lengthscale(self):
             summary = {}
             fp_keys = sorted([k for k in self.feat_idx.keys() if k.startswith("fp_")])
-            count_names = sorted(list(self.count_feat_name_idx.keys()))
+            count_names = [
+                name
+                for name, _ in sorted(
+                    self.count_feat_name_idx.items(),
+                    key=lambda item: item[1],
+                )
+            ]
 
             fp_has_tanimoto = "tanimoto" in str(self.kernel_type["fp"]).lower()
             if fp_has_tanimoto:

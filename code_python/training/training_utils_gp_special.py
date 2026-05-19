@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import time
-from typing import Callable, Optional, Union, Dict, Tuple
+from typing import Callable, Optional, Union, Dict, Tuple, Any
 import torch
 
 import numpy as np
@@ -34,22 +34,6 @@ from scoring import (
 )
 from utils import split_for_training
 from filter_data import sanitize_dataset
-
-## imports for MGK
-from mgktools.data.data import Dataset
-from mgktools.kernels.utils import get_kernel_config
-from mgktools.hyperparameters import *
-from mgktools.kernels.base import BaseKernelConfig
-
-
-
-graph_kerenel_files = {
-    "product": [product],
-    "sum": [additive],
-}
-
-
-
 
 HERE: Path = Path(__file__).resolve().parent
 
@@ -168,54 +152,63 @@ def _prepare_data(
     """
 
     if "mgk" in regressor_type.lower():
-            df = dataset[structural_features + numerical_feats + target_features]
-            df = sanitize_dataset(dataset, target_features, dropna=True)
-            if features_impute:
-                imp = imputer_factory[imputer]
-                df[features_impute] = imp.fit_transform(df[features_impute])
-            mgk_dataset = Dataset.from_df(
-                              df=df,
-                              smiles_columns=structural_features,
-                              features_columns=numerical_feats,
-                              targets_columns=target_features,
-                              preserve_dataframe=True,
-                              )
-            mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
-            mgk_dataset.create_graphs(n_jobs=4)
-            mgk_dataset.unify_datatype()
-            # "per_feature"
-            # print(mgk_dataset)
-            mgk_kernel_config = get_kernel_config(
-                            dataset=mgk_dataset,
-                            graph_kernel_type="graph",
-                            mgk_hyperparameters_files=graph_kerenel_files[kernel_mixing_method]*len(structural_features),
-                            features_kernel_type=kernel_type["count"],
-                            features_hyperparameters_file=f"{kernel_type["count"]}.json",
-                            hybrid_rule=kernel_mixing_method,
-                            feature_mode=kwargs.get("kernel_feature_mode", None)
+        from mgktools.data.data import Dataset
+        from mgktools.hyperparameters import additive, product
+        from mgktools.kernels.utils import get_kernel_config
+
+        graph_kernel_files = {
+            "product": [product],
+            "sum": [additive],
+        }
+
+        df = dataset[structural_features + numerical_feats + target_features]
+        df = sanitize_dataset(dataset, target_features, dropna=True)
+        if features_impute:
+            imp = imputer_factory[imputer]
+            df[features_impute] = imp.fit_transform(df[features_impute])
+        mgk_dataset = Dataset.from_df(
+                          df=df,
+                          smiles_columns=structural_features,
+                          features_columns=numerical_feats,
+                          targets_columns=target_features,
+                          preserve_dataframe=True,
+                          )
+        mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
+        mgk_dataset.create_graphs(n_jobs=4)
+        mgk_dataset.unify_datatype()
+        # "per_feature"
+        # print(mgk_dataset)
+        mgk_kernel_config = get_kernel_config(
+                        dataset=mgk_dataset,
+                        graph_kernel_type="graph",
+                        mgk_hyperparameters_files=graph_kernel_files[kernel_mixing_method]*len(structural_features),
+                        features_kernel_type=kernel_type["count"],
+                        features_hyperparameters_file=f"{kernel_type['count']}.json",
+                        hybrid_rule=kernel_mixing_method,
+                        feature_mode=kwargs.get("kernel_feature_mode", None)
+                        )
+
+        preprocessor: Pipeline = preprocessing_workflow(
+                                                    # imputer=imputer,
+                                                    # feat_to_impute=features_impute,
+                                                    # numerical_feat=numerical_feats,
+                                                    # structural_feat=unrolled_feats,
+                                                    # special_column=special_impute,
+                                                    regressor_type=regressor_type,
+                                                    scaler=transform_type
+                                                    )
+
+        score,predication = run(
+                            # X,
+                            # y,
+                            preprocessor=preprocessor,
+                            full_dataset=mgk_dataset,
+                            regressor_type=regressor_type,
+                            hyperparameter_optimization=hyperparameter_optimization,
+                            kernel_parameters=mgk_kernel_config,
+                            **kwargs
                             )
-            
-            preprocessor: Pipeline = preprocessing_workflow(
-                                                        # imputer=imputer,
-                                                        # feat_to_impute=features_impute,
-                                                        # numerical_feat=numerical_feats,
-                                                        # structural_feat=unrolled_feats,
-                                                        # special_column=special_impute,
-                                                        regressor_type=regressor_type,
-                                                        scaler=transform_type
-                                                        )
-            
-            score,predication = run(
-                                # X,
-                                # y,
-                                preprocessor=preprocessor,
-                                full_dataset=mgk_dataset,
-                                regressor_type=regressor_type,
-                                hyperparameter_optimization=hyperparameter_optimization,
-                                kernel_parameters=mgk_kernel_config,
-                                **kwargs
-                                )
-            y = mgk_dataset.y
+        y = mgk_dataset.y
     else:
         X, y, unrolled_feats, kernel_parameters = filter_dataset(
                                                 raw_dataset=dataset,
@@ -264,12 +257,12 @@ def _prepare_data(
 def run(
     X=None, y=None,
     regressor_type: str=None,
-    full_dataset:Optional[Dataset]=None,
+    full_dataset:Optional[Any]=None,
     features_group: Optional[dict[str, list[int]]]=None,
     preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
     target_transformer:str=None, 
     hyperparameter_optimization: bool = False,
-    kernel_parameters: Optional[BaseKernelConfig]=None,
+    kernel_parameters: Optional[Any]=None,
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
     **kwargs,

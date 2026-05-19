@@ -37,9 +37,6 @@ from Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
                             AdditiveMatern, ProductKernel,
                             AddKernel, weighted_jaccard)
 
-## import MGK
-from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor, MGKRegressorSklearn
-
 cutoffs = {
             # "Rh1 (nm)":1000,
             # "Rg1 (nm)":1000,
@@ -195,6 +192,8 @@ def optimized_models(
         return GPMixMCMCRegressor(**kwargs)
     
     if "MGK" == model_name:
+        from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor
+
         return MarginalizedGaussianProcessRegressor(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
@@ -202,6 +201,8 @@ def optimized_models(
                 normalize_y=normalize_y,
                 )
     if "MGK-sklearn" == model_name:
+        from mgktools.models.regression.gpr.gpr import MGKRegressorSklearn
+
         return MGKRegressorSklearn(
                 kernel=graph_kernel_config.kernel,
                 optimizer="L-BFGS-B",
