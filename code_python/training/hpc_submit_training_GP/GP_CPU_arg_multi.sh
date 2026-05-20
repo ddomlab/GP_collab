@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
-paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset="cleaned_dataset_pervaporation_membranes_wang"
+paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+dataset="cleaned_dataset_Ultrafiltration Membrane"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "averageProduct") 
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 40
+#BSUB -W 4:05
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
