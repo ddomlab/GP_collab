@@ -1,0 +1,61 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.44±0.18	 r2: 0.37±0.05
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-Matern32_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c059n04>
+Subject: Job 257773: <structure_numerical_20260520> in cluster <Hazel> Done
+
+Job <structure_numerical_20260520> was submitted from host <c052n01> by user <sdehgha2> in cluster <Hazel> at Wed May 20 14:57:35 2026
+Job was executed on host(s) <6*c059n04>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Wed May 20 14:57:37 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 20 14:57:37 2026
+Terminated at Wed May 20 15:17:57 2026
+Results reported at Wed May 20 15:17:57 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 40
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260520"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoMatern52_Matern32_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoMatern52_Matern32_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern52                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   5669.93 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.16 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   1224 sec.
+    Turnaround time :                            1222 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoMatern52_Matern32_product.err> for stderr output of this job.
+

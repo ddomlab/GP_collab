@@ -1,0 +1,57 @@
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@n0380>
+Subject: Job 257787: <structure_numerical_20260520> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260520> was submitted from host <c052n01> by user <sdehgha2> in cluster <Hazel> at Wed May 20 14:57:42 2026
+Job was executed on host(s) <6*n0380>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Wed May 20 14:57:44 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 20 14:57:44 2026
+Terminated at Wed May 20 14:59:41 2026
+Results reported at Wed May 20 14:59:41 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 40
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260520"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 134.
+
+Resource usage summary:
+
+    CPU time :                                   255.61 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.33 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   136 sec.
+    Turnaround time :                            119 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260520/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct.err> for stderr output of this job.
+
