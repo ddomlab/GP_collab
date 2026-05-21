@@ -1,0 +1,61 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 15.33±0.83	 r2: 0.76±0.02
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoRBF-RBF_sum)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n01>
+Subject: Job 260928: <structure_numerical_20260521> in cluster <Hazel> Done
+
+Job <structure_numerical_20260521> was submitted from host <c044n01> by user <sdehgha2> in cluster <Hazel> at Thu May 21 09:23:09 2026
+Job was executed on host(s) <6*c044n01>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Thu May 21 09:23:09 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu May 21 09:23:09 2026
+Terminated at Thu May 21 09:37:57 2026
+Results reported at Thu May 21 09:37:57 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 50
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260521"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260521/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_TanimotoRBF_RBF_sum.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260521/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_TanimotoRBF_RBF_sum.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method sum                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4201.52 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             2.90 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   887 sec.
+    Turnaround time :                            888 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260521/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_TanimotoRBF_RBF_sum.err> for stderr output of this job.
+
