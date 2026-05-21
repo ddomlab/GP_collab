@@ -120,7 +120,7 @@ DATASET_CONFIG = {
         
     "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation": {
         "features": [
-            "Equiv. AcOH", "Equiv. TTIP", "Solvent_Encoded", "Reaction Conc [mM]"
+            "Equiv AcOH", "Equiv TTIP", "Solvent_Encoded", "Reaction Conc (mM)"
         ],
         "polymer_unit": ["Substrate"],
         "target": ["Approx Conv (%)"],
@@ -186,7 +186,11 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
             }
             return fp_features, unrolling_featurs
         else:
-              return None, None
+            unrolling_featurs = {
+                                "representation": None,
+                                "unit_name": None,
+                                }
+            return None, unrolling_featurs
 
 
 def sanitize_dataset(
@@ -275,7 +279,7 @@ def filter_dataset(
     if cutoff:
         dataset = apply_cutoff(dataset,cutoff)
 
-    if unroll["representation"] != "SMILES":
+    if unroll["representation"] != "SMILES" and unroll["representation"] is not None:
         structure_features: pd.DataFrame = unrolling_factory[
             unroll["representation"]](dataset[structure_feats], **unroll)
 

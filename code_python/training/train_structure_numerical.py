@@ -10,10 +10,10 @@ from data_handling import save_results
 from utils import parse_arguments
 import sys
 
-# sys.modules.setdefault("numpy._core",         np.core)
-# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+sys.modules.setdefault("numpy._core",         np.core)
+sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
@@ -42,7 +42,7 @@ def main_structural_numerical(
     imputer:Optional[str]=None,
     **kwargs,
 ) -> None:
-
+    
     structural_features, unroll_single_feat = get_structural_info(representation, polymer_unit, radius, vector)
     scores, predictions  =   train_regressor(
                                             dataset=dataset,
@@ -63,7 +63,7 @@ def main_structural_numerical(
   
     save_results(scores,
                 predictions=predictions,
-                representation=unroll_single_feat["representation"],
+                representation=representation,
                 target_features=target_features,
                 regressor_type=regressor_type,
                 numerical_feats=numerical_feats,
@@ -84,8 +84,8 @@ def main_structural_numerical(
 if __name__ == "__main__":
     
     args = parse_arguments()
-    PAPER = args.paper
-    dataset_name = args.dataset
+    PAPER = "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+    dataset_name = "cleaned_suzuki_synthesis"
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     for targ in all_targets:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
             representation="ECFP", #"ECFP" # MG
             radius=3,
             vector="count",
-            regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn
+            regressor_type="NGB", #"GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
@@ -104,14 +104,14 @@ if __name__ == "__main__":
             target_transformer="Standard",
             numerical_feats=feats,
             hyperparameter_optimization=False,
-            kernel_type={
-                "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-                "count": args.K_count #"Matern32"   #args.K_count
-                # "fp": "Graph", 
-                # "count": "Matern32"
-                },
-            kernel_mixing_method=args.Kernel_mixing_method,
-            use_cuda=False,
+            # kernel_type={
+            #     "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+            #     "count": args.K_count #"Matern32"   #args.K_count
+            #     # "fp": "Graph", 
+            #     # "count": "Matern32"
+            #     },
+            # kernel_mixing_method=args.Kernel_mixing_method,
+            # use_cuda=False,
             # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
             # hyperparameter_save_dir=optuna_save_dir, # for MGK
             # imputer="mean",
