@@ -157,7 +157,11 @@ def process_scores(
     
     score_types: list[str] = [
         key for key in scores[first_key].keys() 
-        if key.startswith("test_") and "lengthscale" not in key
+        if (
+            key.startswith("test_")
+            and "lengthscale" not in key
+            and "feature_importance" not in key
+        )
     ]
 
     arr = np.array(scores[first_key]["test_r2"])
@@ -630,7 +634,7 @@ def _custom_fit_predict_score(
         model.fit(X_train, y_train, **fit_kwargs)
         y_pred = model.predict(X_test)
         scores = {
-            f"test_{name}": scorer(y_test, y_pred)
+            f"{name}": scorer(y_test, y_pred)
             for name, scorer in scoring.items()
         }
     
@@ -679,14 +683,20 @@ def custom_cross_validate(
 
     scores = defaultdict(list)
     n_samples = len(y)
-    predictions = np.full(n_samples, np.nan)
-        
-    for test_idx, y_pred, fold_scores in parallel_results:
-        predictions[test_idx] = y_pred
 
+    predictions = {
+        "y_pred": np.full(n_samples, np.nan),
+        "y_std": np.full(n_samples, np.nan),
+    }
+
+    for test_idx, y_result, fold_scores in parallel_results:
+        
+        predictions["y_pred"][test_idx] = y_result
+        # if "y_std" in y_result:
+            # predictions["y_std"][test_idx] = y_result["y_std"]
+        
         for key, val in fold_scores.items():
-                scores[key].append(val)
-                
+            scores[f"test_{key}"].append(val)
     return scores, predictions
 
 
@@ -701,30 +711,6 @@ def cross_validate_regressor(
     return_indices: bool = False,
     n_jobs: int = -1
     ) -> tuple[dict[str, float], np.ndarray]:
-
-        # MULTIOUPUT 
-        # if y.ndim > 1 and y.shape[1] > 1:
-  
-        #     scorers = {
-        #             "r2": r2_scorer_multi,
-        #             "rmse": rmse_scorer_multi,
-        #             "mae": mae_scorer_multi
-        #             }
-        
-
-        #     score =  multioutput_cross_validate(
-        #         estimator= regressor,
-        #         X=X,
-        #         y= y,
-        #         cv=cv,
-        #         scorers=scorers,
-        #         n_jobs=-1,
-        #         verbose=0
-        #         )
-
-        # # SINGLE OUTPUT
-        # else:
-        
 
         if custom   :
             scorers = {

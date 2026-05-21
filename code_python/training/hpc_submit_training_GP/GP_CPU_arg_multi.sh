@@ -1,12 +1,12 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAPRegressor"
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-dataset="cleaned_dataset_Ultrafiltration Membrane"
-k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
-k_counts=("RBF" "Matern32" "Matern52")
-k_mixing_methods=("sum" "product" "averageProduct") 
+# model="GPytorchMAPRegressor"
+paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+dataset="cleaned_suzuki_synthesis"
+k_fps=("TanimotoRBF")
+k_counts=("RBF")
+k_mixing_methods=("sum") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 4:05
+#BSUB -W 50
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
