@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 # model="GPytorchMAPRegressor"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="Beyond molecular structure_seifrid_imputed"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
 models=("XGBR" "RF" "NGB")
 # k_fps=("TanimotoRBF")
 # k_counts=("RBF")
