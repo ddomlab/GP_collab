@@ -184,3 +184,189 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err> for stderr output of this job.
 
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 6.98±0.95	 r2: 0.95±0.01
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c046n02>
+Subject: Job 291221: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:36 2026
+Job was executed on host(s) <10*c046n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:38 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 14:55:38 2026
+Terminated at Fri May 22 14:56:36 2026
+Results reported at Fri May 22 14:56:36 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 10
+#BSUB -W 10
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   110.67 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              16
+    Max Threads :                                19
+    Run time :                                   61 sec.
+    Turnaround time :                            60 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.51±0.47	 r2: 0.91±0.01
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c043n04>
+Subject: Job 291222: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:37 2026
+Job was executed on host(s) <10*c043n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:39 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 14:55:39 2026
+Terminated at Fri May 22 14:56:58 2026
+Results reported at Fri May 22 14:56:58 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 10
+#BSUB -W 10
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   246.60 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             0.60 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              16
+    Max Threads :                                19
+    Run time :                                   92 sec.
+    Turnaround time :                            81 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.99±0.56	 r2: 0.9±0.01
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c048n03>
+Subject: Job 291223: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:37 2026
+Job was executed on host(s) <10*c048n03>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 14:55:39 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 14:55:39 2026
+Terminated at Fri May 22 14:57:10 2026
+Results reported at Fri May 22 14:57:10 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 10
+#BSUB -W 10
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   254.24 sec.
+    Max Memory :                                 5 GB
+    Average Memory :                             1.60 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               27.00 GB
+    Max Swap :                                   -
+    Max Processes :                              16
+    Max Threads :                                19
+    Run time :                                   106 sec.
+    Turnaround time :                            93 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP___.err> for stderr output of this job.
+
