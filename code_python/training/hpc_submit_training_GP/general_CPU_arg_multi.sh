@@ -3,7 +3,7 @@
 DATE=$(date +%Y%m%d)
 # model="GPytorchMAPRegressor"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="flux_data_imputed"
+dataset="separation_data_imputed"
 models=("XGBR" "RF" "NGB")
 # k_fps=("TanimotoRBF")
 # k_counts=("RBF")
