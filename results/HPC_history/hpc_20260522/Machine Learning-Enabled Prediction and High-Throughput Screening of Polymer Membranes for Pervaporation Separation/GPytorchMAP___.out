@@ -1,0 +1,402 @@
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.18±0.04	 r2: 0.92±0.04
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.25±0.05	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c042n02>
+Subject: Job 291249: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:40 2026
+Job was executed on host(s) <5*c042n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:43 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:05:43 2026
+Terminated at Fri May 22 15:06:20 2026
+Results reported at Fri May 22 15:06:20 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   68.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   41 sec.
+    Turnaround time :                            40 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.28±0.02	 r2: 0.81±0.02
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.34±0.03	 r2: 0.96±0.01
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 6
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c045n04>
+Subject: Job 291251: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:41 2026
+Job was executed on host(s) <5*c045n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:44 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:05:44 2026
+Terminated at Fri May 22 15:07:23 2026
+Results reported at Fri May 22 15:07:23 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   328.58 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.33 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   119 sec.
+    Turnaround time :                            102 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.2±0.02	 r2: 0.9±0.02
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.26±0.04	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n04>
+Subject: Job 291250: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:41 2026
+Job was executed on host(s) <5*c044n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:05:43 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:05:43 2026
+Terminated at Fri May 22 15:07:29 2026
+Results reported at Fri May 22 15:07:29 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   332.02 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.83 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                17
+    Run time :                                   107 sec.
+    Turnaround time :                            108 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.18±0.04	 r2: 0.92±0.04
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.25±0.05	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c046n02>
+Subject: Job 291255: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:06:58 2026
+Job was executed on host(s) <6*c046n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:07:00 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:07:00 2026
+Terminated at Fri May 22 15:07:56 2026
+Results reported at Fri May 22 15:07:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   81.15 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   66 sec.
+    Turnaround time :                            58 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.2±0.02	 r2: 0.9±0.02
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.26±0.04	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n04>
+Subject: Job 291256: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:06:59 2026
+Job was executed on host(s) <6*c044n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:07:01 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:07:01 2026
+Terminated at Fri May 22 15:08:51 2026
+Results reported at Fri May 22 15:08:51 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   332.19 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.20 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   124 sec.
+    Turnaround time :                            112 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.28±0.02	 r2: 0.81±0.02
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.34±0.03	 r2: 0.96±0.01
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n02>
+Subject: Job 291257: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c045n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:06:59 2026
+Job was executed on host(s) <6*c044n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:07:01 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:07:01 2026
+Terminated at Fri May 22 15:09:03 2026
+Results reported at Fri May 22 15:09:03 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 12
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   370.05 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.33 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   141 sec.
+    Turnaround time :                            124 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP___.err> for stderr output of this job.
+

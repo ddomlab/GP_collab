@@ -1,0 +1,186 @@
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.1±0.15	 r2: 0.53±0.05
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c042n02>
+Subject: Job 291232: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c048n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:56 2026
+Job was executed on host(s) <5*c042n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:58 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:01:58 2026
+Terminated at Fri May 22 15:02:34 2026
+Results reported at Fri May 22 15:02:34 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   60.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.25 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   43 sec.
+    Turnaround time :                            38 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.02±0.18	 r2: 0.57±0.04
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c045n04>
+Subject: Job 291233: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c048n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:57 2026
+Job was executed on host(s) <5*c045n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:59 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:01:59 2026
+Terminated at Fri May 22 15:03:31 2026
+Results reported at Fri May 22 15:03:31 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   266.31 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   111 sec.
+    Turnaround time :                            94 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.03±0.17	 r2: 0.56±0.04
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n02>
+Subject: Job 291234: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c048n03> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:57 2026
+Job was executed on host(s) <5*c044n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:01:59 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:01:59 2026
+Terminated at Fri May 22 15:03:37 2026
+Results reported at Fri May 22 15:03:37 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   313.61 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.60 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   97 sec.
+    Turnaround time :                            100 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP___.err> for stderr output of this job.
+

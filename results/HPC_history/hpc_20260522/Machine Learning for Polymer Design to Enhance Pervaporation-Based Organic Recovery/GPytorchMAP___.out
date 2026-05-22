@@ -1,0 +1,366 @@
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.25±0.02	 r2: 0.88±0.02
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c045n03>
+Subject: Job 291238: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c046n02> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:17 2026
+Job was executed on host(s) <5*c045n03>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:19 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:03:19 2026
+Terminated at Fri May 22 15:04:05 2026
+Results reported at Fri May 22 15:04:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   79.36 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.25 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   49 sec.
+    Turnaround time :                            48 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.3±0.02	 r2: 0.9±0.01
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c045n04>
+Subject: Job 291242: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c044n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:05 2026
+Job was executed on host(s) <5*c045n04>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:08 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:04:08 2026
+Terminated at Fri May 22 15:04:54 2026
+Results reported at Fri May 22 15:04:54 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   80.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   53 sec.
+    Turnaround time :                            49 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.43±0.03	 r2: 0.66±0.03
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c042n02>
+Subject: Job 291240: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c046n02> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:18 2026
+Job was executed on host(s) <5*c042n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:21 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:03:21 2026
+Terminated at Fri May 22 15:05:09 2026
+Results reported at Fri May 22 15:05:09 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   415.57 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.50 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   125 sec.
+    Turnaround time :                            111 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.51±0.02	 r2: 0.69±0.02
+Filename: (ECFP3_count_512-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c046n02>
+Subject: Job 291244: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c044n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:06 2026
+Job was executed on host(s) <5*c046n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:16 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:04:16 2026
+Terminated at Fri May 22 15:06:19 2026
+Results reported at Fri May 22 15:06:19 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   460.34 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.33 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   145 sec.
+    Turnaround time :                            133 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c048n03>
+Subject: Job 291239: <structure_numerical_20260522> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260522> was submitted from host <c046n02> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:18 2026
+Job was executed on host(s) <5*c048n03>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:03:19 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:03:19 2026
+Terminated at Fri May 22 15:09:27 2026
+Results reported at Fri May 22 15:09:27 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   1659.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.19 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   386 sec.
+    Turnaround time :                            369 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c044n02>
+Subject: Job 291243: <structure_numerical_20260522> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260522> was submitted from host <c044n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:06 2026
+Job was executed on host(s) <5*c044n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:04:08 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:04:08 2026
+Terminated at Fri May 22 15:10:18 2026
+Results reported at Fri May 22 15:10:18 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 5
+#BSUB -W 6
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   1644.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.07 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              11
+    Max Threads :                                14
+    Run time :                                   371 sec.
+    Turnaround time :                            372 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP___.err> for stderr output of this job.
+
