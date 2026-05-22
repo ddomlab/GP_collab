@@ -259,3 +259,264 @@ PS:
 
 Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err> for stderr output of this job.
 
+Running seed: 6
+Running seed: 6
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 75.05±6.21	 r2: 0.76±0.08
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.33±1.13	 r2: 0.73±0.11
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.25±1.47	 r2: 0.7±0.09
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.75±1.34	 r2: 0.41±0.14
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.37±1.64	 r2: 0.76±0.09
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.75±1.34	 r2: 0.41±0.14
+Filename: (ECFP3_count_512-COUNT)_XGBR_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c046n02>
+Subject: Job 291401: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c046n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:43 2026
+Job was executed on host(s) <6*c046n02>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:46 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:53:46 2026
+Terminated at Fri May 22 15:54:57 2026
+Results reported at Fri May 22 15:54:57 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 30
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type XGBR                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   121.57 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   85 sec.
+    Turnaround time :                            74 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 72.19±6.72	 r2: 0.78±0.05
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.18±0.94	 r2: 0.74±0.09
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.22±1.1	 r2: 0.71±0.06
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.97±1.22	 r2: 0.5±0.09
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.69±1.33	 r2: 0.75±0.07
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.98±1.22	 r2: 0.5±0.09
+Filename: (ECFP3_count_512-COUNT)_RF_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c048n03>
+Subject: Job 291402: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c046n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:44 2026
+Job was executed on host(s) <6*c048n03>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:46 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:53:46 2026
+Terminated at Fri May 22 15:55:23 2026
+Results reported at Fri May 22 15:55:23 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 30
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type RF                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   282.62 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.17 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                22
+    Run time :                                   112 sec.
+    Turnaround time :                            99 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err> for stderr output of this job.
+
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 79.59±12.05	 r2: 0.74±0.06
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.05±0.86	 r2: 0.74±0.1
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.99±1.35	 r2: 0.66±0.07
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.56±1.2	 r2: 0.44±0.09
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 11.49±1.17	 r2: 0.65±0.06
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.55±1.2	 r2: 0.44±0.09
+Filename: (ECFP3_count_512-COUNT)_NGB_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c049n01>
+Subject: Job 291403: <structure_numerical_20260522> in cluster <Hazel> Done
+
+Job <structure_numerical_20260522> was submitted from host <c046n04> by user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:44 2026
+Job was executed on host(s) <6*c049n01>, in queue <debug>, as user <sdehgha2> in cluster <Hazel> at Fri May 22 15:53:47 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri May 22 15:53:47 2026
+Terminated at Fri May 22 15:56:56 2026
+Results reported at Fri May 22 15:56:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 30
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260522"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --regressor_type NGB                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   707.09 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.89 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   208 sec.
+    Turnaround time :                            192 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260522/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP___.err> for stderr output of this job.
+
