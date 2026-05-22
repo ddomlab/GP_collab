@@ -16,8 +16,8 @@ mkdir -p "$output_dir"
 for model in "${models[@]}"; do
     bsub <<EOT
 
-#BSUB -n 10
-#BSUB -W 10
+#BSUB -n 5
+#BSUB -W 6
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
