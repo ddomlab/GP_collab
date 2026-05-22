@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 # model="GPytorchMAPRegressor"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
+paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+dataset="cleaned_dataset_Ultrafiltration Membrane"
 models=("XGBR" "RF" "NGB")
 # k_fps=("TanimotoRBF")
 # k_counts=("RBF")
@@ -17,7 +17,7 @@ for model in "${models[@]}"; do
     bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 6
+#BSUB -W 30
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
