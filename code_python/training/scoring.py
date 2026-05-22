@@ -18,6 +18,7 @@ from sklearn.model_selection import (
 from utils import split_for_training
 import shap
 from sklearn.base import clone
+from sklearn.ensemble import BaggingRegressor
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
@@ -398,6 +399,195 @@ def get_feature_importances_from_cv(score: dict, X: np.ndarray | None = None) ->
         score["feature_importance_SHAP"] = all_shap_importances
 
 
+def get_tree_uncerainty(estimator,model_type, X_test):
+    ttr = estimator.named_steps['regressor']
+    reg= ttr.regressor_
+    y_transformer = ttr.transformer_
+    pre = estimator.named_steps["preprocessor"]
+    X_test_transformed = pre.transform(X_test)
+    
+    if model_type == "NGB":
+        y_std = (
+            reg.pred_dist(X_test_transformed).scale
+            * y_transformer.scale_
+        )
+    
+    elif model_type == "RF":
+        y_preds_scaled = np.asarray(
+            Parallel(n_jobs=-1)(
+                delayed(tree.predict)(X_test_transformed)
+                for tree in reg.estimators_
+            )
+        )
+
+        y_std = (
+            np.std(y_preds_scaled, axis=0)
+            * y_transformer.scale_
+        )
+    elif model_type == "XGBR":
+        y_std = None
+
+    return y_std
+
+
+def _tree_fit_predict_score(
+        estimator, 
+        model_type:str,
+        X, y,
+        train_idx, 
+        test_idx, 
+        scoring: Dict,
+        return_estimator: bool,
+        return_feature_importances: bool,
+        early_stopping:bool,
+        UQ: bool
+        ):
+    """
+    - clone estimator
+    - split train into train / eval
+    - fit with early stopping (XGB or NGBoost)
+    - predict on test
+    - compute scores
+    """
+
+    model = clone(estimator)
+
+    X_train= split_for_training(X, train_idx)
+    y_train = split_for_training(y, train_idx)
+    X_test = split_for_training(X, test_idx)
+    y_test = split_for_training(y, test_idx)
+
+    # Internal validation split (ONLY from training fold)
+    fit_kwargs = {}
+    y_result = {"y_pred": None}
+    results = {}
+    if  early_stopping:
+        print("Using early stopping during training...")
+        X_train, X_eval, y_train, y_eval = train_test_split(
+            X_train,
+            y_train,
+            test_size=0.2,
+            random_state=42,
+        )
+
+        # ---- Early stopping dispatch ----
+        preprocessor = clone(model.named_steps["preprocessor"])
+        reg = model.named_steps["regressor"]
+        inner_model = reg.regressor
+        yt  = clone(reg.transformer) 
+        y_train_2d = np.asarray(y_train).reshape(-1, 1)
+        y_eval_2d  = np.asarray(y_eval).reshape(-1, 1)
+        yt.fit(y_train_2d)
+        # y_train_tgt = yt.transform()
+        y_eval_tgt  = yt.transform(y_eval_2d)
+        preprocessor.fit(X_train)
+
+        X_train_t = preprocessor.transform(X_train)
+        X_eval_t  = preprocessor.transform(X_eval)
+        X_test_t  = preprocessor.transform(X_test)
+
+
+
+        fit_sig = inspect.signature(inner_model.fit).parameters
+
+        # XGBoost / LightGBM style
+        if "eval_set" in fit_sig:
+            fit_kwargs["eval_set"] = [(X_eval_t, y_eval_tgt)]
+            fit_kwargs["verbose"] = False
+
+        elif "X_val" in fit_sig and "Y_val" in fit_sig:
+            fit_kwargs["X_val"] = X_eval_t
+            fit_kwargs["Y_val"] = y_eval_tgt
+        else:
+            raise ValueError("Early stopping requested but the model does not support eval_set or X_val/Y_val.")
+
+        reg.fit(X_train_t, y_train, **fit_kwargs)
+        # print(f"best score, {reg.regressor_.best_score}")
+        # best_iteration = reg.regressor_.best_iteration
+        # print(f"Best iteration: {best_iteration}")
+        y_pred = reg.predict(X_test_t)
+        y_result["y_pred"] = y_pred
+        results = {
+            f"test_{name}": scorer(y_test, y_result["y_pred"])
+            for name, scorer in scoring.items()
+        }
+
+        if return_feature_importances:
+            # MDI_importances = []
+            # shap_importances = []
+
+            model_inner = reg.regressor_   # ✅ FIX
+            feature_names = preprocessor.get_feature_names_out()
+
+            raw_fi = model_inner.feature_importances_
+            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
+            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            results["feature_importance_MDI"] = dict(zip(feature_names, feat_imp))
+
+            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
+            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
+
+            shap_values = explainer(X_train_t)
+            fi_shap = np.abs(shap_values.values).mean(axis=0)
+            # shap_importances.append(dict(zip(feature_names, fi_shap)))
+
+            results["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
+        if return_estimator:
+            results["estimator"] = {
+                "preprocessor": preprocessor,
+                "regressor": reg,
+            }
+    else:
+        model.fit(X_train, y_train, **fit_kwargs)
+        y_pred = model.predict(X_test)
+        y_result["y_pred"] = y_pred
+        results = {
+            f"{name}": scorer(y_test, y_result["y_pred"])
+            for name, scorer in scoring.items()
+        }
+    
+        if return_feature_importances:
+            
+            MDI_importances = []
+            shap_importances = []
+            preprocessor = model.named_steps["preprocessor"]
+            feature_names = preprocessor.get_feature_names_out()
+            model_inner = model.named_steps["regressor"].regressor_
+            raw_fi = model_inner.feature_importances_
+            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
+            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
+            results["feature_importance_MDI"] = dict(zip(feature_names, feat_imp)) 
+            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
+            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
+            x_t_transformed = preprocessor.transform(X_train)
+            shap_values = explainer(x_t_transformed)
+            fi_shap = np.abs(shap_values.values).mean(axis=0)
+            # shap_importances.append(dict(zip(feature_names, fi_shap)))
+            results["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
+        if return_estimator:
+            results["estimator"] = model
+        
+        if UQ and model_type != "XGBR":
+            y_std = get_tree_uncerainty(model, model_type=model_type, X_test=X_test)
+            y_result["y_std"] = y_std
+            UQ_scorers = {
+                "ece": compute_ece,
+                "RUSC": compute_RUSC,
+                "cdf_ama": compute_cdf_ama,
+                "cvpp_ama": compute_cvpp_ama,
+                "nll": gaussian_nll,
+                "Cv": compute_Cv,
+                "sharpness": compute_sharpness
+            }
+            for name, uq_scorer in UQ_scorers.items():
+                if name in ["Cv", "sharpness"]:
+                    results[name] = float(uq_scorer(y_result["y_std"]))
+                else:
+                    results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
+
+    
+    return test_idx, y_result, results
+
 
 
 def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls: bool, UQ: bool):
@@ -451,16 +641,19 @@ def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scor
     return test_idx, y_result, results
 
 
-def gp_cross_validate(
+def cross_validate(
     estimator,
-    model_type:str,
+    model_type,
     X,
     y,
     cv,
     scoring,
     UQ,
-    return_ls,
     n_jobs,
+    return_ls,
+    return_estimator,
+    return_feature_importances,
+    early_stopping
 ):
     """
     Returns:
@@ -470,18 +663,21 @@ def gp_cross_validate(
             - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
               only available when returned by the model.
     """
-    # if "mgk" in model_type.lower():
-    #     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
-    #     delayed(_mgk_fit_and_score_fold)(estimator, X, y, train_idx, test_idx, scoring, UQ)
-    #     for train_idx, test_idx in cv.split(X, y)
-    #     )
-    # else:
-    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
-            delayed(_gp_fit_predict_score)(
-                estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls, UQ
+    if "gp" in model_type.lower() or "mgk" in model_type.lower():
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                delayed(_gp_fit_predict_score)(
+                    estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls, UQ
+                )
+                for train_idx, test_idx in cv.split(X, y)
             )
-            for train_idx, test_idx in cv.split(X, y)
-        )
+    else:
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+        delayed(_tree_fit_predict_score)(
+                estimator, model_type, X, y, train_idx, test_idx,
+                scoring, return_estimator, return_feature_importances, early_stopping, UQ
+                )
+                for train_idx, test_idx in cv.split(X, y)
+            )
 
     scores = defaultdict(list)
     n_samples = len(y)
@@ -503,9 +699,19 @@ def gp_cross_validate(
     return scores, predictions
 
 
-def gp_cross_validate_regressor(
-    regressor, model_type:str, X, y, cv, n_jobs=1, return_ls: bool = False, UQ: bool = False
-    ) -> tuple[dict[str, float], np.ndarray]:
+def cross_validate_regressor(
+    regressor, 
+    model_type:str, 
+    X, y, 
+    cv, 
+    UQ:bool=False,
+    return_ls:bool=False,
+    return_estimator:bool=False,
+    return_feature_importances:bool=False,
+    early_stopping:bool=False,
+    n_jobs:int=1,     
+
+    ) -> tuple[dict[str, float], dict[str, np.ndarray]]:
 
 
         scorers = {
@@ -514,7 +720,7 @@ def gp_cross_validate_regressor(
             "r2": r2_score,
             }
         
-        score, predictions = gp_cross_validate(
+        score, predictions = cross_validate(
             regressor,
             model_type,
             X,
@@ -523,249 +729,115 @@ def gp_cross_validate_regressor(
             scoring=scorers,
             n_jobs=n_jobs,
             return_ls=return_ls,
-            UQ=UQ
+            UQ=UQ,
+            return_estimator=return_estimator,
+            return_feature_importances=return_feature_importances,
+            early_stopping=early_stopping
             )
         return score, predictions
 
 
 
-def _custom_fit_predict_score(
-        estimator, X, y,
-        train_idx, 
-        test_idx, 
-        scoring: Dict,
-        return_estimator: bool,
-        return_feature_importances: bool,
-        early_stopping:bool,
-        UQ: bool
-        ):
-    """
-    - clone estimator
-    - split train into train / eval
-    - fit with early stopping (XGB or NGBoost)
-    - predict on test
-    - compute scores
-    """
 
-    model = clone(estimator)
-
-    X_train= split_for_training(X, train_idx)
-    y_train = split_for_training(y, train_idx)
-    X_test = split_for_training(X, test_idx)
-    y_test = split_for_training(y, test_idx)
-
-    # Internal validation split (ONLY from training fold)
-    fit_kwargs = {}
-    if  early_stopping:
-        print("Using early stopping during training...")
-        X_train, X_eval, y_train, y_eval = train_test_split(
-            X_train,
-            y_train,
-            test_size=0.2,
-            random_state=42,
-        )
-
-        # ---- Early stopping dispatch ----
-        preprocessor = clone(model.named_steps["preprocessor"])
-        reg = model.named_steps["regressor"]
-        inner_model = reg.regressor
-        yt  = clone(reg.transformer) 
-        y_train_2d = np.asarray(y_train).reshape(-1, 1)
-        y_eval_2d  = np.asarray(y_eval).reshape(-1, 1)
-        yt.fit(y_train_2d)
-        # y_train_tgt = yt.transform()
-        y_eval_tgt  = yt.transform(y_eval_2d)
-        preprocessor.fit(X_train)
-
-        X_train_t = preprocessor.transform(X_train)
-        X_eval_t  = preprocessor.transform(X_eval)
-        X_test_t  = preprocessor.transform(X_test)
-
-
-
-        fit_sig = inspect.signature(inner_model.fit).parameters
-
-        # XGBoost / LightGBM style
-        if "eval_set" in fit_sig:
-            fit_kwargs["eval_set"] = [(X_eval_t, y_eval_tgt)]
-            fit_kwargs["verbose"] = False
-
-        elif "X_val" in fit_sig and "Y_val" in fit_sig:
-            fit_kwargs["X_val"] = X_eval_t
-            fit_kwargs["Y_val"] = y_eval_tgt
-        else:
-            raise ValueError("Early stopping requested but the model does not support eval_set or X_val/Y_val.")
-
-        reg.fit(X_train_t, y_train, **fit_kwargs)
-        # print(f"best score, {reg.regressor_.best_score}")
-        # best_iteration = reg.regressor_.best_iteration
-        # print(f"Best iteration: {best_iteration}")
-        y_pred = reg.predict(X_test_t)
-        scores = {
-            f"test_{name}": scorer(y_test, y_pred)
-            for name, scorer in scoring.items()
-        }
-
-        if return_feature_importances:
-            # MDI_importances = []
-            # shap_importances = []
-
-            model_inner = reg.regressor_   # ✅ FIX
-            feature_names = preprocessor.get_feature_names_out()
-
-            raw_fi = model_inner.feature_importances_
-            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
-            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
-            scores["feature_importance_MDI"] = dict(zip(feature_names, feat_imp))
-
-            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
-            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
-
-            shap_values = explainer(X_train_t)
-            fi_shap = np.abs(shap_values.values).mean(axis=0)
-            # shap_importances.append(dict(zip(feature_names, fi_shap)))
-
-            scores["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
-        if return_estimator:
-            scores["estimator"] = {
-                "preprocessor": preprocessor,
-                "regressor": reg,
-            }
-    else:
-        model.fit(X_train, y_train, **fit_kwargs)
-        y_pred = model.predict(X_test)
-        scores = {
-            f"{name}": scorer(y_test, y_pred)
-            for name, scorer in scoring.items()
-        }
+# def custom_cross_validate(
+#     estimator,
+#     model_type,
+#     X,
+#     y,
+#     cv,
+#     scoring,
+#     n_jobs=-1,
+#     return_estimator: bool = False,
+#     return_feature_importances: bool = False,
+#     early_stopping:bool = False
+# ):
     
-        if return_feature_importances:
-            
-            MDI_importances = []
-            shap_importances = []
-            preprocessor = model.named_steps["preprocessor"]
-            feature_names = preprocessor.get_feature_names_out()
-            model_inner = model.named_steps["regressor"].regressor_
-            raw_fi = model_inner.feature_importances_
-            feat_imp = raw_fi[0] if model_inner.__class__.__name__ == "NGBRegressor" else raw_fi
-            # MDI_importances.append(dict(zip(feature_names, feat_imp)))
-            scores["feature_importance_MDI"] = dict(zip(feature_names, feat_imp)) 
-            model_output = 0 if model_inner.__class__.__name__ == "NGBRegressor" else "raw"
-            explainer = shap.TreeExplainer(model_inner, model_output=model_output)
-            x_t_transformed = preprocessor.transform(X_train)
-            shap_values = explainer(x_t_transformed)
-            fi_shap = np.abs(shap_values.values).mean(axis=0)
-            # shap_importances.append(dict(zip(feature_names, fi_shap)))
-            scores["feature_importance_SHAP"] = dict(zip(feature_names, fi_shap))
-        if return_estimator:
-            scores["estimator"] = model
+#     parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+#         delayed(_custom_fit_predict_score)(
+#             estimator, model_type, X, y, train_idx, test_idx, scoring, return_estimator, return_feature_importances, early_stopping
+#         )
+#         for train_idx, test_idx in cv.split(X, y)
+#     )
+
+#     scores = defaultdict(list)
+#     n_samples = len(y)
+
+#     predictions = {
+#         "y_pred": np.full(n_samples, np.nan),
+#         "y_std": np.full(n_samples, np.nan),
+#     }
+
+#     for test_idx, y_result, fold_scores in parallel_results:
         
-        if UQ:
-
-            pass
-
-    
-    return test_idx, y_pred, scores
-
-
-def custom_cross_validate(
-    estimator,
-    X,
-    y,
-    cv,
-    scoring,
-    n_jobs=-1,
-    return_estimator: bool = False,
-    return_feature_importances: bool = False,
-    early_stopping:bool = False
-):
-    
-    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
-        delayed(_custom_fit_predict_score)(
-            estimator, X, y, train_idx, test_idx, scoring, return_estimator, return_feature_importances, early_stopping
-        )
-        for train_idx, test_idx in cv.split(X, y)
-    )
-
-    scores = defaultdict(list)
-    n_samples = len(y)
-
-    predictions = {
-        "y_pred": np.full(n_samples, np.nan),
-        "y_std": np.full(n_samples, np.nan),
-    }
-
-    for test_idx, y_result, fold_scores in parallel_results:
+#         predictions["y_pred"][test_idx] = y_result["y_pred"]
+#         if "y_std" in y_result:
+#             predictions["y_std"][test_idx] = y_result["y_std"]
         
-        predictions["y_pred"][test_idx] = y_result
-        # if "y_std" in y_result:
-            # predictions["y_std"][test_idx] = y_result["y_std"]
-        
-        for key, val in fold_scores.items():
-            scores[f"test_{key}"].append(val)
-    return scores, predictions
+#         for key, val in fold_scores.items():
+#             scores[f"test_{key}"].append(val)
+#     return scores, predictions
 
 
 
 
-def cross_validate_regressor(
-    regressor, X, y, cv,
-    custom: bool = False,
-    early_stopping: bool = False,
-    return_estimator: bool = False,
-    return_feature_importances: bool = False,
-    return_indices: bool = False,
-    n_jobs: int = -1
-    ) -> tuple[dict[str, float], np.ndarray]:
+# def cross_validate_regressor(
+#     regressor, X, y, cv,
+#     custom: bool = False,
+#     early_stopping: bool = False,
+#     return_estimator: bool = False,
+#     return_feature_importances: bool = False,
+#     return_indices: bool = False,
+#     n_jobs: int = -1
+#     ) -> tuple[dict[str, float], np.ndarray]:
 
-        if custom   :
-            scorers = {
-            "rmse": root_mean_squared_error,
-            "mae": mean_absolute_error,
-            "r2": r2_score,
-            }
-            score, predictions = custom_cross_validate(
-                regressor,
-                X,
-                y,
-                cv=cv,
-                scoring=scorers,
-                n_jobs=n_jobs,
-                return_estimator=return_estimator,
-                return_feature_importances=return_feature_importances,
-                early_stopping=early_stopping
-            )
-        else:
-            scorers = {
-            "rmse": rmse_scorer,
-            "mae": mae_scorer,
-            "r2": r2_scorer,
-            }
+#         if custom   :
+#             scorers = {
+#             "rmse": root_mean_squared_error,
+#             "mae": mean_absolute_error,
+#             "r2": r2_score,
+#             }
+#             score, predictions = custom_cross_validate(
+#                 regressor,
+#                 X,
+#                 y,
+#                 cv=cv,
+#                 scoring=scorers,
+#                 n_jobs=n_jobs,
+#                 return_estimator=return_estimator,
+#                 return_feature_importances=return_feature_importances,
+#                 early_stopping=early_stopping
+#             )
+#         else:
+#             scorers = {
+#             "rmse": rmse_scorer,
+#             "mae": mae_scorer,
+#             "r2": r2_scorer,
+#             }
 
-            score: dict[str, float] = cross_validate(
-                regressor,
-                X,
-                y,
-                cv=cv,
-                scoring=scorers,
-                return_estimator=True,
-                n_jobs=n_jobs,
-                return_indices=return_indices,
-                )
-            predictions: np.ndarray = cross_val_predict(
-                regressor,
-                X,
-                y,
-                cv=cv,
-                n_jobs=n_jobs,
-            )
-            if return_feature_importances:
-                get_feature_importances_from_cv(score, X=X)
+#             score: dict[str, float] = cross_validate(
+#                 regressor,
+#                 X,
+#                 y,
+#                 cv=cv,
+#                 scoring=scorers,
+#                 return_estimator=True,
+#                 n_jobs=n_jobs,
+#                 return_indices=return_indices,
+#                 )
+#             predictions: np.ndarray = cross_val_predict(
+#                 regressor,
+#                 X,
+#                 y,
+#                 cv=cv,
+#                 n_jobs=n_jobs,
+#             )
+#             if return_feature_importances:
+#                 get_feature_importances_from_cv(score, X=X)
 
-            if return_indices:
-                indexes = score.pop("indices")
-                return score, predictions, indexes
-        return score, predictions
+#             if return_indices:
+#                 indexes = score.pop("indices")
+#                 return score, predictions, indexes
+#         return score, predictions
 
 
 
@@ -793,114 +865,5 @@ def cross_validate_regressor(
 
 
 
-def get_tree_uncerainty(estimator,model_type, X_test):
-    reg = estimator.named_steps['regressor'].regressor
-    pre = estimator.named_steps["preprocessor"]
-    X_test_transformed = pre.transform(X_test)
-    if model_type == "NGB":
-        reg.pred_dist(X_test_transformed)
-    elif model_type == "RF":
-        pass
-    elif model_type == "XGBR":
-        pass
-
-    return
-
-class _RF_Uncertainty:
-    def __init__(self, fitted_model):
-        self.fitted_model = fitted_model
-
-    def fit(self, X_train_u, y_train_u)->None:
-        self.x_scaler= StandardScaler()
-        self.y_scaler= StandardScaler()
-        self.X_train_u = self.x_scaler.fit_transform(X_train_u)
-        self.y_train_u = self.y_scaler.fit_transform(y_train_u)
-        self.trained_u = self.fitted_model.fit(self.X_train_u, self.y_train_u)
-
-    def pred_dist(self, X_test_u) -> np.ndarray:
-        self.X_test_u = self.x_scaler.transform(X_test_u)
-        all_preds = Parallel(n_jobs=-1)(
-                delayed(tree.predict)(self.X_test_u) for tree in self.fitted_model.estimators_
-                )
-        return np.std(all_preds, axis=0)
-
-    
-
-class _XGB_Uncertainty:
-    def __init__(self, fitted_model):
-        self.fitted_model = fitted_model
-    def fit(self, X_train_u, y_train_u)->None:
-        model_num = self.fitted_model.get_params().get('n_estimators', 500)
-        self.x_scaler= StandardScaler()
-        self.y_scaler= StandardScaler()
-        self.X_train_u = self.x_scaler.fit_transform(X_train_u)
-        self.y_train_u = self.y_scaler.fit_transform(y_train_u)
-        self.boosted_reg = BaggingRegressor(estimator=self.fitted_model, n_estimators=model_num,n_jobs=-1).fit(self.X_train_u,
-                                                                                                    self.y_train_u)
-    def pred_dist(self, X_test_u) -> np.ndarray:
-        self.X_test_u = self.x_scaler.transform(X_test_u)
-        all_preds = Parallel(n_jobs=-1)(
-                delayed(tree.predict)(self.X_test_u ) for tree in self.boosted_reg.estimators_
-                )
-        return np.std(all_preds, axis=0)
-    
-
-def train_and_predict_ood(reg, X_train_val, y_train_val, X_test, y_test, 
-                            algorithm:str, return_train_pred:bool=False,
-                            manual_preprocessor:Pipeline=None) -> tuple:
-    
-    reg_u = reg.named_steps['regressor'].regressor
-    reg.fit(X_train_val, y_train_val)
-    if algorithm == 'NGB':
-        x_scaler = StandardScaler()
-        y_scaler = StandardScaler()
-
-        X_train_val_u = x_scaler.fit_transform(X_train_val)
-        y_train_val_u = y_scaler.fit_transform(y_train_val)
-        X_test_u = x_scaler.transform(X_test)
-        reg_u.fit(X_train_val_u, y_train_val_u)
-        y_test_predist = reg_u.pred_dist(X_test_u)
-        y_test_pred_uncertainty = np.array(np.sqrt(y_test_predist.var)).reshape(y_test.shape)
-        y_test_pred = reg.predict(X_test)
-
-    elif algorithm == 'RF':
-        uncertainty_estimator = _RF_Uncertainty(reg_u)
-        uncertainty_estimator.fit(X_train_val, y_train_val)
-        y_test_pred_uncertainty = uncertainty_estimator.pred_dist(X_test).reshape(y_test.shape)
-        y_test_pred = reg.predict(X_test)
-        
-    elif algorithm == 'XGBR':
-        xgb_u = _XGB_Uncertainty(reg_u)
-        xgb_u.fit(X_train_val, y_train_val)
-        y_test_pred_uncertainty = xgb_u.pred_dist(X_test).reshape(y_test.shape)
-        y_test_pred = reg.predict(X_test)
-    else:
-        y_test_pred = reg.predict(X_test)
-        y_test_pred_uncertainty = None
-
-    
-    test_scores = get_prediction_scores(y_test, y_test_pred,'test')
-    if return_train_pred:
-        y_train_pred = reg.predict(X_train_val)
-        train_scores = get_prediction_scores(y_train_val, y_train_pred,'train')
-        return test_scores, train_scores, y_test_pred, y_test_pred_uncertainty
-    
-    return test_scores, y_test_pred, y_test_pred_uncertainty
-
-
-def get_prediction_scores(y_true, y_pred, score_set:str='test'):
-    return {
-        f"{score_set}_mad": np.abs(y_pred - y_pred.mean()).mean(),
-        f"{score_set}_ystd": y_pred.std(),
-        f"{score_set}_mae": mean_absolute_error(y_true, y_pred),
-        f"{score_set}_rmse": root_mean_squared_error(y_true, y_pred),
-        f"{score_set}_r2": r2_score(y_true, y_pred),
-        # f"{score_set}_pearson_r": pearsonr(y_test, y_pred)[0],
-        # f"{score_set}_pearson_p_value": pearsonr(y_test, y_pred)[1],
-        # f"{score_set}_spearman_r": spearmanr(y_test, y_pred)[0],
-        # f"{score_set}_spearman_p_value": spearmanr(y_test, y_pred)[1],
-        # f"{score_set}_kendall_r": kendalltau(y_test, y_pred)[0],
-        # f"{score_set}_kendall_p_value": kendalltau(y_test, y_pred)[1],
-    }
 
 

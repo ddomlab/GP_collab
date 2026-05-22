@@ -4,7 +4,7 @@ import sys
 from typing import Optional, Union, Dict, Tuple
 
 import torch
-from all_factories import radius_to_bits,cutoffs
+from all_factories import radius_to_bits,cutoffs, imputer_factory
 import pandas as pd
 from unrolling_utils import unrolling_factory
 import numpy as np
@@ -245,6 +245,8 @@ def filter_dataset(
     unroll: Union[dict, list, None] = None,
     cluster_type:Optional[str]= None,
     kernel_type: Optional[str]=None,
+    feat_to_impute: Optional[list[str]]=None,
+    imputer: Optional[str]=None,
     # **kwargs,
 ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """
@@ -305,6 +307,9 @@ def filter_dataset(
 
     if scalar_feats:
         scalar_features: pd.DataFrame = dataset[scalar_feats]
+        if feat_to_impute:
+            scalar_features[feat_to_impute] = imputer_factory[imputer].fit_transform(scalar_features[feat_to_impute])
+
     else:
         scalar_features: pd.DataFrame = dataset[[]]
 

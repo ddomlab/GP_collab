@@ -65,14 +65,12 @@ def calculate_mw(df: pd.DataFrame,  # df containing Mw, Mn & PDI columns only
   return df
 
 
-def preprocessing_workflow(imputer: Optional[str]=None,
-                           regressor_type: Optional[str]=None,
-                           feat_to_impute: Optional[list[str]] = None,
-                           numerical_feat: Optional[list] = None,
-                           structural_feat: Optional[list] = None,
-                           special_column: Optional[str] = None,
-                           scaler: str = None,
-                           ) -> Pipeline:
+def preprocessing_workflow(
+        regressor_type: Optional[str]=None,
+        numerical_feat: Optional[list] = None,
+        structural_feat: Optional[list] = None,
+        scaler: str = None,
+        ) -> Pipeline:
     # structure_feats and scalar_feats for scaling
     # all_columns = list(set(columns_to_impute)|set(special_column))
     # imputation of columns
@@ -94,52 +92,11 @@ def preprocessing_workflow(imputer: Optional[str]=None,
             print("MGK regressor, only scaling numerical features")
               
     else:
-        if imputer:
-            steps = [
-                ("Impute feats", ColumnTransformer(
-                    transformers=[
-                        (f'imputer_{imputer}', imputer_factory[imputer], feat_to_impute),
-                    ],
-                    remainder="passthrough", verbose_feature_names_out=False
-                )),
-                
-                    ]
-        
-        if special_column:
-            steps.extend([
-                ("Calculate Mw", ColumnTransformer(
-                    transformers=[
-                        (f'calculator_{special_column}',
-                        (FunctionTransformer(calculate_mw,
-                                            kw_args={'mw': special_column, 'mn': 'Mn (g/mol)', 'pdi': 'PDI'},
-                                            validate=False)), ['Mn (g/mol)', special_column, 'PDI'])
-                    ],
-                    remainder="passthrough", verbose_feature_names_out=False
-                )),
-
-                ("Impute the rest of Mw values", ColumnTransformer(
-                    transformers=[
-                        (f"imputer_{special_column}", imputer_factory[imputer], [special_column])
-                    ],
-                    remainder="passthrough", verbose_feature_names_out=False
-                )),
-                ("drop Mn", ColumnTransformer(
-                    transformers=[
-                        ("Drop Mn column",
-                        FunctionTransformer(drop_columns, kw_args={'columns_to_drop': ['Mn (g/mol)']}, validate=False),
-                        ['Mn (g/mol)'])
-                    ], remainder="passthrough", verbose_feature_names_out=False))
-
-            ])
-        # Normalization
-        if numerical_feat is not None and 'Mn (g/mol)' in numerical_feat:
-            numerical_feat.remove('Mn (g/mol)')
-            
         if scaler:
             transformers = []
             if structural_feat:
                 transformers.append(
-                ("structural_scaling", "passthrough", structural_feat)  # graphs stay at front
+                ("structural_scaling", "passthrough", structural_feat)
                 )
                 
             if numerical_feat:

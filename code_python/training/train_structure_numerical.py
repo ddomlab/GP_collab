@@ -84,8 +84,8 @@ def main_structural_numerical(
 if __name__ == "__main__":
     
     args = parse_arguments()
-    PAPER = "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-    dataset_name = "cleaned_suzuki_synthesis"
+    PAPER = args.paper
+    dataset_name =args.dataset
     w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
     for targ in all_targets:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
             representation="ECFP", #"ECFP" # MG
             radius=3,
             vector="count",
-            regressor_type="NGB", #"GPytorchMAP", #MGK-sklearn
+            regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,

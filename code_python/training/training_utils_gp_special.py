@@ -30,7 +30,6 @@ from scoring import (
     cross_validate_regressor,
     process_scores,
     # _average_ls,
-    gp_cross_validate_regressor,
 )
 from utils import split_for_training
 from filter_data import sanitize_dataset
@@ -219,17 +218,17 @@ def _prepare_data(
                                                 dropna = True,
                                                 unroll=unroll,
                                                 kernel_type=kernel_type,
+                                                feat_to_impute=features_impute,
+                                                imputer=imputer,
                                                 )
 
         # Pipline workflow here and preprocessor
-        preprocessor: Pipeline = preprocessing_workflow(imputer=imputer,
-                                                        regressor_type=regressor_type,
-                                                        feat_to_impute=features_impute,
-                                                        numerical_feat=numerical_feats,
-                                                        structural_feat=unrolled_feats,
-                                                        special_column=special_impute,
-                                                        scaler=transform_type
-                                                        )
+        preprocessor: Pipeline = preprocessing_workflow(
+                                    regressor_type=regressor_type,
+                                    numerical_feat=numerical_feats,
+                                    structural_feat=unrolled_feats,
+                                    scaler=transform_type
+                                )
         
 
 
@@ -317,7 +316,8 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv=cv_outer, UQ=True)
+                scores, predictions = cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs,
+                                                                cv=cv_outer, UQ=True, return_ls=True)
             else:
                 model = optimized_models(regressor_type, 
                                          graph_kernel_config=kernel_parameters,
@@ -328,7 +328,8 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = gp_cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs, cv=cv_outer,return_ls=True, UQ=True)
+                scores, predictions = cross_validate_regressor(regressor, regressor_type, X, y, n_jobs=n_jobs,
+                                                                cv=cv_outer, return_ls=True, UQ=True)
         else:
             
             if hyperparameter_optimization:
@@ -375,7 +376,7 @@ def run(
                                                                         )
                 
                 scores, predictions = cross_validate_regressor(
-                                        best_estimator, X, y, cv_outer
+                                        best_estimator, regressor_type, X, y, cv_outer
                                         )
                 scores["best_params"] = regressor_params
             else:
@@ -399,7 +400,7 @@ def run(
                                                 ]
                                             )
                     regressor.set_output(transform="pandas")
-                    scores, predictions = gp_cross_validate_regressor(
+                    scores, predictions = cross_validate_regressor(
                                             regressor,
                                             regressor_type, 
                                             X, y,
@@ -420,13 +421,15 @@ def run(
                                             ("regressor", y_transform_regressor),
                                             ])
                     scores, predictions = cross_validate_regressor(
-                                            regressor, X, y, 
+                                            regressor, 
+                                            regressor_type, 
+                                            X, y, 
                                             cv_outer,
-                                            custom=True,
                                             early_stopping=False,
                                             return_estimator=False,
                                             return_feature_importances=True,
-                                            n_jobs=n_jobs
+                                            UQ=True,
+                                            n_jobs=-1
                                             )
 
         seed_scores[seed] = scores.copy()
@@ -539,11 +542,8 @@ def _pd_to_np(data):
 
 
 def get_target_transformer(y_transformer:str) -> Pipeline:
-    return Pipeline(steps=[
-            ("y scaler", transforms[y_transformer])  # StandardScaler to standardize the target
-            ])
+    return transforms[y_transformer] # StandardScaler to standardize the target
 
 def get_default_kfold_splitter(n_splits: int,random_state:int):
-        
     return KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
 
