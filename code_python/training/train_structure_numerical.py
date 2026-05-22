@@ -95,7 +95,7 @@ if __name__ == "__main__":
             representation="ECFP", #"ECFP" # MG
             radius=3,
             vector="count",
-            regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn
+            regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
@@ -104,18 +104,18 @@ if __name__ == "__main__":
             target_transformer="Standard",
             numerical_feats=feats,
             hyperparameter_optimization=False,
-            # kernel_type={
-            #     "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-            #     "count": args.K_count #"Matern32"   #args.K_count
-            #     # "fp": "Graph", 
-            #     # "count": "Matern32"
-            #     },
-            # kernel_mixing_method=args.Kernel_mixing_method,
-            # use_cuda=False,
+            kernel_type={
+                "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+                "count": args.K_count #"Matern32"   #args.K_count
+                # "fp": "Graph", 
+                # "count": "Matern32"
+                },
+            kernel_mixing_method=args.Kernel_mixing_method,
+            use_cuda=False,
             # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
             # hyperparameter_save_dir=optuna_save_dir, # for MGK
-            imputer="mean",
-            columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+            # imputer="mean",
+            # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
             )
 
 
