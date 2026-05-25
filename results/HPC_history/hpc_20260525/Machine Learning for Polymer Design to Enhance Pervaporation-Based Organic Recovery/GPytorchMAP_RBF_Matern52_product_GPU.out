@@ -1,0 +1,126 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.28±0.02	 r2: 0.86±0.02
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-Matern52_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu17>
+Subject: Job 302090: <structure_numerical_20260525> in cluster <Hazel> Done
+
+Job <structure_numerical_20260525> was submitted from host <gpu17> by user <sdehgha2> in cluster <Hazel> at Mon May 25 15:47:03 2026
+Job was executed on host(s) <gpu17>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 15:58:07 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 15:58:07 2026
+Terminated at Mon May 25 16:01:25 2026
+Results reported at Mon May 25 16:01:25 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 3:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count Matern52                                         --Kernel_mixing_method product                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   161.76 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.88 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   199 sec.
+    Turnaround time :                            862 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 302168: <structure_numerical_20260525> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260525> was submitted from host <gpu13> by user <sdehgha2> in cluster <Hazel> at Mon May 25 16:06:19 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 16:20:25 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 16:20:25 2026
+Terminated at Mon May 25 16:21:07 2026
+Results reported at Mon May 25 16:21:07 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 1:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp RBF                                         --K_count Matern52                                         --Kernel_mixing_method product                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   14.73 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   67 sec.
+    Turnaround time :                            888 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_RBF_Matern52_product_GPU.err> for stderr output of this job.
+
