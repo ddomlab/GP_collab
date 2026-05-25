@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
+paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+dataset="cleaned_suzuki_synthesis"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "averageProduct") 
