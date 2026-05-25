@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="Beyond molecular structure_seifrid_imputed"
+paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+dataset="cleaned_dataset_pervaporation_membranes_wang"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "averageProduct") 
