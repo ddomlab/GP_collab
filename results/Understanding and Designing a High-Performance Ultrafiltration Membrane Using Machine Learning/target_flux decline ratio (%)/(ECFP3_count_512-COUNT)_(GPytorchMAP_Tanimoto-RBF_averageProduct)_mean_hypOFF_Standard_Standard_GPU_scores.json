@@ -1,0 +1,455 @@
+{
+  "6": {
+    "test_lengthscale": [
+      {
+        "P_MW": 0.4247956871986389,
+        "surface tension (mN/m)": 0.8144552707672119,
+        "P_wt%": 0.6893979907035828,
+        "pore maker molecular weight (Da)": 0.3095386326313019,
+        "pore maker wt% (pore maker to total weight)": 0.7012706995010376,
+        "additive wt% (additive to polymer)": 1.4148584604263306,
+        "solubility parameter (MPa1/2)": 0.8134216070175171,
+        "TMP (bar)": 0.438944011926651,
+        "oraganic compound concentration (mg/L)": 0.5353233814239502,
+        "organic compound size (Da)": 1.0381584167480469,
+        "foulant concentration (mg/L)": 0.4643009305000305,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4946534037590027,
+        "surface tension (mN/m)": 0.8118851184844971,
+        "P_wt%": 0.9226325750350952,
+        "pore maker molecular weight (Da)": 0.29153233766555786,
+        "pore maker wt% (pore maker to total weight)": 0.6338849067687988,
+        "additive wt% (additive to polymer)": 1.0094053745269775,
+        "solubility parameter (MPa1/2)": 0.8074766397476196,
+        "TMP (bar)": 0.46222710609436035,
+        "oraganic compound concentration (mg/L)": 0.5743910670280457,
+        "organic compound size (Da)": 1.0846173763275146,
+        "foulant concentration (mg/L)": 0.39106324315071106,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.47015607357025146,
+        "surface tension (mN/m)": 0.814225971698761,
+        "P_wt%": 1.043503999710083,
+        "pore maker molecular weight (Da)": 0.37016841769218445,
+        "pore maker wt% (pore maker to total weight)": 0.5705131888389587,
+        "additive wt% (additive to polymer)": 1.2798664569854736,
+        "solubility parameter (MPa1/2)": 0.8122280240058899,
+        "TMP (bar)": 0.42726054787635803,
+        "oraganic compound concentration (mg/L)": 0.6074308156967163,
+        "organic compound size (Da)": 1.127244472503662,
+        "foulant concentration (mg/L)": 0.4330716133117676,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.37230491638183594,
+        "surface tension (mN/m)": 0.8079572319984436,
+        "P_wt%": 0.9907876253128052,
+        "pore maker molecular weight (Da)": 0.23864123225212097,
+        "pore maker wt% (pore maker to total weight)": 0.7026556730270386,
+        "additive wt% (additive to polymer)": 0.6675533652305603,
+        "solubility parameter (MPa1/2)": 0.79081130027771,
+        "TMP (bar)": 0.4572775363922119,
+        "oraganic compound concentration (mg/L)": 0.512501060962677,
+        "organic compound size (Da)": 1.0761741399765015,
+        "foulant concentration (mg/L)": 0.4746001958847046,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.42232394218444824,
+        "surface tension (mN/m)": 0.8115062713623047,
+        "P_wt%": 0.4894632399082184,
+        "pore maker molecular weight (Da)": 0.2659136652946472,
+        "pore maker wt% (pore maker to total weight)": 0.6367496848106384,
+        "additive wt% (additive to polymer)": 0.2766290009021759,
+        "solubility parameter (MPa1/2)": 0.8117275238037109,
+        "TMP (bar)": 0.5295557975769043,
+        "oraganic compound concentration (mg/L)": 0.5557551383972168,
+        "organic compound size (Da)": 1.093442678451538,
+        "foulant concentration (mg/L)": 0.4984514117240906,
+        "fp_polymer": null
+      }
+    ],
+    "test_rmse": [
+      10.79411492422885,
+      8.834901317866278,
+      10.508759862965784,
+      12.086150230994702,
+      9.261295206840275
+    ],
+    "test_mae": [
+      7.457697851657867,
+      6.618718674182892,
+      7.332253255844117,
+      8.446053098648314,
+      6.519156737554642
+    ],
+    "test_r2": [
+      0.5832660259114637,
+      0.7766836189559226,
+      0.7214363295379673,
+      0.6059152473674012,
+      0.7748547394988398
+    ],
+    "test_ece": [
+      0.058125,
+      0.059999999999999984,
+      0.059687500000000004,
+      0.07222222222222219,
+      0.07063492063492065
+    ],
+    "test_RUSC": [
+      -0.02303245381827957,
+      0.11005792548341609,
+      -0.11575091575091574,
+      0.1107924202319153,
+      -0.11055107526881719
+    ],
+    "test_cdf_ama": [
+      0.10698580044998897,
+      0.06414450611172577,
+      0.05632213165661612,
+      0.08843054481482368,
+      0.07057315250593996
+    ],
+    "test_cvpp_ama": [
+      0.065625,
+      0.09322916666666664,
+      0.09166666666666666,
+      0.05306878306878307,
+      0.09888888888888885
+    ],
+    "test_nll": [
+      3.8073327950210007,
+      3.626404737332938,
+      3.816132142225473,
+      4.040224057579192,
+      3.659920251294999
+    ],
+    "test_Cv": [
+      0.09122927486896515,
+      0.08382225036621094,
+      0.1604723483324051,
+      0.20714952051639557,
+      0.16107285022735596
+    ],
+    "test_sharpness": [
+      9.746185302734375,
+      10.598045349121094,
+      10.611854553222656,
+      9.4021577835083,
+      10.116887092590332
+    ]
+  },
+  "13": {
+    "test_lengthscale": [
+      {
+        "P_MW": 0.47673213481903076,
+        "surface tension (mN/m)": 0.8127952814102173,
+        "P_wt%": 0.7603927254676819,
+        "pore maker molecular weight (Da)": 0.33450940251350403,
+        "pore maker wt% (pore maker to total weight)": 0.5587447881698608,
+        "additive wt% (additive to polymer)": 1.2843281030654907,
+        "solubility parameter (MPa1/2)": 0.7837272882461548,
+        "TMP (bar)": 0.45969611406326294,
+        "oraganic compound concentration (mg/L)": 0.524476945400238,
+        "organic compound size (Da)": 1.1444032192230225,
+        "foulant concentration (mg/L)": 0.4248695373535156,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4468154311180115,
+        "surface tension (mN/m)": 0.8158337473869324,
+        "P_wt%": 0.8504800796508789,
+        "pore maker molecular weight (Da)": 0.3357616662979126,
+        "pore maker wt% (pore maker to total weight)": 0.632378101348877,
+        "additive wt% (additive to polymer)": 0.312722384929657,
+        "solubility parameter (MPa1/2)": 0.8116883039474487,
+        "TMP (bar)": 0.41556620597839355,
+        "oraganic compound concentration (mg/L)": 0.5048413276672363,
+        "organic compound size (Da)": 1.1334511041641235,
+        "foulant concentration (mg/L)": 0.44755905866622925,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.43036067485809326,
+        "surface tension (mN/m)": 0.813349723815918,
+        "P_wt%": 0.7269543409347534,
+        "pore maker molecular weight (Da)": 0.3111470639705658,
+        "pore maker wt% (pore maker to total weight)": 0.6235160231590271,
+        "additive wt% (additive to polymer)": 1.2375154495239258,
+        "solubility parameter (MPa1/2)": 0.8082153797149658,
+        "TMP (bar)": 0.4688585102558136,
+        "oraganic compound concentration (mg/L)": 0.5809521079063416,
+        "organic compound size (Da)": 1.1096175909042358,
+        "foulant concentration (mg/L)": 0.45670825242996216,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4074128270149231,
+        "surface tension (mN/m)": 0.8045084476470947,
+        "P_wt%": 0.7630866765975952,
+        "pore maker molecular weight (Da)": 0.2611667811870575,
+        "pore maker wt% (pore maker to total weight)": 0.70380038022995,
+        "additive wt% (additive to polymer)": 1.4636693000793457,
+        "solubility parameter (MPa1/2)": 0.8027438521385193,
+        "TMP (bar)": 0.4836373031139374,
+        "oraganic compound concentration (mg/L)": 0.5555078387260437,
+        "organic compound size (Da)": 1.0215803384780884,
+        "foulant concentration (mg/L)": 0.4467669725418091,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.42813798785209656,
+        "surface tension (mN/m)": 0.8114545941352844,
+        "P_wt%": 1.0579160451889038,
+        "pore maker molecular weight (Da)": 0.3154161870479584,
+        "pore maker wt% (pore maker to total weight)": 0.7243202924728394,
+        "additive wt% (additive to polymer)": 0.5051789283752441,
+        "solubility parameter (MPa1/2)": 0.8311171531677246,
+        "TMP (bar)": 0.43498560786247253,
+        "oraganic compound concentration (mg/L)": 0.6039221286773682,
+        "organic compound size (Da)": 0.8745269775390625,
+        "foulant concentration (mg/L)": 0.4758628308773041,
+        "fp_polymer": null
+      }
+    ],
+    "test_rmse": [
+      9.029614744183213,
+      9.105737104352562,
+      9.59626592739484,
+      10.679725264165961,
+      11.385965683984498
+    ],
+    "test_mae": [
+      6.316257090568543,
+      6.920870419740678,
+      6.6949753785133375,
+      7.939293365478515,
+      8.333325292193699
+    ],
+    "test_r2": [
+      0.7616166380452092,
+      0.7336211122702094,
+      0.7826118872319021,
+      0.7193686682371023,
+      0.6329251573519709
+    ],
+    "test_ece": [
+      0.0609375,
+      0.03874999999999999,
+      0.05625,
+      0.08333333333333334,
+      0.08015873015873014
+    ],
+    "test_RUSC": [
+      0.015751276361187463,
+      0.08445706176805311,
+      -0.01561355311355311,
+      0.10304106764363107,
+      -0.03156315633608859
+    ],
+    "test_cdf_ama": [
+      0.09684185870424913,
+      0.04072596676335058,
+      0.047718886418310534,
+      0.08190959187228379,
+      0.05419870035207341
+    ],
+    "test_cvpp_ama": [
+      0.11874999999999998,
+      0.06249999999999999,
+      0.10729166666666666,
+      0.05656084656084654,
+      0.05370370370370371
+    ],
+    "test_nll": [
+      3.642322880461609,
+      3.6395786902286615,
+      3.699079229850293,
+      3.7733982373648134,
+      3.967312169796101
+    ],
+    "test_Cv": [
+      0.0947551429271698,
+      0.1434028297662735,
+      0.08373046666383743,
+      0.2470085471868515,
+      0.12847815454006195
+    ],
+    "test_sharpness": [
+      10.533239364624023,
+      10.331965446472168,
+      10.31407642364502,
+      10.99915885925293,
+      9.115120887756348
+    ]
+  },
+  "42": {
+    "test_lengthscale": [
+      {
+        "P_MW": 0.3970167934894562,
+        "surface tension (mN/m)": 0.813015341758728,
+        "P_wt%": 0.31819599866867065,
+        "pore maker molecular weight (Da)": 0.4776999056339264,
+        "pore maker wt% (pore maker to total weight)": 0.7132018208503723,
+        "additive wt% (additive to polymer)": 0.34600409865379333,
+        "solubility parameter (MPa1/2)": 0.8011616468429565,
+        "TMP (bar)": 0.5662612915039062,
+        "oraganic compound concentration (mg/L)": 0.5260310173034668,
+        "organic compound size (Da)": 1.0157606601715088,
+        "foulant concentration (mg/L)": 0.47392022609710693,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4113164246082306,
+        "surface tension (mN/m)": 0.8109228610992432,
+        "P_wt%": 0.6921187043190002,
+        "pore maker molecular weight (Da)": 0.295663446187973,
+        "pore maker wt% (pore maker to total weight)": 0.6546441912651062,
+        "additive wt% (additive to polymer)": 0.41983115673065186,
+        "solubility parameter (MPa1/2)": 0.8116466403007507,
+        "TMP (bar)": 0.4370628297328949,
+        "oraganic compound concentration (mg/L)": 0.5660830736160278,
+        "organic compound size (Da)": 1.2019546031951904,
+        "foulant concentration (mg/L)": 0.47823649644851685,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.45268797874450684,
+        "surface tension (mN/m)": 0.8126477599143982,
+        "P_wt%": 0.8092107176780701,
+        "pore maker molecular weight (Da)": 0.37251487374305725,
+        "pore maker wt% (pore maker to total weight)": 0.5634496212005615,
+        "additive wt% (additive to polymer)": 1.2745616436004639,
+        "solubility parameter (MPa1/2)": 0.8055616617202759,
+        "TMP (bar)": 0.45230162143707275,
+        "oraganic compound concentration (mg/L)": 0.642702579498291,
+        "organic compound size (Da)": 1.1703746318817139,
+        "foulant concentration (mg/L)": 0.34733983874320984,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4234219193458557,
+        "surface tension (mN/m)": 0.8152300119400024,
+        "P_wt%": 0.7980961799621582,
+        "pore maker molecular weight (Da)": 0.2852603793144226,
+        "pore maker wt% (pore maker to total weight)": 0.665276825428009,
+        "additive wt% (additive to polymer)": 1.4161708354949951,
+        "solubility parameter (MPa1/2)": 0.8145768642425537,
+        "TMP (bar)": 0.45379209518432617,
+        "oraganic compound concentration (mg/L)": 0.5366028547286987,
+        "organic compound size (Da)": 0.9687011241912842,
+        "foulant concentration (mg/L)": 0.4625847041606903,
+        "fp_polymer": null
+      },
+      {
+        "P_MW": 0.4896547794342041,
+        "surface tension (mN/m)": 0.8118326663970947,
+        "P_wt%": 1.1183969974517822,
+        "pore maker molecular weight (Da)": 0.24925754964351654,
+        "pore maker wt% (pore maker to total weight)": 0.6416998505592346,
+        "additive wt% (additive to polymer)": 1.4623032808303833,
+        "solubility parameter (MPa1/2)": 0.7902133464813232,
+        "TMP (bar)": 0.46996694803237915,
+        "oraganic compound concentration (mg/L)": 0.5504587888717651,
+        "organic compound size (Da)": 0.9880146980285645,
+        "foulant concentration (mg/L)": 0.46604421734809875,
+        "fp_polymer": null
+      }
+    ],
+    "test_rmse": [
+      10.306324430764361,
+      9.847078229734832,
+      10.013480081913027,
+      11.525890514626381,
+      11.686382526336235
+    ],
+    "test_mae": [
+      7.022866146564484,
+      7.214803230762481,
+      7.330836757421494,
+      7.838675730871776,
+      8.461160301329599
+    ],
+    "test_r2": [
+      0.7093545719153247,
+      0.7208752550192227,
+      0.7189214084429837,
+      0.6441987371670126,
+      0.6445392097194489
+    ],
+    "test_ece": [
+      0.0515625,
+      0.0390625,
+      0.0453125,
+      0.03317460317460319,
+      0.03412698412698413
+    ],
+    "test_RUSC": [
+      0.1385349772443687,
+      -0.09079774265410182,
+      -0.04107142857142857,
+      0.188678339567393,
+      0.0025442544270915515
+    ],
+    "test_cdf_ama": [
+      0.05184493468472879,
+      0.05117462922312883,
+      0.13251843414767253,
+      0.13083011665935756,
+      0.045975631267688326
+    ],
+    "test_cvpp_ama": [
+      0.10375,
+      0.06177083333333333,
+      0.05593749999999998,
+      0.08216931216931216,
+      0.047883597883597875
+    ],
+    "test_nll": [
+      3.717012134495268,
+      3.7267973423659493,
+      3.7265066575919423,
+      3.8960490580011533,
+      3.9290901553714717
+    ],
+    "test_Cv": [
+      0.18893757462501526,
+      0.1484115868806839,
+      0.12560465931892395,
+      0.09300098568201065,
+      0.15966510772705078
+    ],
+    "test_sharpness": [
+      10.551647186279297,
+      10.197835922241211,
+      9.962392807006836,
+      9.746049880981445,
+      10.053465843200684
+    ]
+  },
+  "rmse_avg": 10.310779070023454,
+  "rmse_stdev": 1.00905152369357,
+  "mae_avg": 7.363129555422162,
+  "mae_stdev": 0.6846364285614259,
+  "r2_avg": 0.7020125737781322,
+  "r2_stdev": 0.062213614502168516,
+  "ece_avg": 0.056222552910052896,
+  "ece_stdev": 0.015456803297604323,
+  "RUSC_avg": 0.02169846648092478,
+  "RUSC_stdev": 0.09217492828866168,
+  "cdf_ama_avg": 0.0746796590421292,
+  "cdf_ama_stdev": 0.029366984328753006,
+  "cvpp_ama_avg": 0.07685306437389769,
+  "cvpp_ama_stdev": 0.02273964219042571,
+  "nll_avg": 3.777810702598724,
+  "nll_stdev": 0.12474332464328865,
+  "Cv_avg": 0.14111608664194744,
+  "Cv_stdev": 0.04687934020808017,
+  "sharpness_avg": 10.152005513509115,
+  "sharpness_stdev": 0.48357521841839557,
+  "run_time_sec": 27.498
+}

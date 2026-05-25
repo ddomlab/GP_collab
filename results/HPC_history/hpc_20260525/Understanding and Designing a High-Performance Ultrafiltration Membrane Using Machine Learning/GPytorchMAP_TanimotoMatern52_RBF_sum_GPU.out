@@ -1,0 +1,90 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 87.45±11.36	 r2: 0.68±0.08
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 11.5±1.21	 r2: 0.49±0.17
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.49±1.21	 r2: 0.69±0.07
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.53±1.11	 r2: 0.44±0.1
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 12.54±1.94	 r2: 0.57±0.15
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.53±1.11	 r2: 0.44±0.1
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern52-RBF_sum)_mean_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 301903: <structure_numerical_20260525> in cluster <Hazel> Done
+
+Job <structure_numerical_20260525> was submitted from host <gpu11> by user <sdehgha2> in cluster <Hazel> at Mon May 25 15:06:04 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 15:08:08 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 15:08:08 2026
+Terminated at Mon May 25 15:20:32 2026
+Results reported at Mon May 25 15:20:32 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_TanimotoMatern52_RBF_sum_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_TanimotoMatern52_RBF_sum_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoMatern52                                         --K_count RBF                                         --Kernel_mixing_method sum                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   698.92 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.92 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   754 sec.
+    Turnaround time :                            868 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_TanimotoMatern52_RBF_sum_GPU.err> for stderr output of this job.
+
