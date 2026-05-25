@@ -5,15 +5,14 @@ from filter_data import _get_dataset_features, get_structural_info
 from training_utils_gp_special import train_regressor
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np
-import sys
 from data_handling import save_results
 from utils import parse_arguments
-import sys
+# import sys
 
-sys.modules.setdefault("numpy._core",         np.core)
-sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
-sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
-sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+# sys.modules.setdefault("numpy._core",         np.core)
+# sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+# sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+# sys.modules.setdefault("numpy._core.umath",   np.core.umath)
 
 
 
