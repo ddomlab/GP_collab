@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAPRegressor"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "averageProduct") 
