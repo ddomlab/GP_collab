@@ -1,0 +1,126 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu14>
+Subject: Job 301526: <structure_numerical_20260525> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260525> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 25 14:00:16 2026
+Job was executed on host(s) <gpu14>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 14:00:46 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 14:00:46 2026
+Terminated at Mon May 25 14:00:58 2026
+Results reported at Mon May 25 14:00:58 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Matern52                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation" 
+
+
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 143.
+
+Resource usage summary:
+
+    CPU time :                                   2.00 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   12 sec.
+    Turnaround time :                            42 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.72±0.59	 r2: 0.9±0.01
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern52-RBF_averageProduct)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 301593: <structure_numerical_20260525> in cluster <Hazel> Done
+
+Job <structure_numerical_20260525> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 25 14:01:49 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 14:10:40 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 14:10:40 2026
+Terminated at Mon May 25 14:12:47 2026
+Results reported at Mon May 25 14:12:47 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Matern52                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   91.50 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.67 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   124 sec.
+    Turnaround time :                            658 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern52_RBF_averageProduct_GPU.err> for stderr output of this job.
+

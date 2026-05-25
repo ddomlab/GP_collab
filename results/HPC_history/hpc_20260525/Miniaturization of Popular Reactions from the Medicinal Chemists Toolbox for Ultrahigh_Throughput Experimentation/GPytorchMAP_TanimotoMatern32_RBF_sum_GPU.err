@@ -1,0 +1,91 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 1, in <module>
+    from sklearn.linear_model import LinearRegression
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/linear_model/__init__.py", line 42, in <module>
+    from sklearn.linear_model._passive_aggressive import (
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/linear_model/_passive_aggressive.py", line 7, in <module>
+    from sklearn.linear_model._stochastic_gradient import (
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1128, in get_code
+  File "<frozen importlib._bootstrap_external>", line 759, in _compile_bytecode
+  File "<frozen importlib._bootstrap>", line 491, in _verbose_message
+KeyboardInterrupt
+/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py:14: DeprecationWarning: numpy.core is deprecated and has been renamed to numpy._core. The numpy._core namespace contains private NumPy internals and its use is discouraged, as NumPy internals can change without warning in any release. In practice, most real-world usage of numpy.core is to access functionality in the public NumPy API. If that is the case, use the public NumPy API. If not, you are using NumPy internals. If you would still like to access an internal attribute, use numpy._core.numeric.
+  sys.modules.setdefault("numpy._core.numeric", np.core.numeric)
+/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py:15: DeprecationWarning: numpy.core is deprecated and has been renamed to numpy._core. The numpy._core namespace contains private NumPy internals and its use is discouraged, as NumPy internals can change without warning in any release. In practice, most real-world usage of numpy.core is to access functionality in the public NumPy API. If that is the case, use the public NumPy API. If not, you are using NumPy internals. If you would still like to access an internal attribute, use numpy._core.multiarray.
+  sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
+/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py:16: DeprecationWarning: numpy.core is deprecated and has been renamed to numpy._core. The numpy._core namespace contains private NumPy internals and its use is discouraged, as NumPy internals can change without warning in any release. In practice, most real-world usage of numpy.core is to access functionality in the public NumPy API. If that is the case, use the public NumPy API. If not, you are using NumPy internals. If you would still like to access an internal attribute, use numpy._core.umath.
+  sys.modules.setdefault("numpy._core.umath",   np.core.umath)
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+    Found GPU0 NVIDIA GeForce GTX 1080 which is of cuda capability 6.1.
+    Minimum and Maximum cuda capability supported by this version of PyTorch is
+    (7.0) - (12.0)
+    
+  queued_call()
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+    Please install PyTorch with a following CUDA
+    configurations:  12.6 following instructions at
+    https://pytorch.org/get-started/locally/
+    
+  queued_call()
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+NVIDIA GeForce GTX 1080 with CUDA capability sm_61 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_70 sm_75 sm_80 sm_86 sm_90 sm_100 sm_120.
+If you want to use the NVIDIA GeForce GTX 1080 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  queued_call()
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 93, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 47, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 76, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 237, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 403, in run
+    scores, predictions = cross_validate_regressor(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 723, in cross_validate_regressor
+    score, predictions = cross_validate(
+                         ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 667, in cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 613, in _gp_fit_predict_score
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPytorch_kernel_mix.py", line 921, in fit
+    self.regressor_.fit(X, y)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPytorch_kernel_mix.py", line 690, in fit
+    X_train = self._prepare_X(X_train, fit=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPytorch_kernel_mix.py", line 681, in _prepare_X
+    return torch.as_tensor(
+           ^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

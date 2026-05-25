@@ -1,0 +1,65 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 15.34±0.83	 r2: 0.76±0.02
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern52_sum)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu13>
+Subject: Job 301550: <structure_numerical_20260525> in cluster <Hazel> Done
+
+Job <structure_numerical_20260525> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Mon May 25 14:01:37 2026
+Job was executed on host(s) <gpu13>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon May 25 14:05:24 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon May 25 14:05:24 2026
+Terminated at Mon May 25 14:07:20 2026
+Results reported at Mon May 25 14:07:20 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260525"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern32_Matern52_sum_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern32_Matern52_sum_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Matern32                                         --K_count Matern52                                         --Kernel_mixing_method sum                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   76.85 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.60 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   128 sec.
+    Turnaround time :                            343 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260525/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_Matern32_Matern52_sum_GPU.err> for stderr output of this job.
+
