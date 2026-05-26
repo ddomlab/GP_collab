@@ -91,10 +91,10 @@ if __name__ == "__main__":
         # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
         main_structural_numerical(
             dataset=w_data,
-            representation="MG", #"ECFP" # MG
-            # radius=3,
-            # vector="count",
-            regressor_type="MGK-sklearn", #"GPytorchMAP", #MGK-sklearn
+            representation="ECFP", #"ECFP" # MG
+            radius=3,
+            vector="count",
+            regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,

@@ -1090,33 +1090,253 @@ def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
 
 
 
-def load_score(paper_loc, model, fp_k, count_k, mix_method,metric,seed):
-    """Return r2_avg or None if the file is missing."""
-    for suffix in ["", "_mean"]:
-        tmpl = (
+TREE_MODELS = {"RF", "XGBR", "NGB"}
+MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP"]
+DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
+BASE_MASTER_RESULT_COLUMNS = [
+    "paper",
+    "target",
+    "model",
+    "fp kernel",
+    "count kernel",
+    "mixing method",
+]
+TIME_COLUMNS = [
+    "Running time (GPU)",
+    "Running time (CPU)",
+]
+
+
+def _is_tree_model(model: str) -> bool:
+    return model in TREE_MODELS
+
+
+def _score_file_templates(
+    model: str,
+    fp_k: Optional[str] = None,
+    count_k: Optional[str] = None,
+    mix_method: Optional[str] = None,
+    use_gpu: bool = False,
+) -> List[str]:
+    if _is_tree_model(model):
+        if use_gpu:
+            return []
+        return [f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores"]
+
+    device_suffix = "_GPU" if use_gpu else ""
+    return [
+        (
             f"(ECFP3_count_512-COUNT)_"
             f"({model}_{fp_k}-{count_k}_{mix_method})"
-            f"{suffix}_hypOFF_Standard_Standard_scores"
+            f"{suffix}_hypOFF_Standard_Standard{device_suffix}_scores"
         )
-        p = ensure_long_path(paper_loc / f"{tmpl}.json")
-        if p.exists():
-            with open(p) as f:
-                data = json.load(f)
-            return data.get(f"{score_metric}_avg")
+        for suffix in ["", "_mean"]
+    ]
+
+
+def _find_score_path(
+    paper_loc: Path,
+    model: str,
+    fp_k: Optional[str] = None,
+    count_k: Optional[str] = None,
+    mix_method: Optional[str] = None,
+    use_gpu: bool = False,
+) -> Optional[Path]:
+    for tmpl in _score_file_templates(model, fp_k, count_k, mix_method, use_gpu):
+        path = ensure_long_path(paper_loc / f"{tmpl}.json")
+        if path.exists():
+            return path
     return None
 
 
-MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP","MGK-sklearn"]
-def build_master_performance_data():
-    
+def _read_json(path: Optional[Path]) -> Optional[Dict[str, Any]]:
+    if path is None:
+        return None
+
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def _metric_score(
+    data: Optional[Dict[str, Any]],
+    metric: str,
+    suffix: str,
+) -> Optional[Any]:
+    if data is None:
+        return None
+
+    return data.get(f"{metric}_{suffix}")
+
+
+def _seed_fold_scores(
+    data: Optional[Dict[str, Any]],
+    metric: str,
+) -> Optional[List[Any]]:
+    if data is None:
+        return None
+
+    scores = []
+    seeds = [key for key, value in data.items() if isinstance(value, dict)]
+
+    for seed in sorted(
+        seeds,
+        key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value)),
+    ):
+        values = data[seed].get(f"test_{metric}")
+        if isinstance(values, list):
+            scores.extend(values)
+
+    return scores or None
+
+
+def _load_score_files(
+    paper_loc: Path,
+    model: str,
+    fp_k: Optional[str] = None,
+    count_k: Optional[str] = None,
+    mix_method: Optional[str] = None,
+) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    cpu_data = _read_json(_find_score_path(paper_loc, model, fp_k, count_k, mix_method))
+    gpu_data = None
+
+    if not _is_tree_model(model):
+        gpu_data = _read_json(
+            _find_score_path(
+                paper_loc,
+                model,
+                fp_k,
+                count_k,
+                mix_method,
+                use_gpu=True,
+            )
+        )
+
+    return cpu_data, gpu_data
+
+
+def _metric_result_columns(score_metrics: List[str]) -> List[str]:
+    columns = []
+    for metric in score_metrics:
+        columns.extend([
+            f"{metric}_avg",
+            f"{metric}_stdev",
+            f"{metric}_seed_fold_scores",
+        ])
+    return columns
+
+
+def _master_result_columns(score_metrics: List[str]) -> List[str]:
+    return BASE_MASTER_RESULT_COLUMNS + _metric_result_columns(score_metrics) + TIME_COLUMNS
+
+
+def _score_row_values(
+    cpu_data: Optional[Dict[str, Any]],
+    gpu_data: Optional[Dict[str, Any]],
+    score_metrics: List[str],
+) -> Dict[str, Any]:
+    scores = {}
+    for metric in score_metrics:
+        scores.update({
+            f"{metric}_avg": _metric_score(cpu_data, metric, "avg"),
+            f"{metric}_stdev": _metric_score(cpu_data, metric, "stdev"),
+            f"{metric}_seed_fold_scores": _seed_fold_scores(cpu_data, metric),
+        })
+
+    scores.update({
+        "Running time (GPU)": None if gpu_data is None else gpu_data.get("run_time_sec"),
+        "Running time (CPU)": None if cpu_data is None else cpu_data.get("run_time_sec"),
+    })
+    return scores
+
+
+def load_score(
+    paper_loc: Path,
+    model: str,
+    fp_k: Optional[str] = None,
+    count_k: Optional[str] = None,
+    mix_method: Optional[str] = None,
+    score_metrics: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Load score values for one master-results row."""
+    score_metrics = DEFAULT_SCORE_METRICS if score_metrics is None else score_metrics
+    cpu_data, gpu_data = _load_score_files(paper_loc, model, fp_k, count_k, mix_method)
+    return _score_row_values(cpu_data, gpu_data, score_metrics)
+
+
+def _save_master_performance_data(df: pd.DataFrame, save_path: Path) -> None:
+    save_path = Path(save_path)
+    os.makedirs(ensure_long_path(save_path.parent), exist_ok=True)
+
+    df.to_pickle(ensure_long_path(Path(f"{save_path}.pkl")))
+
+    output = df.copy()
+    for column in output.columns:
+        if column.endswith("_seed_fold_scores"):
+            output[column] = output[column].apply(
+                lambda value: json.dumps(value) if value is not None else None
+            )
+    output.to_csv(ensure_long_path(Path(f"{save_path}.csv")), index=False)
+
+
+def build_master_performance_data(
+    save_path: Optional[Path] = RESULTS / "master_performance_data",
+    score_metrics: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    score_metrics = (
+        DEFAULT_SCORE_METRICS
+        if score_metrics is None
+        else list(dict.fromkeys(score_metrics))
+    )
+    rows = []
+
     for paper_name, paper_info in PAPER.items():
         for target in paper_info["target"]:
             paper_loc = RESULTS / paper_name / target
-            for fp_k in fp_sk_kernels:
-                for count_k in count_kernels:
-                    for mix in mixing_methods:
-                        for model in MODELS:
-                            score = load_avg_score(paper_loc, model, fp_k, count_k, mix, "r2")
+
+            for model in MODELS:
+                if _is_tree_model(model):
+                    cpu_data, gpu_data = _load_score_files(
+                        paper_loc=paper_loc,
+                        model=model,
+                    )
+                    score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                    rows.append({
+                        "paper": paper_name,
+                        "target": target,
+                        "model": model,
+                        "fp kernel": None,
+                        "count kernel": None,
+                        "mixing method": None,
+                        **score_info,
+                    })
+                    continue
+
+                for fp_k in fp_sk_kernels:
+                    for count_k in count_kernels:
+                        for mix in mixing_methods:
+                            cpu_data, gpu_data = _load_score_files(
+                                paper_loc=paper_loc,
+                                model=model,
+                                fp_k=fp_k,
+                                count_k=count_k,
+                                mix_method=mix,
+                            )
+                            score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                            rows.append({
+                                "paper": paper_name,
+                                "target": target,
+                                "model": model,
+                                "fp kernel": fp_k,
+                                "count kernel": count_k,
+                                "mixing method": mix,
+                                **score_info,
+                            })
+
+    df = pd.DataFrame(rows, columns=_master_result_columns(score_metrics), dtype=object)
+    if save_path is not None:
+        _save_master_performance_data(df, save_path)
+
+    return df
 
 if __name__ == "__main__":
 
@@ -1225,12 +1445,15 @@ if __name__ == "__main__":
                 # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
                 # for model in models:
                 #     plot_heatmap(model, save_dir=HERE/"result_analysis")
-                models_to_draw = [
-                    {"label": "RF", "model": "RF"},
-                    {"label": "XGBR", "model": "XGBR"},
-                    {"label": "NGB", "model": "NGB"},
-                    {"label": "GPytorchMAP", "model": "GPytorchMAP"},
-                    {"label": "GPytorchMAP SK", "model": "GPytorchMAP", "kernel_case": "sk"},
-                ]
+                # models_to_draw = [
+                #     {"label": "RF", "model": "RF"},
+                #     {"label": "XGBR", "model": "XGBR"},
+                #     {"label": "NGB", "model": "NGB"},
+                #     {"label": "GPytorchMAP", "model": "GPytorchMAP"},
+                #     {"label": "GPytorchMAP SK", "model": "GPytorchMAP", "kernel_case": "sk"},
+                # ]
 
-                plot_barplot(models_to_draw, save_dir=HERE / "result_analysis", figsize=(6,6))
+                # plot_barplot(models_to_draw, save_dir=HERE / "result_analysis", figsize=(6,6))
+
+    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+                                   score_metrics=DEFAULT_SCORE_METRICS)
