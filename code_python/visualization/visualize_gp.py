@@ -3,12 +3,13 @@ from pathlib import Path
 from typing import List, Optional, Any, Dict
 import os 
 import re
-from collections import defaultdict
-import matplotlib.colors as mcolors
 
 # visualization imports
 # import cmcrameri.cm as cmc
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.transforms import Bbox
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -660,13 +661,6 @@ def create_word_table_table(rows_data, folder_path, file_name="results_gp_table.
 
 
 
-baseline_kernel = ["RBF", "Matern32", "Matern52"]
-tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimoto",  ]
-count_kernel = ["Matern32", "Matern52", "RBF"]
-mixing_methods = ["sum", "product", "averageProduct"]
-
-
-
 PLS_Ranks = pd.DataFrame([{
                 "Xn": 1,
                 "Mw (g/mol)": 2,
@@ -739,357 +733,12 @@ PAPER = {
 }
 
 
-models = [
-        "GpyroMCMC", 
-        "GPytorchMAP"
-        ]
-
 
 fp_sk_kernels = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
 fp_bit_kernels = ["Matern32", "Matern52", "RBF"]
 count_kernels    = ["Matern32", "Matern52", "RBF"]
 mixing_methods  = ["sum", "product", "averageProduct"]
 mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
-
-
-def load_avg_score(paper_loc, model, fp_k, count_k, mix_method,score_metric):
-    """Return r2_avg or None if the file is missing."""
-    for suffix in ["", "_mean"]:
-        tmpl = (
-            f"(ECFP3_count_512-COUNT)_"
-            f"({model}_{fp_k}-{count_k}_{mix_method})"
-            f"{suffix}_hypOFF_Standard_Standard_scores"
-        )
-        p = ensure_long_path(paper_loc / f"{tmpl}.json")
-        if p.exists():
-            with open(p) as f:
-                data = json.load(f)
-            return data.get(f"{score_metric}_avg")
-    return None
-
-
-def build_heatmap_data(model):
-    scores = defaultdict(list)
-
-    for paper_name, paper_info in PAPER.items():
-        for target in paper_info["target"]:
-            paper_loc = RESULTS / paper_name / target
-            for fp_k in fp_sk_kernels:
-                for count_k in count_kernels:
-                    for mix in mixing_methods:
-                        score = load_avg_score(paper_loc, model, fp_k, count_k, mix, "r2")
-                        if score is not None:
-                            scores[(fp_k, count_k, mix)].append(score)
-
-    combos = [f"{fp}:\n{c}" for fp in fp_sk_kernels for c in count_kernels]
-    rows = [mixing_labels[m] for m in mixing_methods]
-    pairs = [(fp, c) for fp in fp_sk_kernels for c in count_kernels]
-
-    mean_mat = np.full((len(mixing_methods), len(combos)), np.nan)
-    std_mat  = np.full((len(mixing_methods), len(combos)), np.nan)
-    annot_mat = np.full((len(mixing_methods), len(combos)), "", dtype=object)
-
-    for j, (fp_k, count_k) in enumerate(pairs):
-        for i, mix in enumerate(mixing_methods):
-            vals = scores[(fp_k, count_k, mix)]
-            if vals:
-                avg = np.mean(vals)
-                std = np.std(vals)   # or np.std(vals, ddof=1) for sample std if len(vals) > 1
-
-                mean_mat[i, j] = avg
-                std_mat[i, j] = std
-
-                avg_txt = f"{avg:.2f}"
-                std_txt = f"{std:.2f}"
-                annot_mat[i, j] = f"{avg_txt}\n±{std_txt}"
-
-    mean_df = pd.DataFrame(mean_mat, index=rows, columns=combos)
-    std_df = pd.DataFrame(std_mat, index=rows, columns=combos)
-    annot_df = pd.DataFrame(annot_mat, index=rows, columns=combos)
-
-    return mean_df, std_df, annot_df
-
-
-def plot_heatmap(model, save_dir: Path):
-    df, std_df, annot_df = build_heatmap_data(model)
-    print(df)
-    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
-    annot_df = annot_df.loc[df.index, df.columns]
-
-    fig, ax = plt.subplots(figsize=(10, 3.5))
-
-    sns.heatmap(
-        df,
-        ax=ax,
-        cmap="Reds",
-        vmin=0.5,
-        vmax=0.9,
-        mask=~np.isfinite(df),
-        annot=annot_df,
-        fmt="",
-        annot_kws={"fontsize": 8, "fontweight": "bold"},
-        linewidths=0.5,
-        linecolor="white",
-        cbar_kws={
-            # "label": "Average R² ± Stdev",
-            # "pad": 0.02,
-            "ticks": [0.5, 0.6, 0.7, 0.8, 0.9],
-        },
-    )
-
-    cbar = ax.collections[0].colorbar
-    cbar.set_label("Average R² ± Stdev", rotation=270, labelpad=20, fontsize=14)
-    cbar.set_ticks([0.5, 0.6, 0.7, 0.8, 0.9])
-    cbar.set_ticklabels(["0.5", "0.6", "0.7", "0.8", "0.9"])
-
-    n_count = len(count_kernels)
-    for g in range(1, len(fp_sk_kernels)):
-        ax.axvline(g * n_count, color="white", linewidth=2)
-
-    ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, ha="right", rotation=30)
-    ax.set_yticklabels(ax.get_yticklabels(), fontsize=10, rotation=0)
-    ax.set_xlabel("FP Kernel : Count Kernel", fontsize=11, labelpad=10)
-    ax.set_ylabel("Hybridization Configuration", fontsize=11)
-
-    plt.tight_layout()
-    save_img_path(save_dir, f"heatmap_r2_{model}_ARD.png")
-    plt.close(fig)
-
-
-
-def load_r2_simple(paper_loc: Path, model: str, kernel_case: str = "default"):
-    if kernel_case == "sk":
-        file_templates = [
-            f"(ECFP3_count_512-COUNT)_({model}_TanimotoRBF-Matern32_product)_hypOFF_Standard_Standard_scores",
-            f"(ECFP3_count_512-COUNT)_({model}_TanimotoRBF-Matern32_product)_mean_hypOFF_Standard_Standard_scores",
-        ]
-    elif "gp" in model.lower():
-        file_templates = [
-            f"(ECFP3_count_512-COUNT)_({model}_RBF-Matern32_product)_hypOFF_Standard_Standard_scores",
-            f"(ECFP3_count_512-COUNT)_({model}_RBF-Matern32_product)_mean_hypOFF_Standard_Standard_scores",
-        ]
-    else:
-        file_templates = [
-            f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores",
-        ]
-
-    score_path = None
-    for template in file_templates:
-        candidate = ensure_long_path(paper_loc / f"{template}.json")
-        if candidate.exists():
-            score_path = candidate
-            break
-
-    if score_path is None:
-        tried = "\n  ".join(str(paper_loc / f"{t}.json") for t in file_templates)
-        print(f"File not found. Tried:\n  {tried}")
-        return None
-
-    with open(score_path) as f:
-        data = json.load(f)
-
-    return data.get("r2_avg")
-
-
-def build_barplot_data(model_specs: List[dict]):
-    results = {spec["label"]: [] for spec in model_specs}
-
-    for paper_name, paper_info in PAPER.items():
-        for target in paper_info["target"]:
-            paper_loc = RESULTS / paper_name / target
-            for spec in model_specs:
-                r2 = load_r2_simple(
-                    paper_loc,
-                    spec["model"],
-                    spec.get("kernel_case", "default"),
-                )
-                if r2 is not None:
-                    results[spec["label"]].append(r2)
-
-    return results
-
-
-def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
-    data = build_barplot_data(model_specs)
-
-    labels = [spec["label"] for spec in model_specs]
-    means = [np.mean(data[label]) for label in labels]
-    stds = [np.std(data[label]) for label in labels]
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    x = np.arange(len(labels))
-    bars = ax.bar(
-        x,
-        means,
-        yerr=stds,
-        capsize=5,
-        color=["#AA5A6E", "#AA5A6E","#AA5A6E","#AA5A6E", "#6B9DB4"],
-        edgecolor="white",
-        linewidth=0.8,
-        error_kw={"elinewidth": 1.5, "ecolor": "black", "capthick": 1.5},
-    )
-
-    for bar, mean, std in zip(bars, means, stds):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + std + 0.005,
-            f"{mean:.2f}",
-            ha="center",
-            va="bottom",
-            fontsize=13,
-        )
-
-    ax.set_xticks(x)
-    ax.tick_params(axis="both", labelsize=14)
-    ax.set_xticklabels(labels, fontsize=14, rotation=45)
-    ax.set_ylabel("R²", fontsize=16, fontweight="bold")
-    ax.set_xlabel("Model", fontsize=16, fontweight="bold")
-    ax.set_ylim(0, 1.0)
-    ax.set_yticks(np.arange(0, 1.1, 0.1))
-
-    plt.tight_layout()
-    save_img_path(save_dir, "Tree_based_model_result_across_datasets.png")
-    plt.close(fig)
-    print(f"Saved barplot at {save_dir}")
-
-
-# def performance_plot_with_ranks(
-#     df,
-#     dataset_names,
-#     kernel_names,
-#     metric,
-#     n_seeds,
-#     p_threshold=0.05,
-#     title="",
-#     show=True,
-#     high_quality=True,
-#     save_dir="Performance_profiles",
-#     file_name="performance_profile.png",
-# ):
-#     """
-#     Creates a figure with the performance profiles of each kernel.
-#     Methods are sorted by decreasing auc.
-#     For two successive kernels, if a Wilcoxon signed rank test considers that the first one is not significantly higher than the second one, then we add a grey box in the legend to group the methods.
-
-#     Args:
-#         df: a pandas dataframe, where one line contains the RRMSE and sequential time for one (seed, dataset, kernel).
-#             It should also contain the 'percentile_rank_repeat' column.
-#         dataset_names: a list of dataset names.
-#         kernel_names: a list of kernel names.
-#         metric: the name of the metric (only for the legends).
-#         n_seeds: the total number of seeds.
-#         p_threshold: p-value threshold for the Wilcoxon signed-rank test.
-#         title: the title to display on the figure.
-#         show: a boolean. If True, displays the figure.
-#         high_quality: a boolean. If True, changes the dpi of the figure from 100 to 200.
-#         save_dir: the directory where the figure will be saved.
-
-#     Returns:
-#         aucs (dict): a dict giving the aucs of the performance profiles for all kernels.
-#     """
-#     all_percentages = {}
-#     linn = np.linspace(0, 1, len(dataset_names) * n_seeds)
-#     aggregated_percentiles = df.pivot(
-#         index=["dataset", "seed"], columns="kernel", values="percentile_rank_repeat"
-#     )
-
-#     for kernel_name in kernel_names:
-#         percentages_datasets = [
-#             aggregated_percentiles[kernel_name]
-#             .where(aggregated_percentiles[kernel_name] <= rk)
-#             .count()
-#             / aggregated_percentiles[kernel_name].count()
-#             for rk in linn
-#         ]
-#         all_percentages[kernel_name] = percentages_datasets
-
-#     aucs = {}
-#     for kernel_name in kernel_names:
-#         aucs[kernel_name] = auc(linn, [a for a in all_percentages[kernel_name]])
-
-#     sorted_names = list(
-#         dict(sorted(aucs.items(), key=lambda x: x[1], reverse=True)).keys()
-#     )
-#     groups_of_same_ranks = []
-#     curr_l = [0]
-#     for i in range(len(sorted_names)):
-#         if i != len(sorted_names) - 1:
-#             A = df[df["kernel"] == sorted_names[i]][metric]
-#             B = df[df["kernel"] == sorted_names[i + 1]][metric]
-#             if len(A) != len(B):
-#                 continue  # Ugly, but not used here
-#             stat, p = wilcoxon(A, B, alternative="less")
-#             if p < p_threshold:
-#                 # Significative
-#                 if len(curr_l) >= 2:
-#                     groups_of_same_ranks.append(curr_l)
-#                 curr_l = [i + 1]
-#             else:
-#                 # Not significative
-#                 curr_l.append(i + 1)
-#         else:
-#             if len(curr_l) >= 2:
-#                 groups_of_same_ranks.append(curr_l)
-
-#     fig, ax = plt.subplots()
-
-#     for kernel_name in dict(
-#         sorted(aucs.items(), key=lambda x: x[1], reverse=True)
-#     ).keys():
-#         cat_kernel_name = kernel_name.split("--")[1]
-#         true_kernel_name = (
-#             cat_kernel_name
-#             if cat_kernel_name not in replace_map_cat
-#             else replace_map_cat[cat_kernel_name]
-#         )
-#         ax.plot(
-#             linn,
-#             [a for a in all_percentages[kernel_name]],
-#             color=color_map_all[cat_kernel_name],
-#             label=f"{true_kernel_name}, {aucs[kernel_name]:.2f}",
-#         )
-
-#     legend = plt.legend(
-#         loc="center left",
-#         bbox_to_anchor=(1.02, 0.5),
-#         borderaxespad=0,
-#         frameon=False,
-#         fontsize=12,
-#     )
-
-#     fig = plt.gcf()
-#     fig.canvas.draw()
-#     renderer = fig.canvas.get_renderer()
-
-#     plt.xlabel(r"$\tau$", fontsize=14)  # "Percentage of kernels")
-#     plt.ylabel(r"$p_i(\tau)$", fontsize=14)
-#     # plt.suptitle(suptitle, fontsize = 16, y=0.92) #("% of experiments where the kernel is in the q % best kernels for varying q")
-#     plt.title(title, fontsize=16)
-#     ax.yaxis.set_tick_params(labelsize=14)
-#     ax.xaxis.set_tick_params(labelsize=14)
-
-#     plt.gcf().canvas.draw()
-#     for group_rank in groups_of_same_ranks:
-#         add_legend_box(group_rank, legend, linewidth=1.2, alpha=1.0, pad=3)
-
-#     if show:
-#         plt.show()
-#     else:
-#         plt.close()
-
-#     if save_dir is not None:
-#         os.makedirs(save_dir, exist_ok=True)
-#         fig.savefig(
-#             os.path.join(save_dir, file_name),
-#             bbox_inches="tight",
-#             format="png",
-#             dpi=900 if high_quality else 100,
-#         )
-#     return aucs
-
-
-
 TREE_MODELS = {"RF", "XGBR", "NGB"}
 MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP"]
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
@@ -1105,6 +754,55 @@ TIME_COLUMNS = [
     "Running time (GPU)",
     "Running time (CPU)",
 ]
+
+
+
+# def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
+#     data = build_barplot_data(model_specs)
+
+#     labels = [spec["label"] for spec in model_specs]
+#     means = [np.mean(data[label]) for label in labels]
+#     stds = [np.std(data[label]) for label in labels]
+
+#     fig, ax = plt.subplots(figsize=figsize)
+
+#     x = np.arange(len(labels))
+#     bars = ax.bar(
+#         x,
+#         means,
+#         yerr=stds,
+#         capsize=5,
+#         color=["#AA5A6E", "#AA5A6E","#AA5A6E","#AA5A6E", "#6B9DB4"],
+#         edgecolor="white",
+#         linewidth=0.8,
+#         error_kw={"elinewidth": 1.5, "ecolor": "black", "capthick": 1.5},
+#     )
+
+#     for bar, mean, std in zip(bars, means, stds):
+#         ax.text(
+#             bar.get_x() + bar.get_width() / 2,
+#             bar.get_height() + std + 0.005,
+#             f"{mean:.2f}",
+#             ha="center",
+#             va="bottom",
+#             fontsize=13,
+#         )
+
+#     ax.set_xticks(x)
+#     ax.tick_params(axis="both", labelsize=14)
+#     ax.set_xticklabels(labels, fontsize=14, rotation=45)
+#     ax.set_ylabel("R²", fontsize=16, fontweight="bold")
+#     ax.set_xlabel("Model", fontsize=16, fontweight="bold")
+#     ax.set_ylim(0, 1.0)
+#     ax.set_yticks(np.arange(0, 1.1, 0.1))
+
+#     plt.tight_layout()
+#     save_img_path(save_dir, "Tree_based_model_result_across_datasets.png")
+#     plt.close(fig)
+#     print(f"Saved barplot at {save_dir}")
+
+
+
 
 
 def _is_tree_model(model: str) -> bool:
@@ -1338,6 +1036,248 @@ def build_master_performance_data(
 
     return df
 
+
+
+def add_legend_box(
+    indices, legend, color="grey", linestyle="dashed", alpha=1.0, linewidth=1.5, pad=5
+):
+    # Utilitary function to add a box in the legend of a figure.
+    fig = legend.figure
+    renderer = fig.canvas.get_renderer()
+
+    texts = legend.get_texts()
+    handles = legend.legend_handles
+
+    text_boxes = [texts[i].get_window_extent(renderer) for i in indices]
+    handle_boxes = [handles[i].get_window_extent(renderer) for i in indices]
+
+    all_boxes = text_boxes + handle_boxes
+
+    if not all_boxes:
+        return
+
+    full_box = Bbox.union(all_boxes).padded(pad)
+
+    trans = fig.transFigure.inverted()
+    full_box_fig = trans.transform_bbox(full_box)
+
+    rect = patches.Rectangle(
+        (full_box_fig.x0, full_box_fig.y0),
+        full_box_fig.width,
+        full_box_fig.height,
+        transform=fig.transFigure,
+        facecolor="none",
+        edgecolor=color,
+        linestyle=linestyle,
+        linewidth=linewidth,
+        alpha=alpha,
+        zorder=5,
+    )
+    fig.patches.append(rect)
+
+
+def _coerce_score_list(value: Any) -> Optional[List[Any]]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+        return parsed if isinstance(parsed, list) else None
+    return None
+
+
+def _kernel_label(row: pd.Series) -> str:
+    return f"{row['fp kernel']}-{row['count kernel']}_{row['mixing method']}"
+
+
+def _metric_higher_is_better(metric: str) -> bool:
+    return metric in {"r2", "RUSC", "cvpp_ama"}
+
+
+def _expand_master_scores_for_profile(
+    df: pd.DataFrame,
+    metric: str,
+    model: str,
+) -> pd.DataFrame:
+    score_col = f"{metric}_seed_fold_scores"
+    if score_col not in df.columns:
+        raise ValueError(f"Missing required column: {score_col}")
+
+    rows = []
+    model_df = df[df["model"].astype(str).str.lower() == model.lower()].copy()
+    for _, row in model_df.iterrows():
+        scores = _coerce_score_list(row[score_col])
+        if scores is None:
+            continue
+
+        dataset = f"{row['paper']} | {row['target']}"
+        kernel = _kernel_label(row)
+        for repeat_idx, score in enumerate(scores):
+            try:
+                score = float(score)
+            except (TypeError, ValueError):
+                continue
+            if np.isnan(score):
+                continue
+            rows.append({
+                "dataset": dataset,
+                "repeat": repeat_idx,
+                "kernel": kernel,
+                metric: score,
+            })
+
+    return pd.DataFrame(rows)
+
+
+def performance_plot_with_ranks(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: str = "GPytorchMAP",
+    p_threshold: float = 0.05,
+    title: Optional[str] = None,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = "performance_profile.png",
+):
+    """
+    Plot GPytorchMAP kernel performance profiles from the master result dataset.
+
+    The ranking is computed over every available paper/target, seed, and fold
+    value in the master dataset's ``<metric>_seed_fold_scores`` columns.
+    """
+    profile_df = _expand_master_scores_for_profile(df, metric=metric, model=model)
+    if profile_df.empty:
+        raise ValueError(f"No {metric} seed/fold scores found for model={model}.")
+
+    score_matrix = profile_df.pivot_table(
+        index=["dataset", "repeat"],
+        columns="kernel",
+        values=metric,
+        aggfunc="first",
+    )
+    kernel_names = list(score_matrix.columns)
+    higher_is_better = _metric_higher_is_better(metric)
+    rank_matrix = score_matrix.rank(
+        axis=1,
+        ascending=not higher_is_better,
+        method="average",
+    )
+    valid_counts = score_matrix.notna().sum(axis=1)
+    percentile_matrix = rank_matrix.sub(1, axis=0).div(
+        valid_counts.sub(1).replace(0, np.nan),
+        axis=0,
+    ).fillna(0)
+
+    linn = np.linspace(0, 1, len(percentile_matrix))
+    all_percentages = {}
+    for kernel_name in kernel_names:
+        percentiles = percentile_matrix[kernel_name].dropna()
+        if percentiles.empty:
+            continue
+        all_percentages[kernel_name] = [
+            (percentiles <= rk).mean()
+            for rk in linn
+        ]
+
+    aucs = {
+        kernel_name: auc(linn, percentages)
+        for kernel_name, percentages in all_percentages.items()
+    }
+    sorted_names = [
+        kernel_name
+        for kernel_name, _ in sorted(aucs.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    groups_of_same_ranks = []
+    curr_l = [0]
+    alternative = "greater" if higher_is_better else "less"
+    for i in range(len(sorted_names)):
+        if i == len(sorted_names) - 1:
+            if len(curr_l) >= 2:
+                groups_of_same_ranks.append(curr_l)
+            continue
+
+        paired_scores = score_matrix[[sorted_names[i], sorted_names[i + 1]]].dropna()
+        if paired_scores.empty:
+            continue
+
+        try:
+            _, p = wilcoxon(
+                paired_scores[sorted_names[i]],
+                paired_scores[sorted_names[i + 1]],
+                alternative=alternative,
+            )
+        except ValueError:
+            p = 1.0
+
+        if p < p_threshold:
+            if len(curr_l) >= 2:
+                groups_of_same_ranks.append(curr_l)
+            curr_l = [i + 1]
+        else:
+            curr_l.append(i + 1)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    colors = sns.color_palette("tab20", n_colors=max(len(sorted_names), 1))
+
+    for color, kernel_name in zip(colors, sorted_names):
+        ax.plot(
+            linn,
+            all_percentages[kernel_name],
+            color=color,
+            label=f"{kernel_name}, {aucs[kernel_name]:.2f}",
+        )
+
+    legend = plt.legend(
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+        borderaxespad=0,
+        frameon=False,
+        fontsize=12,
+    )
+
+    fig.canvas.draw()
+
+    ax.set_xlabel(r"$\tau$", fontsize=14)
+    ax.set_ylabel(r"$p_i(\tau)$", fontsize=14)
+    if title is not None:
+        ax.set_title(
+            title or f"{model} {metric} performance profile",
+            fontsize=16,
+        )
+    ax.yaxis.set_tick_params(labelsize=14)
+    ax.xaxis.set_tick_params(labelsize=14)
+
+    fig.canvas.draw()
+    for group_rank in groups_of_same_ranks:
+        add_legend_box(group_rank, legend, linewidth=1.2, alpha=1.0, pad=3)
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            file_name = f"{model}_{metric}_performance_profile.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return aucs
+
+
+
 if __name__ == "__main__":
 
     # model_stats = {}
@@ -1455,5 +1395,18 @@ if __name__ == "__main__":
 
                 # plot_barplot(models_to_draw, save_dir=HERE / "result_analysis", figsize=(6,6))
 
-    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-                                   score_metrics=DEFAULT_SCORE_METRICS)
+
+    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+    #                                score_metrics=DEFAULT_SCORE_METRICS)
+
+    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    res = performance_plot_with_ranks(
+        df=result_df,
+        metric="nll",
+        model="GPytorchMAP",
+        # title="GPyTorch MAP R² Performance Profile",
+        save_dir=HERE / "result_analysis",
+        file_name="GPytorchMAP_nll_performance_profile.png",
+    )
+    print(res)
