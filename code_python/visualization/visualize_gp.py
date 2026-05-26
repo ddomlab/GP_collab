@@ -17,6 +17,9 @@ import seaborn as sns
 # import krippendorff
 import pingouin as pg
 from scipy.stats import kendalltau
+from sklearn.metrics import auc
+from scipy.stats import wilcoxon
+
 #docs
 from docx import Document
 from docx.shared import Pt
@@ -662,21 +665,6 @@ tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF","Tanimo
 count_kernel = ["Matern32", "Matern52", "RBF"]
 mixing_methods = ["sum", "product", "averageProduct"]
 
-# PAPER = {
-#         "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": ["target_log Rg (nm)"],
-#         "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": ["target_calculated PCE (%)"],
-#         "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": ["target_log (Separation factor)","target_log (Total flux)"],
-#         "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": ["target_log (Separation factor)","target_log (Total flux)"],
-#         "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": [
-#         "target_flux decline ratio (%)",
-#         "target_flux recovery ratio (%)",
-#         "target_irreversible fouling ratio(%)",
-#         "target_organic compound removal (%)",
-#         "target_reversible fouling ratio (%)",
-#         r"target_water permeability (LMH\bar)",
-#         ],
-#         }
-
 
 
 PLS_Ranks = pd.DataFrame([{
@@ -742,27 +730,29 @@ PAPER = {
             "target_reversible fouling ratio (%)",
             r"target_water permeability (LMH\bar)"
         ],
-        # "expert_impt": None
-    }
+        "expert_impt": None
+    },
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation": {
+        "target": ["target_Approx Conv (%)"],
+        "expert_impt": None
+    },
 }
 
 
 models = [
-            "GpyroMCMC", 
-            "GPytorchMAP"
-            ]
+        "GpyroMCMC", 
+        "GPytorchMAP"
+        ]
 
 
-
-
-# tanimoto_kernel = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
-tanimoto_kernel = ["Matern32", "Matern52", "RBF"]
-count_kernel    = ["Matern32", "Matern52", "RBF"]
+fp_sk_kernels = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
+fp_bit_kernels = ["Matern32", "Matern52", "RBF"]
+count_kernels    = ["Matern32", "Matern52", "RBF"]
 mixing_methods  = ["sum", "product", "averageProduct"]
 mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
 
 
-def load_r2(paper_loc, model, fp_k, count_k, mix_method):
+def load_avg_score(paper_loc, model, fp_k, count_k, mix_method,score_metric):
     """Return r2_avg or None if the file is missing."""
     for suffix in ["", "_mean"]:
         tmpl = (
@@ -774,7 +764,7 @@ def load_r2(paper_loc, model, fp_k, count_k, mix_method):
         if p.exists():
             with open(p) as f:
                 data = json.load(f)
-            return data.get("r2_avg")
+            return data.get(f"{score_metric}_avg")
     return None
 
 
@@ -784,16 +774,16 @@ def build_heatmap_data(model):
     for paper_name, paper_info in PAPER.items():
         for target in paper_info["target"]:
             paper_loc = RESULTS / paper_name / target
-            for fp_k in tanimoto_kernel:
-                for count_k in count_kernel:
+            for fp_k in fp_sk_kernels:
+                for count_k in count_kernels:
                     for mix in mixing_methods:
-                        r2 = load_r2(paper_loc, model, fp_k, count_k, mix)
-                        if r2 is not None:
-                            scores[(fp_k, count_k, mix)].append(r2)
+                        score = load_avg_score(paper_loc, model, fp_k, count_k, mix, "r2")
+                        if score is not None:
+                            scores[(fp_k, count_k, mix)].append(score)
 
-    combos = [f"{fp}:\n{c}" for fp in tanimoto_kernel for c in count_kernel]
+    combos = [f"{fp}:\n{c}" for fp in fp_sk_kernels for c in count_kernels]
     rows = [mixing_labels[m] for m in mixing_methods]
-    pairs = [(fp, c) for fp in tanimoto_kernel for c in count_kernel]
+    pairs = [(fp, c) for fp in fp_sk_kernels for c in count_kernels]
 
     mean_mat = np.full((len(mixing_methods), len(combos)), np.nan)
     std_mat  = np.full((len(mixing_methods), len(combos)), np.nan)
@@ -852,8 +842,8 @@ def plot_heatmap(model, save_dir: Path):
     cbar.set_ticks([0.5, 0.6, 0.7, 0.8, 0.9])
     cbar.set_ticklabels(["0.5", "0.6", "0.7", "0.8", "0.9"])
 
-    n_count = len(count_kernel)
-    for g in range(1, len(tanimoto_kernel)):
+    n_count = len(count_kernels)
+    for g in range(1, len(fp_sk_kernels)):
         ax.axvline(g * n_count, color="white", linewidth=2)
 
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, ha="right", rotation=30)
@@ -962,6 +952,171 @@ def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
     save_img_path(save_dir, "Tree_based_model_result_across_datasets.png")
     plt.close(fig)
     print(f"Saved barplot at {save_dir}")
+
+
+# def performance_plot_with_ranks(
+#     df,
+#     dataset_names,
+#     kernel_names,
+#     metric,
+#     n_seeds,
+#     p_threshold=0.05,
+#     title="",
+#     show=True,
+#     high_quality=True,
+#     save_dir="Performance_profiles",
+#     file_name="performance_profile.png",
+# ):
+#     """
+#     Creates a figure with the performance profiles of each kernel.
+#     Methods are sorted by decreasing auc.
+#     For two successive kernels, if a Wilcoxon signed rank test considers that the first one is not significantly higher than the second one, then we add a grey box in the legend to group the methods.
+
+#     Args:
+#         df: a pandas dataframe, where one line contains the RRMSE and sequential time for one (seed, dataset, kernel).
+#             It should also contain the 'percentile_rank_repeat' column.
+#         dataset_names: a list of dataset names.
+#         kernel_names: a list of kernel names.
+#         metric: the name of the metric (only for the legends).
+#         n_seeds: the total number of seeds.
+#         p_threshold: p-value threshold for the Wilcoxon signed-rank test.
+#         title: the title to display on the figure.
+#         show: a boolean. If True, displays the figure.
+#         high_quality: a boolean. If True, changes the dpi of the figure from 100 to 200.
+#         save_dir: the directory where the figure will be saved.
+
+#     Returns:
+#         aucs (dict): a dict giving the aucs of the performance profiles for all kernels.
+#     """
+#     all_percentages = {}
+#     linn = np.linspace(0, 1, len(dataset_names) * n_seeds)
+#     aggregated_percentiles = df.pivot(
+#         index=["dataset", "seed"], columns="kernel", values="percentile_rank_repeat"
+#     )
+
+#     for kernel_name in kernel_names:
+#         percentages_datasets = [
+#             aggregated_percentiles[kernel_name]
+#             .where(aggregated_percentiles[kernel_name] <= rk)
+#             .count()
+#             / aggregated_percentiles[kernel_name].count()
+#             for rk in linn
+#         ]
+#         all_percentages[kernel_name] = percentages_datasets
+
+#     aucs = {}
+#     for kernel_name in kernel_names:
+#         aucs[kernel_name] = auc(linn, [a for a in all_percentages[kernel_name]])
+
+#     sorted_names = list(
+#         dict(sorted(aucs.items(), key=lambda x: x[1], reverse=True)).keys()
+#     )
+#     groups_of_same_ranks = []
+#     curr_l = [0]
+#     for i in range(len(sorted_names)):
+#         if i != len(sorted_names) - 1:
+#             A = df[df["kernel"] == sorted_names[i]][metric]
+#             B = df[df["kernel"] == sorted_names[i + 1]][metric]
+#             if len(A) != len(B):
+#                 continue  # Ugly, but not used here
+#             stat, p = wilcoxon(A, B, alternative="less")
+#             if p < p_threshold:
+#                 # Significative
+#                 if len(curr_l) >= 2:
+#                     groups_of_same_ranks.append(curr_l)
+#                 curr_l = [i + 1]
+#             else:
+#                 # Not significative
+#                 curr_l.append(i + 1)
+#         else:
+#             if len(curr_l) >= 2:
+#                 groups_of_same_ranks.append(curr_l)
+
+#     fig, ax = plt.subplots()
+
+#     for kernel_name in dict(
+#         sorted(aucs.items(), key=lambda x: x[1], reverse=True)
+#     ).keys():
+#         cat_kernel_name = kernel_name.split("--")[1]
+#         true_kernel_name = (
+#             cat_kernel_name
+#             if cat_kernel_name not in replace_map_cat
+#             else replace_map_cat[cat_kernel_name]
+#         )
+#         ax.plot(
+#             linn,
+#             [a for a in all_percentages[kernel_name]],
+#             color=color_map_all[cat_kernel_name],
+#             label=f"{true_kernel_name}, {aucs[kernel_name]:.2f}",
+#         )
+
+#     legend = plt.legend(
+#         loc="center left",
+#         bbox_to_anchor=(1.02, 0.5),
+#         borderaxespad=0,
+#         frameon=False,
+#         fontsize=12,
+#     )
+
+#     fig = plt.gcf()
+#     fig.canvas.draw()
+#     renderer = fig.canvas.get_renderer()
+
+#     plt.xlabel(r"$\tau$", fontsize=14)  # "Percentage of kernels")
+#     plt.ylabel(r"$p_i(\tau)$", fontsize=14)
+#     # plt.suptitle(suptitle, fontsize = 16, y=0.92) #("% of experiments where the kernel is in the q % best kernels for varying q")
+#     plt.title(title, fontsize=16)
+#     ax.yaxis.set_tick_params(labelsize=14)
+#     ax.xaxis.set_tick_params(labelsize=14)
+
+#     plt.gcf().canvas.draw()
+#     for group_rank in groups_of_same_ranks:
+#         add_legend_box(group_rank, legend, linewidth=1.2, alpha=1.0, pad=3)
+
+#     if show:
+#         plt.show()
+#     else:
+#         plt.close()
+
+#     if save_dir is not None:
+#         os.makedirs(save_dir, exist_ok=True)
+#         fig.savefig(
+#             os.path.join(save_dir, file_name),
+#             bbox_inches="tight",
+#             format="png",
+#             dpi=900 if high_quality else 100,
+#         )
+#     return aucs
+
+
+
+def load_score(paper_loc, model, fp_k, count_k, mix_method,metric,seed):
+    """Return r2_avg or None if the file is missing."""
+    for suffix in ["", "_mean"]:
+        tmpl = (
+            f"(ECFP3_count_512-COUNT)_"
+            f"({model}_{fp_k}-{count_k}_{mix_method})"
+            f"{suffix}_hypOFF_Standard_Standard_scores"
+        )
+        p = ensure_long_path(paper_loc / f"{tmpl}.json")
+        if p.exists():
+            with open(p) as f:
+                data = json.load(f)
+            return data.get(f"{score_metric}_avg")
+    return None
+
+
+MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP","MGK-sklearn"]
+def build_master_performance_data():
+    
+    for paper_name, paper_info in PAPER.items():
+        for target in paper_info["target"]:
+            paper_loc = RESULTS / paper_name / target
+            for fp_k in fp_sk_kernels:
+                for count_k in count_kernels:
+                    for mix in mixing_methods:
+                        for model in MODELS:
+                            score = load_avg_score(paper_loc, model, fp_k, count_k, mix, "r2")
 
 if __name__ == "__main__":
 
