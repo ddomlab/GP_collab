@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 5, in <module>
+    from training_utils_gp_special import train_regressor
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 29, in <module>
+    from scoring import (
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 19, in <module>
+    import shap
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/shap/__init__.py", line 52, in <module>
+    from . import plots
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/shap/plots/__init__.py", line 13, in <module>
+    from ._force import force, initjs
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/shap/plots/_force.py", line 17, in <module>
+    from IPython.display import HTML, display
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/IPython/__init__.py", line 57, in <module>
+    from .terminal.embed import embed
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/IPython/terminal/embed.py", line 15, in <module>
+    from IPython.core.interactiveshell import InteractiveShell, make_main_module_type
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/IPython/core/interactiveshell.py", line 72, in <module>
+    from IPython.core.displayhook import DisplayHook
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/IPython/core/displayhook.py", line 19, in <module>
+    from .history import HistoryOutput
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/IPython/core/history.py", line 52, in <module>
+    from sqlite3 import DatabaseError, OperationalError
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/sqlite3/__init__.py", line 57, in <module>
+    from sqlite3.dbapi2 import *
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/sqlite3/dbapi2.py", line 27, in <module>
+    from _sqlite3 import *
+KeyboardInterrupt
