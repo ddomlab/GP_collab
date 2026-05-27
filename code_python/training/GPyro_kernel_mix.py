@@ -504,13 +504,18 @@ def run_inference(gp_model,
                 warmup_steps,
                 num_chains,
                 num_drawn_samples,
-                random_state=42
+                random_state=42,
+                jit_compile=False,
                 ):
     pyro.clear_param_store()
     if random_state is not None:
         pyro.set_rng_seed(random_state)
 
-    nuts_kernel = NUTS(gp_model.model, ignore_jit_warnings=True, jit_compile=True)
+    nuts_kernel = NUTS(
+        gp_model.model,
+        ignore_jit_warnings=True,
+        jit_compile=jit_compile,
+    )
 
     mcmc = MCMC(
         nuts_kernel,
@@ -538,6 +543,7 @@ class GpyroHMCRegressor:
         kernel_mixing_method:str="product",
         kernel_type:dict|None=None,
         normalize_y: bool = False,
+        jit_compile: bool = False,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -552,6 +558,7 @@ class GpyroHMCRegressor:
             else {"fp": "TanimotoRBF", "count": "Matern32"}
         )
         self.normalize_y = normalize_y
+        self.jit_compile = jit_compile
 
         self.is_fitted_ = False
         self.gp_model_ = None
@@ -697,6 +704,7 @@ class GpyroHMCRegressor:
             num_chains=self.num_chains,
             random_state=self.random_state,
             num_drawn_samples=self.num_drawn_samples,
+            jit_compile=self.jit_compile,
         )
 
         # make sure samples live on the same device as the model
@@ -827,6 +835,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         kernel_mixing_method:str="product",
         kernel_type:dict|None=None,
         normalize_y: bool = False,
+        jit_compile: bool = False,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -838,6 +847,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         self.kernel_mixing_method = kernel_mixing_method
         self.kernel_type = kernel_type
         self.normalize_y = normalize_y
+        self.jit_compile = jit_compile
 
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
@@ -857,6 +867,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
             kernel_mixing_method=self.kernel_mixing_method,
             kernel_type=self.kernel_type,
             normalize_y=self.normalize_y,
+            jit_compile=self.jit_compile,
         )
 
         self.regressor_.fit(X, y)

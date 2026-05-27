@@ -200,6 +200,7 @@ def optimized_models(
                                     kernel_mixing_method=kernel_mixing_method,
                                     kernel_type=kernel_type,
                                     normalize_y=normalize_y,
+                                    jit_compile=kwargs.get('jit_compile', False),
                                     )
     
     if "MGK" == model_name:
