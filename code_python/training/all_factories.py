@@ -180,7 +180,7 @@ def optimized_models(
                                     n_epoch=kwargs.get('n_epochs', 400),
                                     lr=kwargs.get('lr', 0.01),
                                     progbar=kwargs.get('progbar', False),
-                                    prior=kwargs.get('prior', True),
+                                    prior=kwargs.get('prior', False),
                                     random_state=random_state,
                                     normalize_y=normalize_y,
                                     use_cuda=kwargs.get('use_cuda', True),
