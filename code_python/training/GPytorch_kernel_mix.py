@@ -309,7 +309,7 @@ class GPMix(gpytorch.models.ExactGP):
                     else:
                         sk.register_prior(
                             f"count_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(3.0, 6.0),
+                            gpytorch.priors.GammaPrior(5.0, 5.0),
                             "lengthscale",
                         )
 
@@ -319,7 +319,7 @@ class GPMix(gpytorch.models.ExactGP):
                 for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
                     sk.register_prior(
                                 f"count_lengthscale_prior_{i}",
-                                gpytorch.priors.GammaPrior(5.0, 5.0),
+                                gpytorch.priors.GammaPrior(3.0, 6.0),
                                 "lengthscale",
                                 )
                 fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
@@ -331,7 +331,7 @@ class GPMix(gpytorch.models.ExactGP):
                         # fp_key = fp_keys[i]
                         sk.register_prior(
                                     f"fp_lengthscale_prior_{i}",
-                                    gpytorch.priors.GammaPrior(5.0, 5.0),
+                                    gpytorch.priors.GammaPrior(3.0, 6.0),
                                     "lengthscale",
                                     )
             else:

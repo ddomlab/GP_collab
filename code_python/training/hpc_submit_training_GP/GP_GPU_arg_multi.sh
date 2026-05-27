@@ -1,12 +1,12 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GpyroHMC"   #"GPytorchMAP"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
+model="GPytorchMAP"   #"GpyroHMC", "GPytorchMAP"
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("TanimotoRBF")
 k_counts=("RBF")
-k_mixing_methods=("product") 
+k_mixing_methods=("product" "averageProduct") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 20
+#BSUB -W 30
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=16GB]"
