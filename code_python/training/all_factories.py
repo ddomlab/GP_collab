@@ -10,7 +10,7 @@ from sklearn.linear_model import Lasso
 # from GPR_model import GPRegressor
 from GPytorch_kernel_mix import GPytorchMCMCRegressor, GPytorchMAPsklearnRegressor
 # from pyro_kernel_mix import GPMixMCMCRegressor
-from GPyro_kernel_mix import GPMixMCMCRegressor
+from GPyro_kernel_mix import GpyroHMCsklearnRegressor
 
 from sklearn.neural_network import MLPRegressor
 # from sklearn.multioutput import MultiOutputRegressor
@@ -189,7 +189,18 @@ def optimized_models(
         return GPytorchMCMCRegressor(**kwargs)
     
     if "GpyroMCMC" == model_name:
-        return GPMixMCMCRegressor(**kwargs)
+        return GpyroHMCsklearnRegressor(
+                                    feat_group=feat_group,
+                                    num_samples=kwargs.get('num_samples', 200),
+                                    warmup_steps=kwargs.get('warmup_steps', 200),
+                                    num_chains=kwargs.get('num_chains', 1),
+                                    num_drawn_samples=kwargs.get('num_drawn_samples', 100),
+                                    use_cuda=kwargs.get('use_cuda', False),
+                                    random_state=random_state,
+                                    kernel_mixing_method=kernel_mixing_method,
+                                    kernel_type=kernel_type,
+                                    normalize_y=normalize_y,
+                                    )
     
     if "MGK" == model_name:
         from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor
