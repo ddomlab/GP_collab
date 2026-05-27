@@ -4,8 +4,8 @@ DATE=$(date +%Y%m%d)
 model="GPytorchMAP"  #"GpyroHMC", "GPytorchMAP"
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 dataset="Beyond molecular structure_seifrid_imputed"
-k_fps=("TanimotoRBF")
-k_counts=("RBF")
+k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto")
+k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("averageProduct") 
 
 ##flux_data_imputed
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 50
+#BSUB -W 1:30
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=16GB]"
