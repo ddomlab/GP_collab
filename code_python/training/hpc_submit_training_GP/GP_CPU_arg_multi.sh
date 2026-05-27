@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-# model="GPytorchMAPRegressor"
+model="GPytorchMAP"
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto")
@@ -31,6 +31,7 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
+                                        --regressor_type "$model"
 
 
 EOT
