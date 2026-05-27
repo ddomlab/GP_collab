@@ -1090,8 +1090,39 @@ def _coerce_score_list(value: Any) -> Optional[List[Any]]:
     return None
 
 
-def _kernel_label(row: pd.Series) -> str:
-    return f"{row['fp kernel']}-{row['count kernel']}_{row['mixing method']}"
+def _selection_values(values: Any) -> Optional[List[Any]]:
+    if values is None:
+        return None
+    if isinstance(values, str):
+        return [values]
+    return list(values)
+
+
+def _filter_selection(
+    df: pd.DataFrame,
+    column: str,
+    values: Any,
+    keep_missing: bool = False,
+) -> pd.DataFrame:
+    selected = _selection_values(values)
+    if selected is None:
+        return df
+
+    selected_lower = {str(value).lower() for value in selected}
+    column_values = df[column].astype(str).str.lower()
+    mask = column_values.isin(selected_lower)
+    if keep_missing:
+        mask = mask | df[column].isna()
+    return df[mask].copy()
+
+
+def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
+    model = str(row["model"])
+    if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
+        return model
+
+    label = f"{row['fp kernel']}-{row['count kernel']}_{row['mixing method']}"
+    return f"{model}: {label}" if include_model else label
 
 
 def _metric_higher_is_better(metric: str) -> bool:
@@ -1101,21 +1132,30 @@ def _metric_higher_is_better(metric: str) -> bool:
 def _expand_master_scores_for_profile(
     df: pd.DataFrame,
     metric: str,
-    model: str,
+    model: Any,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
 ) -> pd.DataFrame:
     score_col = f"{metric}_seed_fold_scores"
     if score_col not in df.columns:
         raise ValueError(f"Missing required column: {score_col}")
 
     rows = []
-    model_df = df[df["model"].astype(str).str.lower() == model.lower()].copy()
+    selected_models = _selection_values(model)
+    model_df = _filter_selection(df, "model", selected_models)
+    model_df = _filter_selection(model_df, "fp kernel", fp_kernels, keep_missing=True)
+    model_df = _filter_selection(model_df, "count kernel", count_kernels, keep_missing=True)
+    model_df = _filter_selection(model_df, "mixing method", mixing_methods, keep_missing=True)
+    include_model = selected_models is None or len(selected_models) > 1
+
     for _, row in model_df.iterrows():
         scores = _coerce_score_list(row[score_col])
         if scores is None:
             continue
 
         dataset = f"{row['paper']} | {row['target']}"
-        kernel = _kernel_label(row)
+        kernel = _kernel_label(row, include_model=include_model)
         for repeat_idx, score in enumerate(scores):
             try:
                 score = float(score)
@@ -1136,7 +1176,10 @@ def _expand_master_scores_for_profile(
 def performance_plot_with_ranks(
     df: pd.DataFrame,
     metric: str = "r2",
-    model: str = "GPytorchMAP",
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
     p_threshold: float = 0.05,
     title: Optional[str] = None,
     show: bool = True,
@@ -1145,14 +1188,24 @@ def performance_plot_with_ranks(
     file_name: Optional[str] = "performance_profile.png",
 ):
     """
-    Plot GPytorchMAP kernel performance profiles from the master result dataset.
+    Plot model/kernel performance profiles from the master result dataset.
 
     The ranking is computed over every available paper/target, seed, and fold
     value in the master dataset's ``<metric>_seed_fold_scores`` columns.
     """
-    profile_df = _expand_master_scores_for_profile(df, metric=metric, model=model)
+    profile_df = _expand_master_scores_for_profile(
+        df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+    )
     if profile_df.empty:
-        raise ValueError(f"No {metric} seed/fold scores found for model={model}.")
+        raise ValueError(
+            f"No {metric} seed/fold scores found for model={model} "
+            f"with fp_kernels={fp_kernels} and count_kernels={count_kernels}."
+        )
 
     score_matrix = profile_df.pivot_table(
         index=["dataset", "repeat"],
@@ -1403,10 +1456,9 @@ if __name__ == "__main__":
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
     res = performance_plot_with_ranks(
         df=result_df,
-        metric="nll",
+        metric="r2",
         model="GPytorchMAP",
         # title="GPyTorch MAP R² Performance Profile",
         save_dir=HERE / "result_analysis",
-        file_name="GPytorchMAP_nll_performance_profile.png",
+        file_name="GPytorchMAP_r2_performance_profile.png",
     )
-    print(res)
