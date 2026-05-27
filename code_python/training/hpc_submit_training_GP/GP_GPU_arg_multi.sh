@@ -6,7 +6,7 @@ paper="Beyond molecular structure_ critically assessing machine learning for des
 dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("TanimotoRBF")
 k_counts=("RBF")
-k_mixing_methods=("product" "averageProduct") 
+k_mixing_methods=("sum" "averageProduct") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 30
+#BSUB -W 55
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=16GB]"
