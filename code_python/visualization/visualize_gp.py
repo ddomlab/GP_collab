@@ -1009,7 +1009,7 @@ def build_master_performance_data(
                     })
                     continue
 
-                for fp_k in fp_sk_kernels:
+                for fp_k in fp_sk_kernels + fp_bit_kernels:
                     for count_k in count_kernels:
                         for mix in mixing_methods:
                             cpu_data, gpu_data = _load_score_files(

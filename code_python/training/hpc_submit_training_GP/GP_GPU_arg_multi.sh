@@ -1,10 +1,10 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAPRegressor"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
-k_fps=("TanimotoRBF" "TanimotoMatern32")
+model="GpyroHMC"   #"GPytorchMAP"
+paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+dataset="Rg data with clusters aging imputed"
+k_fps=("TanimotoRBF")
 k_counts=("RBF")
 k_mixing_methods=("product") 
 
@@ -18,13 +18,13 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 40
+#BSUB -W 20
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=16GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
-#BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
+#BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
+#BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
 
 source ~/.bashrc
 module load cuda/12.1
@@ -36,6 +36,7 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
+                                        --regressor_type "$model"
 
 
 EOT

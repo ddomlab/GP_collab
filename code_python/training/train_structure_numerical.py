@@ -94,7 +94,7 @@ if __name__ == "__main__":
             representation="ECFP", #"ECFP" # MG
             radius=3,
             vector="count",
-            regressor_type="GpyroHMC", #"GPytorchMAP", #MGK-sklearn
+            regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
             # GPytorchMixMCMC
             # GPMixMCMC
             polymer_unit=polymer_unit,
