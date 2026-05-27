@@ -188,7 +188,7 @@ def optimized_models(
     if "GPytorchMCMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     
-    if "GpyroMCMC" == model_name:
+    if "GpyroHMC" == model_name:
         return GpyroHMCsklearnRegressor(
                                     feat_group=feat_group,
                                     num_samples=kwargs.get('num_samples', 200),
