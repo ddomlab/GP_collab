@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 13, in <module>
+    from GPyro_kernel_mix import GPMixMCMCRegressor
+ImportError: cannot import name 'GPMixMCMCRegressor' from 'GPyro_kernel_mix' (/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py). Did you mean: 'GpyroHMCRegressor'?
