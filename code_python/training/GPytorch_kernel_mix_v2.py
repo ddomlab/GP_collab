@@ -261,7 +261,15 @@ class MixingKernel:
 
 class GPMix(gpytorch.models.ExactGP):
     def __init__(self, X, y, feat_idx,
-                  mixing_method:str, kernel_method:dict, likelihood, prior, ssk_parameters, cuda_avail):
+                  mixing_method:str,
+                  kernel_method:dict,
+                  likelihood,
+                  prior,
+                  ssk_parameters,
+                  cuda_avail,
+                  outputscale_prior: gpytorch.priors.Prior | None = None,
+                  noise_prior: gpytorch.priors.Prior | None = None,
+                  lengthscale_prior: gpytorch.priors.Prior | None = None):
         super().__init__(X, y, likelihood)
         # self.feat_idx = feat_idx
         # self.kernel_method = kernel_method
@@ -279,15 +287,16 @@ class GPMix(gpytorch.models.ExactGP):
         self.covar_module = gpytorch.kernels.ScaleKernel(base_kernel)
         self.covar_module.register_prior(
             "variance_prior",
-            gpytorch.priors.LogNormalPrior(0.0, 1.0),
+            outputscale_prior or gpytorch.priors.LogNormalPrior(0.0, 1.0),
             "outputscale",
         )
         self.likelihood.register_prior(
             "noise_prior",
-            gpytorch.priors.LogNormalPrior(0.0, 1.0),
+            noise_prior or gpytorch.priors.LogNormalPrior(0.0, 1.0),
             "noise",
         )
         fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
+        lengthscale_prior = lengthscale_prior or gpytorch.priors.GammaPrior(5.0, 5.0)
 
         root_kernel = self.covar_module.base_kernel
         if prior:
@@ -301,7 +310,7 @@ class GPMix(gpytorch.models.ExactGP):
                             # ard_dim = len(feat_idx[fp_key])
                             sk.register_prior(
                                 f"fp_lengthscale_prior_{i}",
-                                gpytorch.priors.GammaPrior(5.0, 5.0),
+                                lengthscale_prior,
                                 "lengthscale",
                                 )
                         
@@ -309,7 +318,7 @@ class GPMix(gpytorch.models.ExactGP):
                     else:
                         sk.register_prior(
                             f"count_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
+                            lengthscale_prior,
                             "lengthscale",
                         )
 
@@ -319,7 +328,7 @@ class GPMix(gpytorch.models.ExactGP):
                 for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
                     sk.register_prior(
                                 f"count_lengthscale_prior_{i}",
-                                gpytorch.priors.GammaPrior(5.0, 5.0),
+                                lengthscale_prior,
                                 "lengthscale",
                                 )
                 fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
@@ -331,7 +340,7 @@ class GPMix(gpytorch.models.ExactGP):
                         # fp_key = fp_keys[i]
                         sk.register_prior(
                                     f"fp_lengthscale_prior_{i}",
-                                    gpytorch.priors.GammaPrior(5.0, 5.0),
+                                    lengthscale_prior,
                                     "lengthscale",
                                     )
             else:
@@ -386,6 +395,15 @@ class GPytorchMAPRegressor:
         prior=False,
         normalize_y: bool = False,
         use_cuda: bool = True,
+        noise_lower_bound: float = 1e-4,
+        cholesky_jitter: float = 1e-3,
+        cholesky_max_tries: int = 3,
+        outputscale_prior_loc: float = 0.0,
+        outputscale_prior_scale: float = 1.0,
+        noise_prior_loc: float = 0.0,
+        noise_prior_scale: float = 1.0,
+        lengthscale_prior_concentration: float = 5.0,
+        lengthscale_prior_rate: float = 5.0,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -402,6 +420,15 @@ class GPytorchMAPRegressor:
         self.prior = prior
         self.normalize_y = normalize_y
         self.use_cuda= use_cuda
+        self.noise_lower_bound = noise_lower_bound
+        self.cholesky_jitter = cholesky_jitter
+        self.cholesky_max_tries = cholesky_max_tries
+        self.outputscale_prior_loc = outputscale_prior_loc
+        self.outputscale_prior_scale = outputscale_prior_scale
+        self.noise_prior_loc = noise_prior_loc
+        self.noise_prior_scale = noise_prior_scale
+        self.lengthscale_prior_concentration = lengthscale_prior_concentration
+        self.lengthscale_prior_rate = lengthscale_prior_rate
         device = torch.device(
             "cuda" if self.use_cuda and torch.cuda.is_available() else "cpu"
         )
@@ -524,7 +551,7 @@ class GPytorchMAPRegressor:
         y_train = self._y_train
 
         self.likelihood_ = gpytorch.likelihoods.GaussianLikelihood(
-            noise_constraint=gpytorch.constraints.GreaterThan(1e-2)
+            noise_constraint=gpytorch.constraints.GreaterThan(self.noise_lower_bound)
         ).to(**self.cuda_avail)
 
         self.gp_model_ = GPMix(
@@ -537,6 +564,18 @@ class GPytorchMAPRegressor:
             prior=self.prior,
             ssk_parameters=self.ssk_parameters,
             cuda_avail=self.cuda_avail,
+            outputscale_prior=gpytorch.priors.LogNormalPrior(
+                self.outputscale_prior_loc,
+                self.outputscale_prior_scale,
+            ),
+            noise_prior=gpytorch.priors.LogNormalPrior(
+                self.noise_prior_loc,
+                self.noise_prior_scale,
+            ),
+            lengthscale_prior=gpytorch.priors.GammaPrior(
+                self.lengthscale_prior_concentration,
+                self.lengthscale_prior_rate,
+            ),
         ).to(**self.cuda_avail)
 
         optimizer = torch.optim.Adam(
@@ -558,6 +597,7 @@ class GPytorchMAPRegressor:
 
         for _ in range(self.n_epoch):
             optimizer.zero_grad()
+
             with gpytorch.settings.cholesky_jitter(
                 float_value=1e-1,
                 double_value=1e-1,
@@ -587,9 +627,9 @@ class GPytorchMAPRegressor:
         self.likelihood_.eval()
 
         with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.cholesky_jitter(
-            float_value=1e-1,
-            double_value=1e-1,
-        ), gpytorch.settings.cholesky_max_tries(5):
+            float_value=self.cholesky_jitter,
+            double_value=self.cholesky_jitter,
+        ), gpytorch.settings.cholesky_max_tries(self.cholesky_max_tries):
             posterior = self.likelihood_(self.gp_model_(X_test))
 
             y_pred_scaled = posterior.mean.detach().cpu().numpy()
@@ -721,6 +761,15 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         prior=False,
         normalize_y: bool = False,
         use_cuda: bool = True,
+        noise_lower_bound: float = 1e-4,
+        cholesky_jitter: float = 1e-3,
+        cholesky_max_tries: int = 3,
+        outputscale_prior_loc: float = 0.0,
+        outputscale_prior_scale: float = 1.0,
+        noise_prior_loc: float = 0.0,
+        noise_prior_scale: float = 1.0,
+        lengthscale_prior_concentration: float = 5.0,
+        lengthscale_prior_rate: float = 5.0,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -733,6 +782,16 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         self.prior = prior
         self.normalize_y = normalize_y
         self.use_cuda = use_cuda
+        self.noise_lower_bound = noise_lower_bound
+        self.cholesky_jitter = cholesky_jitter
+        self.cholesky_max_tries = cholesky_max_tries
+        self.outputscale_prior_loc = outputscale_prior_loc
+        self.outputscale_prior_scale = outputscale_prior_scale
+        self.noise_prior_loc = noise_prior_loc
+        self.noise_prior_scale = noise_prior_scale
+        self.lengthscale_prior_concentration = lengthscale_prior_concentration
+        self.lengthscale_prior_rate = lengthscale_prior_rate
+
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
             raise TypeError(
@@ -752,6 +811,15 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
             prior=self.prior,
             normalize_y=self.normalize_y,
             use_cuda=self.use_cuda,
+            noise_lower_bound=self.noise_lower_bound,
+            cholesky_jitter=self.cholesky_jitter,
+            cholesky_max_tries=self.cholesky_max_tries,
+            outputscale_prior_loc=self.outputscale_prior_loc,
+            outputscale_prior_scale=self.outputscale_prior_scale,
+            noise_prior_loc=self.noise_prior_loc,
+            noise_prior_scale=self.noise_prior_scale,
+            lengthscale_prior_concentration=self.lengthscale_prior_concentration,
+            lengthscale_prior_rate=self.lengthscale_prior_rate,
         )
 
         self.regressor_.fit(X, y)
