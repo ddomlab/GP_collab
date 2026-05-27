@@ -1,0 +1,376 @@
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 320159: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Wed May 27 12:26:39 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 12:27:03 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 12:27:03 2026
+Terminated at Wed May 27 12:27:24 2026
+Results reported at Wed May 27 12:27:24 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   11.43 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   18 sec.
+    Turnaround time :                            45 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 320186: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <gpu14> by user <sdehgha2> in cluster <Hazel> at Wed May 27 12:40:25 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 12:40:28 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 12:40:28 2026
+Terminated at Wed May 27 12:41:59 2026
+Results reported at Wed May 27 12:41:59 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 55
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   46.33 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.60 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   120 sec.
+    Turnaround time :                            94 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 320194: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <gpu26> by user <sdehgha2> in cluster <Hazel> at Wed May 27 12:47:14 2026
+Job was executed on host(s) <gpu26>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 12:48:11 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 12:48:11 2026
+Terminated at Wed May 27 12:49:12 2026
+Results reported at Wed May 27 12:49:12 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   22.86 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                7
+    Run time :                                   71 sec.
+    Turnaround time :                            118 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 321183: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Wed May 27 14:24:53 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 14:24:53 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 14:24:53 2026
+Terminated at Wed May 27 14:25:17 2026
+Results reported at Wed May 27 14:25:17 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   10.30 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   24 sec.
+    Turnaround time :                            24 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu01>
+Subject: Job 321240: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <gpu01> by user <sdehgha2> in cluster <Hazel> at Wed May 27 14:27:15 2026
+Job was executed on host(s) <gpu01>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 14:27:15 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 14:27:15 2026
+Terminated at Wed May 27 14:27:33 2026
+Results reported at Wed May 27 14:27:33 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   10.12 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   18 sec.
+    Turnaround time :                            18 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.06±0.14	 r2: 0.55±0.05
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoRBF-RBF_averageProduct)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 321242: <structure_numerical_20260527> in cluster <Hazel> Done
+
+Job <structure_numerical_20260527> was submitted from host <gpu13> by user <sdehgha2> in cluster <Hazel> at Wed May 27 14:27:55 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 14:27:56 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 14:27:56 2026
+Terminated at Wed May 27 14:31:12 2026
+Results reported at Wed May 27 14:31:12 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoRBF                                         --K_count RBF                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   157.41 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.78 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   223 sec.
+    Turnaround time :                            197 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_TanimotoRBF_RBF_averageProduct_GPU.err> for stderr output of this job.
+
