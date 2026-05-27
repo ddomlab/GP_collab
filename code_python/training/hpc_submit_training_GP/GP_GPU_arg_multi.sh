@@ -4,7 +4,7 @@ DATE=$(date +%Y%m%d)
 model="GPytorchMAP"  #"GpyroHMC", "GPytorchMAP"
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 dataset="Beyond molecular structure_seifrid_imputed"
-k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto")
+k_fps=("TanimotoMatern52" "Tanimoto")
 k_counts=("RBF" "Matern32" "Matern52")
 k_mixing_methods=("averageProduct") 
 
