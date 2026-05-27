@@ -2,12 +2,11 @@
 
 DATE=$(date +%Y%m%d)
 # model="GPytorchMAPRegressor"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
-k_fps=("TanimotoRBF" "TanimotoMatern32")
-k_counts=("RBF")
-k_mixing_methods=("product") 
-
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
+k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto")
+k_counts=("RBF" "Matern32" "Matern52")
+k_mixing_methods=("averageProduct") 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
