@@ -1449,16 +1449,16 @@ if __name__ == "__main__":
                 # plot_barplot(models_to_draw, save_dir=HERE / "result_analysis", figsize=(6,6))
 
 
-    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-                                   score_metrics=DEFAULT_SCORE_METRICS)
+    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+    #                                score_metrics=DEFAULT_SCORE_METRICS)
 
-    # COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
-    # result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    # res = performance_plot_with_ranks(
-    #     df=result_df,
-    #     metric="r2",
-    #     model="GPytorchMAP",
-    #     # title="GPyTorch MAP R² Performance Profile",
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="GPytorchMAP_r2_performance_profile.png",
-    # )
+    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    res = performance_plot_with_ranks(
+        df=result_df,
+        metric="r2",
+        model="GPytorchMAP",
+        # title="GPyTorch MAP R² Performance Profile",
+        save_dir=HERE / "result_analysis",
+        file_name="GPytorchMAP_r2_performance_profile.png",
+    )
