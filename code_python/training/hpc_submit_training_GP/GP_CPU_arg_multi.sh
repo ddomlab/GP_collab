@@ -1,12 +1,12 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAP"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="Beyond molecular structure_seifrid_imputed"
-k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto")
-k_counts=("RBF" "Matern32" "Matern52")
-k_mixing_methods=("averageProduct") 
+model="GpyroHMC"
+paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+dataset="Rg data with clusters aging imputed"
+k_fps=("TanimotoRBF")
+k_counts=("RBF")
+k_mixing_methods=("product") 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -17,12 +17,12 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 55
+#BSUB -W 4:30
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.out"
-#BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.err"
+#BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.out"
+#BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
