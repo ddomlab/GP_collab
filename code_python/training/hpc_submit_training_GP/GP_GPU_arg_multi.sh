@@ -2,10 +2,10 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="separation_data_imputed"
+paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+dataset="cleaned_dataset_pervaporation_membranes_wang"
 k_fps=("TanimotoMatern32")
-k_counts=("Matern32")
+k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
 
 ##flux_data_imputed
@@ -18,9 +18,9 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 20:50
+#BSUB -W 3:50
 #BSUB -q gpu
-#BSUB -R "select[a10]"
+#BSUB -R "select[a100]"
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=16GB]"
 #BSUB -J "structure_numerical_${DATE}"
