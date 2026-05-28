@@ -270,6 +270,7 @@ def run(
     seed_scores: dict[int, dict[str, float]] = {}
     seed_predictions: dict[int, np.ndarray] = {}
     n_jobs = 1 if kwargs.get("use_cuda", False) and torch.cuda.is_available() else -1
+    n_jobs = 1 if "hmc" in regressor_type.lower() else n_jobs
     for seed in SEEDS:
 
         print(f"Running seed: {seed}")
