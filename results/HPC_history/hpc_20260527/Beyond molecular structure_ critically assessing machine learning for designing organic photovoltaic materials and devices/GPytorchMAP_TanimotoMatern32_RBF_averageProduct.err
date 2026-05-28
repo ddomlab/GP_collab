@@ -1,0 +1,75 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 92, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 46, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 76, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 153, in _prepare_data
+    if "mgk" in regressor_type.lower():
+                ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'lower'
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(

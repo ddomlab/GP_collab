@@ -1,0 +1,118 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c047n01>
+Subject: Job 334248: <structure_numerical_20260527> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260527> was submitted from host <c055n01> by user <sdehgha2> in cluster <Hazel> at Wed May 27 18:30:37 2026
+Job was executed on host(s) <6*c047n01>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 18:30:39 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 18:30:39 2026
+Terminated at Wed May 27 18:31:02 2026
+Results reported at Wed May 27 18:31:02 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 55
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern52                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   11.31 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   26 sec.
+    Turnaround time :                            25 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.02±0.13	 r2: 0.57±0.04
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Tanimoto-Matern52_averageProduct)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c047n01>
+Subject: Job 334264: <structure_numerical_20260527> in cluster <Hazel> Done
+
+Job <structure_numerical_20260527> was submitted from host <c055n01> by user <sdehgha2> in cluster <Hazel> at Wed May 27 18:32:32 2026
+Job was executed on host(s) <6*c047n01>, in queue <short>, as user <sdehgha2> in cluster <Hazel> at Wed May 27 18:32:34 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed May 27 18:32:34 2026
+Terminated at Wed May 27 18:48:35 2026
+Results reported at Wed May 27 18:48:35 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 55
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260527"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp Tanimoto                                         --K_count Matern52                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GPytorchMAP"
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4575.89 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.06 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                14
+    Run time :                                   962 sec.
+    Turnaround time :                            963 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260527/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GPytorchMAP_Tanimoto_Matern52_averageProduct.err> for stderr output of this job.
+
