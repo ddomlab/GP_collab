@@ -34,285 +34,9 @@ set_plot_style()
 HERE = Path(__file__).resolve().parent
 # DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
+COMBINED_RESULTS = RESULTS / "master_performance_data" / "Tree_and_GP.pkl"
 
 
-# 
-#----------- Helper functions for heatmap visualization -----------#
-def generate_annotations(num: float) -> str:
-    """
-    Args:
-        num: Number to annotate
-
-    Returns:
-        String to annotate heatmap
-    """
-    if isinstance(num, float) and not np.isnan(num):
-        num_txt: str = f"{round(num, 2)}"
-    else:
-        num_txt = "NaN"
-    return num_txt
-
-
-def plot_manual_heatmap(
-    root_dir: Path,
-    score_metric: str,
-    score_to_show: pd.DataFrame,
-    figsize: tuple[int, int],
-    fig_title: str,
-    x_title: str,
-    y_title: str,
-    fname: str,
-    vmin: float = None,
-    vmax: float = None,
-    feature_order: list[str] = None,
-    model_order: list[str] = None,
-    num_ticks: int = 3,
-    **kwargs,
-) -> None:
-    
-    # def wrap_label(label: str, max_words_per_line: int = 2) -> str:
-    #     words = label.split(" + ")
-    #     return "\n".join(
-    #         [" + ".join(words[i:i + max_words_per_line]) for i in range(0, len(words), max_words_per_line)]
-    #     )
-
-    # Pivot the DataFrame
-    avg_scores = score_to_show.pivot(index='features', columns='model', values='score')
-    annotations = score_to_show.pivot(index='features', columns='model', values='annotations')
-
-    if feature_order is not None:
-        avg_scores = avg_scores.reindex(feature_order)
-        annotations = annotations.reindex(feature_order)
-
-    if model_order is not None:
-        avg_scores = avg_scores[model_order]
-        annotations = annotations[model_order]
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    palette = "viridis" if score_metric in ["r", "r2"] else "viridis_r"
-    custom_cmap = sns.color_palette(palette, as_cmap=True)
-    custom_cmap.set_bad(color="lightgray")
-
-    # Create heatmap without automatic colorbar
-    hmap = sns.heatmap(
-        avg_scores,
-        annot=annotations,
-        fmt="",
-        cmap=custom_cmap,
-        cbar=False,
-        vmin=vmin,
-        vmax=vmax,
-        ax=ax,
-        mask=avg_scores.isnull(),
-        annot_kws={"fontsize": kwargs['fontsize']},
-    )
-
-    # Flip y-ticks to the right side
-    ax.yaxis.tick_right()
-
-    # Set tick labels
-    ax.set_xticks(np.arange(len(avg_scores.columns)) + 0.5)
-    ax.set_yticks(np.arange(len(avg_scores.index)) + 0.5)
-
-    x_tick_labels = avg_scores.columns.tolist()
-    # y_tick_labels = [wrap_label(label) for label in avg_scores.index]
-
-    ax.set_xticklabels(x_tick_labels, rotation=45, ha="right", fontsize=kwargs['fontsize'])
-    ax.set_yticklabels(avg_scores.index, rotation=0, ha="left", fontsize=kwargs['fontsize'])
-    ax.tick_params(axis='y', pad=5)
-
-    # Titles
-    plt.title(fig_title, fontsize=kwargs['fontsize'] + 2, fontweight='bold')
-    ax.set_xlabel(x_title, fontsize=kwargs['fontsize'] + 2, fontweight='bold')
-    ax.set_ylabel(y_title, fontsize=kwargs['fontsize'] + 2, fontweight='bold')
-
-    # Colorbar manually on the left
-    var_titles = {"stdev": "Stdev"}
-    score_txt = "$R^2$" if score_metric == "r2" else score_metric
-
-    if vmin is None:
-        vmin = np.nanmin(avg_scores.values)
-    if vmax is None:
-        vmax = np.nanmax(avg_scores.values)
-
-    ticks = np.linspace(vmin, vmax, num_ticks)
-
-    # Get the QuadMesh from heatmap and create colorbar manually
-    im = hmap.get_children()[0]
-    cbar = fig.colorbar(im, ax=ax, orientation='vertical', location='left', shrink=0.6, pad=0.02)
-    cbar.set_ticks(np.round(ticks, 1))
-    cbar.set_label(
-        f"Average {score_txt.upper()} ± {var_titles.get('stdev', 'Stdev')}",
-        rotation=90,
-        labelpad=10,
-        fontsize=kwargs['fontsize']+2,
-        fontweight='bold',
-    )
-    cbar.ax.tick_params(labelsize=kwargs['fontsize'])
-
-    visualization_folder_path = root_dir / "heatmap"
-    # os.makedirs(visualization_folder_path, exist_ok=True)
-    plt.tight_layout()
-    save_img_path(visualization_folder_path, fname)
-    plt.show()
-    plt.close()
-
-
-def _parse_property_string(file_name: str):
-
-    feat_match = re.search(r"\((.*?)\)", file_name)
-    if not feat_match:
-        return None
-    feature_str = feat_match.group(1)
-    features = re.sub(r"[-]+", "+", feature_str)  # replace '-' with '+'
-
-
-    # extract model name (e.g. RF, XGBR, sklearn-GPR, etc.)
-    model_match = re.search(r"\)_(.*?)_", file_name)
-    model = model_match.group(1) if model_match else None
-
-    imp_match = re.search(rf"{model}_(\w+)_hypOFF", file_name)
-    imputation = imp_match.group(1) if imp_match else None
-
-    # Exclude false matches like 'hypOFF' itself
-    if imputation and imputation.lower() not in ["hypoff"]:
-        features = f"{features} ({imputation} imp)"
-
-    return features, model
-
-
-def get_results_from_file(
-    file_path: Path,
-    score_metric: str,
-    # impute: bool = False,
-) :
-    """
-    Args:
-        root_dir: Root directory containing all results
-        representation: Representation for which to get scores
-        model: Model for which to get scores.
-        score: Score to plot
-        var: Variance to plot
-
-    Returns:
-        Average and variance of score
-    """
-    file_path = ensure_long_path(file_path)
-    if not file_path.exists():
-            print('not exists')
-            features, model = None, None
-            avg, std = np.nan, np.nan
-        
-    else:
-        features, model = _parse_property_string(file_path.name)
-         # Read JSON file
-       
-        with open(file_path, "r") as f:
-            data = json.load(f)
-
-        avg = data[f"{score_metric}_avg"]
-        std = data[f"{score_metric}_stdev"]
-        
-        if score_metric in ["mae", "rmse"]:
-            avg, std = abs(avg), abs(std)
-        return features, model, avg, std
-
-
-
-def _get_count_fp_comparison(
-                            target_folder: Path,
-                            scoring_metric: str,
-                            selected_models: set[str],
-                            features_to_draw: set[str] = None,
-                            ) -> pd.DataFrame:
-
-    scores_to_report: List = []
-    pattern: str = "*_scores.json"
-
-    # for value in comparison_value:
-    # value_folder = os.path.join(target_folder, value)
-    print('yes')
-
-    score_files = list(Path(target_folder).glob(pattern))
-    for score_path in score_files:
-        if "heatmap" in score_path.parts:
-            continue
-
-        if (
-            "generalizability" in score_path.name
-            or "test" in score_path.parts
-            or "lc_scores" in score_path.name
-            or "dropped_nans" in score_path.name
-            ):
-            continue
-
-
-        feats, model, av, std = get_results_from_file(file_path=score_path, score_metric=scoring_metric)
-        # Only keep selected features
-        if features_to_draw is None:
-            # draw all features
-            pass
-        elif feats not in features_to_draw:
-            continue
-
-        if model not in selected_models and selected_models is not None:
-            continue
-
-        anot = f"{np.round(av, 2)}\n±{np.round(std, 2)}"
-        scores_to_report.append({
-            "features": feats,
-            "model": model,
-            "score": np.round(av, 2),
-            "annotations": anot
-        })
-
-    return pd.DataFrame(scores_to_report)
-
-
-def creat_count_fp_heatmap(
-                            target_dir:Path,
-                            score_metric:str,
-                            features_to_draw: List[str] = None,
-                            models_to_draw: set[str] = {"RF","XGBR"},
-                            figsize: tuple=(6,6)
-                            ) -> None:
-    scores_to_show:pd.DataFrame = _get_count_fp_comparison(
-                                                            target_folder=target_dir,
-                                                            scoring_metric=score_metric,
-                                                            selected_models=models_to_draw,
-                                                            features_to_draw=features_to_draw
-                                                            )
-                                                            
-    print(scores_to_show)
-    fname= f"model vs features_{score_metric}"
-    if score_metric == "r2":
-        vmax= 1
-        vmin= 0
-        n_cbar_tick = 6 
-    elif score_metric == "mae":
-        vmax= .5
-        vmin= 0.1
-        n_cbar_tick = 5  
-    elif score_metric == "rmse":
-        vmax= 1
-        vmin= 0
-        n_cbar_tick = 6 
-    plot_manual_heatmap(root_dir=target_dir/"comparison heatmap for polymer properties",
-                        score_metric=score_metric,
-                        score_to_show=scores_to_show,
-                        figsize=figsize,
-                        fig_title=f" \n ",
-                        x_title="Models",
-                        y_title="",
-                        fname=fname,
-                        vmin=vmin,
-                        vmax=vmax,
-                        # feature_order=,
-                        # model_order=['RF','DT','MLR'],
-                        num_ticks=n_cbar_tick,
-                        fontsize=16,
-                        )
 
 
 
@@ -1167,10 +891,151 @@ def _expand_master_scores_for_profile(
                 "dataset": dataset,
                 "repeat": repeat_idx,
                 "kernel": kernel,
+                "model": row["model"],
+                "fp kernel": row["fp kernel"],
+                "count kernel": row["count kernel"],
+                "mixing method": row["mixing method"],
                 metric: score,
             })
 
     return pd.DataFrame(rows)
+
+
+
+def _model_config_label(row: pd.Series, include_kernel_config: bool = True) -> str:
+    model = str(row["model"])
+    if not include_kernel_config:
+        return model
+    if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
+        return model
+
+    mix = mixing_labels.get(str(row["mixing method"]), str(row["mixing method"]))
+    return f"{model}"
+
+
+def plot_comparison_boxplot(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    include_kernel_config: bool = True,
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple = (9, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 35,
+    show_points: bool = True,
+    point_alpha: float = 0.35,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Make a box plot of a metric score for selected models/kernels.
+
+    ``df`` can be a COMBINED_RESULTS DataFrame, a path to the pickle, or None.
+    When None, the function loads the module-level ``COMBINED_RESULTS`` pickle.
+    For GP models, pass ``fp_kernels``, ``count_kernels``, and
+    ``mixing_methods`` to choose the exact kernel/mixing combinations.
+    """
+    plot_df = _expand_master_scores_for_profile(
+        df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+    )
+    if plot_df.empty:
+        raise ValueError(
+            f"No {metric} seed/fold scores found for model={model} "
+            f"with fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+            f"and mixing_methods={mixing_methods}."
+        )
+
+    x_col = "model configuration"
+    plot_df[x_col] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+
+    if dataset_as_experiment_points:
+        group_cols = [
+            "dataset",
+            x_col,
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+        ]
+        plot_df = (
+            plot_df.groupby(group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .copy()
+        )
+
+    order = plot_df[x_col].drop_duplicates().tolist()
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.boxplot(
+        data=plot_df,
+        x=x_col,
+        y=metric,
+        order=order,
+        ax=ax,
+        width=0.65,
+        color="#4584B4",
+        showfliers=not show_points,
+    )
+
+    if show_points:
+        sns.stripplot(
+            data=plot_df,
+            x=x_col,
+            y=metric,
+            order=order,
+            ax=ax,
+            color="black",
+            size=3,
+            alpha=point_alpha,
+            jitter=0.22,
+        )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label or metric.capitalize(), fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize-2)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_ylim(0,1.05)
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            file_name = f"{model_name}_{metric}_boxplot.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
 
 
 def _rank_percentile_matrix(
@@ -1258,6 +1123,43 @@ def _repeat_profile_error_bands(
     return error_bands
 
 
+def _profile_auc_dataframe(
+    profile_df: pd.DataFrame,
+    aucs: Dict[str, float],
+    sorted_names: List[str],
+    metric: str,
+) -> pd.DataFrame:
+    metadata_cols = ["kernel", "model", "fp kernel", "count kernel", "mixing method"]
+    metadata = (
+        profile_df[metadata_cols]
+        .drop_duplicates(subset=["kernel"])
+        .set_index("kernel")
+    )
+    rows = []
+
+    for rank, kernel_name in enumerate(sorted_names, start=1):
+        meta = metadata.loc[kernel_name]
+        fp_kernel = meta["fp kernel"]
+        count_kernel = meta["count kernel"]
+        kernel_combination = (
+            None
+            if pd.isna(fp_kernel) or pd.isna(count_kernel)
+            else f"{fp_kernel}-{count_kernel}"
+        )
+
+        rows.append({
+            "rank": rank,
+            "metric": metric,
+            "model": meta["model"],
+            "fp kernel": fp_kernel,
+            "count kernel": count_kernel,
+            "mixing method": meta["mixing method"],
+            "auc": aucs[kernel_name],
+        })
+
+    return pd.DataFrame(rows)
+
+
 def performance_plot_with_ranks(
     df: pd.DataFrame,
     metric: str = "r2",
@@ -1281,7 +1183,7 @@ def performance_plot_with_ranks(
 
     The ranking is computed over every available paper/target, seed, and fold
     value in the master dataset's ``<metric>_seed_fold_scores`` columns by
-    default.
+    default. Returns a DataFrame with one AUC row per model/kernel combination.
 
     If ``dataset_as_experiment_points`` is True, the main profile first averages
     seed/fold scores within each paper/target so each dataset contributes one
@@ -1344,6 +1246,8 @@ def performance_plot_with_ranks(
         kernel_name
         for kernel_name, _ in sorted(aucs.items(), key=lambda x: x[1], reverse=True)
     ]
+    auc_df = _profile_auc_dataframe(profile_df, aucs, sorted_names, metric)
+
 
     groups_of_same_ranks = []
     curr_l = [0]
@@ -1439,143 +1343,230 @@ def performance_plot_with_ranks(
     else:
         plt.close(fig)
 
-    return aucs
+    return auc_df
+
+
+def plot_profile_auc_heatmap(
+    auc_df: pd.DataFrame,
+    model: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    auc_column: str = "auc",
+    figsize: tuple = (12, 4),
+    title: Optional[str] = None,
+    vmin: float = 0,
+    vmax: float = 1,
+    fontsize: int = 12,
+    show: bool = True,
+    high_quality: bool = True,
+    plot_heatmap: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = "profile_auc_heatmap.png",
+) -> pd.DataFrame:
+    """
+    Plot profile-performance AUC values as a heatmap.
+
+    The input should be the DataFrame returned by ``performance_plot_with_ranks``.
+    Rows are hybridization methods and columns are FP/count kernel combinations.
+    """
+    required_columns = {
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+        auc_column,
+    }
+    missing_columns = required_columns.difference(auc_df.columns)
+    if missing_columns:
+        raise ValueError(
+            "auc_df is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    plot_df = auc_df.copy()
+    plot_df = _filter_selection(plot_df, "model", model)
+    plot_df = _filter_selection(plot_df, "fp kernel", fp_kernels)
+    plot_df = _filter_selection(plot_df, "count kernel", count_kernels)
+    plot_df = _filter_selection(plot_df, "mixing method", mixing_methods)
+    plot_df = plot_df.dropna(
+        subset=["fp kernel", "count kernel", "mixing method", auc_column]
+    ).copy()
+
+    if plot_df.empty:
+        raise ValueError(
+            "No profile-AUC rows available for the requested model/kernel filters."
+        )
+
+    plot_df[auc_column] = pd.to_numeric(plot_df[auc_column], errors="coerce")
+    plot_df = plot_df.dropna(subset=[auc_column])
+    if plot_df.empty:
+        raise ValueError("No numeric profile-AUC values available to plot.")
+
+    plot_df["hybridization method"] = plot_df["mixing method"].map(
+        lambda value: mixing_labels.get(str(value), str(value))
+    )
+    plot_df["kernel combination"] = (
+        plot_df["fp kernel"].astype(str)
+        + "-"
+        + plot_df["count kernel"].astype(str)
+    )
+
+    heatmap_matrix = plot_df.pivot_table(
+        index="hybridization method",
+        columns="kernel combination",
+        values=auc_column,
+        aggfunc="mean",
+    )
+
+    selected_mixes = _selection_values(mixing_methods) or globals()["mixing_methods"]
+    row_order = [
+        mixing_labels.get(str(method), str(method))
+        for method in selected_mixes
+        if mixing_labels.get(str(method), str(method)) in heatmap_matrix.index
+    ]
+    row_order.extend(row for row in heatmap_matrix.index if row not in row_order)
+    heatmap_matrix = heatmap_matrix.reindex(row_order)
+
+    selected_fp = _selection_values(fp_kernels) or (fp_sk_kernels + fp_bit_kernels)
+    selected_count = _selection_values(count_kernels) or globals()["count_kernels"]
+    column_order = [
+        f"{fp_kernel}-{count_kernel}"
+        for fp_kernel in selected_fp
+        for count_kernel in selected_count
+        if f"{fp_kernel}-{count_kernel}" in heatmap_matrix.columns
+    ]
+    column_order.extend(
+        column for column in heatmap_matrix.columns if column not in column_order
+    )
+    heatmap_matrix = heatmap_matrix.reindex(columns=column_order)
+
+    annotations = heatmap_matrix.copy().astype(object)
+    for row_label in heatmap_matrix.index:
+        for column_label in heatmap_matrix.columns:
+            value = heatmap_matrix.loc[row_label, column_label]
+            annotations.loc[row_label, column_label] = (
+                "" if pd.isna(value) else f"{value:.2f}"
+            )
+
+    if not plot_heatmap:
+        return heatmap_matrix
+
+    x_tick_labels = [
+        str(column).replace("-", ":\n", 1)
+        for column in heatmap_matrix.columns
+    ]
+
+    fig, ax = plt.subplots(figsize=figsize)
+    custom_cmap = sns.color_palette("viridis", as_cmap=True)
+    custom_cmap.set_bad(color="lightgray")
+    hmap = sns.heatmap(
+        heatmap_matrix,
+        annot=annotations,
+        fmt="",
+        cmap=custom_cmap,
+        cbar=True,
+        vmin=vmin,
+        vmax=vmax,
+        ax=ax,
+        mask=heatmap_matrix.isnull(),
+        linewidths=0.5,
+        linecolor="white",
+        xticklabels=x_tick_labels,
+        yticklabels=heatmap_matrix.index.tolist(),
+        annot_kws={"fontsize": fontsize},
+    )
+
+    cbar = hmap.collections[0].colorbar
+    if cbar is not None:
+        cbar.set_label(
+            "Performance profile AUC",
+            fontsize=fontsize,
+            fontweight="bold",
+        )
+        cbar.ax.tick_params(labelsize=fontsize)
+
+    ax.set_xlabel("FP Kernel : Count Kernel", fontsize=fontsize + 2, fontweight="bold")
+    ax.set_ylabel("Hybridization method", fontsize=fontsize + 2, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 3, fontweight="bold")
+    ax.set_xticklabels(
+        x_tick_labels,
+        rotation=45,
+        ha="right",
+        fontsize=fontsize,
+    )
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=fontsize)
+
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            file_name = "profile_auc_heatmap.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return heatmap_matrix
 
 
 
 if __name__ == "__main__":
-
-    # model_stats = {}
-    # for paper_name, paper_info in PAPER.items():
-    #     for target in paper_info["target"]:
-    #         print(paper_name, target)
-            # creat_count_fp_heatmap(
-            #                         target_dir=RESULTS/paper_name/target,
-            #                         score_metric='rmse',
-            #                         figsize=(7,4.5),
-            #                         # comparison_value=['scaler', 'Trimer_scaler'],
-            #                         )
-            # feat_impt_expert = paper_info["expert_impt"]
-            # for model in ["RF","XGBR", "NGB"]:    
-                # paper_loc: Path = RESULTS / paper_name / target
-            #     file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_chain1_scores"
-            #     score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     if not score_path.exists():
-            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_product_chain1_scores"
-            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     if not score_path.exists():
-            #         file_name = f"(ECFP3_count_512-COUNT)_{model}_mean_hypOFF_Standard_Standard_product_chain1_scores"
-            #         score_path = ensure_long_path(paper_loc / f"{file_name}.json")
-            #     # else:
-            #     #     print("file not found:", score_path)
-            #     with open(score_path, "r") as f:
-            #         scores = json.load(f)
-            #     MDI_imp, shap_imp = plot_average_feature_importances(scores_data=scores,
-            #                                     save_loc=paper_loc,
-            #                                     file_extension=file_name,
-            #                                     figsize=(8,7.5)
-            #                                     )
-                # shap_feature_means = shap_imp.abs().mean()
-                # df_top15_shap_features = shap_imp[shap_feature_means.sort_values(ascending=False).head(15).index]
-
-                # mdi_feature_means = MDI_imp.mean()
-                # df_top15_mdi_features = MDI_imp[mdi_feature_means.sort_values(ascending=False).head(15).index]
-
-                # 3. Filter the DataFrame to these 15 features
-                # plot_top15_feature_stability(
-                #                     scores_data=scores,
-                #                     # save_loc=paper_loc,
-                #                     # file_extension=file_name,
-                #                     # top_n=15,
-                #                     # figsize=(8,6)
-                #                     )
-                # krippendorff_alpha_by_feature(
-                #                             df=df_top15,             
-                #                             save_loc=paper_loc,
-                #                             file_extension=file_name,
-                #                             figsize=(9,6)
-                #                             )
-                # ls_stats = get_lengthscale_stat(scores, expert_rank=feat_impt_expert, feature_stability=True, mean_std=False)
-                # print(df_ls)
-                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["length scale"] = ls_stats
-                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["MDI"] = kendalls_w(MDI_imp)["Kendall's W"]
-                # model_stats.setdefault(paper_name, {}).setdefault(target, {}).setdefault(model, {})["SHAP"] = kendalls_w(shap_imp)["Kendall's W"]
-
-                # print(pg.friedman(df_top15))
-                # print(MDI_imp)
-    # with open(RESULTS / "model_stats" / "tree_model_stability.json", "w") as f:
-    #     json.dump(model_stats, f, indent=2)
-
-    # with open(RESULTS / "model_stats" / "model_stability_ls.json", "w") as f:
-    #     json.dump(model_stats, f, indent=2)
-
-            ### SCORE TABLE CREATION ###
-                # rows_data = []
-                # for count_k in count_kernel:
-                #     for fp_k in baseline_kernel:
-                #         for mix_method in mixing_methods:
-                #             row = [count_k, fp_k, "Av(co)*FP" if mix_method=="averageProduct" else mix_method]
-                #             for model in models:
-                #                 score_file = None
-                #                 file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                #                 score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                 if not score_path.exists():
-                #                     file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
-                #                     score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                     if not score_path.exists():
-                #                         file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard_scores"
-                #                         score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                         if not score_path.exists():
-                #                             file_template = f"(ECFP3_count_512-COUNT)_({model}_{fp_k}-{count_k}_{mix_method})_mean_hypOFF_Standard_Standard_scores"
-                #                             score_path = ensure_long_path(paper_loc / f"{file_template}.json")
-                #                 if not score_path.exists():
-                #                     print(f"❌ Missing score: {paper_name}\n{target}\nfile name: {file_template}")
-
-                #                 else:
-                #                     with open(score_path, "r") as f:
-                #                         score_file = json.load(f)
-
-                #                 if score_file is None:
-                #                     rmse_value = ""
-                #                     r2_value = ""
-                #                     run_time_value = ""
-                #                 else:
-                #                     score_annot = get_scores(score_file, metric=['rmse','r2', "run_time_sec"])
-                #                     rmse_value = score_annot["rmse"]
-                #                     r2_value = score_annot["r2"]
-                #                     run_time_value = score_annot["run_time_sec"]
-
-                #                 row.extend([rmse_value, r2_value, run_time_value])
-                #             rows_data.append(row)
-                # create_word_table_table(rows_data, folder_path=paper_loc/"tabular results", file_name=f"kernel_combination_scores.docx")
-                # for model in models:
-                #     plot_heatmap(model, save_dir=HERE/"result_analysis")
-                # models_to_draw = [
-                #     {"label": "RF", "model": "RF"},
-                #     {"label": "XGBR", "model": "XGBR"},
-                #     {"label": "NGB", "model": "NGB"},
-                #     {"label": "GPytorchMAP", "model": "GPytorchMAP"},
-                #     {"label": "GPytorchMAP SK", "model": "GPytorchMAP", "kernel_case": "sk"},
-                # ]
-
-                # plot_barplot(models_to_draw, save_dir=HERE / "result_analysis", figsize=(6,6))
-
 
     # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
     #                                score_metrics=DEFAULT_SCORE_METRICS)
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    res = performance_plot_with_ranks(
+    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    prof_results = performance_plot_with_ranks(
         df=result_df,
         metric="r2",
         model=["GPytorchMAP"],
-        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52"],
+        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
         count_kernels=["RBF", "Matern32", "Matern52"],
         # title="GPyTorch MAP R² Performance Profile",
         dataset_as_experiment_points=False,
         # show_error_band=True,
+        show=False,
+        save_dir= None,  #HERE / "result_analysis",
+        # file_name="GPytorchMAP_SK_r2_performance_profile.png",
+    )
 
+    plot_profile_auc_heatmap(
+        auc_df=prof_results,
+        fontsize=13.4,
+        figsize=(15, 4.1),
+        model=["GPytorchMAP"],
+        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        # title="GPyTorch MAP R² Profile AUC Heatmap",
         save_dir=HERE / "result_analysis",
-        file_name="GPytorchMAP_SK_r2_performance_profile.png",
+        file_name="GPytorchMAP_SK_r2_profile_auc_heatmap.png",
+    )
+
+
+    plot_comparison_boxplot(
+        df=result_df,
+        metric="r2",
+        model=["RF", "XGBR","NGB","GPytorchMAP"],
+        fp_kernels=["TanimotoMatern32"],
+        count_kernels=["Matern32"],
+        mixing_methods=["averageProduct"],
+        y_label="R²",
+        fontsize=17,
+        show=True,
+        figsize=(5, 5),
+        save_dir=HERE / "result_analysis",
+        file_name="GPytorchMAP_SK_r2_boxplot.png",
     )
