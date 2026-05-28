@@ -1173,6 +1173,91 @@ def _expand_master_scores_for_profile(
     return pd.DataFrame(rows)
 
 
+def _rank_percentile_matrix(
+    score_matrix: pd.DataFrame,
+    higher_is_better: bool,
+) -> pd.DataFrame:
+    rank_matrix = score_matrix.rank(
+        axis=1,
+        ascending=not higher_is_better,
+        method="average",
+    )
+    valid_counts = score_matrix.notna().sum(axis=1)
+    return rank_matrix.sub(1, axis=0).div(
+        valid_counts.sub(1).replace(0, np.nan),
+        axis=0,
+    ).fillna(0)
+
+
+def _profile_curve_from_percentiles(
+    percentiles: pd.Series,
+    tau_grid: np.ndarray,
+) -> Optional[np.ndarray]:
+    values = percentiles.dropna().to_numpy(dtype=float)
+    if len(values) == 0:
+        return None
+
+    return np.array([(values <= tau).mean() for tau in tau_grid], dtype=float)
+
+
+def _profile_curves(
+    percentile_matrix: pd.DataFrame,
+    tau_grid: np.ndarray,
+) -> Dict[str, np.ndarray]:
+    curves = {}
+    for kernel_name in percentile_matrix.columns:
+        curve = _profile_curve_from_percentiles(
+            percentile_matrix[kernel_name],
+            tau_grid,
+        )
+        if curve is not None:
+            curves[kernel_name] = curve
+
+    return curves
+
+
+def _repeat_profile_error_bands(
+    score_matrix: pd.DataFrame,
+    higher_is_better: bool,
+    tau_grid: np.ndarray,
+    error_band_stat: str,
+) -> Dict[str, np.ndarray]:
+    error_band_stat = error_band_stat.lower()
+    if error_band_stat not in {"std", "sem"}:
+        raise ValueError("error_band_stat must be either 'std' or 'sem'.")
+
+    curves_by_kernel = {}
+    if not isinstance(score_matrix.index, pd.MultiIndex):
+        return curves_by_kernel
+    if "repeat" not in score_matrix.index.names:
+        return curves_by_kernel
+
+    for _, repeat_scores in score_matrix.groupby(level="repeat"):
+        repeat_score_matrix = repeat_scores.droplevel("repeat")
+        repeat_score_matrix = repeat_score_matrix.groupby(level=0).mean()
+        repeat_percentile_matrix = _rank_percentile_matrix(
+            repeat_score_matrix,
+            higher_is_better,
+        )
+        repeat_curves = _profile_curves(repeat_percentile_matrix, tau_grid)
+        for kernel_name, curve in repeat_curves.items():
+            curves_by_kernel.setdefault(kernel_name, []).append(curve)
+
+    error_bands = {}
+    for kernel_name, curves in curves_by_kernel.items():
+        curve_matrix = np.vstack(curves)
+        if curve_matrix.shape[0] <= 1:
+            error_bands[kernel_name] = np.zeros(curve_matrix.shape[1])
+            continue
+
+        error = np.nanstd(curve_matrix, axis=0, ddof=1)
+        if error_band_stat == "sem":
+            error = error / np.sqrt(curve_matrix.shape[0])
+        error_bands[kernel_name] = error
+
+    return error_bands
+
+
 def performance_plot_with_ranks(
     df: pd.DataFrame,
     metric: str = "r2",
@@ -1184,6 +1269,10 @@ def performance_plot_with_ranks(
     title: Optional[str] = None,
     show: bool = True,
     high_quality: bool = True,
+    dataset_as_experiment_points: bool = False,
+    show_error_band: bool = False,
+    error_band_stat: str = "std",
+    error_band_alpha: float = 0.18,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = "performance_profile.png",
 ):
@@ -1191,7 +1280,13 @@ def performance_plot_with_ranks(
     Plot model/kernel performance profiles from the master result dataset.
 
     The ranking is computed over every available paper/target, seed, and fold
-    value in the master dataset's ``<metric>_seed_fold_scores`` columns.
+    value in the master dataset's ``<metric>_seed_fold_scores`` columns by
+    default.
+
+    If ``dataset_as_experiment_points`` is True, the main profile first averages
+    seed/fold scores within each paper/target so each dataset contributes one
+    profile point. If ``show_error_band`` is True, this dataset-level mode is
+    used and the shaded band is the std/sem across seed/fold repeat profiles.
     """
     profile_df = _expand_master_scores_for_profile(
         df,
@@ -1215,27 +1310,31 @@ def performance_plot_with_ranks(
     )
     kernel_names = list(score_matrix.columns)
     higher_is_better = _metric_higher_is_better(metric)
-    rank_matrix = score_matrix.rank(
-        axis=1,
-        ascending=not higher_is_better,
-        method="average",
-    )
-    valid_counts = score_matrix.notna().sum(axis=1)
-    percentile_matrix = rank_matrix.sub(1, axis=0).div(
-        valid_counts.sub(1).replace(0, np.nan),
-        axis=0,
-    ).fillna(0)
 
-    linn = np.linspace(0, 1, len(percentile_matrix))
-    all_percentages = {}
-    for kernel_name in kernel_names:
-        percentiles = percentile_matrix[kernel_name].dropna()
-        if percentiles.empty:
-            continue
-        all_percentages[kernel_name] = [
-            (percentiles <= rk).mean()
-            for rk in linn
-        ]
+    if show_error_band:
+        dataset_as_experiment_points = True
+
+    profile_score_matrix = score_matrix
+    if dataset_as_experiment_points:
+        profile_score_matrix = score_matrix.groupby(level="dataset").mean()
+
+    percentile_matrix = _rank_percentile_matrix(
+        profile_score_matrix,
+        higher_is_better,
+    )
+
+    linn = np.linspace(0, 1, max(len(percentile_matrix), 2))
+    all_percentages = _profile_curves(percentile_matrix, linn)
+    error_bands = (
+        _repeat_profile_error_bands(
+            score_matrix,
+            higher_is_better,
+            linn,
+            error_band_stat,
+        )
+        if show_error_band
+        else {}
+    )
 
     aucs = {
         kernel_name: auc(linn, percentages)
@@ -1255,7 +1354,9 @@ def performance_plot_with_ranks(
                 groups_of_same_ranks.append(curr_l)
             continue
 
-        paired_scores = score_matrix[[sorted_names[i], sorted_names[i + 1]]].dropna()
+        paired_scores = profile_score_matrix[
+            [sorted_names[i], sorted_names[i + 1]]
+        ].dropna()
         if paired_scores.empty:
             continue
 
@@ -1279,12 +1380,23 @@ def performance_plot_with_ranks(
     colors = sns.color_palette("tab20", n_colors=max(len(sorted_names), 1))
 
     for color, kernel_name in zip(colors, sorted_names):
+        curve = np.asarray(all_percentages[kernel_name], dtype=float)
         ax.plot(
             linn,
-            all_percentages[kernel_name],
+            curve,
             color=color,
             label=f"{kernel_name}, {aucs[kernel_name]:.2f}",
         )
+        if kernel_name in error_bands:
+            error = np.asarray(error_bands[kernel_name], dtype=float)
+            ax.fill_between(
+                linn,
+                np.clip(curve - error, 0, 1),
+                np.clip(curve + error, 0, 1),
+                color=color,
+                alpha=error_band_alpha,
+                linewidth=0,
+            )
 
     legend = plt.legend(
         loc="center left",
@@ -1457,8 +1569,13 @@ if __name__ == "__main__":
     res = performance_plot_with_ranks(
         df=result_df,
         metric="r2",
-        model="GPytorchMAP",
+        model=["GPytorchMAP"],
+        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
         # title="GPyTorch MAP R² Performance Profile",
+        dataset_as_experiment_points=False,
+        # show_error_band=True,
+
         save_dir=HERE / "result_analysis",
-        file_name="GPytorchMAP_r2_performance_profile.png",
+        file_name="GPytorchMAP_SK_r2_performance_profile.png",
     )
