@@ -822,6 +822,22 @@ class GpyroHMCRegressor:
         return summary
 
 
+"""
+points about the std of predictions:
+y_std reflects the spread of sampled predicted observations. It is not simply:
+std of 100 posterior means
+It is:
+std of 100 sampled predicted y values
+
+where each predicted y draw includes:
+1. HMC posterior variation in GP parameters
+2. GP predictive variance at X_test
+3. observation/noise variance, because noiseless=False
+4. Monte Carlo randomness from Normal sampling
+
+"""
+
+
 class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,

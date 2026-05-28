@@ -38,7 +38,6 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
                                         --regressor_type "$model" \
-                                        --cuda True
 
 
 

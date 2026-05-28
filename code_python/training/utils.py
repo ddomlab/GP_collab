@@ -103,6 +103,7 @@ def parse_arguments():
         '--cuda',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=True,
+        type=bool,
         help="Specify whether to use CUDA (GPU) or not (CPU)."
     )
 
