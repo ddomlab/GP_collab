@@ -100,6 +100,13 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        '--cuda',
+        # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
+        required=True,
+        help="Specify whether to use CUDA (GPU) or not (CPU)."
+    )
+
+    parser.add_argument(
         '--paper',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
@@ -110,21 +117,21 @@ def parse_arguments():
         '--dataset',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
-        help="Specify a single target for the analysis."
+        help="Specify dataset name"
     )
 
     parser.add_argument(
         '--K_fp',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
-        help="Specify a single target for the analysis."
+        help="Specify fingerprint kernel"
     )
 
     parser.add_argument(
         '--K_count',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
         required=False,
-        help="Specify a single target for the analysis."
+        help="Specify count kernel"
     )
 
     parser.add_argument(
