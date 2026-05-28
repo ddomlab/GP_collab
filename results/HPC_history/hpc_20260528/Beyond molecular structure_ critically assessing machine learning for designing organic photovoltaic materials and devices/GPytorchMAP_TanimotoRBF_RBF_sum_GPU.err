@@ -38,3 +38,61 @@
   warnings.warn(
 /usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
   warnings.warn(
+usage: train_structure_numerical.py [-h] [--target_features TARGET_FEATURES]
+                                    --cuda CUDA [--paper PAPER]
+                                    [--dataset DATASET] [--K_fp K_FP]
+                                    [--K_count K_COUNT]
+                                    [--Kernel_mixing_method KERNEL_MIXING_METHOD]
+                                    [--kernel_feature_mode KERNEL_FEATURE_MODE]
+                                    [--regressor_type REGRESSOR_TYPE]
+                                    [--numerical_feats {Xn,Mn (g/mol),Mw (g/mol),PDI,Temperature SANS/SLS/DLS/SEC (K),Concentration (mg/ml),solvent dP,polymer dP,solvent dD,polymer dD,solvent dH,polymer dH,Ra,abs(solvent dD - polymer dD),abs(solvent dP - polymer dP),abs(solvent dH - polymer dH)} [{Xn,Mn (g/mol),Mw (g/mol),PDI,Temperature SANS/SLS/DLS/SEC (K),Concentration (mg/ml),solvent dP,polymer dP,solvent dD,polymer dD,solvent dH,polymer dH,Ra,abs(solvent dD - polymer dD),abs(solvent dP - polymer dP),abs(solvent dH - polymer dH)} ...]]
+                                    [--columns_to_impute [{Xn,Mn (g/mol),Mw (g/mol),PDI,Temperature SANS/SLS/DLS/SEC (K),Concentration (mg/ml),solvent dP,polymer dP,solvent dD,polymer dD,solvent dH,polymer dH,Ra} ...]]
+                                    [--imputer [{mean,median,most_frequent,distance KNN,None}]]
+                                    [--special_impute [{Mw (g/mol),None}]]
+                                    [--feat_transformer {Standard,Robust Scaler}]
+                                    [--representation {ECFP,MACCS,Mordred}]
+                                    [--polymer_unit {Monomer,Dimer,Trimer,RRU Monomer,RRU Dimer,RRU Trimer}]
+                                    [--radius [{3,4,5,6}]]
+                                    [--vector [{count,binary}]]
+                                    [--clustering_method [CLUSTERING_METHOD]]
+train_structure_numerical.py: error: the following arguments are required: --cuda
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-01 to the diagonal
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e+00 to the diagonal
+  warnings.warn(
