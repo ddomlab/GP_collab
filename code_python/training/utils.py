@@ -102,7 +102,7 @@ def parse_arguments():
     parser.add_argument(
         '--cuda',
         # choices=['Lp (nm)', 'Rg1 (nm)', 'Rh (IW avg log)'],  
-        required=True,
+        required=False,
         type=bool,
         help="Specify whether to use CUDA (GPU) or not (CPU)."
     )
