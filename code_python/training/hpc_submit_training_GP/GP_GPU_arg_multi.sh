@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
 k_mixing_methods=("averageProduct") 
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 4:50
+#BSUB -W 20:50
 #BSUB -q gpu
 #BSUB -R "select[a10]"
 #BSUB -gpu "num=1:mode=shared:mps=no"
