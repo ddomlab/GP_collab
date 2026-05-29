@@ -8,6 +8,7 @@ import re
 # import cmcrameri.cm as cmc
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.collections import PolyCollection
 from matplotlib.transforms import Bbox
 
 import numpy as np
@@ -464,6 +465,12 @@ count_kernels    = ["Matern32", "Matern52", "RBF"]
 mixing_methods  = ["sum", "product", "averageProduct"]
 mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
 TREE_MODELS = {"RF", "XGBR", "NGB"}
+GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
+MODEL_TYPE_COLORS = {
+    "tree": "#7093B9",
+    "gp": "#E45756",
+    "gnn": "#72B7B2",
+}
 MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP"]
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
 BASE_MASTER_RESULT_COLUMNS = [
@@ -862,6 +869,10 @@ def _expand_master_scores_for_profile(
     mixing_methods: Any = None,
 ) -> pd.DataFrame:
     score_col = f"{metric}_seed_fold_scores"
+    use_seed_fold_scores = True
+    if score_col not in df.columns and metric in df.columns:
+        score_col = metric
+        use_seed_fold_scores = False
     if score_col not in df.columns:
         raise ValueError(f"Missing required column: {score_col}")
 
@@ -874,9 +885,12 @@ def _expand_master_scores_for_profile(
     include_model = selected_models is None or len(selected_models) > 1
 
     for _, row in model_df.iterrows():
-        scores = _coerce_score_list(row[score_col])
-        if scores is None:
-            continue
+        if use_seed_fold_scores:
+            scores = _coerce_score_list(row[score_col])
+            if scores is None:
+                continue
+        else:
+            scores = [row[score_col]]
 
         dataset = f"{row['paper']} | {row['target']}"
         kernel = _kernel_label(row, include_model=include_model)
@@ -909,17 +923,79 @@ def _model_config_label(row: pd.Series, include_kernel_config: bool = True) -> s
     if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
         return model
 
-    mix = mixing_labels.get(str(row["mixing method"]), str(row["mixing method"]))
-    return f"{model}"
+    # mix = mixing_labels.get(str(row["mixing method"]))
+    suffix = "SK" if "tanimoto" in row["fp kernel"].lower() else "Bitwise"
+    return f"{model} ({suffix})"
 
 
-def plot_comparison_boxplot(
+def _model_type_color(model: Any) -> str:
+    model_name = str(model)
+    model_upper = model_name.upper()
+    if model_name in TREE_MODELS:
+        return MODEL_TYPE_COLORS["tree"]
+    if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
+        return MODEL_TYPE_COLORS["gnn"]
+    if "GP" in model_upper:
+        return MODEL_TYPE_COLORS["gp"]
+    return "#808080"
+
+
+def _kernel_triple_values(kernel_triples: Any) -> Optional[List[tuple]]:
+    if kernel_triples is None:
+        return None
+    if (
+        isinstance(kernel_triples, tuple)
+        and len(kernel_triples) == 3
+        and not any(isinstance(value, (list, tuple)) for value in kernel_triples)
+    ):
+        return [kernel_triples]
+
+    triples = list(kernel_triples)
+    for triple in triples:
+        if not isinstance(triple, (list, tuple)) or len(triple) != 3:
+            raise ValueError(
+                "kernel_triples must be a triple or a list of "
+                "(fp_kernel, count_kernel, mixing_method) triples."
+            )
+    return triples
+
+
+def _filter_kernel_triples(
+    df: pd.DataFrame,
+    kernel_triples: Any,
+    keep_missing: bool = True,
+) -> pd.DataFrame:
+    triples = _kernel_triple_values(kernel_triples)
+    if triples is None:
+        return df
+
+    selected = {
+        (str(fp).lower(), str(count).lower(), str(mix).lower())
+        for fp, count, mix in triples
+    }
+    row_triples = zip(
+        df["fp kernel"].astype(str).str.lower(),
+        df["count kernel"].astype(str).str.lower(),
+        df["mixing method"].astype(str).str.lower(),
+    )
+    mask = pd.Series(
+        [row_triple in selected for row_triple in row_triples],
+        index=df.index,
+    )
+    if keep_missing:
+        mask = mask | (
+            df["fp kernel"].isna()
+            & df["count kernel"].isna()
+            & df["mixing method"].isna()
+        )
+    return df[mask].copy()
+
+
+def plot_model_comparison(
     df: pd.DataFrame,
     metric: str = "r2",
     model: Any = "GPytorchMAP",
-    fp_kernels: Any = None,
-    count_kernels: Any = None,
-    mixing_methods: Any = None,
+    kernel_triples: Any = None,
     include_kernel_config: bool = True,
     dataset_as_experiment_points: bool = False,
     figsize: tuple = (9, 5),
@@ -928,8 +1004,8 @@ def plot_comparison_boxplot(
     x_label: str = "Model",
     y_label: Optional[str] = None,
     x_tick_rotation: int = 35,
-    show_points: bool = True,
-    point_alpha: float = 0.35,
+    y_lim: Optional[tuple] = None,
+    log_y: bool = False,
     show: bool = True,
     high_quality: bool = True,
     save_dir: Optional[Path] = HERE / "result_analysis",
@@ -938,24 +1014,23 @@ def plot_comparison_boxplot(
     """
     Make a box plot of a metric score for selected models/kernels.
 
-    ``df`` can be a COMBINED_RESULTS DataFrame, a path to the pickle, or None.
-    When None, the function loads the module-level ``COMBINED_RESULTS`` pickle.
-    For GP models, pass ``fp_kernels``, ``count_kernels``, and
-    ``mixing_methods`` to choose the exact kernel/mixing combinations.
+    Score metrics use ``<metric>_seed_fold_scores``. Scalar columns such as
+    ``Running time (CPU)`` are plotted directly across dataset/model rows.
+    For GP models, pass ``kernel_triples`` as one triple or a list of
+    ``(fp_kernel, count_kernel, mixing_method)`` triples.
+    Set ``log_y=True`` to show the y-axis on a log scale.
     """
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
     plot_df = _expand_master_scores_for_profile(
         df,
         metric=metric,
         model=model,
-        fp_kernels=fp_kernels,
-        count_kernels=count_kernels,
-        mixing_methods=mixing_methods,
     )
     if plot_df.empty:
         raise ValueError(
-            f"No {metric} seed/fold scores found for model={model} "
-            f"with fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
-            f"and mixing_methods={mixing_methods}."
+            f"No {metric} values found for model={model} "
+            f"with kernel_triples={kernel_triples}."
         )
 
     x_col = "model configuration"
@@ -980,30 +1055,66 @@ def plot_comparison_boxplot(
         )
 
     order = plot_df[x_col].drop_duplicates().tolist()
+    violin_palette = {
+        label: _model_type_color(plot_df.loc[plot_df[x_col] == label, "model"].iloc[0])
+        for label in order
+    }
     fig, ax = plt.subplots(figsize=figsize)
-    sns.boxplot(
+    sns.violinplot(
         data=plot_df,
         x=x_col,
         y=metric,
+        hue=x_col,
         order=order,
+        hue_order=order,
         ax=ax,
         width=0.65,
-        color="#4584B4",
-        showfliers=not show_points,
+        palette=violin_palette,
+        inner_kws=dict(box_width=10, whis_width=2, color=".65",solid_capstyle="round"),
+        cut=0,
+        linewidth=1,
+        dodge=False,
+        legend=False,
     )
+    positions = list(range(len(order)))
+    for collection in ax.collections:
+        if not isinstance(collection, PolyCollection):
+            continue
+        for path in collection.get_paths():
+            vertices = path.vertices
+            if len(vertices) == 0:
+                continue
+            center = min(positions, key=lambda pos: abs(pos - np.median(vertices[:, 0])))
+            vertices[:, 0] = np.maximum(vertices[:, 0], center)
+    for line in ax.lines:
+        x_data = np.asarray(line.get_xdata(), dtype=float)
+        if len(x_data) == 0:
+            continue
+        center = min(positions, key=lambda pos: abs(pos - np.mean(x_data)))
+        line.set_xdata(np.maximum(x_data, center))
 
-    if show_points:
-        sns.stripplot(
-            data=plot_df,
-            x=x_col,
-            y=metric,
-            order=order,
-            ax=ax,
-            color="black",
-            size=3,
-            alpha=point_alpha,
-            jitter=0.22,
-        )
+    # if show_points:
+    #     sns.stripplot(
+    #         data=plot_df,
+    #         x=x_col,
+    #         y=metric,
+    #         order=order,
+    #         ax=ax,
+    #         color="black",
+    #         size=3,
+    #         alpha=point_alpha,
+    #         jitter=0.22,
+    #     )
+    #     for collection in ax.collections:
+    #         if isinstance(collection, PolyCollection) or not hasattr(collection, "get_offsets"):
+    #             continue
+    #         offsets = collection.get_offsets()
+    #         if len(offsets) == 0:
+    #             continue
+    #         for offset in offsets:
+    #             center = min(positions, key=lambda pos: abs(pos - offset[0]))
+    #             offset[0] = max(offset[0], center)
+    #         collection.set_offsets(offsets)
 
     ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
     ax.set_ylabel(y_label or metric.capitalize(), fontsize=fontsize, fontweight="bold")
@@ -1016,7 +1127,20 @@ def plot_comparison_boxplot(
         rotation=x_tick_rotation,
         ha="right" if x_tick_rotation else "center",
     )
-    ax.set_ylim(0,1.05)
+    if log_y:
+        positive_values = pd.to_numeric(plot_df[metric], errors="coerce")
+        if (positive_values.dropna() <= 0).any():
+            raise ValueError("log_y=True requires all plotted values to be positive.")
+        ax.set_yscale("log")
+
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    elif log_y:
+        ax.set_ylim(bottom=pd.to_numeric(plot_df[metric], errors="coerce").min() * 0.8)
+    elif is_scalar_metric:
+        ax.set_ylim(bottom=0)
+    else:
+        ax.set_ylim(0, 1.05)
     plt.tight_layout()
 
     if save_dir is not None:
@@ -1036,6 +1160,187 @@ def plot_comparison_boxplot(
         plt.show()
     else:
         plt.close(fig)
+
+
+def plot_model_profile_comparison(
+    prof_results: pd.DataFrame,
+    model: Any = None,
+    kernel_triples: Any = None,
+    metric: Optional[str] = None,
+    auc_column: str = "auc",
+    include_kernel_config: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "Performance profile AUC",
+    x_tick_rotation: int = 35,
+    y_lim: tuple = (0, 1.05),
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Draw a barplot of profile AUC values from ``performance_plot_with_ranks``.
+
+    Pass ``kernel_triples`` as one triple or a list of
+    ``(fp_kernel, count_kernel, mixing_method)`` triples to select exact GP
+    kernel combinations. Tree models are kept when their kernel columns are
+    empty.
+    """
+    required_columns = {
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+        auc_column,
+    }
+    missing_columns = required_columns.difference(prof_results.columns)
+    if missing_columns:
+        raise ValueError(
+            "prof_results is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    plot_df = prof_results.copy()
+    plot_df = _filter_selection(plot_df, "model", model)
+    plot_df = _filter_kernel_triples(plot_df, kernel_triples, keep_missing=True)
+    if metric is not None and "metric" in plot_df.columns:
+        plot_df = _filter_selection(plot_df, "metric", metric)
+
+    plot_df[auc_column] = pd.to_numeric(plot_df[auc_column], errors="coerce")
+    plot_df = plot_df.dropna(subset=[auc_column])
+    if plot_df.empty:
+        raise ValueError(
+            f"No profile AUC rows found for model={model} "
+            f"with kernel_triples={kernel_triples}."
+        )
+
+    x_col = "model configuration"
+    plot_df[x_col] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+    selected_models = _selection_values(model)
+    selected_triples = _kernel_triple_values(kernel_triples)
+    if selected_models is None:
+        order = plot_df[x_col].drop_duplicates().tolist()
+    else:
+        order = []
+        model_values = plot_df["model"].astype(str).str.lower()
+        fp_values = plot_df["fp kernel"].astype(str).str.lower()
+        count_values = plot_df["count kernel"].astype(str).str.lower()
+        mix_values = plot_df["mixing method"].astype(str).str.lower()
+        missing_kernel_mask = (
+            plot_df["fp kernel"].isna()
+            & plot_df["count kernel"].isna()
+            & plot_df["mixing method"].isna()
+        )
+
+        for model_name in selected_models:
+            model_mask = model_values == str(model_name).lower()
+            for label in plot_df.loc[model_mask & missing_kernel_mask, x_col].drop_duplicates():
+                if label not in order:
+                    order.append(label)
+
+            if selected_triples is None:
+                labels = plot_df.loc[model_mask & ~missing_kernel_mask, x_col].drop_duplicates()
+                for label in labels:
+                    if label not in order:
+                        order.append(label)
+                continue
+
+            for fp_kernel, count_kernel, mix_method in selected_triples:
+                triple_mask = (
+                    (fp_values == str(fp_kernel).lower())
+                    & (count_values == str(count_kernel).lower())
+                    & (mix_values == str(mix_method).lower())
+                )
+                for label in plot_df.loc[model_mask & triple_mask, x_col].drop_duplicates():
+                    if label not in order:
+                        order.append(label)
+
+        for label in plot_df[x_col].drop_duplicates():
+            if label not in order:
+                order.append(label)
+
+    order_lookup = {label: idx for idx, label in enumerate(order)}
+    plot_df["_plot_order"] = plot_df[x_col].map(order_lookup)
+    plot_df = (
+        plot_df.sort_values("_plot_order", kind="stable")
+        .drop(columns="_plot_order")
+        .copy()
+    )
+    bar_palette = {
+        label: _model_type_color(plot_df.loc[plot_df[x_col] == label, "model"].iloc[0])
+        for label in order
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(
+        data=plot_df,
+        x=x_col,
+        y=auc_column,
+        hue=x_col,
+        order=order,
+        hue_order=order,
+        palette=bar_palette,
+        width=0.67,
+        dodge=False,
+        legend=False,
+        errorbar=None,
+        ax=ax,
+    )
+
+    if show_values:
+        for patch in ax.patches:
+            height = patch.get_height()
+            if np.isnan(height):
+                continue
+            ax.text(
+                patch.get_x() + patch.get_width() / 2,
+                height + 0.01,
+                f"{height:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=fontsize - 2,
+            )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_ylim(*y_lim)
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            file_name = f"{model_name}_profile_auc_barplot.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return plot_df
 
 
 def _rank_percentile_matrix(
@@ -1167,6 +1472,7 @@ def performance_plot_with_ranks(
     fp_kernels: Any = None,
     count_kernels: Any = None,
     mixing_methods: Any = None,
+    kernel_triples: Any = None,
     p_threshold: float = 0.05,
     title: Optional[str] = None,
     show: bool = True,
@@ -1175,6 +1481,10 @@ def performance_plot_with_ranks(
     show_error_band: bool = False,
     error_band_stat: str = "std",
     error_band_alpha: float = 0.18,
+    fontsize: float = 12,
+    figsize: tuple = (7, 5),
+    legend_ncols: Optional[int] = None,
+    legend_nrows: Optional[int] = None,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = "performance_profile.png",
 ):
@@ -1185,11 +1495,19 @@ def performance_plot_with_ranks(
     value in the master dataset's ``<metric>_seed_fold_scores`` columns by
     default. Returns a DataFrame with one AUC row per model/kernel combination.
 
+    For exact GP kernel choices, pass ``kernel_triples`` as one triple or a
+    list of ``(fp_kernel, count_kernel, mixing_method)`` triples. The older
+    separate ``fp_kernels``, ``count_kernels``, and ``mixing_methods`` filters
+    are still supported.
+
     If ``dataset_as_experiment_points`` is True, the main profile first averages
     seed/fold scores within each paper/target so each dataset contributes one
     profile point. If ``show_error_band`` is True, this dataset-level mode is
     used and the shaded band is the std/sem across seed/fold repeat profiles.
+    ``legend_ncols`` and ``legend_nrows`` control the legend layout above the
+    plot. If both are omitted, up to three columns are used.
     """
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     profile_df = _expand_master_scores_for_profile(
         df,
         metric=metric,
@@ -1201,7 +1519,8 @@ def performance_plot_with_ranks(
     if profile_df.empty:
         raise ValueError(
             f"No {metric} seed/fold scores found for model={model} "
-            f"with fp_kernels={fp_kernels} and count_kernels={count_kernels}."
+            f"with fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+            f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
         )
 
     score_matrix = profile_df.pivot_table(
@@ -1280,7 +1599,7 @@ def performance_plot_with_ranks(
         else:
             curr_l.append(i + 1)
 
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=figsize)
     colors = sns.color_palette("tab20", n_colors=max(len(sorted_names), 1))
 
     for color, kernel_name in zip(colors, sorted_names):
@@ -1302,25 +1621,38 @@ def performance_plot_with_ranks(
                 linewidth=0,
             )
 
-    legend = plt.legend(
-        loc="center left",
-        bbox_to_anchor=(1.02, 0.5),
+    if legend_ncols is not None and legend_ncols < 1:
+        raise ValueError("legend_ncols must be at least 1.")
+    if legend_nrows is not None and legend_nrows < 1:
+        raise ValueError("legend_nrows must be at least 1.")
+
+    if legend_ncols is None:
+        if legend_nrows is None:
+            legend_ncols = max(1, min(3, len(sorted_names)))
+        else:
+            legend_ncols = int(np.ceil(len(sorted_names) / legend_nrows))
+
+    legend = ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.02),
+        ncol=legend_ncols,
         borderaxespad=0,
         frameon=False,
-        fontsize=12,
+        fontsize=fontsize,
     )
 
     fig.canvas.draw()
 
-    ax.set_xlabel(r"$\tau$", fontsize=14)
-    ax.set_ylabel(r"$p_i(\tau)$", fontsize=14)
+    ax.set_xlabel(r"$\tau$", fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(r"$p_i(\tau)$", fontsize=fontsize, fontweight="bold")
     if title is not None:
         ax.set_title(
             title or f"{model} {metric} performance profile",
-            fontsize=16,
+            fontsize=fontsize+2,
+            fontweight="bold"
         )
-    ax.yaxis.set_tick_params(labelsize=14)
-    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=fontsize-2)
+    ax.xaxis.set_tick_params(labelsize=fontsize-2)
 
     fig.canvas.draw()
     for group_rank in groups_of_same_ranks:
@@ -1528,45 +1860,78 @@ if __name__ == "__main__":
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    prof_results = performance_plot_with_ranks(
+    # prof_results = performance_plot_with_ranks(
+    #     df=result_df,
+    #     metric="r2",
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     # title="GPyTorch MAP R² Performance Profile",
+    #     dataset_as_experiment_points=False,
+    #     # show_error_band=True,
+    #     show=True,
+    #     save_dir= None,  #HERE / "result_analysis",
+    #     file_name="GPytorchMAP_SK_r2_performance_profile.png",
+    # )
+    # prof_results = performance_plot_with_ranks(
+    #     df=result_df,
+    #     metric="cvpp_ama",
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #     ],
+    #     legend_ncols=2,
+    #     fontsize=17,
+    #     figsize=(7, 5),
+    #     show=True,
+    #     show_error_band=False,
+    #     save_dir= HERE / "result_analysis",
+    #     file_name="cvpp_ama_model_performance_profile_curve_comparison.png",
+    # )
+
+    # plot_model_profile_comparison(
+    #     prof_results=prof_results,
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #     ],
+    #     metric="ece",
+    #     y_label="Profile AUC of ECE",
+    #     fontsize=17,
+    #     figsize=(5, 5),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="ece_model_profile_comparison.png",
+    # )
+
+    # plot_profile_auc_heatmap(
+    #     auc_df=prof_results,
+    #     fontsize=13.4,
+    #     figsize=(15, 4.1),
+    #     model=["GPytorchMAP"],
+    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     # title="GPyTorch MAP R² Profile AUC Heatmap",
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="GPytorchMAP_SK_r2_profile_auc_heatmap.png",
+    # )
+
+
+    plot_model_comparison(
         df=result_df,
-        metric="r2",
-        model=["GPytorchMAP"],
-        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        # title="GPyTorch MAP R² Performance Profile",
-        dataset_as_experiment_points=False,
-        # show_error_band=True,
-        show=False,
-        save_dir= None,  #HERE / "result_analysis",
-        # file_name="GPytorchMAP_SK_r2_performance_profile.png",
-    )
-
-    plot_profile_auc_heatmap(
-        auc_df=prof_results,
-        fontsize=13.4,
-        figsize=(15, 4.1),
-        model=["GPytorchMAP"],
-        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        # title="GPyTorch MAP R² Profile AUC Heatmap",
-        save_dir=HERE / "result_analysis",
-        file_name="GPytorchMAP_SK_r2_profile_auc_heatmap.png",
-    )
-
-
-    plot_comparison_boxplot(
-        df=result_df,
-        metric="r2",
+        metric="Running time (CPU)",
         model=["RF", "XGBR","NGB","GPytorchMAP"],
-        fp_kernels=["TanimotoMatern32"],
-        count_kernels=["Matern32"],
-        mixing_methods=["averageProduct"],
-        y_label="R²",
+        kernel_triples=[
+            ("Matern32", "Matern32", "averageProduct"),
+            ("TanimotoMatern32", "Matern32", "averageProduct"),
+            ],
+        y_label="CPU Running time (Sec)",
         fontsize=17,
         show=True,
+        # y_lim=(0,.2),
         figsize=(5, 5),
+        # log_y=True,
         save_dir=HERE / "result_analysis",
-        file_name="GPytorchMAP_SK_r2_boxplot.png",
+        file_name="cpu_running_time_model_comparison.png",
     )
