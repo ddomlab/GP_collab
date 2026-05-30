@@ -1,12 +1,12 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAP"
+model="GpyroHMC"
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 dataset="Beyond molecular structure_seifrid_imputed"
-k_fps=("TanimotoRBF")
-k_counts=("RBF")
-k_mixing_methods=("sum")  
+k_fps=("TanimotoMatern32")
+k_counts=("Matern32")           
+k_mixing_methods=("averageProduct") 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -17,7 +17,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 40
+#BSUB -W 40:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
@@ -31,7 +31,7 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
-                                        --regressor_type "$model" \
+                                        --regressor_type "$model" 
 
 
 EOT

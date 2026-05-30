@@ -35,7 +35,6 @@ set_plot_style()
 HERE = Path(__file__).resolve().parent
 # DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
-COMBINED_RESULTS = RESULTS / "master_performance_data" / "Tree_and_GP.pkl"
 
 
 
@@ -471,7 +470,7 @@ MODEL_TYPE_COLORS = {
     "gp": "#E45756",
     "gnn": "#72B7B2",
 }
-MODELS= ["RF", "XGBR", "NGB", "GpyroMCMC", "GPytorchMAP"]
+MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP"]
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
 BASE_MASTER_RESULT_COLUMNS = [
     "paper",
@@ -1948,24 +1947,24 @@ def plot_profile_auc_heatmap(
 
 if __name__ == "__main__":
 
-    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-    #                                score_metrics=DEFAULT_SCORE_METRICS)
+    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+                                   score_metrics=DEFAULT_SCORE_METRICS)
 
-    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
-    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    prof_results = performance_plot_with_ranks(
-        df=result_df,
-        metric="r2",
-        model=["GPytorchMAP"],
-        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        # title="GPyTorch MAP R² Performance Profile",
-        dataset_as_experiment_points=False,
-        # show_error_band=True,
-        # show=True,
-        save_dir= HERE / "result_analysis",
-        file_name="GpytorchMAP_SK_r2_performance_profile.png",
-    )
+    # COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    # result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    # prof_results = performance_plot_with_ranks(
+    #     df=result_df,
+    #     metric="r2",
+    #     model=["GPytorchMAP"],
+    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     # title="GPyTorch MAP R² Performance Profile",
+    #     dataset_as_experiment_points=False,
+    #     # show_error_band=True,
+    #     # show=True,
+    #     save_dir= HERE / "result_analysis",
+    #     file_name="GpytorchMAP_SK_r2_performance_profile.png",
+    # )
     # for metric in ["nll", "cvpp_ama", "ece"]:
     #     prof_results = performance_plot_with_ranks(
     #         df=result_df,
@@ -2014,18 +2013,18 @@ if __name__ == "__main__":
 
     # plot_model_comparison(
     #     df=result_df,
-    #     metric="Running time (CPU)",
-    #     model=["RF", "XGBR","NGB","GPytorchMAP"],
+    #     metric="r2",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC"],
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "averageProduct"),
     #         ("TanimotoMatern32", "Matern32", "averageProduct"),
     #         ],
-    #     y_label="CPU Running time (Sec)",
+    #     y_label="R²",
     #     fontsize=17,
     #     show=True,
     #     # y_lim=(0,.2),
     #     figsize=(5, 5),
     #     # log_y=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="cpu_running_time_model_comparison.png",
+    #     file_name="r2_model_comparison.png",
     # )
