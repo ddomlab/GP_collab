@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 55
+#BSUB -W 50:24
 #BSUB -q gpu
 #BSUB -R "select[a10]"
 #BSUB -gpu "num=1:mode=shared:mps=no"
@@ -37,7 +37,7 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
-                                        --regressor_type "$model" \
+                                        --regressor_type "$model" 
 
 
 

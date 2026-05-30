@@ -892,7 +892,8 @@ def _expand_master_scores_for_profile(
         else:
             scores = [row[score_col]]
 
-        dataset = f"{row['paper']} | {row['target']}"
+        dataset = row["paper"]
+        target = row["target"]
         kernel = _kernel_label(row, include_model=include_model)
         for repeat_idx, score in enumerate(scores):
             try:
@@ -903,6 +904,7 @@ def _expand_master_scores_for_profile(
                 continue
             rows.append({
                 "dataset": dataset,
+                "target": target,
                 "repeat": repeat_idx,
                 "kernel": kernel,
                 "model": row["model"],
@@ -1042,6 +1044,7 @@ def plot_model_comparison(
     if dataset_as_experiment_points:
         group_cols = [
             "dataset",
+            "target",
             x_col,
             "model",
             "fp kernel",
@@ -1350,13 +1353,95 @@ def _rank_percentile_matrix(
     rank_matrix = score_matrix.rank(
         axis=1,
         ascending=not higher_is_better,
-        method="average",
+        method="min",
     )
-    valid_counts = score_matrix.notna().sum(axis=1)
-    return rank_matrix.sub(1, axis=0).div(
-        valid_counts.sub(1).replace(0, np.nan),
-        axis=0,
-    ).fillna(0)
+    valid_counts = score_matrix.notna().sum(axis=1).replace(0, np.nan)
+    return rank_matrix.div(valid_counts, axis=0)
+
+
+def _profile_task_columns(profile_df: pd.DataFrame) -> List[str]:
+    task_cols = [column for column in ["dataset", "target"] if column in profile_df.columns]
+    if not task_cols:
+        raise ValueError("profile_df must contain at least a dataset or target column.")
+    return task_cols
+
+
+def _profile_index_columns(
+    profile_df: pd.DataFrame,
+    include_repeat: bool,
+) -> List[str]:
+    index_cols = _profile_task_columns(profile_df)
+    if include_repeat and "repeat" in profile_df.columns:
+        index_cols = index_cols + ["repeat"]
+    return index_cols
+
+
+def _aggregate_profile_repeats(
+    profile_df: pd.DataFrame,
+    metric: str,
+) -> pd.DataFrame:
+    group_cols = [
+        column
+        for column in [
+            "dataset",
+            "target",
+            "kernel",
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+        ]
+        if column in profile_df.columns
+    ]
+    return (
+        profile_df.groupby(group_cols, dropna=False, as_index=False)[metric]
+        .mean()
+        .copy()
+    )
+
+
+def _cat_gp_percentile_rank_matrix(
+    profile_df: pd.DataFrame,
+    metric: str,
+    higher_is_better: bool,
+    index_cols: List[str],
+) -> pd.DataFrame:
+    ranked_df = profile_df.copy()
+    task_cols = _profile_task_columns(ranked_df)
+    ranked_df["rank_repeat"] = ranked_df.groupby(
+        task_cols,
+        dropna=False,
+    )[metric].rank(
+        ascending=not higher_is_better,
+        method="min",
+    )
+    max_rank = ranked_df.groupby(
+        task_cols,
+        dropna=False,
+    )["rank_repeat"].transform("max")
+    ranked_df["percentile_rank_repeat"] = ranked_df["rank_repeat"].div(
+        max_rank.replace(0, np.nan)
+    )
+
+    return ranked_df.pivot_table(
+        index=index_cols,
+        columns="kernel",
+        values="percentile_rank_repeat",
+        aggfunc="first",
+    )
+
+
+def _profile_score_matrix(
+    profile_df: pd.DataFrame,
+    metric: str,
+    index_cols: List[str],
+) -> pd.DataFrame:
+    return profile_df.pivot_table(
+        index=index_cols,
+        columns="kernel",
+        values=metric,
+        aggfunc="first",
+    )
 
 
 def _profile_curve_from_percentiles(
@@ -1387,7 +1472,8 @@ def _profile_curves(
 
 
 def _repeat_profile_error_bands(
-    score_matrix: pd.DataFrame,
+    profile_df: pd.DataFrame,
+    metric: str,
     higher_is_better: bool,
     tau_grid: np.ndarray,
     error_band_stat: str,
@@ -1397,17 +1483,16 @@ def _repeat_profile_error_bands(
         raise ValueError("error_band_stat must be either 'std' or 'sem'.")
 
     curves_by_kernel = {}
-    if not isinstance(score_matrix.index, pd.MultiIndex):
-        return curves_by_kernel
-    if "repeat" not in score_matrix.index.names:
+    if "repeat" not in profile_df.columns:
         return curves_by_kernel
 
-    for _, repeat_scores in score_matrix.groupby(level="repeat"):
-        repeat_score_matrix = repeat_scores.droplevel("repeat")
-        repeat_score_matrix = repeat_score_matrix.groupby(level=0).mean()
-        repeat_percentile_matrix = _rank_percentile_matrix(
-            repeat_score_matrix,
+    index_cols = _profile_index_columns(profile_df, include_repeat=False)
+    for _, repeat_df in profile_df.groupby("repeat", dropna=False):
+        repeat_percentile_matrix = _cat_gp_percentile_rank_matrix(
+            repeat_df,
+            metric,
             higher_is_better,
+            index_cols,
         )
         repeat_curves = _profile_curves(repeat_percentile_matrix, tau_grid)
         for kernel_name, curve in repeat_curves.items():
@@ -1491,9 +1576,11 @@ def performance_plot_with_ranks(
     """
     Plot model/kernel performance profiles from the master result dataset.
 
-    The ranking is computed over every available paper/target, seed, and fold
-    value in the master dataset's ``<metric>_seed_fold_scores`` columns by
-    default. Returns a DataFrame with one AUC row per model/kernel combination.
+    Following the cat_gp profile code, each row is one
+    ``dataset * target * seed/fold`` repeat for a model/kernel. Percentile
+    ranks are computed within each ``dataset * target`` task using all selected
+    model/kernel repeats, then the plotted profile is the CDF of those ranks.
+    Returns a DataFrame with one AUC row per model/kernel combination.
 
     For exact GP kernel choices, pass ``kernel_triples`` as one triple or a
     list of ``(fp_kernel, count_kernel, mixing_method)`` triples. The older
@@ -1501,7 +1588,7 @@ def performance_plot_with_ranks(
     are still supported.
 
     If ``dataset_as_experiment_points`` is True, the main profile first averages
-    seed/fold scores within each paper/target so each dataset contributes one
+    seed/fold scores within each dataset/target so each target contributes one
     profile point. If ``show_error_band`` is True, this dataset-level mode is
     used and the shaded band is the std/sem across seed/fold repeat profiles.
     ``legend_ncols`` and ``legend_nrows`` control the legend layout above the
@@ -1523,32 +1610,38 @@ def performance_plot_with_ranks(
             f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
         )
 
-    score_matrix = profile_df.pivot_table(
-        index=["dataset", "repeat"],
-        columns="kernel",
-        values=metric,
-        aggfunc="first",
-    )
-    kernel_names = list(score_matrix.columns)
     higher_is_better = _metric_higher_is_better(metric)
 
     if show_error_band:
         dataset_as_experiment_points = True
 
-    profile_score_matrix = score_matrix
+    profile_rank_df = profile_df
     if dataset_as_experiment_points:
-        profile_score_matrix = score_matrix.groupby(level="dataset").mean()
+        profile_rank_df = _aggregate_profile_repeats(profile_df, metric)
 
-    percentile_matrix = _rank_percentile_matrix(
-        profile_score_matrix,
+    include_repeat = not dataset_as_experiment_points
+    profile_index_cols = _profile_index_columns(
+        profile_rank_df,
+        include_repeat=include_repeat,
+    )
+    profile_score_matrix = _profile_score_matrix(
+        profile_rank_df,
+        metric,
+        profile_index_cols,
+    )
+    percentile_matrix = _cat_gp_percentile_rank_matrix(
+        profile_rank_df,
+        metric,
         higher_is_better,
+        profile_index_cols,
     )
 
     linn = np.linspace(0, 1, max(len(percentile_matrix), 2))
     all_percentages = _profile_curves(percentile_matrix, linn)
     error_bands = (
         _repeat_profile_error_bands(
-            score_matrix,
+            profile_df,
+            metric,
             higher_is_better,
             linn,
             error_band_stat,
@@ -1860,78 +1953,79 @@ if __name__ == "__main__":
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    # prof_results = performance_plot_with_ranks(
-    #     df=result_df,
-    #     metric="r2",
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     # title="GPyTorch MAP R² Performance Profile",
-    #     dataset_as_experiment_points=False,
-    #     # show_error_band=True,
-    #     show=True,
-    #     save_dir= None,  #HERE / "result_analysis",
-    #     file_name="GPytorchMAP_SK_r2_performance_profile.png",
-    # )
-    # prof_results = performance_plot_with_ranks(
-    #     df=result_df,
-    #     metric="cvpp_ama",
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #     ],
-    #     legend_ncols=2,
-    #     fontsize=17,
-    #     figsize=(7, 5),
-    #     show=True,
-    #     show_error_band=False,
-    #     save_dir= HERE / "result_analysis",
-    #     file_name="cvpp_ama_model_performance_profile_curve_comparison.png",
-    # )
-
-    # plot_model_profile_comparison(
-    #     prof_results=prof_results,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #     ],
-    #     metric="ece",
-    #     y_label="Profile AUC of ECE",
-    #     fontsize=17,
-    #     figsize=(5, 5),
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="ece_model_profile_comparison.png",
-    # )
+    prof_results = performance_plot_with_ranks(
+        df=result_df,
+        metric="r2",
+        model=["GPytorchMAP"],
+        fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        # title="GPyTorch MAP R² Performance Profile",
+        dataset_as_experiment_points=False,
+        # show_error_band=True,
+        # show=True,
+        save_dir= HERE / "result_analysis",
+        file_name="GpytorchMAP_SK_r2_performance_profile.png",
+    )
+    # for metric in ["nll", "cvpp_ama", "ece"]:
+    #     prof_results = performance_plot_with_ranks(
+    #         df=result_df,
+    #         metric=metric,
+    #         model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #         kernel_triples=[
+    #             ("Matern32", "Matern32", "averageProduct"),
+    #             ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #         ],
+    #         legend_ncols=2,
+    #         fontsize=17,
+    #         figsize=(7, 5),
+    #         show=True,
+    #         show_error_band=False,
+    #         save_dir= HERE / "result_analysis",
+    #         file_name=f"{metric}_model_performance_profile_curve_comparison.png",
+    #     )
+    #     metric_name = "AMA" if metric == "cvpp_ama" else metric.upper()
+    #     plot_model_profile_comparison(
+    #         prof_results=prof_results,
+    #         model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #         kernel_triples=[
+    #             ("Matern32", "Matern32", "averageProduct"),
+    #             ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #         ],
+    #         metric=metric,
+    #         y_label=f"Profile AUC of {metric_name}",
+    #         fontsize=17,
+    #         figsize=(5, 5),
+    #         save_dir=HERE / "result_analysis",
+    #         file_name=f"{metric}_model_profile_comparison.png",
+    #     )
 
     # plot_profile_auc_heatmap(
     #     auc_df=prof_results,
     #     fontsize=13.4,
     #     figsize=(15, 4.1),
     #     model=["GPytorchMAP"],
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     fp_kernels=["RBF", "Matern32", "Matern52"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
     #     # title="GPyTorch MAP R² Profile AUC Heatmap",
     #     save_dir=HERE / "result_analysis",
-    #     file_name="GPytorchMAP_SK_r2_profile_auc_heatmap.png",
+    #     file_name="GPytorchMAP_bitwise_r2_profile_auc_heatmap.png",
     # )
 
 
-    plot_model_comparison(
-        df=result_df,
-        metric="Running time (CPU)",
-        model=["RF", "XGBR","NGB","GPytorchMAP"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "averageProduct"),
-            ("TanimotoMatern32", "Matern32", "averageProduct"),
-            ],
-        y_label="CPU Running time (Sec)",
-        fontsize=17,
-        show=True,
-        # y_lim=(0,.2),
-        figsize=(5, 5),
-        # log_y=True,
-        save_dir=HERE / "result_analysis",
-        file_name="cpu_running_time_model_comparison.png",
-    )
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="Running time (CPU)",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #         ],
+    #     y_label="CPU Running time (Sec)",
+    #     fontsize=17,
+    #     show=True,
+    #     # y_lim=(0,.2),
+    #     figsize=(5, 5),
+    #     # log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="cpu_running_time_model_comparison.png",
+    # )
