@@ -191,8 +191,8 @@ def optimized_models(
     if "GpyroHMC" == model_name:
         return GpyroHMCsklearnRegressor(
                                     feat_group=feat_group,
-                                    num_samples=kwargs.get('num_samples', 200),
-                                    warmup_steps=kwargs.get('warmup_steps', 200),
+                                    num_samples=kwargs.get('num_samples', 100),
+                                    warmup_steps=kwargs.get('warmup_steps', 100),
                                     num_chains=kwargs.get('num_chains', 1),
                                     num_drawn_samples=kwargs.get('num_drawn_samples', 100),
                                     use_cuda=kwargs.get('use_cuda', False),

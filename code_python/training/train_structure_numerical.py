@@ -110,7 +110,7 @@ if __name__ == "__main__":
                 # "count": "Matern32"
                 },
             kernel_mixing_method=args.Kernel_mixing_method,
-            use_cuda=True, #True for GPU, False for CPU
+            use_cuda=False, #True for GPU, False for CPU
             # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
             # hyperparameter_save_dir=optuna_save_dir, # for MGK
             # imputer="mean",
