@@ -16,8 +16,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
             bsub <<EOT
 
-#BSUB -n 4
-#BSUB -W 10:40
+#BSUB -n 6
+#BSUB -W 5:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
