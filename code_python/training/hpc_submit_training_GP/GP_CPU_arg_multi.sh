@@ -3,7 +3,7 @@
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="flux_data_imputed"
+dataset="separation_data_imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
@@ -16,7 +16,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
             bsub <<EOT
 
-#BSUB -n 4
+#BSUB -n 8
 #BSUB -W 60:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
