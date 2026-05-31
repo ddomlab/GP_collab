@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="separation_data_imputed"
+paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+dataset="cleaned_dataset_pervaporation_membranes_wang"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
@@ -16,8 +16,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
             bsub <<EOT
 
-#BSUB -n 8
-#BSUB -W 60:40
+#BSUB -n 4
+#BSUB -W 10:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
