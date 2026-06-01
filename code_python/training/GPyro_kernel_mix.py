@@ -414,8 +414,8 @@ class GPMixPyro(gp.models.GPRegression):
         kernel = self.kernel_builder.build()
         super().__init__(X, y, kernel, jitter=1e-4)
 
-        self.noise = self._lognormal_prior("noise_prior", self)
-        self.kernel.variance = self._lognormal_prior("variance_prior", self.kernel)
+        self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
+        self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
 
         # Dynamically assign lengthscales to all sub-kernels
         fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
@@ -428,71 +428,20 @@ class GPMixPyro(gp.models.GPRegression):
                 if self.kernel_method["fp"].lower() == "tanimoto":
                     continue
                 if "tanimoto" in self.kernel_method["fp"].lower():
-                    target_kern.lengthscale = self._inverse_gamma_prior(
-                        "lengthscale_prior",
-                        target_kern,
+                    target_kern.lengthscale = PyroSample(
+                        dist.InverseGamma(5.0, 5.0)
                     )
                 else:
                     ard_length = len(self.feat_idx[fp_keys[i]])
-                    target_kern.lengthscale = self._inverse_gamma_prior(
-                        "lengthscale_prior",
-                        target_kern,
-                        event_shape=(ard_length,),
+                    target_kern.lengthscale = PyroSample(
+                        dist.InverseGamma(5.0, 5.0)
+                        .expand([ard_length])
+                        .to_event(1)
                     )
             else:
-                target_kern.lengthscale = self._inverse_gamma_prior(
-                    "lengthscale_prior",
-                    target_kern,
+                target_kern.lengthscale = PyroSample(
+                    dist.InverseGamma(5.0, 5.0)
                 )
-
-    def _register_prior_buffer(self, module, name, value):
-        tensor = _as_torch_tensor(value, **self.tensor_kwargs)
-        module.register_buffer(name, tensor)
-        return name
-
-    def _lognormal_prior(self, prefix, module):
-        loc_name = self._register_prior_buffer(module, f"_{prefix}_loc", 0.0)
-        scale_name = self._register_prior_buffer(module, f"_{prefix}_scale", 1.0)
-
-        return PyroSample(
-            lambda m, loc_name=loc_name, scale_name=scale_name: dist.LogNormal(
-                getattr(m, loc_name),
-                getattr(m, scale_name),
-            )
-        )
-
-    def _inverse_gamma_prior(
-        self,
-        prefix,
-        module,
-        concentration=5.0,
-        rate=5.0,
-        event_shape=None,
-    ):
-        concentration_name = self._register_prior_buffer(
-            module,
-            f"_{prefix}_concentration",
-            concentration,
-        )
-        rate_name = self._register_prior_buffer(module, f"_{prefix}_rate", rate)
-
-        if event_shape is None:
-            return PyroSample(
-                lambda m, concentration_name=concentration_name, rate_name=rate_name: dist.InverseGamma(
-                    getattr(m, concentration_name),
-                    getattr(m, rate_name),
-                )
-            )
-
-        return PyroSample(
-            lambda m,
-            concentration_name=concentration_name,
-            rate_name=rate_name,
-            event_shape=event_shape: dist.InverseGamma(
-                getattr(m, concentration_name),
-                getattr(m, rate_name),
-            ).expand(event_shape).to_event(len(event_shape))
-        )
 
 
 # ----------------------------------------------------------------------
@@ -542,8 +491,8 @@ class GpyroHMCRegressor:
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict|None=None,
-        normalize_y: bool = False,
-        jit_compile: bool = False,
+        normalize_y: bool = True,
+        jit_compile: bool = True,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -638,13 +587,6 @@ class GpyroHMCRegressor:
                     ]
 
             count_cols = self.feat_group.get("count", [])
-            missing_count_cols = [
-                c for c in count_cols if c not in X.columns
-            ]
-            if missing_count_cols:
-                raise ValueError(
-                    f"Count columns are missing from X: {missing_count_cols}"
-                )
 
             self.count_feat_name_idx_ = {
                 c: X.columns.get_loc(c)
@@ -657,18 +599,6 @@ class GpyroHMCRegressor:
             self.count_feat_name_idx = self.count_feat_name_idx_
 
         else:
-            if not hasattr(self, "feature_names_in_"):
-                raise RuntimeError("Model is not fitted. Call fit() first.")
-
-            missing_cols = [
-                c for c in self.feature_names_in_
-                if c not in X.columns
-            ]
-            if missing_cols:
-                raise ValueError(
-                    f"Prediction X is missing columns seen during fit: {missing_cols}"
-                )
-
             X = X.loc[:, self.feature_names_in_]
 
         return torch.as_tensor(
@@ -730,7 +660,7 @@ class GpyroHMCRegressor:
         f_loc, f_var = self.gp_model_(X_new, full_cov=False, noiseless=False)
 
         # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
-        f_scale = f_var.clamp_min(1e-12).sqrt()
+        f_scale = f_var.sqrt()
 
         # Sample observations
         pyro.sample(
@@ -850,8 +780,8 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         random_state=42,
         kernel_mixing_method:str="product",
         kernel_type:dict|None=None,
-        normalize_y: bool = False,
-        jit_compile: bool = False,
+        normalize_y: bool = True,
+        jit_compile: bool = True,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
