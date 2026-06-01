@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 88, in <module>
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 136, in _get_dataset_features
+    raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
+FileNotFoundError: Dataset 'Rg data with clusters aging imputed' not found in /gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/datasets/Validation datasets

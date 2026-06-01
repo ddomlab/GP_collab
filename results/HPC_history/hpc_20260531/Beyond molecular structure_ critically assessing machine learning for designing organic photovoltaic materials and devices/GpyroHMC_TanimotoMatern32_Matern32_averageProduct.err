@@ -1,0 +1,163 @@
+Traceback (most recent call last):
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/trace_messenger.py", line 191, in __call__
+    ret = self.fn(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 730, in _predictive_strategy
+    f_loc, f_var = self.gp_model_(X_new, full_cov=False, noiseless=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/nn/module.py", line 520, in __call__
+    result = super().__call__(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/contrib/gp/models/gpr.py", line 136, in forward
+    Lff = torch.linalg.cholesky(Kff)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 280 is not positive-definite).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 92, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 46, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 76, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 237, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 404, in run
+    scores, predictions = cross_validate_regressor(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 723, in cross_validate_regressor
+    score, predictions = cross_validate(
+                         ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 667, in cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 616, in _gp_fit_predict_score
+    y_result = est.predict(X_test, return_std=UQ)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 746, in predict
+    return self.steps[-1][1].predict(Xt, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 904, in predict
+    return self.regressor_.predict(X, return_std=return_std)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 768, in predict
+    y_samples = self._predictive_samples(X_test)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 759, in _predictive_samples
+    samples_pred = predictive(X_t)
+                   ^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/predictive.py", line 277, in forward
+    return _predictive(
+           ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/predictive.py", line 94, in _predictive
+    poutine.trace(model).get_trace(*model_args, **model_kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/trace_messenger.py", line 216, in get_trace
+    self(*args, **kwargs)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/trace_messenger.py", line 198, in __call__
+    raise exc from e
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/trace_messenger.py", line 191, in __call__
+    ret = self.fn(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 730, in _predictive_strategy
+    f_loc, f_var = self.gp_model_(X_new, full_cov=False, noiseless=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/nn/module.py", line 520, in __call__
+    result = super().__call__(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/contrib/gp/models/gpr.py", line 136, in forward
+    Lff = torch.linalg.cholesky(Kff)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 280 is not positive-definite).
+                 Trace Shapes:  
+                  Param Sites:  
+         kernel.kern0.variance  
+         kernel.kern1.variance  
+         kernel.kern2.variance  
+         kernel.kern3.variance  
+         kernel.kern4.variance  
+         kernel.kern5.variance  
+         kernel.kern6.variance  
+         kernel.kern7.variance  
+         kernel.kern8.variance  
+         kernel.kern9.variance  
+        kernel.kern10.variance  
+        kernel.kern11.variance  
+        kernel.kern12.variance  
+        kernel.kern13.variance  
+        kernel.kern14.variance  
+                 Sample Sites:  
+ kernel.kern0.lengthscale dist |
+                         value |
+ kernel.kern1.lengthscale dist |
+                         value |
+ kernel.kern2.lengthscale dist |
+                         value |
+ kernel.kern3.lengthscale dist |
+                         value |
+ kernel.kern4.lengthscale dist |
+                         value |
+ kernel.kern5.lengthscale dist |
+                         value |
+ kernel.kern6.lengthscale dist |
+                         value |
+ kernel.kern7.lengthscale dist |
+                         value |
+ kernel.kern8.lengthscale dist |
+                         value |
+ kernel.kern9.lengthscale dist |
+                         value |
+kernel.kern10.lengthscale dist |
+                         value |
+kernel.kern11.lengthscale dist |
+                         value |
+kernel.kern12.lengthscale dist |
+                         value |
+kernel.kern13.lengthscale dist |
+                         value |
+kernel.kern14.lengthscale dist |
+                         value |
+          kernel.variance dist |
+                         value |
+                    noise dist |
+                         value |

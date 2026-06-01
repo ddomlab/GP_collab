@@ -1,0 +1,58 @@
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c006n04>
+Subject: Job 359338: <structure_numerical_20260531> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260531> was submitted from host <c006n04> by user <sdehgha2> in cluster <Hazel> at Sun May 31 18:14:01 2026
+Job was executed on host(s) <6*c006n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun May 31 18:15:00 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun May 31 18:15:00 2026
+Terminated at Sun May 31 19:32:22 2026
+Results reported at Sun May 31 19:32:22 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 40:40
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260531"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   4619.12 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             0.99 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   4658 sec.
+    Turnaround time :                            4701 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+

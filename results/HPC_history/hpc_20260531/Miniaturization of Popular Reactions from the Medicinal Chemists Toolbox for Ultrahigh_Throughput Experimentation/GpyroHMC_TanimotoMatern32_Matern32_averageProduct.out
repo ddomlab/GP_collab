@@ -1,0 +1,58 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c017n02>
+Subject: Job 359357: <structure_numerical_20260531> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260531> was submitted from host <c016n01> by user <sdehgha2> in cluster <Hazel> at Sun May 31 18:38:29 2026
+Job was executed on host(s) <4*c017n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun May 31 19:33:08 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun May 31 19:33:08 2026
+Terminated at Sun May 31 23:38:35 2026
+Results reported at Sun May 31 23:38:35 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 4
+#BSUB -W 5:40
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260531"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   14666.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   14753 sec.
+    Turnaround time :                            18006 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260531/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+
