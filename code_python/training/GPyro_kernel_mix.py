@@ -428,19 +428,19 @@ class GPMixPyro(gp.models.GPRegression):
                 if self.kernel_method["fp"].lower() == "tanimoto":
                     continue
                 if "tanimoto" in self.kernel_method["fp"].lower():
-                    target_kern.lengthscale = self._gamma_prior(
+                    target_kern.lengthscale = self._inverse_gamma_prior(
                         "lengthscale_prior",
                         target_kern,
                     )
                 else:
                     ard_length = len(self.feat_idx[fp_keys[i]])
-                    target_kern.lengthscale = self._gamma_prior(
+                    target_kern.lengthscale = self._inverse_gamma_prior(
                         "lengthscale_prior",
                         target_kern,
                         event_shape=(ard_length,),
                     )
             else:
-                target_kern.lengthscale = self._gamma_prior(
+                target_kern.lengthscale = self._inverse_gamma_prior(
                     "lengthscale_prior",
                     target_kern,
                 )
@@ -461,7 +461,7 @@ class GPMixPyro(gp.models.GPRegression):
             )
         )
 
-    def _gamma_prior(
+    def _inverse_gamma_prior(
         self,
         prefix,
         module,
@@ -478,7 +478,7 @@ class GPMixPyro(gp.models.GPRegression):
 
         if event_shape is None:
             return PyroSample(
-                lambda m, concentration_name=concentration_name, rate_name=rate_name: dist.Gamma(
+                lambda m, concentration_name=concentration_name, rate_name=rate_name: dist.InverseGamma(
                     getattr(m, concentration_name),
                     getattr(m, rate_name),
                 )
@@ -488,7 +488,7 @@ class GPMixPyro(gp.models.GPRegression):
             lambda m,
             concentration_name=concentration_name,
             rate_name=rate_name,
-            event_shape=event_shape: dist.Gamma(
+            event_shape=event_shape: dist.InverseGamma(
                 getattr(m, concentration_name),
                 getattr(m, rate_name),
             ).expand(event_shape).to_event(len(event_shape))

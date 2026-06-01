@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-dataset="cleaned_dataset_Ultrafiltration Membrane"
+paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+dataset="cleaned_suzuki_synthesis"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
@@ -17,7 +17,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 4
-#BSUB -W 36:40
+#BSUB -W 20:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
