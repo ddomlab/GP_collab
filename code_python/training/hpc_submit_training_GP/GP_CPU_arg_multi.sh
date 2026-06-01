@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset="cleaned_dataset_pervaporation_membranes_wang"
+paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+dataset="cleaned_dataset_Ultrafiltration Membrane"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct") 
@@ -16,7 +16,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
             bsub <<EOT
 
-#BSUB -n 4
+#BSUB -n 6
 #BSUB -W 25:40
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
