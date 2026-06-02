@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-dataset="Beyond molecular structure_seifrid_imputed"
+paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+dataset="cleaned_dataset_pervaporation_membranes_wang"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct" "product") 
@@ -17,7 +17,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 50
+#BSUB -W 4:20
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
