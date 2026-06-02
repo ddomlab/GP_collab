@@ -6,7 +6,7 @@ paper="Robust Learning from Literature Data_Model Generalizability and Uncertain
 dataset="Rg data with clusters aging imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
-k_mixing_methods=("averageProduct") 
+k_mixing_methods=("product") 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
