@@ -1,0 +1,67 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.2±0.03	 r2: 0.91±0.03
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_product)_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.24±0.06	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_product)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c011n03>
+Subject: Job 373341: <structure_numerical_20260601> in cluster <Hazel> Done
+
+Job <structure_numerical_20260601> was submitted from host <c016n03> by user <sdehgha2> in cluster <Hazel> at Mon Jun  1 22:41:38 2026
+Job was executed on host(s) <6*c011n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jun  1 22:45:39 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jun  1 22:45:39 2026
+Terminated at Tue Jun  2 01:09:27 2026
+Results reported at Tue Jun  2 01:09:27 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 4:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260601"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern32_Matern32_product.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern32_Matern32_product.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   8587.41 sec.
+    Max Memory :                                 9 GB
+    Average Memory :                             4.80 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               23.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   8629 sec.
+    Turnaround time :                            8869 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern32_Matern32_product.err> for stderr output of this job.
+

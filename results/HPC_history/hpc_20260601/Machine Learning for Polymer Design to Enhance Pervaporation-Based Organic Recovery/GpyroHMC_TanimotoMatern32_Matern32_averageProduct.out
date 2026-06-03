@@ -1,0 +1,116 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c018n04>
+Subject: Job 373348: <structure_numerical_20260601> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260601> was submitted from host <c019n02> by user <sdehgha2> in cluster <Hazel> at Mon Jun  1 22:44:26 2026
+Job was executed on host(s) <4*c018n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jun  1 22:44:27 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jun  1 22:44:27 2026
+Terminated at Tue Jun  2 19:04:07 2026
+Results reported at Tue Jun  2 19:04:07 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 4
+#BSUB -W 20:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260601"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   73010.00 sec.
+    Max Memory :                                 47 GB
+    Average Memory :                             22.62 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   73204 sec.
+    Turnaround time :                            73181 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c018n02>
+Subject: Job 373477: <structure_numerical_20260601> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260601> was submitted from host <c014n02> by user <sdehgha2> in cluster <Hazel> at Mon Jun  1 23:38:21 2026
+Job was executed on host(s) <8*c018n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Mon Jun  1 23:47:30 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Jun  1 23:47:30 2026
+Terminated at Tue Jun  2 20:07:36 2026
+Results reported at Tue Jun  2 20:07:36 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 8
+#BSUB -W 20:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260601"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   73006.00 sec.
+    Max Memory :                                 56 GB
+    Average Memory :                             34.34 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -24.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   73208 sec.
+    Turnaround time :                            73755 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260601/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+

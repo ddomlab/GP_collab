@@ -1,0 +1,87 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 78.69±10.07	 r2: 0.74±0.06
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.24±1.01	 r2: 0.6±0.12
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.18±1.01	 r2: 0.71±0.06
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.67±1.23	 r2: 0.54±0.1
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.62±1.51	 r2: 0.7±0.08
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 8.71±1.21	 r2: 0.53±0.1
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_mean_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c016n01>
+Subject: Job 375430: <structure_numerical_20260602> in cluster <Hazel> Done
+
+Job <structure_numerical_20260602> was submitted from host <c016n01> by user <sdehgha2> in cluster <Hazel> at Tue Jun  2 09:36:40 2026
+Job was executed on host(s) <4*c016n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Jun  2 09:37:39 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Jun  2 09:37:39 2026
+Terminated at Tue Jun  2 12:01:53 2026
+Results reported at Tue Jun  2 12:01:53 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 4
+#BSUB -W 10:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260602"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260602/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260602/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "cleaned_dataset_Ultrafiltration Membrane"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   8560.02 sec.
+    Max Memory :                                 13 GB
+    Average Memory :                             6.71 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               19.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   8679 sec.
+    Turnaround time :                            8713 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260602/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+
