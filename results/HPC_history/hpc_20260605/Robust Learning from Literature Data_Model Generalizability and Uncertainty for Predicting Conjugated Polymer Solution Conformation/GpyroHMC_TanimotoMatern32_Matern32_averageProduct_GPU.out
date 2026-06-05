@@ -1,0 +1,68 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.26±0.07	 r2: 0.8±0.1
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu10>
+Subject: Job 406111: <structure_numerical_20260605> in cluster <Hazel> Done
+
+Job <structure_numerical_20260605> was submitted from host <gpu10> by user <sdehgha2> in cluster <Hazel> at Fri Jun  5 09:47:01 2026
+Job was executed on host(s) <gpu10>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Fri Jun  5 09:47:01 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Fri Jun  5 09:47:01 2026
+Terminated at Fri Jun  5 10:04:56 2026
+Results reported at Fri Jun  5 10:04:56 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 20
+#BSUB -q gpu
+#BSUB -R "select[a10]"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260605"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260605/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260605/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --regressor_type "GpyroHMC" 
+
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1009.85 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.03 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               13.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                9
+    Run time :                                   1073 sec.
+    Turnaround time :                            1075 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260605/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GpyroHMC_TanimotoMatern32_Matern32_averageProduct_GPU.err> for stderr output of this job.
+
