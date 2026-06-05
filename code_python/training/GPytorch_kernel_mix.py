@@ -20,16 +20,6 @@ from tqdm import trange
 from tqdm import tqdm
 import os, sys
 import gc
-# from torch_geometric.data import Batch
-# from torch_geometric.loader import DataLoader
-# from pytorch_mpnn import DMPNNPredictor, RevIndexedData, smiles2data
-
-#Torch modules
-# from torch.distributions import Gamma
-# from gpytorch.priors import Prior
-# from gpytorch.module import Module as TModule
-# from gpytorch.priors.utils import _bufferize_attributes
-
 from Gpytorch_sskkernel import SubsequenceStringKernel
 
 def weighted_tanimoto(x1, x2, eps=1e-6, dist=True):
