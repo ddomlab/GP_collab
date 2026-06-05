@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
 k_mixing_methods=("averageProduct" "product") 
@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 40
+#BSUB -W 50
 #BSUB -q gpu
 #BSUB -R "select[a10]"
 #BSUB -gpu "num=1:mode=shared:mps=no"
