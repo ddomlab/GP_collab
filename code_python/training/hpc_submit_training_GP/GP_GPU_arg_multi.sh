@@ -3,10 +3,10 @@
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="log (Total flux)"
+dataset="separation_data_imputed"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
-k_mixing_methods=("averageProduct") 
+k_mixing_methods=("product") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -21,8 +21,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 #BSUB -W 4:35
 #BSUB -q gpu
 #BSUB -R "select[a10]"
-#BSUB -gpu "num=1:mode=shared:mps=no"
-#BSUB -R "rusage[mem=16GB]"
+#BSUB -gpu "num=1:mode=exclusive_process:mps=yes"
+#BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
 #BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
 #BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
