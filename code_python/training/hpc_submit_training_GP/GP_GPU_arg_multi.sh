@@ -3,10 +3,10 @@
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="log (Separation factor)"
+dataset="log (Total flux)"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")           
-k_mixing_methods=("product") 
+k_mixing_methods=("averageProduct") 
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
