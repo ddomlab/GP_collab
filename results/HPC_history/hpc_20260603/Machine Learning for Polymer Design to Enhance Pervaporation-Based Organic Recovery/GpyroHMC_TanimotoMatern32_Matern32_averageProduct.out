@@ -1,0 +1,124 @@
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.39±0.03	 r2: 0.82±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c016n01>
+Subject: Job 393349: <structure_numerical_20260603> in cluster <Hazel> Done
+
+Job <structure_numerical_20260603> was submitted from host <c019n03> by user <sdehgha2> in cluster <Hazel> at Wed Jun  3 10:17:53 2026
+Job was executed on host(s) <4*c016n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jun  3 10:17:55 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jun  3 10:17:55 2026
+Terminated at Thu Jun  4 17:23:06 2026
+Results reported at Thu Jun  4 17:23:06 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 4
+#BSUB -W 40:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260603"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   111612.88 sec.
+    Max Memory :                                 69 GB
+    Average Memory :                             36.17 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -37.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   111929 sec.
+    Turnaround time :                            111913 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.32±0.02	 r2: 0.81±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern32_averageProduct)_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c018n03>
+Subject: Job 393346: <structure_numerical_20260603> in cluster <Hazel> Done
+
+Job <structure_numerical_20260603> was submitted from host <c015n03> by user <sdehgha2> in cluster <Hazel> at Wed Jun  3 10:17:10 2026
+Job was executed on host(s) <4*c018n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Jun  3 10:17:12 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jun  3 10:17:12 2026
+Terminated at Thu Jun  4 18:01:39 2026
+Results reported at Thu Jun  4 18:01:39 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 4
+#BSUB -W 40:20
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260603"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method averageProduct                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --regressor_type "GpyroHMC" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   113843.02 sec.
+    Max Memory :                                 48 GB
+    Average Memory :                             25.73 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -16.00 GB
+    Max Swap :                                   11 GB
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   114279 sec.
+    Turnaround time :                            114269 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260603/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_TanimotoMatern32_Matern32_averageProduct.err> for stderr output of this job.
+
