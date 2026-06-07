@@ -1975,8 +1975,8 @@ def plot_profile_auc_heatmap(
 
 if __name__ == "__main__":
 
-    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-    #                                score_metrics=DEFAULT_SCORE_METRICS)
+    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+                                   score_metrics=DEFAULT_SCORE_METRICS)
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
