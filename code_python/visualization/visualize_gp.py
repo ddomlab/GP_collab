@@ -1978,8 +1978,8 @@ if __name__ == "__main__":
     build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
                                    score_metrics=DEFAULT_SCORE_METRICS)
 
-    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
-    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    # COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    # result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
     # prof_results = performance_plot_with_ranks(
     #     df=result_df,
     #     metric="r2",
@@ -2039,20 +2039,20 @@ if __name__ == "__main__":
     # )
 
 
-    plot_model_comparison(
-        df=result_df,
-        metric="ece",
-        model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ],
-        y_label="ECE",
-        fontsize=17,
-        show=True,
-        y_lim=(0,.2),
-        figsize=(5, 5),
-        # log_y=True,
-        save_dir=HERE / "result_analysis",
-        file_name="ece_running_time_model_comparison.png",
-    )
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="ece",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ],
+    #     y_label="ECE",
+    #     fontsize=17,
+    #     show=True,
+    #     y_lim=(0,.2),
+    #     figsize=(5, 5),
+    #     # log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="ece_running_time_model_comparison.png",
+    # )
