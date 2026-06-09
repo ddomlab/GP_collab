@@ -1596,14 +1596,12 @@ def plot_hybridization_profile_comparison(
     Draw a barplot comparing hybridization methods from profile AUC results.
 
     The input should be the DataFrame returned by
-    ``performance_plot_with_ranks`` or
-    ``performance_plot_hybridization_with_ranks``. Hybridization is stored as
+    ``performance_plot_with_ranks``. Hybridization is stored as
     ``mixing method``. Use ``fp_kernels`` and ``count_kernels`` to compare
     methods within a kernel family, or ``kernel_triples`` to select exact
-    ``(fp_kernel, count_kernel, mixing_method)`` combinations. When the input
-    has one AUC per kernel combination, bars summarize mean +/- std across
-    kernels. When the input has one direct AUC per hybridization method, bars
-    show that direct AUC.
+    ``(fp_kernel, count_kernel, mixing_method)`` combinations. Bar heights are
+    the mean profile AUC for each hybridization method; error bars and labels
+    show the standard deviation across the selected kernel configurations.
     """
     required_columns = {
         "model",
@@ -1621,10 +1619,10 @@ def plot_hybridization_profile_comparison(
 
     plot_df = prof_results.copy()
     plot_df = _filter_selection(plot_df, "model", model)
-    plot_df = _filter_selection(plot_df, "fp kernel", fp_kernels, keep_missing=True)
-    plot_df = _filter_selection(plot_df, "count kernel", count_kernels, keep_missing=True)
+    plot_df = _filter_selection(plot_df, "fp kernel", fp_kernels)
+    plot_df = _filter_selection(plot_df, "count kernel", count_kernels)
     plot_df = _filter_selection(plot_df, "mixing method", mixing_methods)
-    plot_df = _filter_kernel_triples(plot_df, kernel_triples, keep_missing=True)
+    plot_df = _filter_kernel_triples(plot_df, kernel_triples, keep_missing=False)
     if metric is not None and "metric" in plot_df.columns:
         plot_df = _filter_selection(plot_df, "metric", metric)
 
@@ -1674,38 +1672,22 @@ def plot_hybridization_profile_comparison(
         .drop(columns="_plot_order")
         .copy()
     )
-
-    direct_profile_auc = (
-        (
-            "profile grouping" in plot_df.columns
-            and plot_df["profile grouping"].eq("hybridization method").all()
-        )
-        or plot_df.groupby(x_col, dropna=False)[auc_column].size().max() == 1
+    summary_group_cols = list(dict.fromkeys([
+        x_col,
+        "hybridization method",
+        "model",
+        "mixing method",
+    ]))
+    summary_df = (
+        plot_df.groupby(summary_group_cols, dropna=False)[auc_column]
+        .agg(["mean", "std", "count"])
+        .reset_index()
+        .rename(columns={
+            "mean": f"{auc_column}_mean",
+            "std": f"{auc_column}_std",
+            "count": f"{auc_column}_count",
+        })
     )
-    if direct_profile_auc:
-        summary_df = plot_df.drop_duplicates(subset=[x_col]).copy()
-        summary_df[f"{auc_column}_mean"] = summary_df[auc_column]
-        if f"{auc_column}_std" not in summary_df.columns:
-            summary_df[f"{auc_column}_std"] = 0.0
-        if f"{auc_column}_count" not in summary_df.columns:
-            summary_df[f"{auc_column}_count"] = 1
-    else:
-        summary_group_cols = list(dict.fromkeys([
-            x_col,
-            "hybridization method",
-            "model",
-            "mixing method",
-        ]))
-        summary_df = (
-            plot_df.groupby(summary_group_cols, dropna=False)[auc_column]
-            .agg(["mean", "std", "count"])
-            .reset_index()
-            .rename(columns={
-                "mean": f"{auc_column}_mean",
-                "std": f"{auc_column}_std",
-                "count": f"{auc_column}_count",
-            })
-        )
     summary_df[f"{auc_column}_std"] = summary_df[f"{auc_column}_std"].fillna(0.0)
     summary_df["_plot_order"] = summary_df[x_col].map(order_lookup)
     summary_df = (
@@ -1751,19 +1733,18 @@ def plot_hybridization_profile_comparison(
         mean_value = float(summary_by_label.loc[label, f"{auc_column}_mean"])
         std_value = float(summary_by_label.loc[label, f"{auc_column}_std"])
         x_position = patch.get_x() + patch.get_width() / 2
-        if not direct_profile_auc:
-            ax.errorbar(
-                x_position,
-                mean_value,
-                yerr=std_value,
-                fmt="none",
-                ecolor="black",
-                elinewidth=1.4,
-                capsize=4,
-                capthick=1.4,
-                zorder=4,
-            )
-        label_y = mean_value + (0 if direct_profile_auc else std_value) + 0.015
+        ax.errorbar(
+            x_position,
+            mean_value,
+            yerr=std_value,
+            fmt="none",
+            ecolor="black",
+            elinewidth=1.4,
+            capsize=4,
+            capthick=1.4,
+            zorder=4,
+        )
+        label_y = mean_value + std_value + 0.015
         max_label_y = label_y if max_label_y is None else max(max_label_y, label_y)
 
     if show_values:
@@ -1772,15 +1753,10 @@ def plot_hybridization_profile_comparison(
                 continue
             mean_value = float(summary_by_label.loc[label, f"{auc_column}_mean"])
             std_value = float(summary_by_label.loc[label, f"{auc_column}_std"])
-            label_text = (
-                f"{mean_value:.2f}"
-                if direct_profile_auc
-                else f"{mean_value:.2f} ± {std_value:.2f}"
-            )
             ax.text(
                 patch.get_x() + patch.get_width() / 2,
-                mean_value + (0 if direct_profile_auc else std_value) + 0.015,
-                label_text,
+                mean_value + std_value + 0.015,
+                f"{mean_value:.2f} ± {std_value:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=fontsize - 2,
@@ -1851,17 +1827,6 @@ def _profile_index_columns(
     index_cols = _profile_task_columns(profile_df)
     if include_repeat and "repeat" in profile_df.columns:
         index_cols = index_cols + ["repeat"]
-    return index_cols
-
-
-def _hybridization_profile_index_columns(
-    profile_df: pd.DataFrame,
-    include_repeat: bool,
-) -> List[str]:
-    index_cols = _profile_index_columns(profile_df, include_repeat=include_repeat)
-    for column in ["fp kernel", "count kernel"]:
-        if column in profile_df.columns and column not in index_cols:
-            index_cols.append(column)
     return index_cols
 
 
@@ -2002,51 +1967,6 @@ def _repeat_profile_error_bands(
     return error_bands
 
 
-def _hybridization_repeat_profile_error_bands(
-    profile_df: pd.DataFrame,
-    metric: str,
-    higher_is_better: bool,
-    tau_grid: np.ndarray,
-    error_band_stat: str,
-) -> Dict[str, np.ndarray]:
-    error_band_stat = error_band_stat.lower()
-    if error_band_stat not in {"std", "sem"}:
-        raise ValueError("error_band_stat must be either 'std' or 'sem'.")
-
-    curves_by_method = {}
-    if "repeat" not in profile_df.columns:
-        return curves_by_method
-
-    index_cols = _hybridization_profile_index_columns(
-        profile_df,
-        include_repeat=False,
-    )
-    for _, repeat_df in profile_df.groupby("repeat", dropna=False):
-        repeat_percentile_matrix = _cat_gp_percentile_rank_matrix(
-            repeat_df,
-            metric,
-            higher_is_better,
-            index_cols,
-        )
-        repeat_curves = _profile_curves(repeat_percentile_matrix, tau_grid)
-        for method_name, curve in repeat_curves.items():
-            curves_by_method.setdefault(method_name, []).append(curve)
-
-    error_bands = {}
-    for method_name, curves in curves_by_method.items():
-        curve_matrix = np.vstack(curves)
-        if curve_matrix.shape[0] <= 1:
-            error_bands[method_name] = np.zeros(curve_matrix.shape[1])
-            continue
-
-        error = np.nanstd(curve_matrix, axis=0, ddof=1)
-        if error_band_stat == "sem":
-            error = error / np.sqrt(curve_matrix.shape[0])
-        error_bands[method_name] = error
-
-    return error_bands
-
-
 def _profile_auc_dataframe(
     profile_df: pd.DataFrame,
     aucs: Dict[str, float],
@@ -2079,48 +1999,6 @@ def _profile_auc_dataframe(
             "count kernel": count_kernel,
             "mixing method": meta["mixing method"],
             "auc": aucs[kernel_name],
-        })
-
-    return pd.DataFrame(rows)
-
-
-def _hybridization_profile_auc_dataframe(
-    profile_df: pd.DataFrame,
-    aucs: Dict[str, float],
-    sorted_names: List[str],
-    metric: str,
-) -> pd.DataFrame:
-    metadata_cols = ["kernel", "model", "mixing method"]
-    metadata = (
-        profile_df[metadata_cols]
-        .drop_duplicates(subset=["kernel"])
-        .set_index("kernel")
-    )
-    fp_kernel_values = sorted(
-        profile_df["fp kernel"].dropna().astype(str).unique().tolist()
-    )
-    count_kernel_values = sorted(
-        profile_df["count kernel"].dropna().astype(str).unique().tolist()
-    )
-    rows = []
-
-    for rank, method_name in enumerate(sorted_names, start=1):
-        meta = metadata.loc[method_name]
-        rows.append({
-            "rank": rank,
-            "metric": metric,
-            "model": meta["model"],
-            "fp kernel": np.nan,
-            "count kernel": np.nan,
-            "mixing method": meta["mixing method"],
-            "hybridization method": method_name,
-            "auc": aucs[method_name],
-            "profile grouping": "hybridization method",
-            "fp kernels": fp_kernel_values,
-            "count kernels": count_kernel_values,
-            "n_profile_points": profile_df.loc[
-                profile_df["kernel"] == method_name
-            ].shape[0],
         })
 
     return pd.DataFrame(rows)
@@ -2347,244 +2225,6 @@ def performance_plot_with_ranks(
     return auc_df
 
 
-def performance_plot_hybridization_with_ranks(
-    df: pd.DataFrame,
-    metric: str = "r2",
-    model: Any = "GPytorchMAP",
-    fp_kernels: Any = None,
-    count_kernels: Any = None,
-    mixing_methods: Any = None,
-    kernel_triples: Any = None,
-    p_threshold: float = 0.05,
-    title: Optional[str] = None,
-    show: bool = True,
-    high_quality: bool = True,
-    dataset_as_experiment_points: bool = False,
-    show_error_band: bool = False,
-    error_band_stat: str = "std",
-    error_band_alpha: float = 0.18,
-    fontsize: float = 12,
-    figsize: tuple = (7, 5),
-    legend_ncols: Optional[int] = None,
-    legend_nrows: Optional[int] = None,
-    save_dir: Optional[Path] = HERE / "result_analysis",
-    file_name: Optional[str] = "hybridization_performance_profile.png",
-):
-    """
-    Plot performance profiles comparing hybridization methods.
-
-    Unlike ``performance_plot_with_ranks``, this treats selected FP/count
-    kernel combinations as experiment points together with datasets, targets,
-    and seed/fold repeats. The returned DataFrame therefore contains one AUC
-    row per hybridization method instead of one AUC per exact kernel
-    combination.
-    """
-    df = _filter_kernel_triples(df, kernel_triples, keep_missing=False)
-    profile_df = _expand_master_scores_for_profile(
-        df,
-        metric=metric,
-        model=model,
-        fp_kernels=fp_kernels,
-        count_kernels=count_kernels,
-        mixing_methods=mixing_methods,
-    )
-    profile_df = profile_df.dropna(
-        subset=["fp kernel", "count kernel", "mixing method"]
-    ).copy()
-    if profile_df.empty:
-        raise ValueError(
-            f"No {metric} seed/fold scores found for model={model} "
-            f"with fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
-            f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
-        )
-
-    selected_models = _selection_values(model)
-    include_model = selected_models is None or len(selected_models) > 1
-    profile_df["hybridization method"] = profile_df["mixing method"].map(
-        _mixing_method_label
-    )
-    if include_model:
-        profile_df["kernel"] = (
-            profile_df["model"].astype(str)
-            + ": "
-            + profile_df["hybridization method"].astype(str)
-        )
-    else:
-        profile_df["kernel"] = profile_df["hybridization method"]
-
-    higher_is_better = _metric_higher_is_better(metric)
-
-    if show_error_band:
-        dataset_as_experiment_points = True
-
-    profile_rank_df = profile_df
-    if dataset_as_experiment_points:
-        profile_rank_df = _aggregate_profile_repeats(profile_df, metric)
-
-    include_repeat = not dataset_as_experiment_points
-    profile_index_cols = _hybridization_profile_index_columns(
-        profile_rank_df,
-        include_repeat=include_repeat,
-    )
-    profile_score_matrix = _profile_score_matrix(
-        profile_rank_df,
-        metric,
-        profile_index_cols,
-    )
-    percentile_matrix = _cat_gp_percentile_rank_matrix(
-        profile_rank_df,
-        metric,
-        higher_is_better,
-        profile_index_cols,
-    )
-
-    linn = np.linspace(0, 1, max(len(percentile_matrix), 2))
-    all_percentages = _profile_curves(percentile_matrix, linn)
-    error_bands = (
-        _hybridization_repeat_profile_error_bands(
-            profile_df,
-            metric,
-            higher_is_better,
-            linn,
-            error_band_stat,
-        )
-        if show_error_band
-        else {}
-    )
-
-    aucs = {
-        method_name: auc(linn, percentages)
-        for method_name, percentages in all_percentages.items()
-    }
-    sorted_names = [
-        method_name
-        for method_name, _ in sorted(aucs.items(), key=lambda x: x[1], reverse=True)
-    ]
-    auc_df = _hybridization_profile_auc_dataframe(
-        profile_df,
-        aucs,
-        sorted_names,
-        metric,
-    )
-
-    groups_of_same_ranks = []
-    curr_l = [0]
-    alternative = "greater" if higher_is_better else "less"
-    for i in range(len(sorted_names)):
-        if i == len(sorted_names) - 1:
-            if len(curr_l) >= 2:
-                groups_of_same_ranks.append(curr_l)
-            continue
-
-        paired_scores = profile_score_matrix[
-            [sorted_names[i], sorted_names[i + 1]]
-        ].dropna()
-        if paired_scores.empty:
-            continue
-
-        try:
-            _, p = wilcoxon(
-                paired_scores[sorted_names[i]],
-                paired_scores[sorted_names[i + 1]],
-                alternative=alternative,
-            )
-        except ValueError:
-            p = 1.0
-
-        if p < p_threshold:
-            if len(curr_l) >= 2:
-                groups_of_same_ranks.append(curr_l)
-            curr_l = [i + 1]
-        else:
-            curr_l.append(i + 1)
-
-    method_lookup = (
-        profile_df[["kernel", "mixing method"]]
-        .drop_duplicates(subset=["kernel"])
-        .set_index("kernel")["mixing method"]
-        .to_dict()
-    )
-
-    fig, ax = plt.subplots(figsize=figsize)
-    fallback_colors = sns.color_palette("Set2", n_colors=max(len(sorted_names), 1))
-    for idx, method_name in enumerate(sorted_names):
-        mix_method = str(method_lookup.get(method_name, method_name))
-        color = HYBRIDIZATION_METHOD_COLORS.get(
-            mix_method,
-            fallback_colors[idx % len(fallback_colors)],
-        )
-        curve = np.asarray(all_percentages[method_name], dtype=float)
-        ax.plot(
-            linn,
-            curve,
-            color=color,
-            label=f"{method_name}, {aucs[method_name]:.2f}",
-        )
-        if method_name in error_bands:
-            error = np.asarray(error_bands[method_name], dtype=float)
-            ax.fill_between(
-                linn,
-                np.clip(curve - error, 0, 1),
-                np.clip(curve + error, 0, 1),
-                color=color,
-                alpha=error_band_alpha,
-                linewidth=0,
-            )
-
-    if legend_ncols is not None and legend_ncols < 1:
-        raise ValueError("legend_ncols must be at least 1.")
-    if legend_nrows is not None and legend_nrows < 1:
-        raise ValueError("legend_nrows must be at least 1.")
-
-    if legend_ncols is None:
-        if legend_nrows is None:
-            legend_ncols = max(1, min(3, len(sorted_names)))
-        else:
-            legend_ncols = int(np.ceil(len(sorted_names) / legend_nrows))
-
-    legend = ax.legend(
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.02),
-        ncol=legend_ncols,
-        borderaxespad=0,
-        frameon=False,
-        fontsize=fontsize,
-    )
-
-    fig.canvas.draw()
-
-    ax.set_xlabel(r"$\tau$", fontsize=fontsize, fontweight="bold")
-    ax.set_ylabel(r"$p_i(\tau)$", fontsize=fontsize, fontweight="bold")
-    if title is not None:
-        ax.set_title(title, fontsize=fontsize + 2, fontweight="bold")
-    ax.yaxis.set_tick_params(labelsize=fontsize - 2)
-    ax.xaxis.set_tick_params(labelsize=fontsize - 2)
-
-    fig.canvas.draw()
-    for group_rank in groups_of_same_ranks:
-        add_legend_box(group_rank, legend, linewidth=1.2, alpha=1.0, pad=3)
-
-    if save_dir is not None:
-        save_dir = ensure_long_path(Path(save_dir))
-        os.makedirs(save_dir, exist_ok=True)
-        if file_name is None:
-            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
-            file_name = f"{model_name}_{metric}_hybridization_performance_profile.png"
-        fig.savefig(
-            ensure_long_path(save_dir / file_name),
-            bbox_inches="tight",
-            format="png",
-            dpi=900 if high_quality else 100,
-        )
-
-    if show:
-        plt.show()
-    else:
-        plt.close(fig)
-
-    return auc_df
-
-
 def plot_profile_auc_heatmap(
     auc_df: pd.DataFrame,
     model: Any = None,
@@ -2767,19 +2407,19 @@ if __name__ == "__main__":
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
-    # prof_results = performance_plot_with_ranks(
-    #     df=result_df,
-    #     metric="r2",
-    #     model=["GPytorchMAP"],
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     # title="GPyTorch MAP R² Performance Profile",
-    #     dataset_as_experiment_points=False,
-    #     # show_error_band=True,
-    #     show=False,
-    #     save_dir= HERE / "result_analysis",
-    #     file_name="r2_GpytorchMAP_SK_performance_profile.png",
-    # )
+    prof_results = performance_plot_with_ranks(
+        df=result_df,
+        metric="r2",
+        model=["GPytorchMAP"],
+        fp_kernels=["RBF", "Matern32", "Matern52"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        # title="GPyTorch MAP R² Performance Profile",
+        dataset_as_experiment_points=False,
+        # show_error_band=True,
+        show=False,
+        save_dir= HERE / "result_analysis",
+        file_name="r2_GpytorchMAP_bitwise_performance_profile.png",
+    )
     # for metric in ["nll", "cvpp_ama", "ece"]:
     #     prof_results = performance_plot_with_ranks(
     #         df=result_df,
@@ -2858,39 +2498,15 @@ if __name__ == "__main__":
     #     file_name="r2_GPytorchMAP_SK_hybridization_comparison.png",
     # )
     
-    # plot_hybridization_profile_comparison(
-    #     prof_results=prof_results,
-    #     model="GPytorchMAP",
-    #     metric="r2",
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     y_label="Profile AUC of R²",
-    #     fontsize=17,
-    #     figsize=(5, 5),
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
-    # )
-
-    hybrid_prof_results = performance_plot_hybridization_with_ranks(
-    df=result_df,
-    metric="r2",
-    model="GPytorchMAP",
-    fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    count_kernels=["RBF", "Matern32", "Matern52"],
-    mixing_methods=["sum", "product", "averageProduct"],
-    fontsize=17,
-    figsize=(7, 5),
-    save_dir= HERE / "result_analysis",
-    file_name="r2_GPytorchMAP_SK_hybridization_performance_profile.png",
+    plot_hybridization_profile_comparison(
+        prof_results=prof_results,
+        model="GPytorchMAP",
+        metric="r2",
+        fp_kernels=["RBF", "Matern32", "Matern52"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        y_label="Profile AUC of R²",
+        fontsize=17,
+        figsize=(5, 5),
+        save_dir=HERE / "result_analysis",
+        file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison.png",
     )
-    
-    # plot_hybridization_profile_comparison(
-    # prof_results=hybrid_prof_results,
-    # model="GPytorchMAP",
-    # metric="r2",
-    # y_label="Profile AUC of R²",
-    # fontsize=17,
-    # figsize=(5, 5),
-    # save_dir=HERE / "result_analysis",
-    # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
-    # )
