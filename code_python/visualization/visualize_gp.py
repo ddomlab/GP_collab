@@ -251,13 +251,72 @@ def get_lengthscale_stat(
     return stat_results
 
 
-def kendalls_w(df_input, tie_corrected=True):
+def _numeric_feature_value(value: Any) -> float:
+    if value is None:
+        return np.nan
+
+    try:
+        values = np.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        return np.nan
+
+    if values.size == 0:
+        return np.nan
+
+    finite_values = values[~np.isnan(values)]
+    return float(np.mean(finite_values)) if finite_values.size else np.nan
+
+
+def _feature_records_dataframe(
+    feature_records: Any,
+    fill_missing_value: Optional[float] = None,
+) -> pd.DataFrame:
+    if feature_records is None:
+        df_feature = pd.DataFrame()
+    elif isinstance(feature_records, pd.DataFrame):
+        df_feature = feature_records.copy()
+    elif isinstance(feature_records, dict):
+        df_feature = pd.DataFrame([feature_records])
+    else:
+        df_feature = pd.DataFrame(
+            [record for record in feature_records if isinstance(record, dict)]
+        )
+
+    for column in df_feature.columns:
+        df_feature[column] = df_feature[column].map(_numeric_feature_value)
+
+    df_feature = df_feature.dropna(axis=1, how="all")
+    if fill_missing_value is not None:
+        df_feature = df_feature.fillna(fill_missing_value)
+
+    return df_feature
+
+
+def kendalls_w(df_input, tie_corrected=True, fill_missing_value: Optional[float] = None):
     """
     Kendall's W for agreement across raters (rows) on items (columns).
     If tie_corrected=True, applies the standard tie correction.
+    ``df_input`` can be a DataFrame or a list of fold-level feature dictionaries.
+    Missing feature values are left as NaN by default; incomplete feature
+    columns are excluded before computing W because Kendall's W needs every
+    rater to rank the same items.
     """
+    df_input = _feature_records_dataframe(df_input, fill_missing_value=fill_missing_value)
+    if fill_missing_value is None:
+        df_input = df_input.dropna(axis=1, how="any")
+
     m = len(df_input)          # raters / folds
     n = len(df_input.columns)  # items / features
+
+    if m < 2 or n < 2:
+        return {
+            "m (Runs)": m,
+            "n (Features)": n,
+            "Kendall's W": np.nan,
+            "Chi-square": np.nan,
+            "Degrees of Freedom": max(n - 1, 0),
+            "Tie Corrected": tie_corrected
+        }
 
     # Rank each row
     ranks = df_input.rank(axis=1, ascending=False, method="average")
@@ -507,6 +566,16 @@ TIME_COLUMNS = [
     "Running time (GPU)",
     "Running time (CPU)",
 ]
+FEATURE_DATA_COLUMNS = [
+    "lengthscale",
+    "feature_importance_MDI",
+    "feature_importance_SHAP",
+]
+FEATURE_STABILITY_COLUMNS = [
+    "lengthscale_kendalls_w",
+    "feature_importance_MDI_kendalls_w",
+    "feature_importance_SHAP_kendalls_w",
+]
 
 
 
@@ -619,21 +688,31 @@ def _metric_score(
     return data.get(f"{metric}_{suffix}")
 
 
+def _seed_sort_key(value: Any) -> tuple:
+    return (0, int(value)) if str(value).isdigit() else (1, str(value))
+
+
+def _seed_items(data: Optional[Dict[str, Any]]) -> List[tuple[str, Dict[str, Any]]]:
+    if data is None:
+        return []
+
+    return [
+        (key, data[key])
+        for key in sorted(
+            [key for key, value in data.items() if isinstance(value, dict)],
+            key=_seed_sort_key,
+        )
+    ]
+
+
 def _seed_fold_scores(
     data: Optional[Dict[str, Any]],
     metric: str,
 ) -> Optional[List[Any]]:
-    if data is None:
-        return None
-
     scores = []
-    seeds = [key for key, value in data.items() if isinstance(value, dict)]
 
-    for seed in sorted(
-        seeds,
-        key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value)),
-    ):
-        values = data[seed].get(f"test_{metric}")
+    for _, seed_data in _seed_items(data):
+        values = seed_data.get(f"test_{metric}")
         if isinstance(values, list):
             scores.extend(values)
 
@@ -677,7 +756,67 @@ def _metric_result_columns(score_metrics: List[str]) -> List[str]:
 
 
 def _master_result_columns(score_metrics: List[str]) -> List[str]:
-    return BASE_MASTER_RESULT_COLUMNS + _metric_result_columns(score_metrics) + TIME_COLUMNS
+    return (
+        BASE_MASTER_RESULT_COLUMNS
+        + FEATURE_DATA_COLUMNS
+        + FEATURE_STABILITY_COLUMNS
+        + _metric_result_columns(score_metrics)
+        + TIME_COLUMNS
+    )
+
+
+def _seed_fold_feature_records(
+    data: Optional[Dict[str, Any]],
+    key: str,
+) -> Optional[List[Dict[str, Any]]]:
+    records = []
+
+    if data is None:
+        return None
+
+    top_level_values = data.get(key)
+    if isinstance(top_level_values, list):
+        records.extend(
+            value for value in top_level_values if isinstance(value, dict)
+        )
+    elif isinstance(top_level_values, dict):
+        records.append(top_level_values)
+
+    for _, seed_data in _seed_items(data):
+        values = seed_data.get(key)
+        if isinstance(values, list):
+            records.extend(value for value in values if isinstance(value, dict))
+        elif isinstance(values, dict):
+            records.append(values)
+
+    return records or None
+
+
+def _feature_kendalls_w(records: Optional[List[Dict[str, Any]]]) -> Optional[float]:
+    if not records:
+        return None
+
+    value = kendalls_w(records)["Kendall's W"]
+    return None if pd.isna(value) else value
+
+
+def _feature_row_values(
+    cpu_data: Optional[Dict[str, Any]],
+    gpu_data: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    source_data = cpu_data if cpu_data is not None else gpu_data
+    lengthscale = _seed_fold_feature_records(source_data, "test_lengthscale")
+    mdi = _seed_fold_feature_records(source_data, "test_feature_importance_MDI")
+    shap = _seed_fold_feature_records(source_data, "test_feature_importance_SHAP")
+
+    return {
+        "lengthscale": lengthscale,
+        "feature_importance_MDI": mdi,
+        "feature_importance_SHAP": shap,
+        "lengthscale_kendalls_w": _feature_kendalls_w(lengthscale),
+        "feature_importance_MDI_kendalls_w": _feature_kendalls_w(mdi),
+        "feature_importance_SHAP_kendalls_w": _feature_kendalls_w(shap),
+    }
 
 
 def _score_row_values(
@@ -722,7 +861,7 @@ def _save_master_performance_data(df: pd.DataFrame, save_path: Path) -> None:
 
     output = df.copy()
     for column in output.columns:
-        if column.endswith("_seed_fold_scores"):
+        if column.endswith("_seed_fold_scores") or column in FEATURE_DATA_COLUMNS:
             output[column] = output[column].apply(
                 lambda value: json.dumps(value) if value is not None else None
             )
@@ -751,6 +890,7 @@ def build_master_performance_data(
                         model=model,
                     )
                     score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                    feature_info = _feature_row_values(cpu_data, gpu_data)
                     rows.append({
                         "paper": paper_name,
                         "target": target,
@@ -758,6 +898,7 @@ def build_master_performance_data(
                         "fp kernel": None,
                         "count kernel": None,
                         "mixing method": None,
+                        **feature_info,
                         **score_info,
                     })
                     continue
@@ -773,6 +914,7 @@ def build_master_performance_data(
                                 mix_method=mix,
                             )
                             score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                            feature_info = _feature_row_values(cpu_data, gpu_data)
                             rows.append({
                                 "paper": paper_name,
                                 "target": target,
@@ -780,6 +922,7 @@ def build_master_performance_data(
                                 "fp kernel": fp_k,
                                 "count kernel": count_k,
                                 "mixing method": mix,
+                                **feature_info,
                                 **score_info,
                             })
 
@@ -965,7 +1108,7 @@ def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]]
         model_rank = model_order.get(model.lower(), model_rank)
 
     fp_kernel = row["fp kernel"]
-    if model in TREE_MODELS:
+    if _is_tree_model(model):
         family_rank = 0
     elif pd.notna(fp_kernel) and "tanimoto" not in str(fp_kernel).lower():
         family_rank = 1
@@ -977,16 +1120,46 @@ def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]]
     return (family_rank, model_rank, model)
 
 
+def _is_tree_model(model: Any) -> bool:
+    return str(model).upper() in TREE_MODELS
+
+
 def _model_type_color(model: Any) -> str:
     model_name = str(model)
     model_upper = model_name.upper()
-    if model_name in TREE_MODELS:
+    if _is_tree_model(model_name):
         return MODEL_TYPE_COLORS["tree"]
     if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
         return MODEL_TYPE_COLORS["gnn"]
     if "GP" in model_upper:
         return MODEL_TYPE_COLORS["gp"]
     return "#808080"
+
+
+def _tree_feature_stability_column(tree_feature_importance: str) -> str:
+    aliases = {
+        "mdi": "feature_importance_MDI_kendalls_w",
+        "model": "feature_importance_MDI_kendalls_w",
+        "model_importance": "feature_importance_MDI_kendalls_w",
+        "feature_importance_mdi": "feature_importance_MDI_kendalls_w",
+        "feature_importance_mdi_kendalls_w": "feature_importance_MDI_kendalls_w",
+        "shap": "feature_importance_SHAP_kendalls_w",
+        "feature_importance_shap": "feature_importance_SHAP_kendalls_w",
+        "feature_importance_shap_kendalls_w": "feature_importance_SHAP_kendalls_w",
+    }
+    key = str(tree_feature_importance).strip().lower()
+    if key not in aliases:
+        raise ValueError("tree_feature_importance must be either 'MDI' or 'SHAP'.")
+    return aliases[key]
+
+
+def _feature_stability_source_label(column: str) -> str:
+    labels = {
+        "lengthscale_kendalls_w": "Lengthscale",
+        "feature_importance_MDI_kendalls_w": "MDI",
+        "feature_importance_SHAP_kendalls_w": "SHAP",
+    }
+    return labels.get(column, column)
 
 
 def _kernel_triple_values(kernel_triples: Any) -> Optional[List[tuple]]:
@@ -1219,6 +1392,197 @@ def plot_model_comparison(
         plt.show()
     else:
         plt.close(fig)
+
+
+def plot_model_feature_importance_stability_comparison(
+    df: pd.DataFrame,
+    model: Any = None,
+    kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
+    include_kernel_config: bool = True,
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple = (9, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "Kendall's W (feature stability)",
+    x_tick_rotation: int = 35,
+    y_lim: Optional[tuple] = (0, 1.05),
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Plot feature-importance stability across selected model configurations.
+
+    GP-style models use ``lengthscale_kendalls_w``. Tree models use either
+    ``feature_importance_MDI_kendalls_w`` or
+    ``feature_importance_SHAP_kendalls_w``, selected with
+    ``tree_feature_importance="MDI"`` or ``"SHAP"``.
+    """
+    tree_stability_col = _tree_feature_stability_column(tree_feature_importance)
+    required_columns = {
+        "paper",
+        "target",
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+        "lengthscale_kendalls_w",
+    }
+    missing_columns = required_columns.difference(df.columns)
+    if missing_columns:
+        raise ValueError(
+            "df is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    filtered_df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    filtered_df = _filter_selection(filtered_df, "model", model)
+    if filtered_df["model"].apply(_is_tree_model).any() and tree_stability_col not in df.columns:
+        raise ValueError(f"df is missing required column: {tree_stability_col}")
+
+    rows = []
+    for _, row in filtered_df.iterrows():
+        stability_col = (
+            tree_stability_col
+            if _is_tree_model(row["model"])
+            else "lengthscale_kendalls_w"
+        )
+        try:
+            stability_value = float(row[stability_col])
+        except (TypeError, ValueError):
+            continue
+        if np.isnan(stability_value):
+            continue
+
+        rows.append({
+            "dataset": row["paper"],
+            "target": row["target"],
+            "model": row["model"],
+            "fp kernel": row["fp kernel"],
+            "count kernel": row["count kernel"],
+            "mixing method": row["mixing method"],
+            "feature stability source": _feature_stability_source_label(stability_col),
+            "feature stability": stability_value,
+        })
+
+    plot_df = pd.DataFrame(rows)
+    if plot_df.empty:
+        raise ValueError(
+            "No feature-importance stability values found for "
+            f"model={model}, kernel_triples={kernel_triples}, and "
+            f"tree_feature_importance={tree_feature_importance}."
+        )
+
+    x_col = "model configuration"
+    plot_df[x_col] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+
+    if dataset_as_experiment_points:
+        group_cols = [
+            "dataset",
+            "target",
+            x_col,
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+            "feature stability source",
+        ]
+        plot_df = (
+            plot_df.groupby(group_cols, dropna=False, as_index=False)["feature stability"]
+            .mean()
+            .copy()
+        )
+
+    selected_models = _selection_values(model) or MODELS
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+    config_order = plot_df[
+        [x_col, "model", "fp kernel", "count kernel", "mixing method"]
+    ].drop_duplicates(subset=[x_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    order = config_order.sort_values("sort_key", kind="mergesort")[x_col].tolist()
+    violin_palette = {
+        label: _model_type_color(plot_df.loc[plot_df[x_col] == label, "model"].iloc[0])
+        for label in order
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.violinplot(
+        data=plot_df,
+        x=x_col,
+        y="feature stability",
+        hue=x_col,
+        order=order,
+        hue_order=order,
+        ax=ax,
+        width=0.65,
+        palette=violin_palette,
+        inner_kws=dict(box_width=10, whis_width=2, color=".65", solid_capstyle="round"),
+        cut=0,
+        linewidth=1,
+        dodge=False,
+        legend=False,
+    )
+    positions = list(range(len(order)))
+    for collection in ax.collections:
+        if not isinstance(collection, PolyCollection):
+            continue
+        for path in collection.get_paths():
+            vertices = path.vertices
+            if len(vertices) == 0:
+                continue
+            center = min(positions, key=lambda pos: abs(pos - np.median(vertices[:, 0])))
+            vertices[:, 0] = np.maximum(vertices[:, 0], center)
+    for line in ax.lines:
+        x_data = np.asarray(line.get_xdata(), dtype=float)
+        if len(x_data) == 0:
+            continue
+        center = min(positions, key=lambda pos: abs(pos - np.mean(x_data)))
+        line.set_xdata(np.maximum(x_data, center))
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            tree_source = _feature_stability_source_label(tree_stability_col).lower()
+            file_name = f"{model_name}_{tree_source}_feature_stability_comparison.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return plot_df
 
 
 def plot_hybridization_method_comparison(
@@ -2978,6 +3342,7 @@ if __name__ == "__main__":
 
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+
     # prof_results = performance_plot_with_ranks(
     #     df=result_df,
     #     metric="r2",
@@ -3095,21 +3460,40 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
 
-    plot_model_performance_vs_data_number(
-        df=result_df,
-        metric="nll",
+    # plot_model_performance_vs_data_number(
+    #     df=result_df,
+    #     metric="nll",
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #     ],
+    #     y_label="NLL",
+    #     x_label="# Datapoints",
+    #     fontsize=17,
+    #     y_lim=(-1, 1),
+    #     # log_y=True,
+    #     figsize=(9, 5),
+    #     show=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="nll_model_performance_vs_data_number.png",
+    # )
+
+
+    plot_model_feature_importance_stability_comparison(
+        result_df,
         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+        tree_feature_importance="SHAP",
         kernel_triples=[
             ("Matern32", "Matern32", "product"),
             ("TanimotoMatern32", "Matern32", "product"),
-        ],
-        y_label="NLL",
-        x_label="# Datapoints",
+            ],
+        y_label="Stability (Kendall's W)",
         fontsize=17,
-        y_lim=(-1, 1),
-        # log_y=True,
-        figsize=(9, 5),
         show=True,
+        y_lim=(0,1.05),
+        figsize=(6, 5),
+        # log_y=True,
         save_dir=HERE / "result_analysis",
-        file_name="nll_model_performance_vs_data_number.png",
+        file_name="feature_importance_stability_lengthscale_SHAP_comparison.png",
     )
