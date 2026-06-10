@@ -59,7 +59,7 @@ def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str, k
 
     if isinstance(regressor_name, str):
         model_info = f'({regressor_name}_{kernel_type["fp"]}-{kernel_type["count"]}_{kernel_mixing_method})' if kernel_mixing_method else regressor_name
-        model_info = f"{model_info}_{kernel_feature_mode}" if kernel_feature_mode else model_info
+        model_info = f"{model_info}_ARD" if kernel_feature_mode =="joint" else model_info
         return model_info
 
 def _save(

@@ -202,16 +202,16 @@ def optimized_models(
                                     normalize_y=normalize_y,
                                     )
     
-    if "MGK" == model_name:
-        from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor
+    # if "MGK" == model_name:
+    #     from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor
 
-        return MarginalizedGaussianProcessRegressor(
-                kernel=graph_kernel_config.kernel,
-                optimizer="L-BFGS-B",
-                alpha=alpha,
-                normalize_y=normalize_y,
-                )
-    if "MGK-sklearn" == model_name:
+    #     return MarginalizedGaussianProcessRegressor(
+    #             kernel=graph_kernel_config.kernel,
+    #             optimizer="L-BFGS-B",
+    #             alpha=alpha,
+    #             normalize_y=normalize_y,
+    #             )
+    if "MGK" == model_name:
         from mgktools.models.regression.gpr.gpr import MGKRegressorSklearn
 
         return MGKRegressorSklearn(

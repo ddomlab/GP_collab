@@ -425,19 +425,23 @@ BMS_Ranks = pd.DataFrame([{
 PAPER = {
     "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation": {
         "target": ["target_log Rg (nm)"],
-        "expert_impt": PLS_Ranks
+        "expert_impt": PLS_Ranks,
+        "n_datapoints":[256]
     },
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices": {
         "target": ["target_calculated PCE (%)"],
-        "expert_impt": BMS_Ranks
+        "expert_impt": BMS_Ranks,
+        "n_datapoints":[558]
     },
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery": {
         "target": ["target_log (Separation factor)", "target_log (Total flux)"],
-        "expert_impt": None
+        "expert_impt": None,
+        "n_datapoints": [2311,2283]
     },
     "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation": {
         "target": ["target_log (Separation factor)", "target_log (Total flux)"],
-        "expert_impt": None
+        "expert_impt": None,
+        "n_datapoints": [681,681]
     },
     "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning": {
         "target": [
@@ -448,11 +452,13 @@ PAPER = {
             "target_reversible fouling ratio (%)",
             r"target_water permeability (LMH\bar)"
         ],
-        "expert_impt": None
+        "expert_impt": None,
+        "n_datapoints": [318,318,318,318,318,318]
     },
     "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation": {
         "target": ["target_Approx Conv (%)"],
-        "expert_impt": None
+        "expert_impt": None,
+        "n_datapoints": [768]
     },
 }
 

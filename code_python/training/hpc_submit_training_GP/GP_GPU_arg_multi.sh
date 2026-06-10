@@ -1,12 +1,13 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GpyroHMC"  #"GpyroHMC", "GPytorchMAP"
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="flux_data_imputed"
-k_fps=("TanimotoMatern32")
+model="MGK"  #"GpyroHMC", "GPytorchMAP"
+paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+dataset="Rg data with clusters aging imputed"
+k_fps=("Graph")
 k_counts=("Matern32")           
-k_mixing_methods=("averageProduct") 
+k_mixing_methods=("product") 
+k_feature_mode="per_feature" #for MGK
 
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
@@ -18,10 +19,10 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 4:35
+#BSUB -W 30
 #BSUB -q gpu
 #BSUB -R "select[a10]"
-#BSUB -gpu "num=1:mode=exclusive_process:mps=yes"
+#BSUB -gpu "num=1:mode=shared:mps=yes"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
 #BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
@@ -37,7 +38,9 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
-                                        --regressor_type "$model" 
+                                        --regressor_type "$model" \
+                                        --kernel_feature_mode "$k_feature_mode"
+
 
 
 
