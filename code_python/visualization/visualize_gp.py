@@ -479,8 +479,20 @@ GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
 MODEL_TYPE_COLORS = {
     "tree": "#7093B9",
     "gp": "#E45756",
+    "mgk": "#CA6351",
     "gnn": "#72B7B2",
 }
+
+INDIVIDUAL_MODEL_COLORS = {
+    "RF": "#174C85",
+    "XGBR": "#5482B3",
+    "NGB": "#94AFCC",
+    "GPytorchMAP (Bitwise)": "#D88F8F",
+    "GPytorchMAP (SK)": "#E03B3B",
+    "GpyroHMC (SK)": "#701515",
+    "MGK": "#B12626",
+}
+
 MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP"]
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
 BASE_MASTER_RESULT_COLUMNS = [
@@ -2765,6 +2777,199 @@ def plot_profile_auc_heatmap(
     return heatmap_matrix
 
 
+def plot_model_performance_vs_data_number(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    kernel_triples: Any = None,
+    include_kernel_config: bool = True,
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple = (10, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Number of datapoints",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 0,
+    y_lim: Optional[tuple] = None,
+    log_y: bool = False,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Make a box plot of model performance grouped by dataset-target size.
+
+    Dataset sizes are read from ``PAPER[paper]["n_datapoints"]`` and matched
+    to each target in ``PAPER[paper]["target"]``. Score metrics use
+    ``<metric>_seed_fold_scores`` when available; scalar columns are plotted
+    directly. For GP models, pass ``kernel_triples`` as one triple or a list of
+    ``(fp_kernel, count_kernel, mixing_method)`` triples.
+    """
+    datapoint_lookup = {}
+    for paper_name, paper_info in PAPER.items():
+        targets = paper_info.get("target", [])
+        n_datapoints = paper_info.get("n_datapoints", [])
+        if len(targets) != len(n_datapoints):
+            raise ValueError(
+                f"PAPER entry for {paper_name!r} has {len(targets)} targets "
+                f"but {len(n_datapoints)} datapoint counts."
+            )
+        for target, n_data in zip(targets, n_datapoints):
+            datapoint_lookup[(paper_name, target)] = n_data
+
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
+    plot_df = _expand_master_scores_for_profile(
+        df,
+        metric=metric,
+        model=model,
+    )
+    if plot_df.empty:
+        raise ValueError(
+            f"No {metric} values found for model={model} "
+            f"with kernel_triples={kernel_triples}."
+        )
+
+    plot_df["n datapoints"] = plot_df.apply(
+        lambda row: datapoint_lookup.get((row["dataset"], row["target"])),
+        axis=1,
+    )
+    missing_size = plot_df["n datapoints"].isna()
+    if missing_size.any():
+        missing_pairs = (
+            plot_df.loc[missing_size, ["dataset", "target"]]
+            .drop_duplicates()
+            .apply(lambda row: f"{row['dataset']} / {row['target']}", axis=1)
+            .tolist()
+        )
+        raise ValueError(
+            "Missing datapoint counts in PAPER for: "
+            + "; ".join(missing_pairs)
+        )
+    plot_df["n datapoints"] = pd.to_numeric(plot_df["n datapoints"])
+
+    hue_col = "model configuration"
+    plot_df[hue_col] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+
+    if dataset_as_experiment_points:
+        group_cols = [
+            "dataset",
+            "target",
+            "n datapoints",
+            hue_col,
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+        ]
+        plot_df = (
+            plot_df.groupby(group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .copy()
+        )
+
+    selected_models = _selection_values(model) or MODELS
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+    config_order = plot_df[
+        [hue_col, "model", "fp kernel", "count kernel", "mixing method"]
+    ].drop_duplicates(subset=[hue_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    hue_order = config_order.sort_values("sort_key", kind="mergesort")[hue_col].tolist()
+    data_number_order = sorted(plot_df["n datapoints"].dropna().unique())
+    palette = {
+        row[hue_col]: INDIVIDUAL_MODEL_COLORS.get(
+            row[hue_col],
+            INDIVIDUAL_MODEL_COLORS.get(
+                str(row["model"]),
+                _model_type_color(row["model"]),
+            ),
+        )
+        for _, row in config_order.iterrows()
+        if row[hue_col] in hue_order
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.boxplot(
+        data=plot_df,
+        x="n datapoints",
+        y=metric,
+        hue=hue_col,
+        order=data_number_order,
+        hue_order=hue_order,
+        ax=ax,
+        width=0.72,
+        palette=palette,
+        linewidth=1,
+        fliersize=2.5,
+    )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label or metric.capitalize(), fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(data_number_order)))
+    ax.set_xticklabels(
+        [
+            f"{int(value)}" if float(value).is_integer() else f"{value:g}"
+            for value in data_number_order
+        ],
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    if log_y:
+        positive_values = pd.to_numeric(plot_df[metric], errors="coerce")
+        if (positive_values.dropna() <= 0).any():
+            raise ValueError("log_y=True requires all plotted values to be positive.")
+        ax.set_yscale("log")
+
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    elif log_y:
+        ax.set_ylim(bottom=pd.to_numeric(plot_df[metric], errors="coerce").min() * 0.8)
+    elif metric == "r2":
+        ax.set_ylim(0, 1.05)
+    elif is_scalar_metric or not _metric_higher_is_better(metric):
+        ax.set_ylim(bottom=0)
+
+    legend = ax.get_legend()
+    if legend is not None:
+        legend.set_title(None)
+        for text in legend.get_texts():
+            text.set_fontsize(fontsize - 2)
+
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            file_name = f"{model_name}_{metric}_performance_vs_data_number.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return plot_df
+
+
+
+
 
 if __name__ == "__main__":
 
@@ -2877,18 +3082,7 @@ if __name__ == "__main__":
     #     file_name="r2_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-    hybrid_prof_results = performance_plot_hybridization_with_ranks(
-    df=result_df,
-    metric="r2",
-    model="GPytorchMAP",
-    fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    count_kernels=["RBF", "Matern32", "Matern52"],
-    mixing_methods=["sum", "product", "averageProduct"],
-    fontsize=17,
-    figsize=(7, 5),
-    save_dir= HERE / "result_analysis",
-    file_name="r2_GPytorchMAP_SK_hybridization_performance_profile.png",
-    )
+
     
     # plot_hybridization_profile_comparison(
     # prof_results=hybrid_prof_results,
@@ -2900,3 +3094,22 @@ if __name__ == "__main__":
     # save_dir=HERE / "result_analysis",
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
+
+    plot_model_performance_vs_data_number(
+        df=result_df,
+        metric="nll",
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "product"),
+            ("TanimotoMatern32", "Matern32", "product"),
+        ],
+        y_label="NLL",
+        x_label="# Datapoints",
+        fontsize=17,
+        y_lim=(-1, 1),
+        # log_y=True,
+        figsize=(9, 5),
+        show=True,
+        save_dir=HERE / "result_analysis",
+        file_name="nll_model_performance_vs_data_number.png",
+    )

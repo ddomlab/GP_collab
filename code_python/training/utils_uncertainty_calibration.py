@@ -168,7 +168,7 @@ def compute_Cv(y_std):
 
     Parameters:
     -----------
-    stdevs : np.ndarray
+    y_std : np.ndarray
         Array of predicted standard deviations (uncertainty values), shape (n_samples,)
 
     Returns:
@@ -203,7 +203,7 @@ def compute_all_uncertainty_metrics(
     metrics = {
         'NLL': lambda: gaussian_nll(y_true, y_pred, y_err, reduce='mean'),
         'Sharpness': lambda: sharpness(y_err),
-        'Cv': lambda: compute_cv(y_err),
+        'Cv': lambda: compute_Cv(y_err),
         'RUSC': lambda: compute_RUSC(y_true, y_pred, y_err),
         'AMA': lambda: compute_cvpp_ama(y_true, y_pred, y_err, step=step)
     }
