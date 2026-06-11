@@ -200,11 +200,12 @@ def _prepare_data(
         score,predication = run(
                             # X,
                             # y,
-                            preprocessor=preprocessor,
                             full_dataset=mgk_dataset,
+                            preprocessor=preprocessor,
                             regressor_type=regressor_type,
                             hyperparameter_optimization=hyperparameter_optimization,
                             kernel_parameters=mgk_kernel_config,
+                            target_transformer=target_transformer,
                             **kwargs
                             )
         y = mgk_dataset.y

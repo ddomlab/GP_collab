@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = True
+TEST = False
 
 
 def main_structural_numerical(

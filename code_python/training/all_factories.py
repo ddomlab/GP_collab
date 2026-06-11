@@ -134,7 +134,6 @@ def optimized_models(
                     target_transformer:str|None=None,
                      **kwargs):
     normalize_y = bool(target_transformer)
-    print(normalize_y)
     if 'NGB'==model_name:
         return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
                              random_state=random_state, verbose=False,
