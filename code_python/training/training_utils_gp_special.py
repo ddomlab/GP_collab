@@ -44,7 +44,7 @@ def set_globals(Test: bool=False) -> None:
         N_FOLDS = 5
         BO_ITER = 42
     else:
-        SEEDS = [42,13]
+        SEEDS = [42]
         N_FOLDS = 2
         BO_ITER = 1
 
