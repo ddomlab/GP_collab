@@ -3,7 +3,7 @@
 DATE=$(date +%Y%m%d)
 model="MGK"  #"GpyroHMC", "GPytorchMAP"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="separation_data_imputed"
+dataset="flux_data_imputed"
 k_fps=("Graph")
 k_counts=("Matern32")           
 k_mixing_methods=("product") 
