@@ -549,10 +549,11 @@ INDIVIDUAL_MODEL_COLORS = {
     "GPytorchMAP (Bitwise)": "#D88F8F",
     "GPytorchMAP (SK)": "#E03B3B",
     "GpyroHMC (SK)": "#701515",
-    "MGK": "#B12626",
+    "MGK": "#CB5B36",
 }
 
-MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP"]
+MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP", "MGK"]
+GPU_SCORE_MODELS = {"MGK"}
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
 BASE_MASTER_RESULT_COLUMNS = [
     "paper",
@@ -631,6 +632,19 @@ def _is_tree_model(model: str) -> bool:
     return model in TREE_MODELS
 
 
+def _uses_gpu_scores(model: str) -> bool:
+    return model in GPU_SCORE_MODELS
+
+
+def _kernel_configs_for_model(model: str) -> List[tuple[str, str, str]]:
+    return [
+        (fp_k, count_k, mix_method)
+        for fp_k in fp_sk_kernels + fp_bit_kernels
+        for count_k in count_kernels
+        for mix_method in mixing_methods
+    ]
+
+
 def _score_file_templates(
     model: str,
     fp_k: Optional[str] = None,
@@ -642,6 +656,18 @@ def _score_file_templates(
         if use_gpu:
             return []
         return [f"(ECFP3_count_512-COUNT)_{model}_hypOFF_Standard_Standard_scores"]
+
+    if model == "MGK":
+        if (
+            not use_gpu
+            or count_k not in count_kernels
+            or mix_method not in mixing_methods
+        ):
+            return []
+        return [
+            f"(MG-COUNT)_(MGK_Graph-{count_k}_{mix_method})"
+            f"_hypOFF_Standard_Standard_GPU_scores"
+        ]
 
     device_suffix = "_GPU" if use_gpu else ""
     return [
@@ -823,13 +849,15 @@ def _score_row_values(
     cpu_data: Optional[Dict[str, Any]],
     gpu_data: Optional[Dict[str, Any]],
     score_metrics: List[str],
+    prefer_gpu_scores: bool = False,
 ) -> Dict[str, Any]:
     scores = {}
+    score_data = gpu_data if prefer_gpu_scores else cpu_data
     for metric in score_metrics:
         scores.update({
-            f"{metric}_avg": _metric_score(cpu_data, metric, "avg"),
-            f"{metric}_stdev": _metric_score(cpu_data, metric, "stdev"),
-            f"{metric}_seed_fold_scores": _seed_fold_scores(cpu_data, metric),
+            f"{metric}_avg": _metric_score(score_data, metric, "avg"),
+            f"{metric}_stdev": _metric_score(score_data, metric, "stdev"),
+            f"{metric}_seed_fold_scores": _seed_fold_scores(score_data, metric),
         })
 
     scores.update({
@@ -850,7 +878,12 @@ def load_score(
     """Load score values for one master-results row."""
     score_metrics = DEFAULT_SCORE_METRICS if score_metrics is None else score_metrics
     cpu_data, gpu_data = _load_score_files(paper_loc, model, fp_k, count_k, mix_method)
-    return _score_row_values(cpu_data, gpu_data, score_metrics)
+    return _score_row_values(
+        cpu_data,
+        gpu_data,
+        score_metrics,
+        prefer_gpu_scores=_uses_gpu_scores(model),
+    )
 
 
 def _save_master_performance_data(df: pd.DataFrame, save_path: Path) -> None:
@@ -903,28 +936,59 @@ def build_master_performance_data(
                     })
                     continue
 
-                for fp_k in fp_sk_kernels + fp_bit_kernels:
+                if model == "MGK":
                     for count_k in count_kernels:
                         for mix in mixing_methods:
                             cpu_data, gpu_data = _load_score_files(
                                 paper_loc=paper_loc,
                                 model=model,
-                                fp_k=fp_k,
                                 count_k=count_k,
                                 mix_method=mix,
                             )
-                            score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                            score_info = _score_row_values(
+                                cpu_data,
+                                gpu_data,
+                                score_metrics,
+                                prefer_gpu_scores=True,
+                            )
                             feature_info = _feature_row_values(cpu_data, gpu_data)
                             rows.append({
                                 "paper": paper_name,
                                 "target": target,
                                 "model": model,
-                                "fp kernel": fp_k,
+                                "fp kernel": "Graph",
                                 "count kernel": count_k,
                                 "mixing method": mix,
                                 **feature_info,
                                 **score_info,
                             })
+                    continue
+
+                for fp_k, count_k, mix in _kernel_configs_for_model(model):
+                    cpu_data, gpu_data = _load_score_files(
+                        paper_loc=paper_loc,
+                        model=model,
+                        fp_k=fp_k,
+                        count_k=count_k,
+                        mix_method=mix,
+                    )
+                    score_info = _score_row_values(
+                        cpu_data,
+                        gpu_data,
+                        score_metrics,
+                        prefer_gpu_scores=_uses_gpu_scores(model),
+                    )
+                    feature_info = _feature_row_values(cpu_data, gpu_data)
+                    rows.append({
+                        "paper": paper_name,
+                        "target": target,
+                        "model": model,
+                        "fp kernel": fp_k,
+                        "count kernel": count_k,
+                        "mixing method": mix,
+                        **feature_info,
+                        **score_info,
+                    })
 
     df = pd.DataFrame(rows, columns=_master_result_columns(score_metrics), dtype=object)
     if save_path is not None:
@@ -3337,11 +3401,11 @@ def plot_model_performance_vs_data_number(
 
 if __name__ == "__main__":
 
-    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-    #                                score_metrics=DEFAULT_SCORE_METRICS)
+    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+                                   score_metrics=DEFAULT_SCORE_METRICS)
 
-    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
-    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    # COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    # result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
 
     # prof_results = performance_plot_with_ranks(
     #     df=result_df,
@@ -3480,20 +3544,20 @@ if __name__ == "__main__":
     # )
 
 
-    plot_model_feature_importance_stability_comparison(
-        result_df,
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-        tree_feature_importance="SHAP",
-        kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ],
-        y_label="Stability (Kendall's W)",
-        fontsize=17,
-        show=True,
-        y_lim=(0,1.05),
-        figsize=(6, 5),
-        # log_y=True,
-        save_dir=HERE / "result_analysis",
-        file_name="feature_importance_stability_lengthscale_SHAP_comparison.png",
-    )
+    # plot_model_feature_importance_stability_comparison(
+    #     result_df,
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+    #     tree_feature_importance="SHAP",
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ],
+    #     y_label="Stability (Kendall's W)",
+    #     fontsize=17,
+    #     show=True,
+    #     y_lim=(0,1.05),
+    #     figsize=(6, 5),
+    #     # log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="feature_importance_stability_lengthscale_SHAP_comparison.png",
+    # )
