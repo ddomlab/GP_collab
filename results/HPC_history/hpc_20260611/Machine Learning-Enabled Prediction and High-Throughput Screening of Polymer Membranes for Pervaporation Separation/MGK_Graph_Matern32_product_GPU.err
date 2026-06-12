@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 88, in <module>
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 136, in _get_dataset_features
+    raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
+FileNotFoundError: Dataset 'cleaned_suzuki_synthesis' not found in /gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/datasets/Validation datasets
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   23.8s
+[Parallel(n_jobs=8)]: Done 600 tasks      | elapsed:   23.8s
+[Parallel(n_jobs=8)]: Done 681 out of 681 | elapsed:   23.8s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  16 out of  16 | elapsed:    1.4s finished
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   16.9s
+[Parallel(n_jobs=8)]: Done 600 tasks      | elapsed:   16.9s
+[Parallel(n_jobs=8)]: Done 681 out of 681 | elapsed:   17.0s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  16 out of  16 | elapsed:    1.2s finished

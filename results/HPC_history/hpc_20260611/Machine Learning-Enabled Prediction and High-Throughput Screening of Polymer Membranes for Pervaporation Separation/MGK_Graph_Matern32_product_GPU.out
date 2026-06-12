@@ -1,0 +1,139 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu13>
+Subject: Job 435857: <structure_numerical_20260611> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260611> was submitted from host <gpu26> by user <sdehgha2> in cluster <Hazel> at Thu Jun 11 00:39:06 2026
+Job was executed on host(s) <gpu13>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jun 11 02:24:53 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jun 11 02:24:53 2026
+Terminated at Thu Jun 11 02:25:28 2026
+Results reported at Thu Jun 11 02:25:28 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 3:20
+#BSUB -q gpu
+#BSUB -R "select[a100]"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260611"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --regressor_type "MGK"                                         --kernel_feature_mode "per_feature"
+
+
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   13.77 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   36 sec.
+    Turnaround time :                            6382 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.err> for stderr output of this job.
+
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.19±0.03	 r2: 0.91±0.03
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_product)_hypOFF_Standard_Standard_GPU
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.25±0.04	 r2: 0.98±0.01
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 438476: <structure_numerical_20260611> in cluster <Hazel> Done
+
+Job <structure_numerical_20260611> was submitted from host <gpu12> by user <sdehgha2> in cluster <Hazel> at Thu Jun 11 11:37:58 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jun 11 11:56:03 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jun 11 11:56:03 2026
+Terminated at Thu Jun 11 12:20:36 2026
+Results reported at Thu Jun 11 12:20:36 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 8:50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260611"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --regressor_type "MGK"                                         --kernel_feature_mode "per_feature"
+
+
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1380.64 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.96 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                19
+    Run time :                                   1474 sec.
+    Turnaround time :                            2558 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260611/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_Graph_Matern32_product_GPU.err> for stderr output of this job.
+

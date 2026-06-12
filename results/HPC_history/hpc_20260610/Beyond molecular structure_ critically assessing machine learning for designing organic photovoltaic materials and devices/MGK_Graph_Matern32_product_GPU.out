@@ -1,0 +1,70 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.52±0.16	 r2: 0.33±0.08
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu12>
+Subject: Job 435802: <structure_numerical_20260610> in cluster <Hazel> Done
+
+Job <structure_numerical_20260610> was submitted from host <gpu12> by user <sdehgha2> in cluster <Hazel> at Wed Jun 10 23:46:21 2026
+Job was executed on host(s) <gpu12>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed Jun 10 23:46:21 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Jun 10 23:46:21 2026
+Terminated at Thu Jun 11 19:21:10 2026
+Results reported at Thu Jun 11 19:21:10 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 30:20
+#BSUB -q gpu
+#BSUB -R "select[a10]"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "structure_numerical_20260610"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260610/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Graph_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260610/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Graph_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --regressor_type "MGK"                                         --kernel_feature_mode "per_feature"
+
+
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   70228.30 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                17
+    Run time :                                   70487 sec.
+    Turnaround time :                            70489 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260610/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Graph_Matern32_product_GPU.err> for stderr output of this job.
+
