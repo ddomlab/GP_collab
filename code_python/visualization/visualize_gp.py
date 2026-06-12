@@ -538,7 +538,7 @@ GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
 MODEL_TYPE_COLORS = {
     "tree": "#7093B9",
     "gp": "#E45756",
-    "mgk": "#CA6351",
+    "mgk": "#9C1E1E",
     "gnn": "#72B7B2",
 }
 
@@ -548,8 +548,8 @@ INDIVIDUAL_MODEL_COLORS = {
     "NGB": "#94AFCC",
     "GPytorchMAP (Bitwise)": "#D88F8F",
     "GPytorchMAP (SK)": "#E03B3B",
-    "GpyroHMC (SK)": "#701515",
-    "MGK": "#CB5B36",
+    "GpyroHMC (SK)": "#7E1919",
+    "MGK": "#CB6D01",
 }
 
 MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP", "MGK"]
@@ -665,8 +665,11 @@ def _score_file_templates(
         ):
             return []
         return [
-            f"(MG-COUNT)_(MGK_Graph-{count_k}_{mix_method})"
-            f"_hypOFF_Standard_Standard_GPU_scores"
+            (
+                f"(MG-COUNT)_(MGK_Graph-{count_k}_{mix_method})"
+                f"{suffix}_hypOFF_Standard_Standard_GPU_scores"
+            )
+            for suffix in ["", "_mean"]
         ]
 
     device_suffix = "_GPU" if use_gpu else ""
@@ -1157,6 +1160,8 @@ def _model_config_label(row: pd.Series, include_kernel_config: bool = True) -> s
     model = str(row["model"])
     if not include_kernel_config:
         return model
+    if model == "MGK":
+        return model
     if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
         return model
 
@@ -1174,12 +1179,14 @@ def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]]
     fp_kernel = row["fp kernel"]
     if _is_tree_model(model):
         family_rank = 0
+    elif model == "MGK":
+        family_rank = 3
     elif pd.notna(fp_kernel) and "tanimoto" not in str(fp_kernel).lower():
         family_rank = 1
     elif pd.notna(fp_kernel) and "tanimoto" in str(fp_kernel).lower():
         family_rank = 2
     else:
-        family_rank = 3
+        family_rank = 4
 
     return (family_rank, model_rank, model)
 
@@ -1188,11 +1195,35 @@ def _is_tree_model(model: Any) -> bool:
     return str(model).upper() in TREE_MODELS
 
 
+def _model_group_sort_rank(model: Any) -> int:
+    model_name = str(model)
+    model_upper = model_name.upper()
+    if _is_tree_model(model_name):
+        return 0
+    if "GP" in model_upper and model_name != "MGK":
+        return 1
+    if model_name == "MGK":
+        return 2
+    if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
+        return 3
+    return 4
+
+
+def _model_order_sort_key(model: Any, model_order: Optional[Dict[str, int]] = None) -> tuple:
+    model_name = str(model)
+    model_rank = len(model_order) if model_order is not None else 0
+    if model_order is not None:
+        model_rank = model_order.get(model_name.lower(), model_rank)
+    return (_model_group_sort_rank(model_name), model_rank, model_name)
+
+
 def _model_type_color(model: Any) -> str:
     model_name = str(model)
     model_upper = model_name.upper()
     if _is_tree_model(model_name):
         return MODEL_TYPE_COLORS["tree"]
+    if model_name == "MGK":
+        return MODEL_TYPE_COLORS["mgk"]
     if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
         return MODEL_TYPE_COLORS["gnn"]
     if "GP" in model_upper:
@@ -1733,9 +1764,8 @@ def plot_hybridization_method_comparison(
     config_order = plot_df[[x_col, "model", "mixing method"]].drop_duplicates(subset=[x_col])
     config_order["sort_key"] = config_order.apply(
         lambda row: (
-            model_order.get(str(row["model"]).lower(), len(model_order)),
+            *_model_order_sort_key(row["model"], model_order),
             method_order.get(str(row["mixing method"]).lower(), len(method_order)),
-            str(row["model"]),
             str(row["mixing method"]),
         ),
         axis=1,
@@ -1896,48 +1926,17 @@ def plot_model_profile_comparison(
         lambda row: _model_config_label(row, include_kernel_config),
         axis=1,
     )
-    selected_models = _selection_values(model)
-    selected_triples = _kernel_triple_values(kernel_triples)
-    if selected_models is None:
-        order = plot_df[x_col].drop_duplicates().tolist()
-    else:
-        order = []
-        model_values = plot_df["model"].astype(str).str.lower()
-        fp_values = plot_df["fp kernel"].astype(str).str.lower()
-        count_values = plot_df["count kernel"].astype(str).str.lower()
-        mix_values = plot_df["mixing method"].astype(str).str.lower()
-        missing_kernel_mask = (
-            plot_df["fp kernel"].isna()
-            & plot_df["count kernel"].isna()
-            & plot_df["mixing method"].isna()
-        )
-
-        for model_name in selected_models:
-            model_mask = model_values == str(model_name).lower()
-            for label in plot_df.loc[model_mask & missing_kernel_mask, x_col].drop_duplicates():
-                if label not in order:
-                    order.append(label)
-
-            if selected_triples is None:
-                labels = plot_df.loc[model_mask & ~missing_kernel_mask, x_col].drop_duplicates()
-                for label in labels:
-                    if label not in order:
-                        order.append(label)
-                continue
-
-            for fp_kernel, count_kernel, mix_method in selected_triples:
-                triple_mask = (
-                    (fp_values == str(fp_kernel).lower())
-                    & (count_values == str(count_kernel).lower())
-                    & (mix_values == str(mix_method).lower())
-                )
-                for label in plot_df.loc[model_mask & triple_mask, x_col].drop_duplicates():
-                    if label not in order:
-                        order.append(label)
-
-        for label in plot_df[x_col].drop_duplicates():
-            if label not in order:
-                order.append(label)
+    selected_models = _selection_values(model) or plot_df["model"].drop_duplicates().tolist()
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+    config_order = plot_df[
+        [x_col, "model", "fp kernel", "count kernel", "mixing method"]
+    ].drop_duplicates(subset=[x_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    order = config_order.sort_values("sort_key", kind="mergesort")[x_col].tolist()
+    order.extend(label for label in plot_df[x_col].drop_duplicates() if label not in order)
 
     order_lookup = {label: idx for idx, label in enumerate(order)}
     plot_df["_plot_order"] = plot_df[x_col].map(order_lookup)
@@ -2102,9 +2101,8 @@ def plot_hybridization_profile_comparison(
     config_order = plot_df[[x_col, "model", "mixing method"]].drop_duplicates(subset=[x_col])
     config_order["sort_key"] = config_order.apply(
         lambda row: (
-            model_order.get(str(row["model"]).lower(), len(model_order)),
+            *_model_order_sort_key(row["model"], model_order),
             method_order.get(str(row["mixing method"]).lower(), len(method_order)),
-            str(row["model"]),
             str(row["mixing method"]),
         ),
         axis=1,
@@ -3401,11 +3399,11 @@ def plot_model_performance_vs_data_number(
 
 if __name__ == "__main__":
 
-    build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-                                   score_metrics=DEFAULT_SCORE_METRICS)
+    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
+    #                                score_metrics=DEFAULT_SCORE_METRICS)
 
-    # COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
-    # result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
 
     # prof_results = performance_plot_with_ranks(
     #     df=result_df,
@@ -3469,10 +3467,11 @@ if __name__ == "__main__":
     # plot_model_comparison(
     #     df=result_df,
     #     metric="r2",
-    #     model=["RF", "XGBR","NGB","GPytorchMAP"],
+    #     model=["RF", "XGBR","NGB","GPytorchMAP", "MGK"],
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Graph", "Matern32", "product"),
     #         ],
     #     y_label="R²",
     #     fontsize=17,
@@ -3481,7 +3480,7 @@ if __name__ == "__main__":
     #     figsize=(5, 5),
     #     # log_y=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_model_comparison_motivation_section.png",
+    #     file_name="r2_distributional_model_comparison.png",
     # )
 
     # plot_hybridization_method_comparison(
@@ -3524,24 +3523,25 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
 
-    # plot_model_performance_vs_data_number(
-    #     df=result_df,
-    #     metric="nll",
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "product"),
-    #         ("TanimotoMatern32", "Matern32", "product"),
-    #     ],
-    #     y_label="NLL",
-    #     x_label="# Datapoints",
-    #     fontsize=17,
-    #     y_lim=(-1, 1),
-    #     # log_y=True,
-    #     figsize=(9, 5),
-    #     show=True,
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="nll_model_performance_vs_data_number.png",
-    # )
+    plot_model_performance_vs_data_number(
+        df=result_df,
+        metric="r2",
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "product"),
+            ("TanimotoMatern32", "Matern32", "product"),
+            ("Graph", "Matern32", "product"),
+        ],
+        y_label="R²",
+        x_label="# Datapoints",
+        fontsize=17,
+        y_lim=(0, 1.05),
+        # log_y=True,
+        figsize=(9, 5),
+        show=True,
+        save_dir=HERE / "result_analysis",
+        file_name="r2_model_performance_vs_data_number.png",
+    )
 
 
     # plot_model_feature_importance_stability_comparison(
