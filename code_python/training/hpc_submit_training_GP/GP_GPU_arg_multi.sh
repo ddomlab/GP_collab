@@ -47,5 +47,3 @@ EOT
         done
     done
 done
-
-#BSUB -R "select[a10]"
