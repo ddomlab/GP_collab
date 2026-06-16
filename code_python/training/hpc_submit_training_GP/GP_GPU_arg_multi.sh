@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="MGK"  #"GpyroHMC", "GPytorchMAP"
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="separation_data_imputed"
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
 k_fps=("Graph")
 k_counts=("Matern32")           
 k_mixing_methods=("product") 
@@ -19,7 +19,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
             bsub <<EOT
 
 #BSUB -n 1
-#BSUB -W 6:10
+#BSUB -W 32:10
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -J "structure_numerical_${DATE}"
