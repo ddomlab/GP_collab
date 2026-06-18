@@ -2075,7 +2075,7 @@ def plot_model_profile_comparison(
             )
 
     ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
-    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize-2, fontweight="bold")
     if title is not None:
         ax.set_title(title, fontsize=fontsize + 2)
     ax.tick_params(axis="both", labelsize=fontsize - 2)
@@ -3478,7 +3478,7 @@ def plot_model_performance_vs_data_number(
     if legend is not None:
         legend.set_title(None)
         for text in legend.get_texts():
-            text.set_fontsize(fontsize - 2)
+            text.set_fontsize(fontsize - 3)
 
     plt.tight_layout()
 
@@ -3558,7 +3558,7 @@ if __name__ == "__main__":
     #         ],
     #         metric=metric,
     #         tree_feature_importance=tree_fi,
-    #         y_label=f"Profile AUC of importance stability",
+    #         y_label=f"Profile AUC of feature stability",
     #         fontsize=17,
     #         figsize=(5, 5),
     #         save_dir=HERE / "result_analysis",
@@ -3578,24 +3578,24 @@ if __name__ == "__main__":
     # )
 
 
-    # plot_model_comparison(
-    #     df=result_df,
-    #     metric="r2",
-    #     model=["RF", "XGBR","NGB","GPytorchMAP", "MGK"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "product"),
-    #         ("TanimotoMatern32", "Matern32", "product"),
-    #         ("Graph", "Matern32", "product"),
-    #         ],
-    #     y_label="R²",
-    #     fontsize=17,
-    #     show=True,
-    #     y_lim=(0,1.05),
-    #     figsize=(5, 5),
-    #     # log_y=True,
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_distributional_model_comparison.png",
-    # )
+    plot_model_comparison(
+        df=result_df,
+        metric="cvpp_ama",
+        model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC","MGK"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "product"),
+            ("TanimotoMatern32", "Matern32", "product"),
+            ("Graph", "Matern32", "product"),
+            ],
+        y_label="AMA",
+        fontsize=17,
+        show=True,
+        y_lim=(0,.8),
+        figsize=(6, 5),
+        # log_y=True,
+        save_dir=HERE / "result_analysis",
+        file_name="cvpp_ama_distributional_model_comparison.png",
+    )
 
     # plot_hybridization_method_comparison(
     #     df=result_df,
@@ -3637,25 +3637,25 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
 
-    plot_model_performance_vs_data_number(
-        df=result_df,
-        metric="cvpp_ama",
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ("Graph", "Matern32", "product"),
-        ],
-        y_label="AMA",
-        x_label="# Datapoints",
-        fontsize=17,
-        y_lim=(0, .5),
-        # log_y=True,
-        figsize=(9, 5),
-        show=True,
-        save_dir=HERE / "result_analysis",
-        file_name="cvpp_ama_model_performance_vs_data_number.png",
-    )
+    # plot_model_performance_vs_data_number(
+    #     df=result_df,
+    #     metric="cvpp_ama",
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Graph", "Matern32", "product"),
+    #     ],
+    #     y_label=label_conversion_source["cvpp_ama"],
+    #     x_label="# Datapoints",
+    #     fontsize=18,
+    #     y_lim=(0, .5),
+    #     # log_y=True,
+    #     figsize=(9, 5),
+    #     show=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="cvpp_ama_model_performance_vs_data_number.png",
+    # )
 
 
     # plot_model_feature_importance_stability_comparison(
@@ -3667,7 +3667,7 @@ if __name__ == "__main__":
     #         ("TanimotoMatern32", "Matern32", "product"),
     #         ],
     #     y_label="Stability (Kendall's W)",
-    #     fontsize=17,
+    #     fontsize=19,
     #     show=True,
     #     y_lim=(0,1.05),
     #     figsize=(6, 5),
