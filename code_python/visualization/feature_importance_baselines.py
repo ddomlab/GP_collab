@@ -579,20 +579,44 @@ prompt3_robust_learning = {
 """
 prompt 1
 
-According to your data that you're trained on and the papers about the Conjugated Polymer Solution Conformation and
-the experimental parameters that control Radius of Gyration (Rg), complete this ranking table:
-PLS_Ranks = pd.DataFrame([{ "Temperature SANS/SLS/DLS/SEC (K)": None,
-"polymer dP": None, "Mw (g/mol)": None,
-"solvent dH": None, "fp": None, "Concentration (mg/ml)": None,
-"polymer dD": None, "Xn": None, "solvent dP": None, "PDI": None,
-"polymer dH": None, "solvent dD": None, }], index=["expert_rank"])
-from 1 (the most effective and predictive and controlling parameter)
-to least effective parameter. FP can be consider as structure of polymer 
-(fingerprint like ECFP encoded as single parameter) Xn is degree of polymerization.
-PDI is polymer dispersity. Temperature SANS/SLS/DLS/SEC (K): preparation temperature. 
-Mw: molecular weight dD, dH, dP: HSP parameters of solvent and polymer. 
-You can look into papers like https://doi.org/10.1063/5.0303721 and similar!
+According to your data that you're trained on and the jornal papers and websites about the predicting organic photovoltaic (solar cell) performance and
+the experimental parameters that control Power Conversion Efficiency, (PCE %), complete this ranking table:
+{
+    "ETL energy level (eV)": None,
+    "Eg_D (eV)": None,
+    "fp_Acceptor": None,
+    "HOMO_A (eV)": None,
+    "temperature of thermal annealing": None,
+    "LUMO_D (eV)": None,
+    "D:A ratio (m/m)": None,
+    "Ehl_A (eV)": None,
+    "HTL energy level (eV)": None,
+    "solvent additive conc. (% v/v)": None,
+    "LUMO_A (eV)": None,
+    "fp_Donor": None,
+    "Eg_A (eV)": None,
+    "HOMO_D (eV)": None,
+    "Ehl_D (eV)": None
+}
 
+from 1 (the most effective and predictive and controlling parameter)
+to least effective parameter. FP can be consider as structure of acceptro and donor 
+(fingerprint like ECFP encoded as single parameter).
+"ETL energy level (eV)": "Energy level of the electron transport layer material.",
+"Eg_D (eV)": "Bandgap energy of the donor material.",
+"fp_Acceptor": "Molecular fingerprint representation of the acceptor structure.",
+"HOMO_A (eV)": "Highest occupied molecular orbital energy of the acceptor.",
+"temperature of thermal annealing": "Temperature used during post-deposition thermal annealing.",
+"LUMO_D (eV)": "Lowest unoccupied molecular orbital energy of the donor.",
+"D:A ratio (m/m)": "Mass ratio of donor to acceptor materials in the active layer.",
+"Ehl_A (eV)": "Energy difference between HOMO and LUMO of the acceptor.",
+"HTL energy level (eV)": "Energy level of the hole transport layer material.",
+"solvent additive conc. (% v/v)": "Volume percentage of solvent additive in the processing solution.",
+"LUMO_A (eV)": "Lowest unoccupied molecular orbital energy of the acceptor.",
+"fp_Donor": "Molecular fingerprint representation of the donor structure.",
+"Eg_A (eV)": "Bandgap energy of the acceptor material.",
+"HOMO_D (eV)": "Highest occupied molecular orbital energy of the donor.",
+"Ehl_D (eV)": "Energy difference between HOMO and LUMO of the donor." 
 
 """
 
@@ -618,37 +642,163 @@ prompt1_Beyond_molecular_structure = {
 
   "chatgpt55_extended_pro": {
     "rep_1": {
-
+      "ETL energy level (eV)": 15,
+      "Eg_D (eV)": 6,
+      "fp_Acceptor": 1,
+      "HOMO_A (eV)": 8,
+      "temperature of thermal annealing": 11,
+      "LUMO_D (eV)": 9,
+      "D:A ratio (m/m)": 7,
+      "Ehl_A (eV)": 12,
+      "HTL energy level (eV)": 14,
+      "solvent additive conc. (% v/v)": 10,
+      "LUMO_A (eV)": 3,
+      "fp_Donor": 2,
+      "Eg_A (eV)": 5,
+      "HOMO_D (eV)": 4,
+      "Ehl_D (eV)": 13
     },
     "rep_2": {
-
+      "ETL energy level (eV)": 11,
+      "Eg_D (eV)": 6,
+      "fp_Acceptor": 1,
+      "HOMO_A (eV)": 12,
+      "temperature of thermal annealing": 9,
+      "LUMO_D (eV)": 13,
+      "D:A ratio (m/m)": 7,
+      "Ehl_A (eV)": 14,
+      "HTL energy level (eV)": 10,
+      "solvent additive conc. (% v/v)": 8,
+      "LUMO_A (eV)": 3,
+      "fp_Donor": 2,
+      "Eg_A (eV)": 5,
+      "HOMO_D (eV)": 4,
+      "Ehl_D (eV)": 15
     },
     "rep_3": {
-
+      "ETL energy level (eV)": 14,
+      "Eg_D (eV)": 9,
+      "fp_Acceptor": 1,
+      "HOMO_A (eV)": 7,
+      "temperature of thermal annealing": 11,
+      "LUMO_D (eV)": 8,
+      "D:A ratio (m/m)": 6,
+      "Ehl_A (eV)": 12,
+      "HTL energy level (eV)": 15,
+      "solvent additive conc. (% v/v)": 10,
+      "LUMO_A (eV)": 3,
+      "fp_Donor": 2,
+      "Eg_A (eV)": 5,
+      "HOMO_D (eV)": 4,
+      "Ehl_D (eV)": 13
     }
   },
 
   "gemini31_pro_extended": {
     "rep_1": {
-
+      "fp_Acceptor": 1,
+      "fp_Donor": 2,
+      "HOMO_D (eV)": 3,
+      "LUMO_A (eV)": 4,
+      "Eg_A (eV)": 5,
+      "Eg_D (eV)": 6,
+      "LUMO_D (eV)": 7,
+      "HOMO_A (eV)": 8,
+      "D:A ratio (m/m)": 9,
+      "solvent additive conc. (% v/v)": 10,
+      "temperature of thermal annealing": 11,
+      "Ehl_A (eV)": 12,
+      "Ehl_D (eV)": 13,
+      "ETL energy level (eV)": 14,
+      "HTL energy level (eV)": 15
     },
     "rep_2": {
-
+      "fp_Donor": 1,
+      "fp_Acceptor": 2,
+      "LUMO_A (eV)": 3,
+      "HOMO_D (eV)": 4,
+      "Eg_D (eV)": 5,
+      "Eg_A (eV)": 6,
+      "LUMO_D (eV)": 7,
+      "HOMO_A (eV)": 8,
+      "Ehl_D (eV)": 9,
+      "Ehl_A (eV)": 10,
+      "D:A ratio (m/m)": 11,
+      "solvent additive conc. (% v/v)": 12,
+      "temperature of thermal annealing": 13,
+      "HTL energy level (eV)": 14,
+      "ETL energy level (eV)": 15
     },
     "rep_3": {
-
+      "fp_Acceptor": 1,
+      "fp_Donor": 2,
+      "LUMO_A (eV)": 3,
+      "HOMO_D (eV)": 4,
+      "Eg_A (eV)": 5,
+      "Eg_D (eV)": 6,
+      "D:A ratio (m/m)": 7,
+      "HOMO_A (eV)": 8,
+      "LUMO_D (eV)": 9,
+      "Ehl_A (eV)": 10,
+      "Ehl_D (eV)": 11,
+      "solvent additive conc. (% v/v)": 12,
+      "temperature of thermal annealing": 13,
+      "HTL energy level (eV)": 14,
+      "ETL energy level (eV)": 15
     }
   },
 
   "claude_opus48_max": {
     "rep_1": {
-
+      "fp_Acceptor": 1,
+      "fp_Donor": 2,
+      "LUMO_A (eV)": 3,
+      "HOMO_D (eV)": 4,
+      "Eg_A (eV)": 5,
+      "HOMO_A (eV)": 6,
+      "Ehl_A (eV)": 7,
+      "LUMO_D (eV)": 8,
+      "Eg_D (eV)": 9,
+      "Ehl_D (eV)": 10,
+      "D:A ratio (m/m)": 11,
+      "temperature of thermal annealing": 12,
+      "solvent additive conc. (% v/v)": 13,
+      "HTL energy level (eV)": 14,
+      "ETL energy level (eV)": 15
     },
     "rep_2": {
-
+      "fp_Acceptor": 1,
+      "fp_Donor": 2,
+      "LUMO_A (eV)": 3,
+      "HOMO_A (eV)": 4,
+      "Eg_A (eV)": 5,
+      "Ehl_A (eV)": 6,
+      "HOMO_D (eV)": 7,
+      "LUMO_D (eV)": 8,
+      "Eg_D (eV)": 9,
+      "Ehl_D (eV)": 10,
+      "D:A ratio (m/m)": 11,
+      "temperature of thermal annealing": 12,
+      "solvent additive conc. (% v/v)": 13,
+      "ETL energy level (eV)": 14,
+      "HTL energy level (eV)": 15
     },
     "rep_3": {
-
+      "ETL energy level (eV)": 14,
+      "Eg_D (eV)": 9,
+      "fp_Acceptor": 1,
+      "HOMO_A (eV)": 6,
+      "temperature of thermal annealing": 12,
+      "LUMO_D (eV)": 8,
+      "D:A ratio (m/m)": 11,
+      "Ehl_A (eV)": 7,
+      "HTL energy level (eV)": 15,
+      "solvent additive conc. (% v/v)": 13,
+      "LUMO_A (eV)": 3,
+      "fp_Donor": 2,
+      "Eg_A (eV)": 5,
+      "HOMO_D (eV)": 4,
+      "Ehl_D (eV)": 10
     }
   }
 }
@@ -758,11 +908,16 @@ if __name__ == "__main__":
     # print(prompt2_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
 
 
-    prompt3_df = compute_kendall_tau()
+    # prompt3_df = compute_kendall_tau()
+    # print(prompt3_df)
+
+    # print("\n\n\n")
+    # print("Kendall Tau Summary:")
+    # print(prompt3_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
+
+    prompt3_df = compute_kendall_tau(prompt1_Beyond_molecular_structure)
     print(prompt3_df)
 
     print("\n\n\n")
     print("Kendall Tau Summary:")
     print(prompt3_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
-
-

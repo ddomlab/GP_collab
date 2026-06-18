@@ -578,7 +578,14 @@ FEATURE_STABILITY_COLUMNS = [
     "feature_importance_SHAP_kendalls_w",
 ]
 
-
+label_conversion_source = {
+    "r2": "R²",
+    "rmse": "RMSE",
+    "mae": "MAE",
+    "nll": "NLL",
+    "cvpp_ama": "AMA",
+    "ece": "ECE"
+}
 
 # def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
 #     data = build_barplot_data(model_specs)
@@ -3418,14 +3425,15 @@ if __name__ == "__main__":
     #     save_dir= HERE / "result_analysis",
     #     file_name="r2_GpytorchMAP_SK_performance_profile.png",
     # )
-    # for metric in ["nll", "cvpp_ama", "ece"]:
+    # for metric in ["r2", "nll", "cvpp_ama", "ece"]:
     #     prof_results = performance_plot_with_ranks(
     #         df=result_df,
     #         metric=metric,
-    #         model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
     #         kernel_triples=[
-    #             ("Matern32", "Matern32", "averageProduct"),
-    #             ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #             ("Matern32", "Matern32", "product"),
+    #             ("TanimotoMatern32", "Matern32", "product"),
+    #             ("Graph", "Matern32", "product"),
     #         ],
     #         legend_ncols=2,
     #         fontsize=17,
@@ -3435,16 +3443,16 @@ if __name__ == "__main__":
     #         save_dir= HERE / "result_analysis",
     #         file_name=f"{metric}_model_performance_profile_curve_comparison.png",
     #     )
-    #     metric_name = "AMA" if metric == "cvpp_ama" else metric.upper()
     #     plot_model_profile_comparison(
     #         prof_results=prof_results,
-    #         model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
     #         kernel_triples=[
-    #             ("Matern32", "Matern32", "averageProduct"),
-    #             ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #             ("Matern32", "Matern32", "product"),
+    #             ("TanimotoMatern32", "Matern32", "product"),
+    #             ("Graph", "Matern32", "product"),
     #         ],
     #         metric=metric,
-    #         y_label=f"Profile AUC of {metric_name}",
+    #         y_label=f"Profile AUC of {label_conversion_source.get(metric)}",
     #         fontsize=17,
     #         figsize=(5, 5),
     #         save_dir=HERE / "result_analysis",
@@ -3523,41 +3531,41 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
 
-    plot_model_performance_vs_data_number(
-        df=result_df,
-        metric="r2",
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ("Graph", "Matern32", "product"),
-        ],
-        y_label="R²",
-        x_label="# Datapoints",
-        fontsize=17,
-        y_lim=(0, 1.05),
-        # log_y=True,
-        figsize=(9, 5),
-        show=True,
-        save_dir=HERE / "result_analysis",
-        file_name="r2_model_performance_vs_data_number.png",
-    )
-
-
-    # plot_model_feature_importance_stability_comparison(
-    #     result_df,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     tree_feature_importance="SHAP",
+    # plot_model_performance_vs_data_number(
+    #     df=result_df,
+    #     metric="r2",
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
-    #         ],
-    #     y_label="Stability (Kendall's W)",
+    #         ("Graph", "Matern32", "product"),
+    #     ],
+    #     y_label="R²",
+    #     x_label="# Datapoints",
     #     fontsize=17,
-    #     show=True,
-    #     y_lim=(0,1.05),
-    #     figsize=(6, 5),
+    #     y_lim=(0, 1.05),
     #     # log_y=True,
+    #     figsize=(9, 5),
+    #     show=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="feature_importance_stability_lengthscale_SHAP_comparison.png",
+    #     file_name="r2_model_performance_vs_data_number.png",
     # )
+
+
+    plot_model_feature_importance_stability_comparison(
+        result_df,
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+        tree_feature_importance="MDI",
+        kernel_triples=[
+            ("Matern32", "Matern32", "product"),
+            ("TanimotoMatern32", "Matern32", "product"),
+            ],
+        y_label="Stability (Kendall's W)",
+        fontsize=17,
+        show=True,
+        y_lim=(0,1.05),
+        figsize=(6, 5),
+        # log_y=True,
+        save_dir=HERE / "result_analysis",
+        file_name="feature_importance_stability_lengthscale_MDI_comparison.png",
+    )
