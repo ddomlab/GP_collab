@@ -1096,7 +1096,11 @@ def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
 
 
 def _metric_higher_is_better(metric: str) -> bool:
-    return metric in {"r2", "RUSC", "cvpp_ama"}
+    return (
+        str(metric).strip().lower() in {"r2", "rusc", "cvpp_ama"}
+        or metric in FEATURE_STABILITY_COLUMNS
+        or _is_feature_stability_metric(metric)
+    )
 
 
 def _mixing_method_label(value: Any) -> str:
@@ -1112,15 +1116,8 @@ def _expand_master_scores_for_profile(
     fp_kernels: Any = None,
     count_kernels: Any = None,
     mixing_methods: Any = None,
+    tree_feature_importance: str = "MDI",
 ) -> pd.DataFrame:
-    score_col = f"{metric}_seed_fold_scores"
-    use_seed_fold_scores = True
-    if score_col not in df.columns and metric in df.columns:
-        score_col = metric
-        use_seed_fold_scores = False
-    if score_col not in df.columns:
-        raise ValueError(f"Missing required column: {score_col}")
-
     rows = []
     selected_models = _selection_values(model)
     model_df = _filter_selection(df, "model", selected_models)
@@ -1128,9 +1125,44 @@ def _expand_master_scores_for_profile(
     model_df = _filter_selection(model_df, "count kernel", count_kernels, keep_missing=True)
     model_df = _filter_selection(model_df, "mixing method", mixing_methods, keep_missing=True)
     include_model = selected_models is None or len(selected_models) > 1
+    feature_stability_metric = _is_feature_stability_metric(metric)
+
+    if feature_stability_metric:
+        tree_stability_col = _tree_feature_stability_column(tree_feature_importance)
+        required_columns = {"lengthscale_kendalls_w"}
+        if model_df["model"].apply(_is_tree_model).any():
+            required_columns.add(tree_stability_col)
+        missing_columns = required_columns.difference(df.columns)
+        if missing_columns:
+            raise ValueError(
+                "df is missing required columns: "
+                + ", ".join(sorted(missing_columns))
+            )
+        use_seed_fold_scores = False
+        score_col = None
+    else:
+        score_col = f"{metric}_seed_fold_scores"
+        use_seed_fold_scores = True
+        if score_col not in df.columns and metric in df.columns:
+            score_col = metric
+            use_seed_fold_scores = False
+        if score_col not in df.columns:
+            raise ValueError(f"Missing required column: {score_col}")
 
     for _, row in model_df.iterrows():
-        if use_seed_fold_scores:
+        feature_stability_source = None
+        tree_feature_source = None
+        if feature_stability_metric:
+            score_col = _feature_stability_column_for_model(
+                row["model"],
+                tree_feature_importance,
+            )
+            scores = [row[score_col]]
+            feature_stability_source = _feature_stability_source_label(score_col)
+            tree_feature_source = _feature_stability_source_label(
+                _tree_feature_stability_column(tree_feature_importance)
+            )
+        elif use_seed_fold_scores:
             scores = _coerce_score_list(row[score_col])
             if scores is None:
                 continue
@@ -1147,7 +1179,7 @@ def _expand_master_scores_for_profile(
                 continue
             if np.isnan(score):
                 continue
-            rows.append({
+            row_data = {
                 "dataset": dataset,
                 "target": target,
                 "repeat": repeat_idx,
@@ -1157,7 +1189,11 @@ def _expand_master_scores_for_profile(
                 "count kernel": row["count kernel"],
                 "mixing method": row["mixing method"],
                 metric: score,
-            })
+            }
+            if feature_stability_metric:
+                row_data["feature stability source"] = feature_stability_source
+                row_data["tree feature importance"] = tree_feature_source
+            rows.append(row_data)
 
     return pd.DataFrame(rows)
 
@@ -1262,6 +1298,43 @@ def _feature_stability_source_label(column: str) -> str:
         "feature_importance_SHAP_kendalls_w": "SHAP",
     }
     return labels.get(column, column)
+
+
+def _is_feature_stability_metric(metric: Any) -> bool:
+    metric_key = re.sub(r"[\s\-]+", "_", str(metric).strip().lower())
+    return metric_key in {
+        "feature_stability",
+        "feature_importance_stability",
+        "feature_importance_kendalls_w",
+        "feature_importance_stability_kendalls_w",
+        "tree_feature_importance_stability",
+    }
+
+
+def _feature_stability_column_for_model(
+    model: Any,
+    tree_feature_importance: str,
+) -> str:
+    if _is_tree_model(model):
+        return _tree_feature_stability_column(tree_feature_importance)
+    return "lengthscale_kendalls_w"
+
+
+def _filter_metric_selection(
+    df: pd.DataFrame,
+    metric: Any,
+    column: str = "metric",
+) -> pd.DataFrame:
+    selected = _selection_values(metric)
+    if selected is None or column not in df.columns:
+        return df
+
+    selected_lower = {str(value).strip().lower() for value in selected}
+    column_values = df[column].astype(str).str.strip().str.lower()
+    mask = column_values.isin(selected_lower)
+    if any(_is_feature_stability_metric(value) for value in selected):
+        mask = mask | df[column].map(_is_feature_stability_metric)
+    return df[mask].copy()
 
 
 def _kernel_triple_values(kernel_triples: Any) -> Optional[List[tuple]]:
@@ -1878,6 +1951,7 @@ def plot_model_profile_comparison(
     kernel_triples: Any = None,
     metric: Optional[str] = None,
     auc_column: str = "auc",
+    tree_feature_importance: Optional[str] = None,
     include_kernel_config: bool = True,
     figsize: tuple = (7, 5),
     fontsize: int = 12,
@@ -1899,6 +1973,10 @@ def plot_model_profile_comparison(
     ``(fp_kernel, count_kernel, mixing_method)`` triples to select exact GP
     kernel combinations. Tree models are kept when their kernel columns are
     empty.
+
+    If the input came from ``performance_plot_with_ranks`` with
+    ``metric="feature_stability"``, pass ``tree_feature_importance`` to select
+    MDI- or SHAP-based tree stability AUC rows when both are present.
     """
     required_columns = {
         "model",
@@ -1917,8 +1995,17 @@ def plot_model_profile_comparison(
     plot_df = prof_results.copy()
     plot_df = _filter_selection(plot_df, "model", model)
     plot_df = _filter_kernel_triples(plot_df, kernel_triples, keep_missing=True)
-    if metric is not None and "metric" in plot_df.columns:
-        plot_df = _filter_selection(plot_df, "metric", metric)
+    plot_df = _filter_metric_selection(plot_df, metric)
+    if tree_feature_importance is not None:
+        tree_feature_source = _feature_stability_source_label(
+            _tree_feature_stability_column(tree_feature_importance)
+        )
+        if "tree feature importance" in plot_df.columns:
+            plot_df = _filter_selection(
+                plot_df,
+                "tree feature importance",
+                tree_feature_source,
+            )
 
     plot_df[auc_column] = pd.to_numeric(plot_df[auc_column], errors="coerce")
     plot_df = plot_df.dropna(subset=[auc_column])
@@ -2505,6 +2592,10 @@ def _profile_auc_dataframe(
     metric: str,
 ) -> pd.DataFrame:
     metadata_cols = ["kernel", "model", "fp kernel", "count kernel", "mixing method"]
+    optional_metadata_cols = ["feature stability source", "tree feature importance"]
+    metadata_cols.extend(
+        column for column in optional_metadata_cols if column in profile_df.columns
+    )
     metadata = (
         profile_df[metadata_cols]
         .drop_duplicates(subset=["kernel"])
@@ -2522,7 +2613,7 @@ def _profile_auc_dataframe(
             else f"{fp_kernel}-{count_kernel}"
         )
 
-        rows.append({
+        row = {
             "rank": rank,
             "metric": metric,
             "model": meta["model"],
@@ -2530,7 +2621,11 @@ def _profile_auc_dataframe(
             "count kernel": count_kernel,
             "mixing method": meta["mixing method"],
             "auc": aucs[kernel_name],
-        })
+        }
+        for column in optional_metadata_cols:
+            if column in metadata.columns:
+                row[column] = meta[column]
+        rows.append(row)
 
     return pd.DataFrame(rows)
 
@@ -2585,6 +2680,7 @@ def performance_plot_with_ranks(
     count_kernels: Any = None,
     mixing_methods: Any = None,
     kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
     p_threshold: float = 0.05,
     title: Optional[str] = None,
     show: bool = True,
@@ -2620,6 +2716,11 @@ def performance_plot_with_ranks(
     used and the shaded band is the std/sem across seed/fold repeat profiles.
     ``legend_ncols`` and ``legend_nrows`` control the legend layout above the
     plot. If both are omitted, up to three columns are used.
+
+    Use ``metric="feature_stability"`` to rank the mixed feature-stability
+    metric used by ``plot_model_feature_importance_stability_comparison``:
+    GP-style models use ``lengthscale_kendalls_w`` and tree models use MDI or
+    SHAP stability according to ``tree_feature_importance``.
     """
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     profile_df = _expand_master_scores_for_profile(
@@ -2629,10 +2730,11 @@ def performance_plot_with_ranks(
         fp_kernels=fp_kernels,
         count_kernels=count_kernels,
         mixing_methods=mixing_methods,
+        tree_feature_importance=tree_feature_importance,
     )
     if profile_df.empty:
         raise ValueError(
-            f"No {metric} seed/fold scores found for model={model} "
+            f"No {metric} values found for model={model} "
             f"with fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
             f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
         )
@@ -3425,39 +3527,43 @@ if __name__ == "__main__":
     #     save_dir= HERE / "result_analysis",
     #     file_name="r2_GpytorchMAP_SK_performance_profile.png",
     # )
-    # for metric in ["r2", "nll", "cvpp_ama", "ece"]:
-    #     prof_results = performance_plot_with_ranks(
-    #         df=result_df,
-    #         metric=metric,
-    #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
-    #         kernel_triples=[
-    #             ("Matern32", "Matern32", "product"),
-    #             ("TanimotoMatern32", "Matern32", "product"),
-    #             ("Graph", "Matern32", "product"),
-    #         ],
-    #         legend_ncols=2,
-    #         fontsize=17,
-    #         figsize=(7, 5),
-    #         show=True,
-    #         show_error_band=False,
-    #         save_dir= HERE / "result_analysis",
-    #         file_name=f"{metric}_model_performance_profile_curve_comparison.png",
-    #     )
-    #     plot_model_profile_comparison(
-    #         prof_results=prof_results,
-    #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
-    #         kernel_triples=[
-    #             ("Matern32", "Matern32", "product"),
-    #             ("TanimotoMatern32", "Matern32", "product"),
-    #             ("Graph", "Matern32", "product"),
-    #         ],
-    #         metric=metric,
-    #         y_label=f"Profile AUC of {label_conversion_source.get(metric)}",
-    #         fontsize=17,
-    #         figsize=(5, 5),
-    #         save_dir=HERE / "result_analysis",
-    #         file_name=f"{metric}_model_profile_comparison.png",
-    #     )
+    #"r2", "nll", "cvpp_ama", "ece"
+    for metric in ["feature_stability"]:
+        tree_fi = "MDI"  # or "SHAP"
+        prof_results = performance_plot_with_ranks(
+            df=result_df,
+            metric=metric,
+            model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+            kernel_triples=[
+                ("Matern32", "Matern32", "product"),
+                ("TanimotoMatern32", "Matern32", "product"),
+                # ("Graph", "Matern32", "product"),
+            ],
+            tree_feature_importance=tree_fi,
+            legend_ncols=2,
+            fontsize=17,
+            figsize=(7, 5),
+            show=True,
+            show_error_band=False,
+            save_dir= HERE / "result_analysis",
+            file_name=f"{metric}_{tree_fi}_lengthscale_model_performance_profile_curve_comparison.png",
+        )
+        plot_model_profile_comparison(
+            prof_results=prof_results,
+            model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+            kernel_triples=[
+                ("Matern32", "Matern32", "product"),
+                ("TanimotoMatern32", "Matern32", "product"),
+                # ("Graph", "Matern32", "product"),
+            ],
+            metric=metric,
+            tree_feature_importance=tree_fi,
+            y_label=f"Profile AUC of importance stability",
+            fontsize=17,
+            figsize=(5, 5),
+            save_dir=HERE / "result_analysis",
+            file_name=f"{metric}_{tree_fi}_lengthscale_model_profile_comparison.png",
+        )
 
     # plot_profile_auc_heatmap(
     #     auc_df=prof_results,
