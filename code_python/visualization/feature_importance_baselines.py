@@ -893,12 +893,12 @@ prompt3_Beyond_molecular_structure = {
 
 if __name__ == "__main__":
     
-    # prompt1_df = compute_kendall_tau(prompt1)
-    # print(prompt1_df)
+    prompt1_df = compute_kendall_tau(prompt1_Beyond_molecular_structure)
+    print(prompt1_df)
 
-    # print("\n\n\n")
-    # print("Kendall Tau Summary:")
-    # print(prompt1_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
+    print("\n\n\n")
+    print("Kendall Tau Summary:")
+    print(prompt1_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
 
     # prompt2_df = compute_kendall_tau(prompt2)
     # print(prompt2_df)
@@ -915,9 +915,9 @@ if __name__ == "__main__":
     # print("Kendall Tau Summary:")
     # print(prompt3_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
 
-    prompt3_df = compute_kendall_tau(prompt1_Beyond_molecular_structure)
-    print(prompt3_df)
+    # prompt3_df = compute_kendall_tau(prompt1_Beyond_molecular_structure)
+    # print(prompt3_df)
 
-    print("\n\n\n")
-    print("Kendall Tau Summary:")
-    print(prompt3_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
+    # print("\n\n\n")
+    # print("Kendall Tau Summary:")
+    # print(prompt3_df.groupby("model")["kendall_tau"].agg(["mean", "std"]))
