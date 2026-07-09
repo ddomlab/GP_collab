@@ -1,5 +1,4 @@
 #!/bin/bash
-
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"  #"GpyroHMC", "GPytorchMAP"
 paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
@@ -37,7 +36,7 @@ python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --Kernel_mixing_method $mixing_method \
                                         --dataset "$dataset" \
                                         --paper "$paper" \
-                                        --regressor_type "$model" \
+                                        --regressor_type "$model" 
 
 
 
