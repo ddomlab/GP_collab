@@ -12,7 +12,6 @@ import os
 from Gpytorch_sskkernel import pad, build_one_hot, encode_string
 
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tkwargs = {"dtype": torch.float, "device": device}
 
@@ -179,7 +178,19 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
                                 "col_names": fp_features,
                                 }
             return fp_features, unrolling_featurs
-        if fp in {"SSK", "MG", "HDF"}:
+        if fp == "HDF":
+            n_bits = radius_to_bits[radius]
+            fp_features = [f"{unit} SMILES" for unit in poly_unit_name]
+            unrolling_featurs = {
+                                "representation": fp,
+                                "radius": radius,
+                                "n_bits": n_bits,
+                                "unit_name": poly_unit_name,
+                                "SMILES_columns": fp_features,
+                                }
+            return fp_features, unrolling_featurs
+        
+        if fp in {"SSK", "MG"}:
             fp_features = [f"{unit} SMILES" for unit in poly_unit_name]
             unrolling_featurs = {
                                 "representation": fp,
@@ -281,17 +292,20 @@ def filter_dataset(
     if cutoff:
         dataset = apply_cutoff(dataset,cutoff)
 
-    if unroll["representation"] in {"Mordred", "MACCS", "ECFP"}:
+    representation = unroll.get("representation") if unroll else None
+
+    
+    if representation in {"Mordred", "MACCS", "ECFP", "HDF"}:
         structure_features: pd.DataFrame = unrolling_factory[
-            unroll["representation"]](dataset[structure_feats], **unroll)
+            representation](dataset[structure_feats], **unroll)
 
     else:
        # generalize for donor acceptor
         list_of_fp_features = []
-        if unroll["representation"] is not None:
+        if representation is not None:
             for unit in unroll["unit_name"]:
                 feat_name = f"{unit} SMILES"
-                if unroll["representation"].lower() == "ssk":
+                if representation.lower() == "ssk":
                     all_encoded_smiles, parameters = _ssk_emb(dataset[feat_name].values)
                     kernel_parameters[f"fp_{unit}"] = parameters
                     df_features = pd.DataFrame(
@@ -299,10 +313,7 @@ def filter_dataset(
                     columns=[f"{unit}_ssk_emb_{i}" for i in range(all_encoded_smiles.shape[1])]
                     )
                     list_of_fp_features.append(df_features)
-                elif unroll["representation"].lower() == "hdf":
-                    # Handle HDF representation
-                    from hyper_fingerprints import Encoder
-                    pass 
+
                 else:
                     list_of_fp_features.append(dataset[feat_name])
         structure_features: pd.DataFrame = (

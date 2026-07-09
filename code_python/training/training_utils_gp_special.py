@@ -210,6 +210,7 @@ def _prepare_data(
                             )
         y = mgk_dataset.y
     else:
+        start = time.time()
         X, y, unrolled_feats, kernel_parameters = filter_dataset(
                                                 raw_dataset=dataset,
                                                 structure_feats=structural_features,
@@ -221,6 +222,8 @@ def _prepare_data(
                                                 feat_to_impute=features_impute,
                                                 imputer=imputer,
                                                 )
+        final_time = time.time() - start
+        print(f"Data filtering and preprocessing took {final_time:.2f} seconds.")
 
         # Pipline workflow here and preprocessor
         preprocessor: Pipeline = preprocessing_workflow(
