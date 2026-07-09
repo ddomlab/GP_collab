@@ -218,7 +218,6 @@ def _prepare_data(
                                                 cutoff=cutoff,
                                                 dropna = True,
                                                 unroll=unroll,
-                                                kernel_type=kernel_type,
                                                 feat_to_impute=features_impute,
                                                 imputer=imputer,
                                                 )
