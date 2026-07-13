@@ -284,7 +284,7 @@ class GPMix(gpytorch.models.ExactGP):
             if mixing_method in ("sum", "product"):
                 for i, (name, sk) in enumerate(root_kernel.named_sub_kernels()):
                     if i < len(fp_keys):
-                        if kernel_method["fp"].lower() == "tanimoto":
+                        if kernel_method["fp"].lower() in {"tanimoto", "ssk"}:
                             continue
                         else:
                             # "tanimoto" in self.kernel_method["fp"].lower():
@@ -314,7 +314,7 @@ class GPMix(gpytorch.models.ExactGP):
                                 )
                 fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
                 for i, (name, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
-                    if kernel_method["fp"].lower() == "tanimoto":
+                    if kernel_method["fp"].lower() in {"tanimoto", "ssk"}:
                         continue
                     # if "tanimoto" in self.kernel_method["fp"].lower():
                     else:

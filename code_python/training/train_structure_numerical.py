@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-TEST = False
+DEBUGGING = False
 
 
 def main_structural_numerical(
@@ -56,7 +56,7 @@ def main_structural_numerical(
                                             feat_transformer=feat_transformer,
                                             hyperparameter_optimization=hyperparameter_optimization,
                                             imputer=imputer,
-                                            Test=TEST,
+                                            Test=DEBUGGING,
                                             **kwargs,
                                             )
   
@@ -73,7 +73,7 @@ def main_structural_numerical(
                 target_transformer=target_transformer,
                 imputer=imputer,
                 output_dir_name= PAPER,
-                TEST=TEST,
+                TEST=DEBUGGING,
                 # special_folder_name='hp_RF_differences',
                 # special_file_name='GPU',
                 **kwargs,
@@ -81,76 +81,76 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    
-    # args = parse_arguments()
-    # PAPER = args.paper
-    # dataset_name =args.dataset
-    # w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+    if DEBUGGING is False:
+        args = parse_arguments()
+        PAPER = args.paper
+        dataset_name =args.dataset
+        w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
-    # for targ in all_targets:
-    #     # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
-    #     main_structural_numerical(
-    #         dataset=w_data,
-    #         representation="SSK", #"ECFP" # MG #SSK
-    #         # radius=3,
-    #         # vector="count",
-    #         regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
-    #         # GPytorchMixMCMC
-    #         # GPMixMCMC
-    #         polymer_unit=polymer_unit,
-    #         target_features=[targ],  
-    #         feat_transformer="Standard",
-    #         target_transformer="Standard",
-    #         numerical_feats=feats,
-    #         hyperparameter_optimization=False,
-    #         kernel_type={
-    #             "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-    #             "count": args.K_count #"Matern32"   #args.K_count
-    #             # "fp": "Graph", 
-    #             # "count": "Matern32"
-    #             },
-    #         kernel_mixing_method=args.Kernel_mixing_method,
-    #         use_cuda=True, #True for GPU, False for CPU
-    #         # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
-    #         # hyperparameter_save_dir=optuna_save_dir, # for MGK
-    #         # imputer="mean",
-    #         # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-    #         )
+        for targ in all_targets:
+            # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
+            main_structural_numerical(
+                dataset=w_data,
+                representation="SSK", #"ECFP" # MG #SSK
+                # radius=3,
+                # vector="count",
+                regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
+                # GPytorchMixMCMC
+                # GPMixMCMC
+                polymer_unit=polymer_unit,
+                target_features=[targ],  
+                feat_transformer="Standard",
+                target_transformer="Standard",
+                numerical_feats=feats,
+                hyperparameter_optimization=False,
+                kernel_type={
+                    "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+                    "count": args.K_count #"Matern32"   #args.K_count
+                    # "fp": "Graph", 
+                    # "count": "Matern32"
+                    },
+                kernel_mixing_method=args.Kernel_mixing_method,
+                use_cuda=True, #True for GPU, False for CPU
+                # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
+                # hyperparameter_save_dir=optuna_save_dir, # for MGK
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )
 
 
+    else:
+        ##### DEBUGGING #####
+        PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+        dataset_name ="Rg data with clusters aging imputed"
+        w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
 
-    ##### DEBUGGING #####
-    PAPER = "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-    dataset_name ="Rg data with clusters aging imputed"
-    w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
-
-    for targ in all_targets:
-        # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
-        main_structural_numerical(
-            dataset=w_data,
-            representation="SSK", #"ECFP" # MG #SSK
-            radius=2,
-            # vector="count",
-            regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
-            # GPytorchMixMCMC
-            # GPMixMCMC
-            polymer_unit=polymer_unit,
-            target_features=[targ],  
-            feat_transformer="Standard",
-            target_transformer="Standard",
-            numerical_feats=feats,
-            hyperparameter_optimization=False,
-            kernel_type={
-                "fp": "SSK", #Graph #"TanimotoRBF" #args.K_fp
-                "count": "RBF" #"Matern32"   #args.K_count
-                # "fp": "Graph", 
-                # "count": "Matern32"
-                },
-            kernel_mixing_method="product",
-            use_cuda=False, #True for GPU, False for CPU
-            # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
-            # hyperparameter_save_dir=optuna_save_dir, # for MGK
-            # imputer="mean",
-            # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
-            )
-        
+        for targ in all_targets:
+            # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
+            main_structural_numerical(
+                dataset=w_data,
+                representation="SSK", #"ECFP" # MG #SSK
+                radius=2,
+                # vector="count",
+                regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
+                # GPytorchMixMCMC
+                # GPMixMCMC
+                polymer_unit=polymer_unit,
+                target_features=[targ],  
+                feat_transformer="Standard",
+                target_transformer="Standard",
+                numerical_feats=feats,
+                hyperparameter_optimization=False,
+                kernel_type={
+                    "fp": "SSK", #Graph #"TanimotoRBF" #args.K_fp
+                    "count": "RBF" #"Matern32"   #args.K_count
+                    # "fp": "Graph", 
+                    # "count": "Matern32"
+                    },
+                kernel_mixing_method="product",
+                use_cuda=False, #True for GPU, False for CPU
+                # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
+                # hyperparameter_save_dir=optuna_save_dir, # for MGK
+                # imputer="mean",
+                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                )
+            
