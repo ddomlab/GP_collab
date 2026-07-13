@@ -179,7 +179,7 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
                                 }
             return fp_features, unrolling_featurs
         if fp == "HDF":
-            n_bits = radius_to_bits[radius]
+            n_bits = 64
             fp_features = [f"{unit} SMILES" for unit in poly_unit_name]
             unrolling_featurs = {
                                 "representation": fp,
@@ -298,7 +298,6 @@ def filter_dataset(
     if representation in {"Mordred", "MACCS", "ECFP", "HDF"}:
         structure_features: pd.DataFrame = unrolling_factory[
             representation](dataset[structure_feats], **unroll)
-
     else:
        # generalize for donor acceptor
         list_of_fp_features = []

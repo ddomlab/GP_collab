@@ -61,6 +61,32 @@ def unroll_MACCS(df: pd.DataFrame, col_names: list[str], unit_name:str,
     new_df: pd.DataFrame = new_df.astype('uint32')
     return new_df
 
+
+def replace_dummy_atoms_with_carbon(smiles: str) -> str:
+    """Convert RDKit dummy/wildcard atoms (*) into carbon atoms."""
+    from rdkit import Chem
+
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"Invalid SMILES: {smiles!r}")
+
+    if not any(atom.GetAtomicNum() == 0 for atom in mol.GetAtoms()):
+        return smiles
+
+    rwmol = Chem.RWMol(mol)
+    for atom in rwmol.GetAtoms():
+        if atom.GetAtomicNum() == 0:
+            atom.SetAtomicNum(6)
+            atom.SetIsotope(0)
+            atom.SetAtomMapNum(0)
+            atom.SetFormalCharge(0)
+            atom.SetNoImplicit(False)
+
+    converted_mol = rwmol.GetMol()
+    Chem.SanitizeMol(converted_mol)
+    return Chem.MolToSmiles(converted_mol, canonical=True)
+
+
 def unroll_HDF(
         df: pd.DataFrame,
         SMILES_columns: list[str],
@@ -81,11 +107,15 @@ def unroll_HDF(
                 seed=42,          # random seed for reproducible codebook generation
                 normalize=False,   
                 backend="auto",     # "auto" | "rust" | "numpy"
+                atom_types=["Br", "C", "Cl", "F", "I", "N", "O", "P", "S", "Si", "Se", "Li"],  # "atomic_number" | "atom_symbol"
                 )
 
     encoded_units: list[pd.DataFrame] = []
     for unit, smiles_col in zip(unit_name, SMILES_columns):
-        smiles = df[smiles_col].astype(str).tolist()
+        smiles = [
+            replace_dummy_atoms_with_carbon(smiles)
+            for smiles in df[smiles_col].astype(str)
+        ]
         encoded_smiles = enc.encode(smiles)
         column_names = [f"{unit}_HDF_{2 * radius}_{n_bit}" for n_bit in range(n_bits)]
         encoded_units.append(
