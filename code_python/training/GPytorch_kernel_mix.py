@@ -644,7 +644,7 @@ class GPytorchMAPRegressor:
                 if i < len(fp_keys):
                     fp_key = fp_keys[i]
 
-                    if self.kernel_type["fp"].lower() == "tanimoto":
+                    if self.kernel_type["fp"].lower() in {"tanimoto", "ssk"}:
                         summary[fp_key] = None
                     else:
                         summary.update(_extract_ls(sk, fp_key))
@@ -684,7 +684,7 @@ class GPytorchMAPRegressor:
 
                 fp_key = fp_keys[i]
 
-                if self.kernel_type["fp"].lower() == "tanimoto":
+                if self.kernel_type["fp"].lower() in {"tanimoto", "ssk"}:
                     summary[fp_key] = None
                 else:
                     summary.update(_extract_ls(sk, fp_key))
