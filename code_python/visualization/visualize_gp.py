@@ -21,6 +21,7 @@ import pingouin as pg
 from scipy.stats import kendalltau
 from sklearn.metrics import auc
 from scipy.stats import wilcoxon
+from sklearn.metrics._scorer import r2_scorer
 
 #docs
 from docx import Document
@@ -356,6 +357,9 @@ TIME_COLUMNS = [
     "Running time (GPU)",
     "Running time (CPU)",
 ]
+OOF_SCORE_COLUMNS = [
+    "OOF_R2",
+]
 FEATURE_DATA_COLUMNS = [
     "lengthscale",
     "feature_importance_MDI",
@@ -369,6 +373,7 @@ FEATURE_STABILITY_COLUMNS = [
 
 label_conversion_source = {
     "r2": "R²",
+    "OOF_R2": "R²",
     "rmse": "RMSE",
     "mae": "MAE",
     "nll": "NLL",
@@ -502,6 +507,87 @@ def _read_json(path: Optional[Path]) -> Optional[Dict[str, Any]]:
         return json.load(f)
 
 
+def _prediction_path_from_score_path(score_path: Optional[Path]) -> Optional[Path]:
+    if score_path is None:
+        return None
+
+    score_name = score_path.name
+    if not score_name.endswith("_scores.json"):
+        return None
+
+    prediction_stem = score_name.removesuffix("_scores.json") + "_predictions"
+    for suffix in [".csv", ".json"]:
+        prediction_path = ensure_long_path(score_path.with_name(f"{prediction_stem}{suffix}"))
+        if prediction_path.exists():
+            return prediction_path
+
+    return None
+
+
+def _prediction_target_column(
+    columns: List[str],
+    target: Optional[str] = None,
+) -> Optional[str]:
+    target_names = []
+    if target is not None:
+        target_names.extend([target, target.removeprefix("target_")])
+
+    for target_name in target_names:
+        if target_name in columns:
+            return target_name
+
+    non_prediction_columns = [
+        column
+        for column in columns
+        if not re.match(r"^seed_.+_y_(pred|std)$", str(column))
+    ]
+    return non_prediction_columns[0] if len(non_prediction_columns) == 1 else None
+
+
+def _pooled_oof_r2_score(
+    prediction_path: Optional[Path],
+    target: Optional[str] = None,
+) -> Optional[float]:
+    if prediction_path is None:
+        return None
+
+    if prediction_path.suffix.lower() != ".csv":
+        return None
+
+    prediction_df = pd.read_csv(prediction_path)
+    target_col = _prediction_target_column(prediction_df.columns.tolist(), target)
+    if target_col is None:
+        return None
+
+    pred_cols = [
+        column
+        for column in prediction_df.columns
+        if re.match(r"^seed_.+_y_pred$", str(column))
+    ]
+    if not pred_cols:
+        return None
+
+    y_true = pd.to_numeric(prediction_df[target_col], errors="coerce").to_numpy()
+    pooled_true = []
+    pooled_pred = []
+    for pred_col in pred_cols:
+        y_pred = pd.to_numeric(prediction_df[pred_col], errors="coerce").to_numpy()
+        valid_mask = np.isfinite(y_true) & np.isfinite(y_pred)
+        pooled_true.extend(y_true[valid_mask])
+        pooled_pred.extend(y_pred[valid_mask])
+
+    if len(pooled_true) < 2:
+        return None
+
+    return float(
+        r2_scorer._score_func(
+            np.asarray(pooled_true),
+            np.asarray(pooled_pred),
+            **r2_scorer._kwargs,
+        )
+    )
+
+
 def _metric_score(
     data: Optional[Dict[str, Any]],
     metric: str,
@@ -550,23 +636,31 @@ def _load_score_files(
     fp_k: Optional[str] = None,
     count_k: Optional[str] = None,
     mix_method: Optional[str] = None,
-) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-    cpu_data = _read_json(_find_score_path(paper_loc, model, fp_k, count_k, mix_method))
+) -> tuple[
+    Optional[Dict[str, Any]],
+    Optional[Dict[str, Any]],
+    Optional[Path],
+    Optional[Path],
+]:
+    cpu_path = _find_score_path(paper_loc, model, fp_k, count_k, mix_method)
+    cpu_data = _read_json(cpu_path)
+    gpu_path = None
     gpu_data = None
 
     if not _is_tree_model(model):
+        gpu_path = _find_score_path(
+            paper_loc,
+            model,
+            fp_k,
+            count_k,
+            mix_method,
+            use_gpu=True,
+        )
         gpu_data = _read_json(
-            _find_score_path(
-                paper_loc,
-                model,
-                fp_k,
-                count_k,
-                mix_method,
-                use_gpu=True,
-            )
+            gpu_path
         )
 
-    return cpu_data, gpu_data
+    return cpu_data, gpu_data, cpu_path, gpu_path
 
 
 def _metric_result_columns(score_metrics: List[str]) -> List[str]:
@@ -586,6 +680,7 @@ def _master_result_columns(score_metrics: List[str]) -> List[str]:
         + FEATURE_DATA_COLUMNS
         + FEATURE_STABILITY_COLUMNS
         + _metric_result_columns(score_metrics)
+        + OOF_SCORE_COLUMNS
         + TIME_COLUMNS
     )
 
@@ -649,9 +744,13 @@ def _score_row_values(
     gpu_data: Optional[Dict[str, Any]],
     score_metrics: List[str],
     prefer_gpu_scores: bool = False,
+    target: Optional[str] = None,
+    cpu_score_path: Optional[Path] = None,
+    gpu_score_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     scores = {}
     score_data = gpu_data if prefer_gpu_scores else cpu_data
+    score_path = gpu_score_path if prefer_gpu_scores else cpu_score_path
     for metric in score_metrics:
         scores.update({
             f"{metric}_avg": _metric_score(score_data, metric, "avg"),
@@ -660,6 +759,10 @@ def _score_row_values(
         })
 
     scores.update({
+        "OOF_R2": _pooled_oof_r2_score(
+            _prediction_path_from_score_path(score_path),
+            target,
+        ),
         "Running time (GPU)": None if gpu_data is None else gpu_data.get("run_time_sec"),
         "Running time (CPU)": None if cpu_data is None else cpu_data.get("run_time_sec"),
     })
@@ -676,12 +779,20 @@ def load_score(
 ) -> Dict[str, Any]:
     """Load score values for one master-results row."""
     score_metrics = DEFAULT_SCORE_METRICS if score_metrics is None else score_metrics
-    cpu_data, gpu_data = _load_score_files(paper_loc, model, fp_k, count_k, mix_method)
+    cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
+        paper_loc,
+        model,
+        fp_k,
+        count_k,
+        mix_method,
+    )
     return _score_row_values(
         cpu_data,
         gpu_data,
         score_metrics,
         prefer_gpu_scores=_uses_gpu_scores(model),
+        cpu_score_path=cpu_path,
+        gpu_score_path=gpu_path,
     )
 
 
@@ -717,11 +828,18 @@ def build_master_performance_data(
 
             for model in MODELS:
                 if _is_tree_model(model):
-                    cpu_data, gpu_data = _load_score_files(
+                    cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
                         paper_loc=paper_loc,
                         model=model,
                     )
-                    score_info = _score_row_values(cpu_data, gpu_data, score_metrics)
+                    score_info = _score_row_values(
+                        cpu_data,
+                        gpu_data,
+                        score_metrics,
+                        target=target,
+                        cpu_score_path=cpu_path,
+                        gpu_score_path=gpu_path,
+                    )
                     feature_info = _feature_row_values(cpu_data, gpu_data)
                     rows.append({
                         "paper": paper_name,
@@ -738,7 +856,7 @@ def build_master_performance_data(
                 if model == "MGK":
                     for count_k in count_kernels:
                         for mix in mixing_methods:
-                            cpu_data, gpu_data = _load_score_files(
+                            cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
                                 paper_loc=paper_loc,
                                 model=model,
                                 count_k=count_k,
@@ -749,6 +867,9 @@ def build_master_performance_data(
                                 gpu_data,
                                 score_metrics,
                                 prefer_gpu_scores=True,
+                                target=target,
+                                cpu_score_path=cpu_path,
+                                gpu_score_path=gpu_path,
                             )
                             feature_info = _feature_row_values(cpu_data, gpu_data)
                             rows.append({
@@ -764,7 +885,7 @@ def build_master_performance_data(
                     continue
 
                 for fp_k, count_k, mix in _kernel_configs_for_model(model):
-                    cpu_data, gpu_data = _load_score_files(
+                    cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
                         paper_loc=paper_loc,
                         model=model,
                         fp_k=fp_k,
@@ -776,6 +897,9 @@ def build_master_performance_data(
                         gpu_data,
                         score_metrics,
                         prefer_gpu_scores=_uses_gpu_scores(model),
+                        target=target,
+                        cpu_score_path=cpu_path,
+                        gpu_score_path=gpu_path,
                     )
                     feature_info = _feature_row_values(cpu_data, gpu_data)
                     rows.append({
@@ -886,10 +1010,39 @@ def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
 
 def _metric_higher_is_better(metric: str) -> bool:
     return (
-        str(metric).strip().lower() in {"r2", "rusc", "cvpp_ama"}
+        str(metric).strip().lower() in {"r2", "oof_r2", "rusc", "cvpp_ama"}
         or metric in FEATURE_STABILITY_COLUMNS
         or _is_feature_stability_metric(metric)
     )
+
+
+def run_topsis(
+    df: pd.DataFrame,
+    criteria_weights: Any,
+    criteria_types: Any,
+) -> pd.Series:
+    criteria_weights = np.asarray(criteria_weights, dtype=float)
+    criteria_types = np.asarray(criteria_types, dtype=int)
+
+    norm_df = df / (np.sqrt((df**2).sum(axis=0)) + 1e-12)
+    weighted_df = norm_df * criteria_weights
+
+    ideal_pos = np.where(
+        criteria_types == 1,
+        weighted_df.max(axis=0),
+        weighted_df.min(axis=0),
+    )
+    ideal_neg = np.where(
+        criteria_types == 1,
+        weighted_df.min(axis=0),
+        weighted_df.max(axis=0),
+    )
+
+    dist_pos = np.sqrt(((weighted_df - ideal_pos) ** 2).sum(axis=1))
+    dist_neg = np.sqrt(((weighted_df - ideal_neg) ** 2).sum(axis=1))
+
+    closeness = dist_neg / (dist_pos + dist_neg + 1e-12)
+    return pd.Series(closeness, index=df.index, name="TOPSIS_Score")
 
 
 def _mixing_method_label(value: Any) -> str:
@@ -2151,6 +2304,586 @@ def plot_hybridization_profile_comparison(
     return plot_df
 
 
+def plot_model_performance_TOPSIS(
+    df: pd.DataFrame,
+    metrics: List[str],
+    criteria_weights: Optional[List[float]] = None,
+    criteria_types: Optional[List[int]] = None,
+    model: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
+    include_kernel_config: bool = True,
+    dataset_as_experiment_points: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "TOPSIS score",
+    x_tick_rotation: int = 35,
+    y_lim: tuple = (0, 1.05),
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compare model configurations with TOPSIS using one or more metrics.
+
+    ``df`` should be the master ``result_df`` from
+    ``build_master_performance_data``. Each metric is averaged before TOPSIS
+    by exact model/FP/count/mixing configuration. Tree models, which have no
+    kernel columns, remain one row per model. TOPSIS is then run on that mean
+    table, with model configurations as alternatives and ``metrics`` as
+    criteria. ``include_kernel_config`` is kept only for backward-compatible
+    calls and does not collapse selected configurations.
+    """
+    if not metrics:
+        raise ValueError("metrics must contain at least one metric name.")
+
+    metrics = list(dict.fromkeys(metrics))
+    if criteria_weights is None:
+        criteria_weights = [1.0] * len(metrics)
+    if len(criteria_weights) != len(metrics):
+        raise ValueError("criteria_weights must have the same length as metrics.")
+
+    if criteria_types is None:
+        criteria_types = [
+            1 if _metric_higher_is_better(metric) else -1
+            for metric in metrics
+        ]
+    if len(criteria_types) != len(metrics):
+        raise ValueError("criteria_types must have the same length as metrics.")
+    if any(criteria_type not in {-1, 1} for criteria_type in criteria_types):
+        raise ValueError("criteria_types values must be 1 or -1.")
+
+    filtered_df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    config_group_cols = ["model", "fp kernel", "count kernel", "mixing method"]
+
+    metric_frames = []
+    for metric in metrics:
+        metric_df = _expand_master_scores_for_profile(
+            filtered_df,
+            metric=metric,
+            model=model,
+            fp_kernels=fp_kernels,
+            count_kernels=count_kernels,
+            mixing_methods=mixing_methods,
+            tree_feature_importance=tree_feature_importance,
+        )
+        if metric_df.empty:
+            raise ValueError(
+                f"No {metric} values found for model={model} with "
+                f"fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+                f"mixing_methods={mixing_methods}, and "
+                f"kernel_triples={kernel_triples}."
+            )
+
+        group_cols = [
+            column for column in config_group_cols if column in metric_df.columns
+        ]
+        if dataset_as_experiment_points:
+            dataset_group_cols = [
+                column
+                for column in ["dataset", "target"] + group_cols
+                if column in metric_df.columns
+            ]
+            metric_df = (
+                metric_df.groupby(dataset_group_cols, dropna=False, as_index=False)[metric]
+                .mean()
+                .copy()
+            )
+        metric_df = (
+            metric_df.groupby(group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .copy()
+        )
+        metric_df["metric"] = metric
+        metric_df["metric value"] = metric_df[metric]
+        metric_frames.append(metric_df[group_cols + ["metric", "metric value"]])
+
+    combined_df = pd.concat(metric_frames, ignore_index=True)
+    index_cols = [
+        column
+        for column in config_group_cols
+        if column in combined_df.columns
+    ]
+    missing_index_value = "__missing_kernel_config__"
+    pivot_df = combined_df.copy()
+    for column in index_cols:
+        pivot_df[column] = pivot_df[column].where(
+            pivot_df[column].notna(),
+            missing_index_value,
+        )
+    plot_df = (
+        pivot_df.pivot_table(
+            index=index_cols,
+            columns="metric",
+            values="metric value",
+            aggfunc="mean",
+        )
+        .reset_index()
+    )
+    plot_df = plot_df.replace(missing_index_value, np.nan)
+    missing_metrics = [metric for metric in metrics if metric not in plot_df.columns]
+    if missing_metrics:
+        raise ValueError(
+            "No TOPSIS values could be assembled for metrics: "
+            + ", ".join(missing_metrics)
+        )
+
+    plot_df = plot_df.dropna(subset=metrics).copy()
+    if len(plot_df) < 2:
+        raise ValueError(
+            "TOPSIS needs at least two model configurations with complete "
+            "mean metric values."
+        )
+
+    plot_df["TOPSIS alternative"] = plot_df.apply(
+        lambda row: _kernel_label(row, include_model=True),
+        axis=1,
+    )
+    plot_df["model configuration"] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+
+    topsis_input = plot_df.set_index("TOPSIS alternative")[metrics].astype(float)
+    topsis_scores = run_topsis(
+        topsis_input,
+        criteria_weights=criteria_weights,
+        criteria_types=criteria_types,
+    )
+    plot_df["TOPSIS_Score"] = plot_df["TOPSIS alternative"].map(topsis_scores)
+
+    selected_models = _selection_values(model) or plot_df["model"].drop_duplicates().tolist()
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+    config_order_cols = [
+        "model configuration",
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+    config_order = plot_df[config_order_cols].drop_duplicates(
+        subset=["model configuration"]
+    )
+    config_order["sort_key"] = config_order.apply(
+        lambda row: (
+            *_model_config_sort_key(row, model_order),
+            str(row.get("fp kernel", "")),
+            str(row.get("count kernel", "")),
+            str(row.get("mixing method", "")),
+        ),
+        axis=1,
+    )
+    order = (
+        config_order.sort_values("sort_key", kind="mergesort")["model configuration"]
+        .tolist()
+    )
+    order.extend(
+        label
+        for label in plot_df["model configuration"].drop_duplicates()
+        if label not in order
+    )
+
+    order_lookup = {label: idx for idx, label in enumerate(order)}
+    plot_df["_plot_order"] = plot_df["model configuration"].map(order_lookup)
+    plot_df = (
+        plot_df.sort_values("_plot_order", kind="stable")
+        .drop(columns="_plot_order")
+        .copy()
+    )
+    bar_palette = {
+        label: _model_type_color(
+            plot_df.loc[plot_df["model configuration"] == label, "model"].iloc[0]
+        )
+        for label in order
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(
+        data=plot_df,
+        x="model configuration",
+        y="TOPSIS_Score",
+        hue="model configuration",
+        order=order,
+        hue_order=order,
+        palette=bar_palette,
+        width=0.67,
+        dodge=False,
+        legend=False,
+        errorbar=None,
+        ax=ax,
+    )
+
+    if show_values:
+        for patch in ax.patches:
+            height = patch.get_height()
+            if np.isnan(height):
+                continue
+            ax.text(
+                patch.get_x() + patch.get_width() / 2,
+                height + 0.01,
+                f"{height:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=fontsize - 2,
+            )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_ylim(*y_lim)
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            metric_name = "_".join(metrics)
+            file_name = f"{model_name}_{metric_name}_model_performance_TOPSIS.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return plot_df
+
+
+def plot_hybridization_topsis_comparison(
+    df: pd.DataFrame,
+    metrics: List[str],
+    criteria_weights: Optional[List[float]] = None,
+    criteria_types: Optional[List[int]] = None,
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
+    dataset_as_experiment_points: bool = True,
+    figsize: tuple = (5, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Hybridization method",
+    y_label: str = "TOPSIS score",
+    x_tick_rotation: int = 0,
+    y_lim: tuple = (0, 1.05),
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compare hybridization methods with TOPSIS using one or more metrics.
+
+    ``df`` should be the master ``result_df`` from
+    ``build_master_performance_data``. Each metric is averaged for every exact
+    model/FP/count/mixing configuration first. TOPSIS is then run on that
+    configuration-mean table, with configurations as alternatives and
+    ``metrics`` as the criteria. The bar plot summarizes those configuration
+    TOPSIS scores by hybridization method.
+
+    ``criteria_weights`` must match ``metrics``; equal weights are used when it
+    is omitted. ``criteria_types`` uses 1 for benefit criteria and -1 for cost
+    criteria. When omitted, directions are inferred from
+    ``_metric_higher_is_better``.
+    """
+    if not metrics:
+        raise ValueError("metrics must contain at least one metric name.")
+
+    metrics = list(dict.fromkeys(metrics))
+    if criteria_weights is None:
+        criteria_weights = [1.0] * len(metrics)
+    if len(criteria_weights) != len(metrics):
+        raise ValueError("criteria_weights must have the same length as metrics.")
+
+    if criteria_types is None:
+        criteria_types = [
+            1 if _metric_higher_is_better(metric) else -1
+            for metric in metrics
+        ]
+    if len(criteria_types) != len(metrics):
+        raise ValueError("criteria_types must have the same length as metrics.")
+    if any(criteria_type not in {-1, 1} for criteria_type in criteria_types):
+        raise ValueError("criteria_types values must be 1 or -1.")
+
+    filtered_df = _filter_kernel_triples(df, kernel_triples, keep_missing=False)
+    metric_frames = []
+    config_group_cols = [
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+
+    for metric in metrics:
+        metric_df = _expand_master_scores_for_profile(
+            filtered_df,
+            metric=metric,
+            model=model,
+            fp_kernels=fp_kernels,
+            count_kernels=count_kernels,
+            mixing_methods=mixing_methods,
+            tree_feature_importance=tree_feature_importance,
+        )
+        metric_df = metric_df.dropna(
+            subset=["fp kernel", "count kernel", "mixing method"]
+        ).copy()
+        if metric_df.empty:
+            raise ValueError(
+                f"No {metric} values found for model={model} with "
+                f"fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+                f"mixing_methods={mixing_methods}, and "
+                f"kernel_triples={kernel_triples}."
+            )
+
+        group_cols = [
+            column for column in config_group_cols if column in metric_df.columns
+        ]
+        if dataset_as_experiment_points:
+            dataset_group_cols = [
+                column
+                for column in ["dataset", "target"] + group_cols
+                if column in metric_df.columns
+            ]
+            metric_df = (
+                metric_df.groupby(dataset_group_cols, dropna=False, as_index=False)[metric]
+                .mean()
+                .copy()
+            )
+        metric_df = (
+            metric_df.groupby(group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .copy()
+        )
+        metric_df["metric"] = metric
+        metric_df["metric value"] = metric_df[metric]
+        metric_frames.append(metric_df[group_cols + ["metric", "metric value"]])
+
+    combined_df = pd.concat(metric_frames, ignore_index=True)
+    index_cols = [
+        column
+        for column in config_group_cols
+        if column in combined_df.columns
+    ]
+    metric_matrix_df = (
+        combined_df.pivot_table(
+            index=index_cols,
+            columns="metric",
+            values="metric value",
+            aggfunc="mean",
+        )
+        .reset_index()
+    )
+    missing_metrics = [metric for metric in metrics if metric not in metric_matrix_df.columns]
+    if missing_metrics:
+        raise ValueError(
+            "No TOPSIS values could be assembled for metrics: "
+            + ", ".join(missing_metrics)
+        )
+
+    plot_df = metric_matrix_df.dropna(subset=metrics).copy()
+    if plot_df.empty or plot_df["mixing method"].nunique(dropna=True) < 2:
+        raise ValueError(
+            "TOPSIS needs at least two hybridization methods with complete "
+            "configuration-mean metric values."
+        )
+    plot_df["configuration"] = plot_df.apply(
+        lambda row: _kernel_label(row, include_model=True),
+        axis=1,
+    )
+    topsis_input = plot_df.set_index("configuration")[metrics].astype(float)
+    topsis_scores = run_topsis(
+        topsis_input,
+        criteria_weights=criteria_weights,
+        criteria_types=criteria_types,
+    )
+    plot_df["TOPSIS_Score"] = plot_df["configuration"].map(topsis_scores)
+    plot_df["hybridization method"] = plot_df["mixing method"].map(
+        _mixing_method_label
+    )
+
+    selected_models = _selection_values(model)
+    include_model = selected_models is None or len(selected_models) > 1
+    x_col = "model hybridization method" if include_model else "hybridization method"
+    if include_model:
+        plot_df[x_col] = (
+            plot_df["model"].astype(str)
+            + "\n"
+            + plot_df["hybridization method"].astype(str)
+        )
+
+    selected_mixes = _selection_values(mixing_methods) or globals()["mixing_methods"]
+    selected_models = selected_models or plot_df["model"].drop_duplicates().tolist()
+    method_order = {str(method).lower(): idx for idx, method in enumerate(selected_mixes)}
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+
+    config_order = plot_df[[x_col, "model", "mixing method"]].drop_duplicates(subset=[x_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: (
+            *_model_order_sort_key(row["model"], model_order),
+            method_order.get(str(row["mixing method"]).lower(), len(method_order)),
+            str(row["mixing method"]),
+        ),
+        axis=1,
+    )
+    config_order = config_order.sort_values("sort_key", kind="mergesort")
+    order = config_order[x_col].tolist()
+    order.extend(label for label in plot_df[x_col].drop_duplicates() if label not in order)
+
+    summary_group_cols = list(dict.fromkeys([
+        x_col,
+        "hybridization method",
+        "model",
+        "mixing method",
+    ]))
+    summary_df = (
+        plot_df.groupby(summary_group_cols, dropna=False)["TOPSIS_Score"]
+        .agg(["mean", "std", "count"])
+        .reset_index()
+        .rename(columns={
+            "mean": "TOPSIS_Score_mean",
+            "std": "TOPSIS_Score_std",
+            "count": "TOPSIS_Score_count",
+        })
+    )
+    summary_df["TOPSIS_Score_std"] = summary_df["TOPSIS_Score_std"].fillna(0.0)
+
+    order_lookup = {label: idx for idx, label in enumerate(order)}
+    summary_df["_plot_order"] = summary_df[x_col].map(order_lookup)
+    summary_df = (
+        summary_df.sort_values("_plot_order", kind="stable")
+        .drop(columns="_plot_order")
+        .copy()
+    )
+    plot_df = plot_df.join(
+        summary_df.set_index(x_col)[
+            ["TOPSIS_Score_mean", "TOPSIS_Score_std", "TOPSIS_Score_count"]
+        ],
+        on=x_col,
+    )
+
+    fallback_colors = sns.color_palette("Set2", n_colors=max(len(order), 1))
+    bar_palette = {}
+    for idx, (_, row) in enumerate(config_order.iterrows()):
+        method = str(row["mixing method"])
+        bar_palette[row[x_col]] = HYBRIDIZATION_METHOD_COLORS.get(
+            method,
+            fallback_colors[idx % len(fallback_colors)],
+        )
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(
+        data=summary_df,
+        x=x_col,
+        y="TOPSIS_Score_mean",
+        hue=x_col,
+        order=order,
+        hue_order=order,
+        palette=bar_palette,
+        width=0.67,
+        dodge=False,
+        legend=False,
+        errorbar=None,
+        ax=ax,
+    )
+
+    summary_by_label = summary_df.set_index(x_col)
+    max_label_y = None
+    for patch, label in zip(ax.patches, order):
+        if label not in summary_by_label.index:
+            continue
+        mean_value = float(summary_by_label.loc[label, "TOPSIS_Score_mean"])
+        std_value = float(summary_by_label.loc[label, "TOPSIS_Score_std"])
+        x_position = patch.get_x() + patch.get_width() / 2
+        ax.errorbar(
+            x_position,
+            mean_value,
+            yerr=std_value,
+            fmt="none",
+            ecolor="black",
+            elinewidth=1.4,
+            capsize=4,
+            capthick=1.4,
+            zorder=4,
+        )
+        label_y = mean_value + std_value + 0.015
+        max_label_y = label_y if max_label_y is None else max(max_label_y, label_y)
+
+    if show_values:
+        for patch, label in zip(ax.patches, order):
+            if label not in summary_by_label.index:
+                continue
+            mean_value = float(summary_by_label.loc[label, "TOPSIS_Score_mean"])
+            std_value = float(summary_by_label.loc[label, "TOPSIS_Score_std"])
+            ax.text(
+                patch.get_x() + patch.get_width() / 2,
+                mean_value + std_value + 0.015,
+                f"{mean_value:.2f} +/- {std_value:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=fontsize - 2,
+            )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_ylim(*y_lim)
+    if max_label_y is not None:
+        bottom, top = ax.get_ylim()
+        ax.set_ylim(bottom, max(top, max_label_y + 0.08))
+    plt.tight_layout()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            metric_name = "_".join(metrics)
+            file_name = f"{model_name}_{metric_name}_hybridization_topsis_barplot.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
 def _rank_percentile_matrix(
     score_matrix: pd.DataFrame,
     higher_is_better: bool,
@@ -3101,6 +3834,45 @@ def plot_profile_auc_heatmap(
     return heatmap_matrix
 
 
+def _datapoint_lookup() -> Dict[tuple[str, str], Any]:
+    datapoint_lookup = {}
+    for paper_name, paper_info in PAPER.items():
+        targets = paper_info.get("target", [])
+        n_datapoints = paper_info.get("n_datapoints", [])
+        if len(targets) != len(n_datapoints):
+            raise ValueError(
+                f"PAPER entry for {paper_name!r} has {len(targets)} targets "
+                f"but {len(n_datapoints)} datapoint counts."
+            )
+        for target, n_data in zip(targets, n_datapoints):
+            datapoint_lookup[(paper_name, target)] = n_data
+
+    return datapoint_lookup
+
+
+def _add_datapoint_counts(plot_df: pd.DataFrame) -> pd.DataFrame:
+    datapoint_lookup = _datapoint_lookup()
+    plot_df = plot_df.copy()
+    plot_df["n datapoints"] = plot_df.apply(
+        lambda row: datapoint_lookup.get((row["dataset"], row["target"])),
+        axis=1,
+    )
+    missing_size = plot_df["n datapoints"].isna()
+    if missing_size.any():
+        missing_pairs = (
+            plot_df.loc[missing_size, ["dataset", "target"]]
+            .drop_duplicates()
+            .apply(lambda row: f"{row['dataset']} / {row['target']}", axis=1)
+            .tolist()
+        )
+        raise ValueError(
+            "Missing datapoint counts in PAPER for: "
+            + "; ".join(missing_pairs)
+        )
+    plot_df["n datapoints"] = pd.to_numeric(plot_df["n datapoints"])
+    return plot_df
+
+
 def plot_model_performance_vs_data_number(
     df: pd.DataFrame,
     metric: str = "r2",
@@ -3130,18 +3902,6 @@ def plot_model_performance_vs_data_number(
     directly. For GP models, pass ``kernel_triples`` as one triple or a list of
     ``(fp_kernel, count_kernel, mixing_method)`` triples.
     """
-    datapoint_lookup = {}
-    for paper_name, paper_info in PAPER.items():
-        targets = paper_info.get("target", [])
-        n_datapoints = paper_info.get("n_datapoints", [])
-        if len(targets) != len(n_datapoints):
-            raise ValueError(
-                f"PAPER entry for {paper_name!r} has {len(targets)} targets "
-                f"but {len(n_datapoints)} datapoint counts."
-            )
-        for target, n_data in zip(targets, n_datapoints):
-            datapoint_lookup[(paper_name, target)] = n_data
-
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
     plot_df = _expand_master_scores_for_profile(
@@ -3155,23 +3915,7 @@ def plot_model_performance_vs_data_number(
             f"with kernel_triples={kernel_triples}."
         )
 
-    plot_df["n datapoints"] = plot_df.apply(
-        lambda row: datapoint_lookup.get((row["dataset"], row["target"])),
-        axis=1,
-    )
-    missing_size = plot_df["n datapoints"].isna()
-    if missing_size.any():
-        missing_pairs = (
-            plot_df.loc[missing_size, ["dataset", "target"]]
-            .drop_duplicates()
-            .apply(lambda row: f"{row['dataset']} / {row['target']}", axis=1)
-            .tolist()
-        )
-        raise ValueError(
-            "Missing datapoint counts in PAPER for: "
-            + "; ".join(missing_pairs)
-        )
-    plot_df["n datapoints"] = pd.to_numeric(plot_df["n datapoints"])
+    plot_df = _add_datapoint_counts(plot_df)
 
     hue_col = "model configuration"
     plot_df[hue_col] = plot_df.apply(
@@ -3292,6 +4036,264 @@ def plot_model_performance_vs_data_number(
     return plot_df
 
 
+def plot_model_average_performance_vs_data_number(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    kernel_triples: Any = None,
+    include_kernel_config: bool = True,
+    dataset_as_experiment_points: bool = True,
+    figsize: tuple = (10, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Number of datapoints",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 0,
+    y_lim: Optional[tuple] = None,
+    log_y: bool = False,
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Make a bar plot of average model performance by dataset-target size.
+
+    This follows ``plot_model_performance_vs_data_number`` for metric expansion,
+    model/kernel filtering, and datapoint lookup, then averages the selected
+    metric for each ``n datapoints`` and model configuration before plotting.
+    """
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
+    plot_df = _expand_master_scores_for_profile(
+        df,
+        metric=metric,
+        model=model,
+    )
+    if plot_df.empty:
+        raise ValueError(
+            f"No {metric} values found for model={model} "
+            f"with kernel_triples={kernel_triples}."
+        )
+
+    plot_df = _add_datapoint_counts(plot_df)
+    hue_col = "model configuration"
+    plot_df[hue_col] = plot_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+
+    if dataset_as_experiment_points:
+        dataset_group_cols = [
+            "dataset",
+            "target",
+            "n datapoints",
+            hue_col,
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+        ]
+        plot_df = (
+            plot_df.groupby(dataset_group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .copy()
+        )
+
+    summary_group_cols = [
+        "n datapoints",
+        hue_col,
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+    summary_df = (
+        plot_df.groupby(summary_group_cols, dropna=False)[metric]
+        .agg(["mean", "std", "count"])
+        .reset_index()
+        .rename(columns={
+            "mean": f"{metric}_mean",
+            "std": f"{metric}_std",
+            "count": f"{metric}_count",
+        })
+    )
+    summary_df[f"{metric}_std"] = summary_df[f"{metric}_std"].fillna(0.0)
+
+    selected_models = _selection_values(model) or MODELS
+    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
+    config_order = summary_df[
+        [hue_col, "model", "fp kernel", "count kernel", "mixing method"]
+    ].drop_duplicates(subset=[hue_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    hue_order = config_order.sort_values("sort_key", kind="mergesort")[hue_col].tolist()
+    data_number_order = sorted(summary_df["n datapoints"].dropna().unique())
+    order_lookup = {label: idx for idx, label in enumerate(hue_order)}
+    summary_df["_plot_order"] = summary_df[hue_col].map(order_lookup)
+    summary_df = (
+        summary_df.sort_values(["n datapoints", "_plot_order"], kind="stable")
+        .drop(columns="_plot_order")
+        .copy()
+    )
+
+    palette = {
+        row[hue_col]: INDIVIDUAL_MODEL_COLORS.get(
+            row[hue_col],
+            INDIVIDUAL_MODEL_COLORS.get(
+                str(row["model"]),
+                _model_type_color(row["model"]),
+            ),
+        )
+        for _, row in config_order.iterrows()
+        if row[hue_col] in hue_order
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(
+        data=summary_df,
+        x="n datapoints",
+        y=f"{metric}_mean",
+        hue=hue_col,
+        order=data_number_order,
+        hue_order=hue_order,
+        palette=palette,
+        width=0.72,
+        errorbar=None,
+        ax=ax,
+    )
+
+    summary_lookup = (
+        summary_df.groupby(["n datapoints", hue_col], dropna=False)
+        .agg({
+            f"{metric}_mean": "mean",
+            f"{metric}_std": "mean",
+        })
+    )
+    max_label_y = None
+    for hue_idx, container in enumerate(ax.containers[:len(hue_order)]):
+        if hue_idx >= len(hue_order):
+            continue
+        hue_value = hue_order[hue_idx]
+        for data_idx, patch in enumerate(container.patches):
+            if data_idx >= len(data_number_order):
+                continue
+            data_value = data_number_order[data_idx]
+            if (data_value, hue_value) not in summary_lookup.index:
+                continue
+
+            mean_value = float(summary_lookup.loc[(data_value, hue_value), f"{metric}_mean"])
+            std_value = float(summary_lookup.loc[(data_value, hue_value), f"{metric}_std"])
+            if np.isnan(mean_value):
+                continue
+
+            x_position = patch.get_x() + patch.get_width() / 2
+            if std_value > 0:
+                ax.errorbar(
+                    x_position,
+                    mean_value,
+                    yerr=std_value,
+                    fmt="none",
+                    ecolor="black",
+                    elinewidth=1.1,
+                    capsize=3,
+                    capthick=1.1,
+                    zorder=4,
+                )
+
+            label_y = mean_value + (std_value if std_value > 0 else 0) + 0.01
+            max_label_y = label_y if max_label_y is None else max(max_label_y, label_y)
+            if show_values:
+                bottom, top = ax.get_ylim()
+                value_y = bottom + 0.02 * (top - bottom)
+                ax.text(
+                    x_position,
+                    value_y,
+                    f"{mean_value:.2f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=max(fontsize - 10, 4),
+                    fontweight="bold",
+                    color="white",
+                    rotation=90,
+                )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label or f"Mean {metric}", fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(data_number_order)))
+    ax.set_xticklabels(
+        [
+            f"{int(value)}" if float(value).is_integer() else f"{value:g}"
+            for value in data_number_order
+        ],
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    if log_y:
+        positive_values = pd.to_numeric(summary_df[f"{metric}_mean"], errors="coerce")
+        if (positive_values.dropna() <= 0).any():
+            raise ValueError("log_y=True requires all plotted values to be positive.")
+        ax.set_yscale("log")
+
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    elif log_y:
+        ax.set_ylim(
+            bottom=pd.to_numeric(summary_df[f"{metric}_mean"], errors="coerce").min() * 0.8
+        )
+    elif str(metric).strip().lower() in {"r2", "oof_r2"} or _is_feature_stability_metric(metric):
+        ax.set_ylim(0, 1.05)
+    elif is_scalar_metric or not _metric_higher_is_better(metric):
+        ax.set_ylim(bottom=0)
+    if max_label_y is not None:
+        bottom, top = ax.get_ylim()
+        ax.set_ylim(bottom, max(top, max_label_y + 0.05))
+
+    legend = ax.get_legend()
+    if legend is not None:
+        handles, labels = ax.get_legend_handles_labels()
+        legend.remove()
+        legend = ax.legend(
+            handles,
+            labels,
+            loc="lower center",
+            bbox_to_anchor=(0.5, 1.02),
+            ncol=max(1, min(3, len(labels))),
+            frameon=False,
+            title=None,
+        )
+        for text in legend.get_texts():
+            text.set_fontsize(fontsize - 3)
+
+    plt.tight_layout(rect=(0, 0, 1, 0.92))
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(str(value) for value in (_selection_values(model) or ["all"]))
+            file_name = f"{model_name}_{metric}_average_performance_vs_data_number.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return summary_df
+
+
 
 
 
@@ -3367,24 +4369,24 @@ if __name__ == "__main__":
     # )
 
 
-    plot_model_comparison(
-        df=result_df,
-        metric="cvpp_ama",
-        model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC","MGK"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ("Graph", "Matern32", "product"),
-            ],
-        y_label="AMA",
-        fontsize=17,
-        show=True,
-        y_lim=(0,.8),
-        figsize=(6, 5),
-        # log_y=True,
-        save_dir=HERE / "result_analysis",
-        file_name="cvpp_ama_distributional_model_comparison.png",
-    )
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC","MGK"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Graph", "Matern32", "product"),
+    #         ],
+    #     y_label="R²",
+    #     fontsize=17,
+    #     show=True,
+    #     y_lim=(0,1.05),
+    #     figsize=(6, 5),
+    #     # log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="OOF_R2_distributional_model_comparison.png",
+    # )
 
     # plot_hybridization_method_comparison(
     #     df=result_df,
@@ -3413,8 +4415,6 @@ if __name__ == "__main__":
     #     file_name="r2_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-
-    
     # plot_hybridization_profile_comparison(
     # prof_results=hybrid_prof_results,
     # model="GPytorchMAP",
@@ -3426,26 +4426,79 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
     # )
 
+    # plot_hybridization_topsis_comparison(
+    #     df=result_df,
+    #     metrics=["OOF_R2"],
+    #     criteria_weights=[1],
+    #     model="GPytorchMAP",
+    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     show=True,
+    #     fontsize=17,
+    #     figsize=(5, 6),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="OOF_R2_TOPSIS_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
+    # )
+    
+
+
     # plot_model_performance_vs_data_number(
     #     df=result_df,
-    #     metric="cvpp_ama",
+    #     metric="OOF_R2",
     #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
     #         ("Graph", "Matern32", "product"),
     #     ],
-    #     y_label=label_conversion_source["cvpp_ama"],
+    #     y_label=label_conversion_source["OOF_R2"],
     #     x_label="# Datapoints",
     #     fontsize=18,
-    #     y_lim=(0, .5),
+    #     y_lim=(0, 1.05),
     #     # log_y=True,
     #     figsize=(9, 5),
     #     show=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="cvpp_ama_model_performance_vs_data_number.png",
+    #     file_name="OOF_R2_model_performance_vs_data_number.png",
     # )
 
+
+    plot_model_average_performance_vs_data_number(
+        df=result_df,
+        metric="OOF_R2",
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "product"),
+            ("TanimotoMatern32", "Matern32", "product"),
+            ("Graph", "Matern32", "product"),
+        ],
+        y_label=label_conversion_source["OOF_R2"],
+        x_label="# Datapoints",
+        fontsize=18,
+        y_lim=(0, 1.05),
+        # log_y=True,
+        figsize=(9, 7),
+        show=True,
+        save_dir=HERE / "result_analysis",
+        file_name="OOF_R2_model_performance_vs_data_number.png",
+    )
+
+
+    # plot_model_performance_TOPSIS(
+    #     df=result_df,
+    #     metrics=["OOF_R2"],
+    #     criteria_weights=[1],
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
+    #     kernel_triples=[
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Graph", "Matern32", "product"),
+    #     ],
+    #     show=True,
+    #     fontsize=17,
+    #     figsize=(5, 5),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name=f"OOF_R2_TOPSIS_model_comparison.png",
+    # )
 
     # plot_model_feature_importance_stability_comparison(
     #     result_df,
