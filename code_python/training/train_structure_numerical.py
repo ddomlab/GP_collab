@@ -91,9 +91,9 @@ if __name__ == "__main__":
             # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
             main_structural_numerical(
                 dataset=w_data,
-                representation="SSK", #"ECFP" # MG #SSK
-                # radius=3,
-                # vector="count",
+                representation="ECFP", #"ECFP" # MG #SSK
+                radius=3,
+                vector="count",
                 regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
                 # GPytorchMixMCMC
                 # GPMixMCMC
@@ -103,14 +103,14 @@ if __name__ == "__main__":
                 target_transformer="Standard",
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                kernel_type={
-                    "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-                    "count": args.K_count #"Matern32"   #args.K_count
-                    # "fp": "Graph", 
-                    # "count": "Matern32"
-                    },
-                kernel_mixing_method=args.Kernel_mixing_method,
-                use_cuda=True, #True for GPU, False for CPU
+                # kernel_type={
+                #     "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
+                #     "count": args.K_count #"Matern32"   #args.K_count
+                #     # "fp": "Graph", 
+                #     # "count": "Matern32"
+                #     },
+                # kernel_mixing_method=args.Kernel_mixing_method,
+                use_cuda=False, #True for GPU, False for CPU
                 # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
                 # hyperparameter_save_dir=optuna_save_dir, # for MGK
                 # imputer="mean",

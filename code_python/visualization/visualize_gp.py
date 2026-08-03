@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Any, Dict
 import os 
 import re
+import sys
 
 # visualization imports
 # import cmcrameri.cm as cmc
@@ -36,6 +37,19 @@ set_plot_style()
 HERE = Path(__file__).resolve().parent
 # DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
+TRAINING = HERE.parent / "training"
+if str(TRAINING) not in sys.path:
+    sys.path.insert(0, str(TRAINING))
+
+from utils_uncertainty_calibration import (
+    compute_Cv,
+    compute_RUSC,
+    compute_cdf_ama,
+    compute_cvpp_ama,
+    compute_ece,
+    compute_sharpness,
+    gaussian_nll,
+)
 
 
 
@@ -357,8 +371,19 @@ TIME_COLUMNS = [
     "Running time (GPU)",
     "Running time (CPU)",
 ]
+OOF_SCORE_METRICS = [
+    "r2",
+    "ece",
+    "cvpp_ama",
+    "cdf_ama",
+    "RUSC",
+    "nll",
+    "Cv",
+    "sharpness",
+]
 OOF_SCORE_COLUMNS = [
-    "OOF_R2",
+    "OOF_R2" if metric == "r2" else f"OOF_{metric}"
+    for metric in OOF_SCORE_METRICS
 ]
 FEATURE_DATA_COLUMNS = [
     "lengthscale",
@@ -377,8 +402,19 @@ label_conversion_source = {
     "rmse": "RMSE",
     "mae": "MAE",
     "nll": "NLL",
+    "OOF_nll": "NLL",
     "cvpp_ama": "AMA",
-    "ece": "ECE"
+    "OOF_cvpp_ama": "AMA",
+    "cdf_ama": "CDF AMA",
+    "OOF_cdf_ama": "CDF AMA",
+    "ece": "ECE",
+    "OOF_ece": "ECE",
+    "RUSC": "RUSC",
+    "OOF_RUSC": "RUSC",
+    "Cv": "Cv",
+    "OOF_Cv": "Cv",
+    "sharpness": "Sharpness",
+    "OOF_sharpness": "Sharpness",
 }
 
 # def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
@@ -544,48 +580,139 @@ def _prediction_target_column(
     return non_prediction_columns[0] if len(non_prediction_columns) == 1 else None
 
 
-def _pooled_oof_r2_score(
+def _oof_metric_column(metric: str) -> str:
+    return "OOF_R2" if metric == "r2" else f"OOF_{metric}"
+
+
+def _prediction_seed_pairs(columns: List[str]) -> List[tuple[str, Optional[str]]]:
+    pairs = []
+    column_set = set(columns)
+    for pred_col in columns:
+        match = re.match(r"^(seed_.+)_y_pred$", str(pred_col))
+        if not match:
+            continue
+        std_col = f"{match.group(1)}_y_std"
+        pairs.append((pred_col, std_col if std_col in column_set else None))
+    return pairs
+
+
+def _pooled_oof_arrays(
     prediction_path: Optional[Path],
     target: Optional[str] = None,
-) -> Optional[float]:
+) -> tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
     if prediction_path is None:
-        return None
+        return None, None, None
 
     if prediction_path.suffix.lower() != ".csv":
-        return None
+        return None, None, None
 
     prediction_df = pd.read_csv(prediction_path)
     target_col = _prediction_target_column(prediction_df.columns.tolist(), target)
     if target_col is None:
-        return None
+        return None, None, None
 
-    pred_cols = [
-        column
-        for column in prediction_df.columns
-        if re.match(r"^seed_.+_y_pred$", str(column))
-    ]
-    if not pred_cols:
-        return None
+    seed_pairs = _prediction_seed_pairs(prediction_df.columns.tolist())
+    if not seed_pairs:
+        return None, None, None
 
     y_true = pd.to_numeric(prediction_df[target_col], errors="coerce").to_numpy()
     pooled_true = []
     pooled_pred = []
-    for pred_col in pred_cols:
+    pooled_std = []
+    has_std = False
+    for pred_col, std_col in seed_pairs:
         y_pred = pd.to_numeric(prediction_df[pred_col], errors="coerce").to_numpy()
+        if std_col is None:
+            y_std = np.full_like(y_pred, np.nan, dtype=float)
+        else:
+            y_std = pd.to_numeric(prediction_df[std_col], errors="coerce").to_numpy()
+            has_std = True
+
         valid_mask = np.isfinite(y_true) & np.isfinite(y_pred)
         pooled_true.extend(y_true[valid_mask])
         pooled_pred.extend(y_pred[valid_mask])
+        pooled_std.extend(y_std[valid_mask])
 
     if len(pooled_true) < 2:
+        return None, None, None
+
+    return (
+        np.asarray(pooled_true, dtype=float),
+        np.asarray(pooled_pred, dtype=float),
+        np.asarray(pooled_std, dtype=float) if has_std else None,
+    )
+
+
+def _safe_oof_metric(
+    metric: str,
+    y_true: Optional[np.ndarray],
+    y_pred: Optional[np.ndarray],
+    y_std: Optional[np.ndarray],
+) -> Optional[float]:
+    if y_true is None or y_pred is None:
         return None
 
-    return float(
-        r2_scorer._score_func(
-            np.asarray(pooled_true),
-            np.asarray(pooled_pred),
-            **r2_scorer._kwargs,
-        )
-    )
+    try:
+        if metric == "r2":
+            value = r2_scorer._score_func(
+                y_true,
+                y_pred,
+                **r2_scorer._kwargs,
+            )
+        elif metric in {"Cv", "sharpness"}:
+            if y_std is None:
+                return None
+            std_mask = np.isfinite(y_std)
+            if std_mask.sum() < 2:
+                return None
+            value = (
+                compute_Cv(y_std[std_mask])
+                if metric == "Cv"
+                else compute_sharpness(y_std[std_mask])
+            )
+        else:
+            if y_std is None:
+                return None
+            valid_mask = np.isfinite(y_true) & np.isfinite(y_pred) & np.isfinite(y_std)
+            if valid_mask.sum() < 2:
+                return None
+            metric_funcs = {
+                "ece": compute_ece,
+                "cvpp_ama": compute_cvpp_ama,
+                "cdf_ama": compute_cdf_ama,
+                "RUSC": compute_RUSC,
+                "nll": gaussian_nll,
+            }
+            value = metric_funcs[metric](
+                y_true[valid_mask],
+                y_pred[valid_mask],
+                y_std[valid_mask],
+            )
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        return None
+
+    return None if pd.isna(value) else float(value)
+
+
+def _pooled_oof_scores(
+    prediction_path: Optional[Path],
+    target: Optional[str] = None,
+) -> Dict[str, Optional[float]]:
+    y_true, y_pred, y_std = _pooled_oof_arrays(prediction_path, target)
+    return {
+        _oof_metric_column(metric): _safe_oof_metric(metric, y_true, y_pred, y_std)
+        for metric in OOF_SCORE_METRICS
+    }
+
+
+def _pooled_oof_r2_score(
+    prediction_path: Optional[Path],
+    target: Optional[str] = None,
+) -> Optional[float]:
+    return _pooled_oof_scores(
+        prediction_path,
+        target,
+    ).get("OOF_R2")
 
 
 def _metric_score(
@@ -758,11 +885,13 @@ def _score_row_values(
             f"{metric}_seed_fold_scores": _seed_fold_scores(score_data, metric),
         })
 
-    scores.update({
-        "OOF_R2": _pooled_oof_r2_score(
+    scores.update(
+        _pooled_oof_scores(
             _prediction_path_from_score_path(score_path),
             target,
-        ),
+        )
+    )
+    scores.update({
         "Running time (GPU)": None if gpu_data is None else gpu_data.get("run_time_sec"),
         "Running time (CPU)": None if cpu_data is None else cpu_data.get("run_time_sec"),
     })
@@ -1010,7 +1139,8 @@ def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
 
 def _metric_higher_is_better(metric: str) -> bool:
     return (
-        str(metric).strip().lower() in {"r2", "oof_r2", "rusc", "cvpp_ama"}
+        str(metric).strip().lower()
+        in {"r2", "oof_r2", "rusc", "oof_rusc", "cvpp_ama", "oof_cvpp_ama"}
         or metric in FEATURE_STABILITY_COLUMNS
         or _is_feature_stability_metric(metric)
     )
@@ -3785,7 +3915,7 @@ def plot_profile_auc_heatmap(
         ax=ax,
         mask=heatmap_matrix.isnull(),
         linewidths=0.5,
-        linecolor="white",
+        linecolor="black",
         xticklabels=x_tick_labels,
         yticklabels=heatmap_matrix.index.tolist(),
         annot_kws={"fontsize": fontsize},
@@ -4161,7 +4291,7 @@ def plot_model_average_performance_vs_data_number(
         order=data_number_order,
         hue_order=hue_order,
         palette=palette,
-        width=0.72,
+        width=0.9,
         errorbar=None,
         ax=ax,
     )
@@ -4215,9 +4345,9 @@ def plot_model_average_performance_vs_data_number(
                     f"{mean_value:.2f}",
                     ha="center",
                     va="bottom",
-                    fontsize=max(fontsize - 10, 4),
+                    fontsize=max(fontsize - 8, 4),
                     fontweight="bold",
-                    color="white",
+                    color="black" if mean_value < 0.1 else "white",
                     rotation=90,
                 )
 
@@ -4368,24 +4498,24 @@ if __name__ == "__main__":
     #     file_name="GPytorchMAP_bitwise_r2_profile_auc_heatmap.png",
     # )
 
-
+    
     # plot_model_comparison(
     #     df=result_df,
-    #     metric="OOF_R2",
+    #     metric="OOF_cvpp_ama",
     #     model=["RF", "XGBR","NGB","GPytorchMAP", "GpyroHMC","MGK"],
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
     #         ("Graph", "Matern32", "product"),
     #         ],
-    #     y_label="R²",
+    #     y_label="AMA",
     #     fontsize=17,
     #     show=True,
-    #     y_lim=(0,1.05),
+    #     y_lim=(0,.6),
     #     figsize=(6, 5),
     #     # log_y=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="OOF_R2_distributional_model_comparison.png",
+    #     file_name="OOF_AMA_distributional_model_comparison.png",
     # )
 
     # plot_hybridization_method_comparison(
@@ -4465,39 +4595,41 @@ if __name__ == "__main__":
 
     plot_model_average_performance_vs_data_number(
         df=result_df,
-        metric="OOF_R2",
+        metric="OOF_cvpp_ama",
         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
         kernel_triples=[
             ("Matern32", "Matern32", "product"),
             ("TanimotoMatern32", "Matern32", "product"),
             ("Graph", "Matern32", "product"),
         ],
-        y_label=label_conversion_source["OOF_R2"],
+        y_label=label_conversion_source["OOF_cvpp_ama"],
         x_label="# Datapoints",
         fontsize=18,
-        y_lim=(0, 1.05),
+        y_lim=(0, .5),
         # log_y=True,
-        figsize=(9, 7),
+        figsize=(11, 7),
         show=True,
         save_dir=HERE / "result_analysis",
-        file_name="OOF_R2_model_performance_vs_data_number.png",
+        file_name="OOF_AMA_model_performance_vs_data_number.png",
     )
 
 
     # plot_model_performance_TOPSIS(
     #     df=result_df,
-    #     metrics=["OOF_R2"],
+    #     metrics=["OOF_cvpp_ama"],
     #     criteria_weights=[1],
     #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
     #     kernel_triples=[
     #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Matern32", "Matern32", "product"),
     #         ("Graph", "Matern32", "product"),
     #     ],
     #     show=True,
     #     fontsize=17,
+    #     y_lim=(0, 1.1),
     #     figsize=(5, 5),
     #     save_dir=HERE / "result_analysis",
-    #     file_name=f"OOF_R2_TOPSIS_model_comparison.png",
+    #     file_name=f"OOF_AMA_TOPSIS_model_comparison.png",
     # )
 
     # plot_model_feature_importance_stability_comparison(

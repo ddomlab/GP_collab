@@ -2,9 +2,9 @@
 
 DATE=$(date +%Y%m%d)
 # model="GPytorchMAPRegressor"
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-dataset="cleaned_dataset_Ultrafiltration Membrane"
-models=("XGBR" "RF" "NGB")
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+dataset="flux_data_imputed"
+models=("RF")
 # k_fps=("TanimotoRBF")
 # k_counts=("RBF")
 # k_mixing_methods=("sum") 
@@ -17,12 +17,12 @@ for model in "${models[@]}"; do
     bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 30
+#BSUB -W 10
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.out"
-#BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.err"
+#BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.out"
+#BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
