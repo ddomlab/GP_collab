@@ -4595,22 +4595,22 @@ if __name__ == "__main__":
 
     plot_model_average_performance_vs_data_number(
         df=result_df,
-        metric="OOF_cvpp_ama",
+        metric="OOF_R2",
         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
         kernel_triples=[
             ("Matern32", "Matern32", "product"),
             ("TanimotoMatern32", "Matern32", "product"),
             ("Graph", "Matern32", "product"),
         ],
-        y_label=label_conversion_source["OOF_cvpp_ama"],
+        y_label=label_conversion_source["OOF_R2"],
         x_label="# Datapoints",
         fontsize=18,
-        y_lim=(0, .5),
+        y_lim=(0, 1.1),
         # log_y=True,
         figsize=(11, 7),
         show=True,
         save_dir=HERE / "result_analysis",
-        file_name="OOF_AMA_model_performance_vs_data_number.png",
+        file_name="OOF_R2_model_performance_vs_data_number.png",
     )
 
 
@@ -4635,7 +4635,7 @@ if __name__ == "__main__":
     # plot_model_feature_importance_stability_comparison(
     #     result_df,
     #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     tree_feature_importance="MDI",
+    #     tree_feature_importance="SHAP",
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
@@ -4647,5 +4647,24 @@ if __name__ == "__main__":
     #     figsize=(6, 5),
     #     # log_y=True,
     #     save_dir=HERE / "result_analysis",
-    #     file_name="feature_importance_stability_lengthscale_MDI_comparison.png",
+    #     file_name="feature_importance_stability_lengthscale_SHAP_comparison.png",
+    # )
+
+
+    # plot_model_performance_TOPSIS(
+    #     df=result_df,
+    #     metrics=["feature_stability"],
+    #     tree_feature_importance="MDI",
+    #     criteria_weights=[1],
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+    #     kernel_triples=[
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Matern32", "Matern32", "product"),
+    #     ],
+    #     show=True,
+    #     fontsize=17,
+    #     y_lim=(0, 1.1),
+    #     figsize=(6, 5),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name=f"feature_importance_stability_lengthscale_MDI_TOPSIS_comparison.png",
     # )
