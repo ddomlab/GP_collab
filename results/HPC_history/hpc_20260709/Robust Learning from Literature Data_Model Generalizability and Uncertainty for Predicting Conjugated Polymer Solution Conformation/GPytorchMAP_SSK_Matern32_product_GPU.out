@@ -1,0 +1,181 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu17>
+Subject: Job 679259: <structure_numerical_20260709> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260709> was submitted from host <gpu17> by user <sdehgha2> in cluster <Hazel> at Thu Jul  9 11:32:07 2026
+Job was executed on host(s) <gpu17>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jul  9 11:32:07 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jul  9 11:32:07 2026
+Terminated at Thu Jul  9 11:32:07 2026
+Results reported at Thu Jul  9 11:32:07 2026
+Cannot open your job file: /home/sdehgha2/.lsbatch/1783611127.679259
+Exited.
+
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 679284: <structure_numerical_20260709> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260709> was submitted from host <gpu16> by user <sdehgha2> in cluster <Hazel> at Thu Jul  9 12:04:20 2026
+Job was executed on host(s) <gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jul  9 12:04:20 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jul  9 12:04:20 2026
+Terminated at Thu Jul  9 12:05:16 2026
+Results reported at Thu Jul  9 12:05:16 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 40
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260709"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp SSK                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --regressor_type "GPytorchMAP" 
+
+
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   8.64 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                6
+    Run time :                                   53 sec.
+    Turnaround time :                            56 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 679610: <structure_numerical_20260709> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260709> was submitted from host <gpu26> by user <sdehgha2> in cluster <Hazel> at Thu Jul  9 14:27:14 2026
+Job was executed on host(s) <gpu26>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jul  9 14:27:14 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jul  9 14:27:14 2026
+Terminated at Thu Jul  9 14:27:14 2026
+Results reported at Thu Jul  9 14:27:14 2026
+Cannot open your job file: /home/sdehgha2/.lsbatch/1783621634.679610
+Exited.
+
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err> for stderr output of this job.
+
+alphabet 
+ ['B', 'i', '=', '5', '+', '#', 'N', '2', '1', '[', 's', 'O', ')', 'n', '*', '6', ']', '3', '4', '.', '(', 'L', '/', 'C', '-', 'c', '7', '@', 'r', 'S'] 
+ length of alphabet 30
+maxlen 127
+Data filtering and preprocessing took 0.26 seconds.
+Running seed: 6
+Using device: cuda
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 679650: <structure_numerical_20260709> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260709> was submitted from host <gpu26> by user <sdehgha2> in cluster <Hazel> at Thu Jul  9 15:09:24 2026
+Job was executed on host(s) <gpu26>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Jul  9 15:09:24 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Jul  9 15:09:24 2026
+Terminated at Thu Jul  9 15:10:20 2026
+Results reported at Thu Jul  9 15:10:20 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 1
+#BSUB -W 40
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_20260709"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp SSK                                         --K_count Matern32                                         --Kernel_mixing_method product                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --regressor_type "GPytorchMAP" 
+
+
+
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   26.35 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.67 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               15.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                8
+    Run time :                                   35 sec.
+    Turnaround time :                            56 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260709/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_SSK_Matern32_product_GPU.err> for stderr output of this job.
+
