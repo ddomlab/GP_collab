@@ -8,7 +8,7 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 
-k_mixing_methods=("(count:+)x(graph:+)" "(count:x)+(graph:x)" "product" "sum")
+k_mixing_methods=("(count:+)x(graph:x)" "(count:+)x(graph:+)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
 k_counts=("Matern32")
