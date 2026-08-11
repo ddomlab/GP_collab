@@ -18,7 +18,6 @@ from sklearn.multioutput import MultiOutputRegressor
 from data_handling import remove_unserializable_keys, save_results
 from filter_data import filter_dataset
 from all_factories import (
-                            regressor_factory,
                             transforms,
                             get_regressor_search_space,
                             imputer_factory
@@ -343,7 +342,7 @@ def run(
                 if y.shape[1] > 1:
                     y_transform_regressor = TransformedTargetRegressor(
                     regressor = MultiOutputRegressor(
-                    estimator= regressor_factory[regressor_type]
+                    estimator= optimized_models(regressor_type)
                     ),
                     transformer=y_transform,
                     )
@@ -354,7 +353,7 @@ def run(
                         }
                 else:
                     y_transform_regressor = TransformedTargetRegressor(
-                            regressor= regressor_factory[regressor_type],
+                            regressor= optimized_models(regressor_type),
                             transformer=y_transform,
                     )
 
