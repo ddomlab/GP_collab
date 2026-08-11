@@ -133,16 +133,16 @@ class Tanimoto(pk.Kernel):
 
 
 
-class ProductWithVariance(pk.Product):
-    def __init__(self, kern0, kern1, variance=None):
-        super().__init__(kern0=kern0, kern1=kern1)
+# class ProductWithVariance(pk.Product):
+#     def __init__(self, kern0, kern1, variance=None):
+#         super().__init__(kern0=kern0, kern1=kern1)
 
-        variance = _as_torch_tensor(1.0 if variance is None else variance)
-        self.variance = PyroParam(variance, constraints.positive)
+#         variance = _as_torch_tensor(1.0 if variance is None else variance)
+#         self.variance = PyroParam(variance, constraints.positive)
 
-    def forward(self, X, Z=None, diag=False):
-        base_val = super().forward(X, Z, diag)
-        return self.variance * base_val
+#     def forward(self, X, Z=None, diag=False):
+#         base_val = super().forward(X, Z, diag)
+#         return self.variance * base_val
 
 
 class ProductMultipleWithVariance(pk.Kernel):
@@ -150,7 +150,7 @@ class ProductMultipleWithVariance(pk.Kernel):
     product of multiple kernels with a single shared variance,
     in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
     """
-    def __init__(self, *kernels, variance=None):
+    def __init__(self, *kernels, variance=None, learn_variance=True):
         if len(kernels) < 2:
             raise ValueError("At least two kernels are required")
 
@@ -173,7 +173,10 @@ class ProductMultipleWithVariance(pk.Kernel):
         self._kernels = kernels  # store in a list too
 
         variance = _as_torch_tensor(1.0 if variance is None else variance)
-        self.variance = PyroParam(variance, constraints.positive)
+        if learn_variance:
+            self.variance = PyroParam(variance, constraints.positive)
+        else:
+            self.register_buffer("variance", variance)
 
     def forward(self, X, Z=None, diag=False):
         val = 1.0
@@ -187,7 +190,7 @@ class SumMultipleWithVariance(pk.Kernel):
     Sum of multiple kernels with a single shared variance,
     in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
     """
-    def __init__(self, *kernels, variance=None):
+    def __init__(self, *kernels, variance=None, learn_variance=True, average=False):
         if len(kernels) < 2:
             raise ValueError("At least two kernels are required")
 
@@ -208,18 +211,24 @@ class SumMultipleWithVariance(pk.Kernel):
         for i, k in enumerate(kernels):
             setattr(self, f"kern{i}", k)
         self._kernels = kernels  # store in a list too
+        self.average = bool(average)
 
         variance = _as_torch_tensor(1.0 if variance is None else variance)
-        self.variance = PyroParam(variance, constraints.positive)
+        if learn_variance:
+            self.variance = PyroParam(variance, constraints.positive)
+        else:
+            self.register_buffer("variance", variance)
 
     def forward(self, X, Z=None, diag=False):
         val = 0.0
         for k in self._kernels:
             val = val + k(X, Z, diag=diag)
+        if self.average:
+            val = val / float(len(self._kernels))
         return self.variance * val
 
 
-class AverageProductMultipleWithVariance(pk.Kernel):
+class SumProductMultipleWithVariance(pk.Kernel):
     """
     (sum over sum_kernels) * (product over product_kernels), scaled by a shared variance.
 
@@ -263,11 +272,6 @@ class AverageProductMultipleWithVariance(pk.Kernel):
         for i, k in enumerate(self._kernels):
             setattr(self, f"kern{i}", k)
 
-        # Optional aliases (helpful for debugging or explicit grouping)
-        # for i, k in enumerate(self._sum_kernels):
-        #     setattr(self, f"sum_kern{i}", k)
-        # for j, k in enumerate(self._product_kernels):
-        #     setattr(self, f"prod_kern{j}", k)
 
         variance = _as_torch_tensor(1.0 if variance is None else variance)
         self.variance = PyroParam(variance, constraints.positive)
@@ -295,7 +299,6 @@ class AverageProductMultipleWithVariance(pk.Kernel):
 mixing_factory: dict = {
     "product": ProductMultipleWithVariance,
     "sum": SumMultipleWithVariance,
-    "averageProduct": AverageProductMultipleWithVariance,
 } 
 
 kernel_factory: dict = {
@@ -342,6 +345,27 @@ class MixingKernelPyro:
     def _variance_tensor(self):
         return self._tensor(1.0 if self.variance is None else self.variance)
 
+    @staticmethod
+    def _combine(kernels, kernel_cls, *, variance=1.0, learn_variance=False, **kwargs):
+        if len(kernels) == 1 and not learn_variance:
+            return kernels[0]
+        return kernel_cls(
+            *kernels,
+            variance=variance,
+            learn_variance=learn_variance,
+            **kwargs,
+        )
+
+    def _validate_grouped_kernels(self, fp_kernels, count_kernels):
+        if not fp_kernels:
+            raise ValueError(
+                f"{self.mixing_method} requires at least one fp kernel"
+            )
+        if not count_kernels:
+            raise ValueError(
+                f"{self.mixing_method} requires at least one count kernel"
+            )
+
     def build(self):
         fp_kernels = []
         count_kernels = []
@@ -380,18 +404,74 @@ class MixingKernelPyro:
             return mixing_factory[self.mixing_method](
                 *all_kernels,
                 variance=self._variance_tensor(),
+                learn_variance=True,
             )
 
-        if self.mixing_method == "averageProduct":
-            if len(fp_kernels) < 1:
-                raise ValueError("average-product requires at least one fp kernel (sum group)")
-            if len(count_kernels) < 1:
-                raise ValueError("average-product requires at least one count kernel (product group)")
-            return AverageProductMultipleWithVariance(
-                sum_kernels=count_kernels,
-                product_kernels=fp_kernels,
+        if self.mixing_method in {"(count:+)x(fp:x)", "averageProduct"}:
+            self._validate_grouped_kernels(fp_kernels, count_kernels)
+
+            fp_kernel = self._combine(
+                fp_kernels,
+                ProductMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            count_kernel = self._combine(
+                count_kernels,
+                SumMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+                average=True,
+            )
+            return ProductMultipleWithVariance(
+                fp_kernel,
+                count_kernel,
                 variance=self._variance_tensor(),
-                average_sum=True,
+                learn_variance=True,
+            )
+
+        if self.mixing_method == "(count:+)x(fp:+)":
+            self._validate_grouped_kernels(fp_kernels, count_kernels)
+
+            fp_kernel = self._combine(
+                fp_kernels,
+                SumMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            count_kernel = self._combine(
+                count_kernels,
+                SumMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            return ProductMultipleWithVariance(
+                fp_kernel,
+                count_kernel,
+                variance=self._variance_tensor(),
+                learn_variance=True,
+            )
+
+        if self.mixing_method == "(count:x)+(fp:x)":
+            self._validate_grouped_kernels(fp_kernels, count_kernels)
+
+            fp_kernel = self._combine(
+                fp_kernels,
+                ProductMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            count_kernel = self._combine(
+                count_kernels,
+                ProductMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            return SumMultipleWithVariance(
+                fp_kernel,
+                count_kernel,
+                variance=self._variance_tensor(),
+                learn_variance=True,
             )
 
         raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
@@ -418,12 +498,20 @@ class GPMixPyro(gp.models.GPRegression):
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
 
         # Dynamically assign lengthscales to all sub-kernels
-        fp_keys = sorted([k for k in feat_idx.keys() if k.startswith("fp_")])
-        
-        for i, _ in enumerate(self.kernel._kernels):
-            target_kern = getattr(self.kernel, f"kern{i}")
-            
-            # Check if this kernel corresponds to one of the FP groups
+        fp_keys = sorted(
+            k for k in feat_idx.keys()
+            if k.startswith("fp_") and feat_idx[k]
+        )
+
+        def _leaf_kernels(kernel):
+            if hasattr(kernel, "_kernels"):
+                leaves = []
+                for sub_kernel in kernel._kernels:
+                    leaves.extend(_leaf_kernels(sub_kernel))
+                return leaves
+            return [kernel]
+
+        for i, target_kern in enumerate(_leaf_kernels(self.kernel)):
             if i < len(fp_keys):
                 if self.kernel_method["fp"].lower() == "tanimoto":
                     continue
@@ -724,7 +812,10 @@ class GpyroHMCRegressor:
             raise RuntimeError("Model is not fitted. Call fit() first.")
 
         summary = {}
-        fp_keys = sorted([k for k in self.feat_idx_.keys() if k.startswith("fp_")])
+        fp_keys = sorted(
+            k for k in self.feat_idx_.keys()
+            if k.startswith("fp_") and self.feat_idx_[k]
+        )
         count_names = [
             name
             for name, _ in sorted(
@@ -733,21 +824,43 @@ class GpyroHMCRegressor:
             )
         ]
 
-        fp_has_tanimoto = "tanimoto" in str(self.kernel_type["fp"]).lower()
-        if fp_has_tanimoto:
-            fp_name = fp_keys
-        else:
-            fp_name = [
-                f"{key}[{dim}]"
-                for key in fp_keys
-                for dim in sorted(list(self.feat_idx_.get(key) or []))
-            ]
-        all_keys = fp_name + count_names
-        # Extract FP lengthscales using their specific unit names
-        for i, key in enumerate(all_keys):
-            param_name = f"kernel.kern{i}.lengthscale"
+        def _leaf_kernel_paths(kernel, path="kernel"):
+            if hasattr(kernel, "_kernels"):
+                paths = []
+                for i, sub_kernel in enumerate(kernel._kernels):
+                    paths.extend(
+                        _leaf_kernel_paths(sub_kernel, f"{path}.kern{i}")
+                    )
+                return paths
+            return [(path, kernel)]
+
+        def _add_lengthscale(key_prefix, param_name):
             if param_name in self.samples_:
-                summary[key] = self.samples_[param_name].float().cpu().numpy()
+                ls = self.samples_[param_name].float().cpu().numpy()
+                if ls.ndim > 1 and ls.shape[-1] > 1:
+                    for i in range(ls.shape[-1]):
+                        summary[f"{key_prefix}[{i}]"] = ls[..., i]
+                else:
+                    summary[key_prefix] = ls
+
+        leaf_paths = _leaf_kernel_paths(self.gp_model_.kernel)
+        fp_leaf_paths = leaf_paths[:len(fp_keys)]
+        count_leaf_paths = leaf_paths[len(fp_keys):]
+
+        if len(count_leaf_paths) > len(count_names):
+            raise IndexError(
+                "More count kernels were found than expected from "
+                "`count_feat_name_idx_`."
+            )
+
+        for fp_key, (path, _) in zip(fp_keys, fp_leaf_paths):
+            if self.kernel_type["fp"].lower() == "tanimoto":
+                summary[fp_key] = None
+                continue
+            _add_lengthscale(fp_key, f"{path}.lengthscale")
+
+        for count_key, (path, _) in zip(count_names, count_leaf_paths):
+            _add_lengthscale(count_key, f"{path}.lengthscale")
 
         return summary
 

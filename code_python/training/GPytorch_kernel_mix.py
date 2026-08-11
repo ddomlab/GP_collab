@@ -158,8 +158,8 @@ class MixingKernel:
         self.mixing_method = mixing_method
         self.kernel_method = kernel_method
         self.variance = variance if variance else 1.0
-        self.ssk_parameters = ssk_parameters
-        self.cuda_avail = cuda_avail
+        self.ssk_parameters = ssk_parameters or {}
+        self.cuda_avail = cuda_avail or {}
     def _make_fp_kernels(self):
         fp_kernels = []
         fp_keys = sorted(k for k in self.feat_idx if k.startswith("fp_"))
@@ -206,44 +206,63 @@ class MixingKernel:
             )
             count_kernels.append(k)
         return count_kernels
-    
-    def _apply_variance(self, kernel):
-        if self.variance is not None:
-            kernel = ScaleKernel(kernel)
-            kernel.outputscale = self.variance
-        return kernel
+
+    @staticmethod
+    def _combine(kernels, kernel_cls):
+        if len(kernels) == 1:
+            return kernels[0]
+        return kernel_cls(*kernels)
+
 
     def build(self):
         fp_kernels = self._make_fp_kernels()
         count_kernels = self._make_count_kernels()
 
-        if self.mixing_method in ("sum", "product"):
-            all_kernels = fp_kernels + count_kernels
-            if len(all_kernels) < 2:
+        if self.mixing_method in {"sum", "product"}:
+            kernels = fp_kernels + count_kernels
+            if len(kernels) < 2:
                 raise ValueError(
                     f"{self.mixing_method} mixing requires at least two kernels"
                 )
 
             if self.mixing_method == "sum":
-                kernel = AdditiveKernel(*all_kernels)
-            else:
-                kernel = ProductKernel(*all_kernels)
+                return AdditiveKernel(*kernels)
 
-            return kernel
+            return ProductKernel(*kernels)
 
-        if self.mixing_method == "averageProduct":
-            if len(fp_kernels) < 1:
-                raise ValueError("averageProduct requires ≥1 fp kernel")
-            if len(count_kernels) < 1:
-                raise ValueError("averageProduct requires ≥1 count kernel")
+        if self.mixing_method == "(count:+)x(fp:x)":
+            if not fp_kernels:
+                raise ValueError("(count:+)x(fp:x) requires at least one fp kernel")
+            if not count_kernels:
+                raise ValueError("(count:+)x(fp:x) requires at least one count kernel")
 
-            # sum over count kernels (optionally averaged)
-            prod_kernel = ProductKernel(*fp_kernels)
-            sum_kernel = AdditiveKernel(*count_kernels)
-            avg_kernel = ScaleKernel(sum_kernel)
-            avg_kernel.outputscale = 1.0 / len(count_kernels)
-            kernel = ProductKernel(prod_kernel, avg_kernel)
-            return kernel
+            fp_product_kernel = self._combine(fp_kernels, ProductKernel)
+            count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
+
+            averaged_count_kernel = ScaleKernel(count_sum_kernel)
+            averaged_count_kernel.outputscale = 1.0 / len(count_kernels)
+
+            return ProductKernel(fp_product_kernel, averaged_count_kernel)
+
+        if self.mixing_method == "(count:+)x(fp:+)":
+            if not fp_kernels:
+                raise ValueError("(count:+)x(fp:+) requires at least one fp kernel")
+            if not count_kernels:
+                raise ValueError("(count:+)x(fp:+) requires at least one count kernel")
+
+            fp_sum_kernel = self._combine(fp_kernels, AdditiveKernel)
+            count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
+            return ProductKernel(fp_sum_kernel, count_sum_kernel)
+
+        if self.mixing_method == "(count:x)+(fp:x)":
+            if not fp_kernels:
+                raise ValueError("(count:x)+(fp:x) requires at least one fp kernel")
+            if not count_kernels:
+                raise ValueError("(count:x)+(fp:x) requires at least one count kernel")
+
+            fp_product_kernel = self._combine(fp_kernels, ProductKernel)
+            count_product_kernel = self._combine(count_kernels, ProductKernel)
+            return AdditiveKernel(fp_product_kernel, count_product_kernel)
 
         raise ValueError(f"Unknown mixing_method: {self.mixing_method}")
 
@@ -277,53 +296,58 @@ class GPMix(gpytorch.models.ExactGP):
             gpytorch.priors.LogNormalPrior(0.0, 1.0),
             "noise",
         )
-        fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
+        fp_keys = sorted(
+            k for k in feat_idx if k.startswith("fp_") and feat_idx[k]
+        )
 
         root_kernel = self.covar_module.base_kernel
         if prior:
+            fp_has_lengthscale = kernel_method["fp"].lower() not in {
+                "tanimoto",
+                "ssk",
+            }
+
+            def _sub_kernels(kernel):
+                if isinstance(kernel, (AdditiveKernel, ProductKernel)):
+                    return list(kernel.kernels)
+                return [kernel]
+
+            def _register_fp_priors(kernels):
+                if not fp_has_lengthscale:
+                    return
+
+                for i, sk in enumerate(kernels):
+                    sk.register_prior(
+                        f"fp_lengthscale_prior_{i}",
+                        gpytorch.priors.GammaPrior(5.0, 5.0),
+                        "lengthscale",
+                    )
+
+            def _register_count_priors(kernels):
+                for i, sk in enumerate(kernels):
+                    sk.register_prior(
+                        f"count_lengthscale_prior_{i}",
+                        gpytorch.priors.GammaPrior(5.0, 5.0),
+                        "lengthscale",
+                    )
+
             if mixing_method in ("sum", "product"):
-                for i, (name, sk) in enumerate(root_kernel.named_sub_kernels()):
-                    if i < len(fp_keys):
-                        if kernel_method["fp"].lower() in {"tanimoto", "ssk"}:
-                            continue
-                        else:
-                            # "tanimoto" in self.kernel_method["fp"].lower():
-                            # ard_dim = len(feat_idx[fp_key])
-                            sk.register_prior(
-                                f"fp_lengthscale_prior_{i}",
-                                gpytorch.priors.GammaPrior(5.0, 5.0),
-                                "lengthscale",
-                                )
-                        
+                sub_kernels = _sub_kernels(root_kernel)
+                _register_fp_priors(sub_kernels[:len(fp_keys)])
+                _register_count_priors(sub_kernels[len(fp_keys):])
 
-                    else:
-                        sk.register_prior(
-                            f"count_lengthscale_prior_{i}",
-                            gpytorch.priors.GammaPrior(5.0, 5.0),
-                            "lengthscale",
-                        )
-
-            elif mixing_method == "averageProduct":
+            elif mixing_method == "(count:+)x(fp:x)":
                 fp_product_kernel = root_kernel.kernels[0]
                 count_sum_kernel = root_kernel.kernels[1].base_kernel
-                for i, (name, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
-                    sk.register_prior(
-                                f"count_lengthscale_prior_{i}",
-                                gpytorch.priors.GammaPrior(5.0, 5.0),
-                                "lengthscale",
-                                )
-                fp_keys = sorted(k for k in feat_idx if k.startswith("fp_"))
-                for i, (name, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
-                    if kernel_method["fp"].lower() in {"tanimoto", "ssk"}:
-                        continue
-                    # if "tanimoto" in self.kernel_method["fp"].lower():
-                    else:
-                        # fp_key = fp_keys[i]
-                        sk.register_prior(
-                                    f"fp_lengthscale_prior_{i}",
-                                    gpytorch.priors.GammaPrior(5.0, 5.0),
-                                    "lengthscale",
-                                    )
+                _register_fp_priors(_sub_kernels(fp_product_kernel))
+                _register_count_priors(_sub_kernels(count_sum_kernel))
+
+            elif mixing_method in {"(count:+)x(fp:+)", "(count:x)+(fp:x)"}:
+                fp_group_kernel = root_kernel.kernels[0]
+                count_group_kernel = root_kernel.kernels[1]
+                _register_fp_priors(_sub_kernels(fp_group_kernel))
+                _register_count_priors(_sub_kernels(count_group_kernel))
+
             else:
                 raise ValueError(f"Unknown mixing_method: {mixing_method}")
             
@@ -610,7 +634,8 @@ class GPytorchMAPRegressor:
         root_kernel = self.gp_model_.covar_module.base_kernel
 
         fp_keys = sorted(
-            [k for k in self.feat_idx_.keys() if k.startswith("fp_")]
+            k for k in self.feat_idx_.keys()
+            if k.startswith("fp_") and self.feat_idx_[k]
         )
 
         count_names = [
@@ -639,55 +664,58 @@ class GPytorchMAPRegressor:
                 key_prefix: float(np.asarray(ls).squeeze())
             }
 
-        if self.kernel_mixing_method in ("sum", "product"):
-            for i, (_, sk) in enumerate(root_kernel.named_sub_kernels()):
-                if i < len(fp_keys):
-                    fp_key = fp_keys[i]
+        def _sub_kernels(kernel):
+            if isinstance(kernel, (AdditiveKernel, ProductKernel)):
+                return list(kernel.kernels)
+            return [kernel]
 
-                    if self.kernel_type["fp"].lower() in {"tanimoto", "ssk"}:
-                        summary[fp_key] = None
-                    else:
-                        summary.update(_extract_ls(sk, fp_key))
+        def _add_fp_lengthscales(kernels):
+            if len(kernels) > len(fp_keys):
+                raise IndexError(
+                    "More fingerprint sub-kernels were found than expected "
+                    "from `feat_idx_`."
+                )
 
-                else:
-                    count_idx = i - len(fp_keys)
-
-                    if count_idx >= len(count_names):
-                        raise IndexError(
-                            "More sub-kernels were found than expected from "
-                            "`feat_idx_` and `count_feat_name_idx_`."
-                        )
-
-                    count_key = count_names[count_idx]
-                    summary.update(_extract_ls(sk, count_key))
-
-        elif self.kernel_mixing_method == "averageProduct":
-            fp_product_kernel = root_kernel.kernels[0]
-            count_sum_kernel = root_kernel.kernels[1].base_kernel
-
-            for i, (_, sk) in enumerate(count_sum_kernel.named_sub_kernels()):
-                if i >= len(count_names):
-                    raise IndexError(
-                        "More count sub-kernels were found than expected from "
-                        "`count_feat_name_idx_`."
-                    )
-
-                count_key = count_names[i]
-                summary.update(_extract_ls(sk, count_key))
-
-            for i, (_, sk) in enumerate(fp_product_kernel.named_sub_kernels()):
-                if i >= len(fp_keys):
-                    raise IndexError(
-                        "More fingerprint sub-kernels were found than expected "
-                        "from `feat_idx_`."
-                    )
-
+            for i, sk in enumerate(kernels):
                 fp_key = fp_keys[i]
 
                 if self.kernel_type["fp"].lower() in {"tanimoto", "ssk"}:
                     summary[fp_key] = None
                 else:
                     summary.update(_extract_ls(sk, fp_key))
+
+        def _add_count_lengthscales(kernels):
+            if len(kernels) > len(count_names):
+                raise IndexError(
+                    "More count sub-kernels were found than expected from "
+                    "`count_feat_name_idx_`."
+                )
+
+            for i, sk in enumerate(kernels):
+                count_key = count_names[i]
+                summary.update(_extract_ls(sk, count_key))
+
+        if self.kernel_mixing_method in ("sum", "product"):
+            sub_kernels = _sub_kernels(root_kernel)
+            _add_fp_lengthscales(sub_kernels[:len(fp_keys)])
+            _add_count_lengthscales(sub_kernels[len(fp_keys):])
+
+        elif self.kernel_mixing_method == "(count:+)x(fp:x)":
+            fp_product_kernel = root_kernel.kernels[0]
+            count_sum_kernel = root_kernel.kernels[1].base_kernel
+
+            _add_fp_lengthscales(_sub_kernels(fp_product_kernel))
+            _add_count_lengthscales(_sub_kernels(count_sum_kernel))
+
+        elif self.kernel_mixing_method in {
+            "(count:+)x(fp:+)",
+            "(count:x)+(fp:x)",
+        }:
+            fp_group_kernel = root_kernel.kernels[0]
+            count_group_kernel = root_kernel.kernels[1]
+
+            _add_fp_lengthscales(_sub_kernels(fp_group_kernel))
+            _add_count_lengthscales(_sub_kernels(count_group_kernel))
 
         else:
             raise ValueError(
@@ -824,12 +852,26 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
         else:
             device = torch.device("cpu")
 
+        cuda_avail = {"dtype": torch.float, "device": device}
+
         self._X_train = X_t
         self._y_train = y_t
 
         # Pyro GP model with priors
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-        self._gp_model = GPMix(X_t, y_t, self.feat_idx, self.kernel_mixing_method, self.kernel_type, self.likelihood)
+        self.likelihood = gpytorch.likelihoods.GaussianLikelihood(
+            noise_constraint=gpytorch.constraints.Positive()
+        ).to(**cuda_avail)
+        self._gp_model = GPMix(
+            X_t,
+            y_t,
+            self.feat_idx,
+            self.kernel_mixing_method,
+            self.kernel_type,
+            self.likelihood,
+            prior=True,
+            ssk_parameters=None,
+            cuda_avail=cuda_avail,
+        ).to(**cuda_avail)
 
         def pyro_model(x, y):
                     sampled_model = self._gp_model.pyro_sample_from_prior()

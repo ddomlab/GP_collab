@@ -24,6 +24,6 @@ source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 python ../train_structure_numerical.py --dataset "$dataset" \
                                         --paper "$paper" \
-                                        --Kernel_mixing_method $mixing_method
+                                        --Kernel_mixing_method "$mixing_method"
 
 EOT

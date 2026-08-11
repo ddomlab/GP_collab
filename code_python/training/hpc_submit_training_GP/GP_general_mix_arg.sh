@@ -10,7 +10,7 @@ mkdir -p "$output_dir"
 
 k_fps=("TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Tanimoto" "RBF" "Matern32" "Matern52")
 k_counts=("RBF" "Matern32" "Matern52")
-k_mixing_methods=("sum" "product" "averageProduct") 
+k_mixing_methods=("sum" "product" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)") 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
@@ -31,7 +31,7 @@ source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu
 python ../train_structure_numerical.py --K_fp $fp_kernel \
                                         --K_count $count_kernel \
-                                        --Kernel_mixing_method $mixing_method \
+                                        --Kernel_mixing_method "$mixing_method" \
                                         --paper "$paper" \
                                         --dataset "$dataset" \
 

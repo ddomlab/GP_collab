@@ -104,23 +104,23 @@ representation_scaling_factory: dict[str, dict[str, Union[Callable, str]]] = {
 }
 
 
-regressor_factory: dict[str, type]={
-    "MLR": LinearRegression(),
-    "KNN": KNeighborsRegressor(),
-    "SVR": SVR(),
-    "XGBR": XGBRegressor(),
-    "RF": RandomForestRegressor(),
-    "Lasso": Lasso(),
-    "DT": DecisionTreeRegressor(),
-    "NGB": NGBRegressor(),
-    "XGBC":XGBClassifier(),
-    "RFC": RandomForestClassifier(),
-    # "GPR": GPRegressor,
-    "sklearn-GPR":GaussianProcessRegressor(),
-    "MLP": MLPRegressor(),
-    "HGBR": HistGradientBoostingRegressor(),
-    # "GPMixR": GPMixRegressor(),
-}
+# regressor_factory: dict[str, type]={
+#     "MLR": LinearRegression(),
+#     "KNN": KNeighborsRegressor(),
+#     "SVR": SVR(),
+#     "XGBR": XGBRegressor(),
+#     "RF": RandomForestRegressor(),
+#     "Lasso": Lasso(),
+#     "DT": DecisionTreeRegressor(),
+#     "NGB": NGBRegressor(),
+#     "XGBC":XGBClassifier(),
+#     "RFC": RandomForestClassifier(),
+#     # "GPR": GPRegressor,
+#     "sklearn-GPR":GaussianProcessRegressor(),
+#     "MLP": MLPRegressor(),
+#     "HGBR": HistGradientBoostingRegressor(),
+#     # "GPMixR": GPMixRegressor(),
+# }
 
 def optimized_models(
                     model_name:str,
