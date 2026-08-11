@@ -8,7 +8,7 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 
-k_mixing_methods=("(count:+)x(graph:x)" "(count:x)+(graph:x)" "(count:+)x(graph:+)")
+k_mixing_methods=("(count:+)x(graph:x)")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
 k_counts=("Matern32")
@@ -23,10 +23,11 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 2:30
+#BSUB -W 1:05
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
 #BSUB -J "structure_numerical_${DATE}"
 #BSUB -o "${output_dir}/${model}_${mixing_method}_${feature_mode}_GPU.out"
 #BSUB -e "${output_dir}/${model}_${mixing_method}_${feature_mode}_GPU.err"
