@@ -7,12 +7,21 @@ from sklearn.gaussian_process.kernels import RBF, DotProduct, Matern
 from mgktools.kernels.base import BaseKernelConfig
 
 
+HybridRule = Literal[
+    "product",
+    "sum",
+    "(count:+)x(graph:x)",
+    "(count:+)x(graph:+)",
+    "(count:x)+(graph:x)",
+]
+
+
 class HybridKernel:
     def __init__(
         self,
         kernel_list: List,
         composition: List[Tuple[int]],
-        hybrid_rule: Literal["product", "sum"] = "product",
+        hybrid_rule: HybridRule = "product",
         kernel_names: List[str] = None,
         composition_names: List[Tuple[str, ...]] = None,
         lengthscale_names: List[Optional[Tuple[str, ...]]] = None,
@@ -32,6 +41,9 @@ class HybridKernel:
             [None if names is None else tuple(names) for names in lengthscale_names]
             if lengthscale_names is not None
             else None
+        )
+        self.graph_kernel_indices, self.count_kernel_indices = (
+            self._get_kernel_groups()
         )
 
     @property
@@ -59,78 +71,213 @@ class HybridKernel:
         else:
             return X
 
+    def _get_kernel_groups(self) -> Tuple[List[int], List[int]]:
+        if self.lengthscale_names is None:
+            return list(range(self.nkernel)), []
+
+        graph_indices = []
+        count_indices = []
+        for i in range(self.nkernel):
+            names = (
+                self.lengthscale_names[i]
+                if i < len(self.lengthscale_names)
+                else None
+            )
+            if names is None:
+                graph_indices.append(i)
+            else:
+                count_indices.append(i)
+        return graph_indices, count_indices
+
+    @staticmethod
+    def _as_float_array(value):
+        if getattr(value, "dtype", None) == object:
+            return np.asarray(value, dtype=np.float64)
+        return np.asarray(value, dtype=np.float64)
+
+    @staticmethod
+    def _align_matrix_dims(matrix, target_ndim):
+        while np.ndim(matrix) < target_ndim:
+            matrix = np.expand_dims(matrix, axis=-1)
+        return matrix
+
+    @classmethod
+    def _multiply_matrices(matrices: List[np.ndarray]):
+        target_ndim = max(np.ndim(matrix) for matrix in matrices)
+        out = 1.
+        for matrix in matrices:
+            matrix = cls._align_matrix_dims(matrix, target_ndim)
+            out = out * matrix
+        return out
+
+    @classmethod
+    def _sum_matrices(matrices: List[np.ndarray], average: bool = False):
+        target_ndim = max(np.ndim(matrix) for matrix in matrices)
+        out = 0.
+        for matrix in matrices:
+            matrix = cls._align_matrix_dims(matrix, target_ndim)
+            out = out + matrix
+        if average:
+            out = out / float(len(matrices))
+        return out
+
+    def _kernel_outputs(self, X_list, Y_list, Y, eval_gradient):
+        covariances = []
+        gradients = []
+
+        for i, kernel in enumerate(self.kernel_list):
+            Xi = X_list[i]
+            Yi = Y_list[i] if Y is not None else None
+            output = kernel(Xi, Y=Yi, eval_gradient=eval_gradient)
+
+            if eval_gradient:
+                covariance, gradient = output
+                covariances.append(self._as_float_array(covariance))
+                gradients.append(self._as_float_array(gradient))
+            else:
+                covariances.append(self._as_float_array(output))
+
+        return covariances, gradients
+
+    def _validate_grouped_rule(self):
+        if not self.graph_kernel_indices:
+            raise ValueError(f"{self.hybrid_rule} requires at least one graph kernel")
+        if not self.count_kernel_indices:
+            raise ValueError(f"{self.hybrid_rule} requires at least one count kernel")
+
+    def _combine_grouped_covariances(self, covariances):
+        self._validate_grouped_rule()
+
+        graph_covariances = [covariances[i] for i in self.graph_kernel_indices]
+        count_covariances = [covariances[i] for i in self.count_kernel_indices]
+
+        if self.hybrid_rule == "(count:+)x(graph:x)":
+            return (
+                self._sum_matrices(count_covariances)
+                * self._multiply_matrices(graph_covariances)
+            )
+
+        if self.hybrid_rule == "(count:+)x(graph:+)":
+            return (
+                self._sum_matrices(count_covariances)
+                * self._sum_matrices(graph_covariances)
+            )
+
+        if self.hybrid_rule == "(count:x)+(graph:x)":
+            return (
+                self._multiply_matrices(count_covariances)
+                + self._multiply_matrices(graph_covariances)
+            )
+
+        raise ValueError(f"Unknown hybrid rule {self.hybrid_rule}")
+
+    def _combine_covariances(self, covariances):
+        if self.hybrid_rule == "product":
+            return self._multiply_matrices(covariances)
+        if self.hybrid_rule == "sum":
+            return self._sum_matrices(covariances)
+        return self._combine_grouped_covariances(covariances)
+
+    def _combine_gradients(self, covariances, gradients):
+        gradient_matrix_list = []
+
+        for i, gradient in enumerate(gradients):
+            gradient_matrix_list.append(
+                self._kernel_gradient_covariance(i, covariances, gradient)
+            )
+
+        gradient_matrix = gradient_matrix_list[0]
+        for i, gm in enumerate(gradient_matrix_list):
+            if i != 0:
+                gradient_matrix = np.c_[gradient_matrix, gm]
+
+        return np.asarray(gradient_matrix, dtype=np.float64)
+
+    def _kernel_gradient_covariance(self, kernel_index, covariances, gradient):
+        other_indices = [i for i in range(self.nkernel) if i != kernel_index]
+
+        if self.hybrid_rule == "product":
+            return self._multiply_matrices(
+                [gradient] + [covariances[i] for i in other_indices]
+            )
+
+        if self.hybrid_rule == "sum":
+            return gradient
+
+        self._validate_grouped_rule()
+        graph_indices = self.graph_kernel_indices
+        count_indices = self.count_kernel_indices
+        graph_covariances = [covariances[i] for i in graph_indices]
+        count_covariances = [covariances[i] for i in count_indices]
+
+        if self.hybrid_rule == "(count:+)x(graph:x)":
+            if kernel_index in count_indices:
+                return self._multiply_matrices(
+                    [
+                        gradient,
+                        self._multiply_matrices(graph_covariances),
+                    ]
+                )
+
+            graph_others = [
+                covariances[i] for i in graph_indices if i != kernel_index
+            ]
+            return self._multiply_matrices(
+                [gradient, self._sum_matrices(count_covariances)]
+                + graph_others
+            )
+
+        if self.hybrid_rule == "(count:+)x(graph:+)":
+            if kernel_index in count_indices:
+                return self._multiply_matrices(
+                    [gradient, self._sum_matrices(graph_covariances)]
+                )
+
+            return self._multiply_matrices(
+                [gradient, self._sum_matrices(count_covariances)]
+            )
+
+        if self.hybrid_rule == "(count:x)+(graph:x)":
+            if kernel_index in count_indices:
+                count_others = [
+                    covariances[i] for i in count_indices if i != kernel_index
+                ]
+                return self._multiply_matrices([gradient] + count_others)
+
+            graph_others = [
+                covariances[i] for i in graph_indices if i != kernel_index
+            ]
+            return self._multiply_matrices([gradient] + graph_others)
+
+        raise ValueError(f"Unknown hybrid rule {self.hybrid_rule}")
+
     def __call__(
         self, X: np.ndarray, Y: np.ndarray = None, eval_gradient: bool = False
     ):
         X_list = self.get_X_list(X)
         Y_list = self.get_X_list(Y) if Y is not None else None
-        if self.hybrid_rule == "product":
-            if eval_gradient:
-                covariance_matrix = 1.
-                gradient_matrix_list = list(map(int, np.ones(self.nkernel).tolist()))
-                for i, kernel in enumerate(self.kernel_list):
-                    Xi = X_list[i]
-                    Yi = Y_list[i] if Y is not None else None
-                    output = kernel(Xi, Y=Yi, eval_gradient=True)
-                    covariance_matrix *= np.asarray(output[0], dtype=np.float64)
-                    for j in range(self.nkernel):
-                        if j == i:
-                            gradient_matrix_list[j] = (
-                                gradient_matrix_list[j] * output[1]
-                            )
-                        else:
-                            shape = output[0].shape + (1,)
-                            gradient_matrix_list[j] = gradient_matrix_list[j] * output[
-                                0
-                            ].reshape(shape)
-                gradient_matrix = gradient_matrix_list[0]
-                for i, gm in enumerate(gradient_matrix_list):
-                    if i != 0:
-                        gradient_matrix = np.c_[gradient_matrix, gradient_matrix_list[i]]
-                return covariance_matrix, np.asarray(gradient_matrix, dtype=np.float64)
-            else:
-                covariance_matrix = 1.
-                for i, kernel in enumerate(self.kernel_list):
-                    Xi = X_list[i]
-                    Yi = Y_list[i] if Y is not None else None
-                    output = kernel(Xi, Y=Yi, eval_gradient=False)
-                    if output.dtype == object:
-                        output = np.asarray(output, dtype=np.float64)
-                    covariance_matrix *= output
-                return covariance_matrix
-        elif self.hybrid_rule == "sum":
-            if eval_gradient:
-                covariance_matrix = 0.
-                gradient_matrix = 0.
-                for i, kernel in enumerate(self.kernel_list):
-                    Xi = X_list[i]
-                    Yi = Y_list[i] if Y is not None else None
-                    output = kernel(Xi, Y=Yi, eval_gradient=False)
-                    covariance_matrix += np.asarray(output[0], dtype=np.float64)
-                    gradient_matrix += np.asarray(output[1], dtype=np.float64)
-                return covariance_matrix, gradient_matrix
-            else:
-                covariance_matrix = 0.
-                for i, kernel in enumerate(self.kernel_list):
-                    Xi = X_list[i]
-                    Yi = Y_list[i] if Y is not None else None
-                    output = kernel(Xi, Y=Yi, eval_gradient=False)
-                    if output.dtype == object:
-                        output = np.asarray(output, dtype=np.float64)
-                    covariance_matrix += output
-                return covariance_matrix
-        else:
-            raise ValueError
+
+        covariances, gradients = self._kernel_outputs(
+            X_list,
+            Y_list,
+            Y,
+            eval_gradient=eval_gradient,
+        )
+        covariance_matrix = self._combine_covariances(covariances)
+
+        if not eval_gradient:
+            return covariance_matrix
+
+        gradient_matrix = self._combine_gradients(covariances, gradients)
+        return covariance_matrix, gradient_matrix
 
     def diag(self, X) -> List[float]:
         X_list = self.get_X_list(X)
         diag_list = [
-            self.kernel_list[i].diag(X_list[i]) for i in range(len(self.kernel_list))
+            self._as_float_array(self.kernel_list[i].diag(X_list[i]))
+            for i in range(len(self.kernel_list))
         ]
-        if self.hybrid_rule == "product":
-            return np.prod(diag_list, axis=0)
-        else:
-            raise Exception("Unknown hybrid rule %s" % self.hybrid_rule)
+        return self._combine_covariances(diag_list)
 
     def is_stationary(self):
         return False
@@ -239,7 +386,7 @@ class HybridKernelConfig(BaseKernelConfig):
         self,
         kernel_configs: List[BaseKernelConfig],
         composition: List[Tuple[int]],
-        hybrid_rule: Literal["product", "sum"] = "product",
+        hybrid_rule: HybridRule = "product",
         kernel_names: List[str] = None,
         composition_names: List[Tuple[str, ...]] = None,
         lengthscale_names: List[Optional[Tuple[str, ...]]] = None,

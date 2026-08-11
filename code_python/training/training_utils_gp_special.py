@@ -157,6 +157,9 @@ def _prepare_data(
         graph_kernel_files = {
             "product": [product],
             "sum": [additive],
+            "(count:+)x(graph:x)": [product],
+            "(count:+)x(graph:+)": [additive],
+            "(count:x)+(graph:x)": [product],
         }
 
         df = dataset[structural_features + numerical_feats + target_features]

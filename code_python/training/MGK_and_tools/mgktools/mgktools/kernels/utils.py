@@ -9,6 +9,15 @@ from mgktools.kernels.PreComputed import PreComputedKernelConfig
 from mgktools.kernels.HybridKernel import HybridKernelConfig
 
 
+HybridRule = Literal[
+    "product",
+    "sum",
+    "(count:+)x(graph:x)",
+    "(count:+)x(graph:+)",
+    "(count:x)+(graph:x)",
+]
+
+
 def _fallback_names(names: List[str], prefix: str, count: int) -> List[str]:
     if names is not None and len(names) == count:
         return list(names)
@@ -28,7 +37,7 @@ def get_kernel_config(
     # arguments for pre-computed kernel
     kernel_dict: Dict = None,
     kernel_pkl: str = None,
-    hybrid_rule: Literal["product", "sum"] = "product",
+    hybrid_rule: HybridRule = "product",
     feature_mode: Literal["joint", "per_feature"] = "joint"
 ):
     if kernel_pkl is not None and os.path.exists(kernel_pkl) and graph_kernel_type == "pre-computed":
