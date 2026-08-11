@@ -102,7 +102,7 @@ class HybridKernel:
         return matrix
 
     @classmethod
-    def _multiply_matrices(matrices: List[np.ndarray]):
+    def _multiply_matrices(cls, matrices: List[np.ndarray]):
         target_ndim = max(np.ndim(matrix) for matrix in matrices)
         out = 1.
         for matrix in matrices:
@@ -111,7 +111,9 @@ class HybridKernel:
         return out
 
     @classmethod
-    def _sum_matrices(matrices: List[np.ndarray], average: bool = False):
+    def _sum_matrices(
+        cls, matrices: List[np.ndarray], average: bool = False
+    ):
         target_ndim = max(np.ndim(matrix) for matrix in matrices)
         out = 0.
         for matrix in matrices:
@@ -459,5 +461,4 @@ class HybridKernelConfig(BaseKernelConfig):
     #             out[f"kernel_{i}.{kernel_type}"] = microkernel.value
 
     #     return out
-
 
