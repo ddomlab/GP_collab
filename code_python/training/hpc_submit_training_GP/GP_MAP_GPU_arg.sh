@@ -1,17 +1,20 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAP"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-datasets=("Beyond molecular structure_seifrid_imputed")
+model="GpyroHMC"
+paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
+datasets=("cleaned_dataset_pervaporation_membranes_wang")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("(count:x)+(fp:x)")
+k_mixing_methods=("(count:+)x(graph:x)" "(count:+)x(graph:+)")
 
+# "(count:+)x(graph:x)"
+# "(count:+)x(graph:+)"
+# "(count:x)+(graph:x)"
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for dataset in "${datasets[@]}"; do
