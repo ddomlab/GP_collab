@@ -91,9 +91,9 @@ if __name__ == "__main__":
             # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
             main_structural_numerical(
                 dataset=w_data,
-                representation="ECFP", #"ECFP" # MG #SSK
-                radius=3,
-                vector="count",
+                representation="MG" if args.regressor_type =="MGK" else "ECFP", #"ECFP" # MG #SSK
+                radius=None if args.regressor_type =="MGK" else 3,
+                vector=None if args.regressor_type =="MGK" else "count",
                 regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
                 # GPytorchMixMCMC
                 # GPMixMCMC
@@ -111,7 +111,7 @@ if __name__ == "__main__":
                     },
                 kernel_mixing_method=args.Kernel_mixing_method,
                 use_cuda=True, #True for GPU, False for CPU
-                # kernel_feature_mode=args.kernel_feature_mode, #joint, #per_feature for MGK
+                kernel_feature_mode=args.kernel_feature_mode, #joint, #per_feature for MGK
                 # hyperparameter_save_dir=optuna_save_dir, # for MGK
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]

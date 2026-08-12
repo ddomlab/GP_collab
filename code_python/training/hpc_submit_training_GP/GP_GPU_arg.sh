@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="MGK"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-datasets=("Beyond molecular structure_seifrid_imputed")
+paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+datasets=("cleaned_dataset_Ultrafiltration Membrane_imputed")
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
@@ -24,8 +24,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 30:30
-#BSUB -q "gpu"
+#BSUB -W 1:55
+#BSUB -q "short_gpu"
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
