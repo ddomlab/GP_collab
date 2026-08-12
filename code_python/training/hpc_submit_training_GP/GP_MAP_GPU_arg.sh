@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+datasets=("flux_data_imputed" "separation_data_imputed")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -14,9 +14,11 @@ k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)" "(count:+)x(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
-    for fp_kernel in "${k_fps[@]}"; do
-        for count_kernel in "${k_counts[@]}"; do
-            bsub <<EOT
+    for feature_mode in "per_feature"; do
+        for dataset in "${datasets[@]}"; do
+            for fp_kernel in "${k_fps[@]}"; do
+                for count_kernel in "${k_counts[@]}"; do
+                    bsub <<EOT
 
 
 #BSUB -n 1
@@ -34,7 +36,7 @@ module load cuda/12.1
 module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_structure_numerical.py --K_fp $fp_kernel \
+python ../train_structure_numerical.py  --K_fp $fp_kernel \
                                         --K_count $count_kernel \
                                         --Kernel_mixing_method "$mixing_method" \
                                         --paper "$paper" \
