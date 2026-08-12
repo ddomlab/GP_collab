@@ -10,7 +10,7 @@ mkdir -p "$output_dir"
 
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)" "(count:+)x(fp:x)")
+k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
@@ -21,8 +21,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 1:58
-#BSUB -q "short_gpu"
+#BSUB -W 18:20
+#BSUB -q "gpu"
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
