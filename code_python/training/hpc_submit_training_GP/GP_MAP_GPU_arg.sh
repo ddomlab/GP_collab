@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-datasets=("Rg data with clusters aging imputed")
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+datasets=("separation_data_imputed" "flux_data_imputed")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
