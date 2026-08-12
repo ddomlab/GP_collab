@@ -407,7 +407,7 @@ class MixingKernelPyro:
                 learn_variance=True,
             )
 
-        if self.mixing_method in {"(count:+)x(fp:x)", "averageProduct"}:
+        if self.mixing_method == "averageProduct":
             self._validate_grouped_kernels(fp_kernels, count_kernels)
 
             fp_kernel = self._combine(
@@ -422,6 +422,28 @@ class MixingKernelPyro:
                 variance=self._tensor(1.0),
                 learn_variance=False,
                 average=True,
+            )
+            return ProductMultipleWithVariance(
+                fp_kernel,
+                count_kernel,
+                variance=self._variance_tensor(),
+                learn_variance=True,
+            )
+
+        if self.mixing_method =="(count:+)x(fp:x)":
+            self._validate_grouped_kernels(fp_kernels, count_kernels)
+
+            fp_kernel = self._combine(
+                fp_kernels,
+                SumMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
+            )
+            count_kernel = self._combine(
+                count_kernels,
+                ProductMultipleWithVariance,
+                variance=self._tensor(1.0),
+                learn_variance=False,
             )
             return ProductMultipleWithVariance(
                 fp_kernel,
