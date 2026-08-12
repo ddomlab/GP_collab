@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.21±0.06	 r2: 0.86±0.07
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu33>
+Subject: Job 993806: <structure_numerical_20260812> in cluster <Hazel> Done
+
+Job <structure_numerical_20260812> was submitted from host <gpu33> by user <sdehgha2> in cluster <Hazel> at Wed Aug 12 01:38:21 2026
+Job was executed on host(s) <gpu33>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Wed Aug 12 01:39:20 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Aug 12 01:39:20 2026
+Terminated at Wed Aug 12 01:40:51 2026
+Results reported at Wed Aug 12 01:40:51 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 1:50
+#BSUB -q "short_gpu"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260812"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260812/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoMatern32_Matern32_(count:+)x(fp:+)_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260812/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoMatern32_Matern32_(count:+)x(fp:+)_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp TanimotoMatern32                                         --K_count Matern32                                         --Kernel_mixing_method "(count:+)x(fp:+)"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --regressor_type "GPytorchMAP" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   84.01 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   149 sec.
+    Turnaround time :                            150 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260812/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_TanimotoMatern32_Matern32_(count:+)x(fp:+)_GPU.err> for stderr output of this job.
+

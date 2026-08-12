@@ -1,0 +1,76 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.4±0.19	 r2: 0.55±0.49
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_(count:+)x(graph:+))_hypOFF_Standard_Standard_GPU
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.38±0.04	 r2: 0.95±0.01
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_(count:+)x(graph:+))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 993054: <structure_numerical_20260811> in cluster <Hazel> Done
+
+Job <structure_numerical_20260811> was submitted from host <gpu15> by user <sdehgha2> in cluster <Hazel> at Tue Aug 11 19:34:29 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Aug 11 19:34:30 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Aug 11 19:34:30 2026
+Terminated at Tue Aug 11 20:57:17 2026
+Results reported at Tue Aug 11 20:57:17 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 1
+#BSUB -W 6:30
+#BSUB -q "gpu"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260811"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_(count:+)x(graph:+)_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_(count:+)x(graph:+)_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method "(count:+)x(graph:+)"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --kernel_feature_mode per_feature                                         --regressor_type "MGK" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4922.50 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             1.61 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                18
+    Run time :                                   4966 sec.
+    Turnaround time :                            4968 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/MGK_(count:+)x(graph:+)_per_feature_GPU.err> for stderr output of this job.
+

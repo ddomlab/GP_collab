@@ -1,0 +1,70 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.24±0.08	 r2: 0.83±0.12
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_(count:x)+(graph:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu17>
+Subject: Job 992514: <structure_numerical_20260811> in cluster <Hazel> Done
+
+Job <structure_numerical_20260811> was submitted from host <gpu33> by user <sdehgha2> in cluster <Hazel> at Tue Aug 11 14:39:53 2026
+Job was executed on host(s) <gpu17>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Aug 11 14:46:35 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Aug 11 14:46:35 2026
+Terminated at Tue Aug 11 14:57:23 2026
+Results reported at Tue Aug 11 14:57:23 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 1
+#BSUB -W 1:05
+#BSUB -q "short_gpu"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260811"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_(count:x)+(graph:x)_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_(count:x)+(graph:x)_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method "(count:x)+(graph:x)"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --kernel_feature_mode per_feature                                         --regressor_type "MGK" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   603.58 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.92 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                18
+    Run time :                                   670 sec.
+    Turnaround time :                            1050 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/MGK_(count:x)+(graph:x)_per_feature_GPU.err> for stderr output of this job.
+

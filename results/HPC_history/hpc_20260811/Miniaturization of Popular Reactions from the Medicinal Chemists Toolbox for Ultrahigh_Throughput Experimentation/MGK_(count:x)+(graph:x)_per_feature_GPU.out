@@ -1,0 +1,70 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 15.78±0.95	 r2: 0.74±0.03
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_(count:x)+(graph:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu33>
+Subject: Job 992695: <structure_numerical_20260811> in cluster <Hazel> Done
+
+Job <structure_numerical_20260811> was submitted from host <gpu33> by user <sdehgha2> in cluster <Hazel> at Tue Aug 11 16:13:59 2026
+Job was executed on host(s) <gpu33>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Aug 11 16:26:58 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Aug 11 16:26:58 2026
+Terminated at Tue Aug 11 16:30:17 2026
+Results reported at Tue Aug 11 16:30:17 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+
+#BSUB -n 1
+#BSUB -W 1:05
+#BSUB -q "short_gpu"
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260811"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_(count:x)+(graph:x)_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_(count:x)+(graph:x)_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Graph                                         --K_count Matern32                                         --Kernel_mixing_method "(count:x)+(graph:x)"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --dataset "cleaned_suzuki_synthesis"                                         --kernel_feature_mode per_feature                                         --regressor_type "MGK" 
+
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   189.65 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.89 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                18
+    Run time :                                   198 sec.
+    Turnaround time :                            978 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260811/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_(count:x)+(graph:x)_per_feature_GPU.err> for stderr output of this job.
+
