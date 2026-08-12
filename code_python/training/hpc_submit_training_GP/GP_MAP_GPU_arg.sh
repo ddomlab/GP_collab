@@ -3,7 +3,7 @@
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-datasets=("flux_data_imputed" separation_data_imputed)
+datasets=("flux_data_imputed" "separation_data_imputed")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -43,6 +43,7 @@ python ../train_structure_numerical.py  --K_fp $fp_kernel \
                                         --regressor_type "$model" 
 
 EOT
+
             done
         done
     done
