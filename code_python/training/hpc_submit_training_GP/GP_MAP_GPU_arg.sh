@@ -2,15 +2,15 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
-datasets=("Beyond molecular structure_seifrid_imputed")
+paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+datasets=("flux_data_imputed" "separation_data_imputed")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)" "(count:+)x(fp:x)")
+k_mixing_methods=("(count:+)x(fp:+)" "(count:+)x(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
