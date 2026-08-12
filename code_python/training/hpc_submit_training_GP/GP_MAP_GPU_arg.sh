@@ -10,7 +10,7 @@ mkdir -p "$output_dir"
 
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)" "(count:+)x(fp:x)")
+k_mixing_methods=("(count:x)+(fp:x)" "(count:+)x(fp:+)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
