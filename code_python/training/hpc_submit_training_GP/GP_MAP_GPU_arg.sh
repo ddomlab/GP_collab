@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAP"
+model="GpyroHMC"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
 datasets=("flux_data_imputed" "separation_data_imputed")
 ##flux_data_imputed
