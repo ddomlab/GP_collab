@@ -230,11 +230,11 @@ class MixingKernel:
 
             return ProductKernel(*kernels)
 
-        if self.mixing_method == "(count:+)x(fp:x)":
+        if self.mixing_method == "averageProduct":
             if not fp_kernels:
-                raise ValueError("(count:+)x(fp:x) requires at least one fp kernel")
+                raise ValueError("averageProduct requires at least one fp kernel")
             if not count_kernels:
-                raise ValueError("(count:+)x(fp:x) requires at least one count kernel")
+                raise ValueError("averageProduct requires at least one count kernel")
 
             fp_product_kernel = self._combine(fp_kernels, ProductKernel)
             count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
@@ -243,6 +243,13 @@ class MixingKernel:
             averaged_count_kernel.outputscale = 1.0 / len(count_kernels)
 
             return ProductKernel(fp_product_kernel, averaged_count_kernel)
+
+        if self.mixing_method =="(count:+)x(fp:x)":
+
+            fp_product_kernel = self._combine(fp_kernels, ProductKernel)
+            count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
+            return ProductKernel(fp_product_kernel, count_sum_kernel)
+
 
         if self.mixing_method == "(count:+)x(fp:+)":
             if not fp_kernels:
@@ -336,13 +343,13 @@ class GPMix(gpytorch.models.ExactGP):
                 _register_fp_priors(sub_kernels[:len(fp_keys)])
                 _register_count_priors(sub_kernels[len(fp_keys):])
 
-            elif mixing_method == "(count:+)x(fp:x)":
+            elif mixing_method == "averageProduct":
                 fp_product_kernel = root_kernel.kernels[0]
                 count_sum_kernel = root_kernel.kernels[1].base_kernel
                 _register_fp_priors(_sub_kernels(fp_product_kernel))
                 _register_count_priors(_sub_kernels(count_sum_kernel))
 
-            elif mixing_method in {"(count:+)x(fp:+)", "(count:x)+(fp:x)"}:
+            elif mixing_method in {"(count:+)x(fp:+)", "(count:x)+(fp:x)", "(count:+)x(fp:x)"}:
                 fp_group_kernel = root_kernel.kernels[0]
                 count_group_kernel = root_kernel.kernels[1]
                 _register_fp_priors(_sub_kernels(fp_group_kernel))
@@ -700,7 +707,7 @@ class GPytorchMAPRegressor:
             _add_fp_lengthscales(sub_kernels[:len(fp_keys)])
             _add_count_lengthscales(sub_kernels[len(fp_keys):])
 
-        elif self.kernel_mixing_method == "(count:+)x(fp:x)":
+        elif self.kernel_mixing_method == "averageProduct":
             fp_product_kernel = root_kernel.kernels[0]
             count_sum_kernel = root_kernel.kernels[1].base_kernel
 
@@ -710,6 +717,7 @@ class GPytorchMAPRegressor:
         elif self.kernel_mixing_method in {
             "(count:+)x(fp:+)",
             "(count:x)+(fp:x)",
+            "(count:+)x(fp:x)",
         }:
             fp_group_kernel = root_kernel.kernels[0]
             count_group_kernel = root_kernel.kernels[1]
