@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GpytorchMAP"
+model="GPytorchMAP"
 paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
 datasets=("cleaned_dataset_Ultrafiltration Membrane_imputed")
 ##flux_data_imputed
