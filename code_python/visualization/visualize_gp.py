@@ -330,13 +330,43 @@ PAPER = {
 fp_sk_kernels = ["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"]
 fp_bit_kernels = ["Matern32", "Matern52", "RBF"]
 count_kernels    = ["Matern32", "Matern52", "RBF"]
-mixing_methods  = ["sum", "product", "averageProduct"]
+LEGACY_MIXING_METHODS = ["sum", "product", "averageProduct"]
+FP_MIXING_METHODS = LEGACY_MIXING_METHODS + [
+    "(count:+)x(fp:x)",
+    "(count:+)x(fp:+)",
+    "(count:x)+(fp:x)",
+]
+MGK_MIXING_METHODS = LEGACY_MIXING_METHODS + [
+    "(count:+)x(graph:x)",
+    "(count:+)x(graph:+)",
+    "(count:x)+(graph:x)",
+]
+# Public/default ordering used by plotting and filtering functions.  File
+# discovery uses the model-specific lists above so that ``fp`` method names are
+# never substituted into MGK filenames (and vice versa).
+mixing_methods = list(dict.fromkeys(FP_MIXING_METHODS + MGK_MIXING_METHODS))
 HYBRIDIZATION_METHOD_COLORS = {
     "sum": "#2A9C9D",
     "product": "#C77B7B",
     "averageProduct": "#EDC525",
+    "(count:+)x(fp:x)": "#5B8FF9",
+    "(count:+)x(graph:x)": "#5B8FF9",
+    "(count:+)x(fp:+)": "#61DDAA",
+    "(count:+)x(graph:+)": "#61DDAA",
+    "(count:x)+(fp:x)": "#F6BD16",
+    "(count:x)+(graph:x)": "#F6BD16",
 }
-mixing_labels   = {"sum": "Sum", "product": "Product", "averageProduct": "Av(count)×FP"}
+mixing_labels = {
+    "sum": "ΣC + ΣF",
+    "product": "ΠC × ΠF",
+    "averageProduct": "Av(C) × F",
+    "(count:+)x(fp:x)": "ΣC × ΠF",
+    "(count:+)x(graph:x)": "(count:+)×(graph:×)",
+    "(count:+)x(fp:+)": "ΣC × ΣF",
+    "(count:+)x(graph:+)": "(count:+)×(graph:+)",
+    "(count:x)+(fp:x)": "ΠC + ΠF",
+    "(count:x)+(graph:x)": "(count:×)+(graph:×)",
+}
 TREE_MODELS = {"RF", "XGBR", "NGB"}
 GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
 MODEL_TYPE_COLORS = {
@@ -417,51 +447,6 @@ label_conversion_source = {
     "OOF_sharpness": "Sharpness",
 }
 
-# def plot_barplot(model_specs, save_dir: Path, figsize=(6, 4)):
-#     data = build_barplot_data(model_specs)
-
-#     labels = [spec["label"] for spec in model_specs]
-#     means = [np.mean(data[label]) for label in labels]
-#     stds = [np.std(data[label]) for label in labels]
-
-#     fig, ax = plt.subplots(figsize=figsize)
-
-#     x = np.arange(len(labels))
-#     bars = ax.bar(
-#         x,
-#         means,
-#         yerr=stds,
-#         capsize=5,
-#         color=["#AA5A6E", "#AA5A6E","#AA5A6E","#AA5A6E", "#6B9DB4"],
-#         edgecolor="white",
-#         linewidth=0.8,
-#         error_kw={"elinewidth": 1.5, "ecolor": "black", "capthick": 1.5},
-#     )
-
-#     for bar, mean, std in zip(bars, means, stds):
-#         ax.text(
-#             bar.get_x() + bar.get_width() / 2,
-#             bar.get_height() + std + 0.005,
-#             f"{mean:.2f}",
-#             ha="center",
-#             va="bottom",
-#             fontsize=13,
-#         )
-
-#     ax.set_xticks(x)
-#     ax.tick_params(axis="both", labelsize=14)
-#     ax.set_xticklabels(labels, fontsize=14, rotation=45)
-#     ax.set_ylabel("R²", fontsize=16, fontweight="bold")
-#     ax.set_xlabel("Model", fontsize=16, fontweight="bold")
-#     ax.set_ylim(0, 1.0)
-#     ax.set_yticks(np.arange(0, 1.1, 0.1))
-
-#     plt.tight_layout()
-#     save_img_path(save_dir, "Tree_based_model_result_across_datasets.png")
-#     plt.close(fig)
-#     print(f"Saved barplot at {save_dir}")
-
-
 
 
 
@@ -478,7 +463,7 @@ def _kernel_configs_for_model(model: str) -> List[tuple[str, str, str]]:
         (fp_k, count_k, mix_method)
         for fp_k in fp_sk_kernels + fp_bit_kernels
         for count_k in count_kernels
-        for mix_method in mixing_methods
+        for mix_method in FP_MIXING_METHODS
     ]
 
 
@@ -498,7 +483,7 @@ def _score_file_templates(
         if (
             not use_gpu
             or count_k not in count_kernels
-            or mix_method not in mixing_methods
+            or mix_method not in MGK_MIXING_METHODS
         ):
             return []
         return [
@@ -876,8 +861,12 @@ def _score_row_values(
     gpu_score_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     scores = {}
-    score_data = gpu_data if prefer_gpu_scores else cpu_data
-    score_path = gpu_score_path if prefer_gpu_scores else cpu_score_path
+    if prefer_gpu_scores:
+        score_data = gpu_data if gpu_data is not None else cpu_data
+        score_path = gpu_score_path if gpu_data is not None else cpu_score_path
+    else:
+        score_data = cpu_data if cpu_data is not None else gpu_data
+        score_path = cpu_score_path if cpu_data is not None else gpu_score_path
     for metric in score_metrics:
         scores.update({
             f"{metric}_avg": _metric_score(score_data, metric, "avg"),
@@ -984,7 +973,7 @@ def build_master_performance_data(
 
                 if model == "MGK":
                     for count_k in count_kernels:
-                        for mix in mixing_methods:
+                        for mix in MGK_MIXING_METHODS:
                             cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
                                 paper_loc=paper_loc,
                                 model=model,
@@ -1176,9 +1165,8 @@ def run_topsis(
 
 
 def _mixing_method_label(value: Any) -> str:
-    clean_labels = {"averageProduct": "Av(count)xFP"}
     value = str(value)
-    return clean_labels.get(value, mixing_labels.get(value, value))
+    return mixing_labels.get(value, value)
 
 
 def _expand_master_scores_for_profile(
@@ -2017,13 +2005,83 @@ def plot_hybridization_method_comparison(
     return plot_df
 
 
+def _profile_auc_from_master_data(
+    df: pd.DataFrame,
+    metric: str,
+    model: Any,
+    fp_kernels: Any,
+    count_kernels: Any,
+    mixing_methods: Any,
+    kernel_triples: Any,
+    tree_feature_importance: str,
+    plot_profile: bool,
+    profile_options: Optional[Dict[str, Any]],
+) -> pd.DataFrame:
+    """Calculate AUC rows and optionally render the corresponding profile."""
+    options = dict(profile_options or {})
+    reserved_options = {
+        "df",
+        "metric",
+        "model",
+        "fp_kernels",
+        "count_kernels",
+        "mixing_methods",
+        "kernel_triples",
+        "tree_feature_importance",
+        "plot_profile",
+    }
+    overlapping_options = reserved_options.intersection(options)
+    if overlapping_options:
+        raise ValueError(
+            "profile_options cannot override selection arguments: "
+            + ", ".join(sorted(overlapping_options))
+        )
+
+    selection = {
+        "df": df,
+        "metric": metric,
+        "model": model,
+        "fp_kernels": fp_kernels,
+        "count_kernels": count_kernels,
+        "mixing_methods": mixing_methods,
+        "kernel_triples": kernel_triples,
+        "tree_feature_importance": tree_feature_importance,
+    }
+    if plot_profile:
+        options.setdefault("file_name", None)
+        return performance_plot_with_ranks(
+            **selection,
+            plot_profile=True,
+            **options,
+        )
+
+    calculation_options = {
+        key: options[key]
+        for key in [
+            "dataset_as_experiment_points",
+            "show_error_band",
+            "error_band_stat",
+        ]
+        if key in options
+    }
+    return calculate_performance_profile_auc(
+        **selection,
+        **calculation_options,
+    )
+
+
 def plot_model_profile_comparison(
-    prof_results: pd.DataFrame,
+    df: pd.DataFrame,
     model: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
     kernel_triples: Any = None,
-    metric: Optional[str] = None,
+    metric: str = "r2",
     auc_column: str = "auc",
-    tree_feature_importance: Optional[str] = None,
+    tree_feature_importance: str = "MDI",
+    plot_profile: bool = False,
+    profile_options: Optional[Dict[str, Any]] = None,
     include_kernel_config: bool = True,
     figsize: tuple = (7, 5),
     fontsize: int = 12,
@@ -2039,17 +2097,34 @@ def plot_model_profile_comparison(
     file_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Draw a barplot of profile AUC values from ``performance_plot_with_ranks``.
+    Calculate profile AUCs from master results and draw a model barplot.
 
     Pass ``kernel_triples`` as one triple or a list of
     ``(fp_kernel, count_kernel, mixing_method)`` triples to select exact GP
     kernel combinations. Tree models are kept when their kernel columns are
     empty.
 
-    If the input came from ``performance_plot_with_ranks`` with
-    ``metric="feature_stability"``, pass ``tree_feature_importance`` to select
-    MDI- or SHAP-based tree stability AUC rows when both are present.
+    Set ``plot_profile=True`` to also draw the performance-profile curves.
+    ``profile_options`` is forwarded to ``performance_plot_with_ranks`` and
+    can customize that optional profile plot.
     """
+    calculated_auc_df = _profile_auc_from_master_data(
+        df=df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        tree_feature_importance=tree_feature_importance,
+        plot_profile=plot_profile,
+        profile_options={
+            "show": show,
+            "high_quality": high_quality,
+            "save_dir": save_dir,
+            **dict(profile_options or {}),
+        },
+    )
     required_columns = {
         "model",
         "fp kernel",
@@ -2057,14 +2132,14 @@ def plot_model_profile_comparison(
         "mixing method",
         auc_column,
     }
-    missing_columns = required_columns.difference(prof_results.columns)
+    missing_columns = required_columns.difference(calculated_auc_df.columns)
     if missing_columns:
         raise ValueError(
-            "prof_results is missing required columns: "
+            "Calculated profile results are missing required columns: "
             + ", ".join(sorted(missing_columns))
         )
 
-    plot_df = prof_results.copy()
+    plot_df = calculated_auc_df.copy()
     plot_df = _filter_selection(plot_df, "model", model)
     plot_df = _filter_kernel_triples(plot_df, kernel_triples, keep_missing=True)
     plot_df = _filter_metric_selection(plot_df, metric)
@@ -2182,20 +2257,23 @@ def plot_model_profile_comparison(
 
 
 def plot_hybridization_profile_comparison(
-    prof_results: pd.DataFrame,
+    df: pd.DataFrame,
     model: Any = "GPytorchMAP",
     fp_kernels: Any = None,
     count_kernels: Any = None,
     mixing_methods: Any = None,
     kernel_triples: Any = None,
-    metric: Optional[str] = None,
+    metric: str = "r2",
     auc_column: str = "auc",
+    tree_feature_importance: str = "MDI",
+    plot_profile: bool = False,
+    profile_options: Optional[Dict[str, Any]] = None,
     figsize: tuple = (5, 5),
     fontsize: int = 12,
     title: Optional[str] = None,
     x_label: str = "Hybridization method",
     y_label: str = "Performance profile AUC",
-    x_tick_rotation: int = 0,
+    x_tick_rotation: int = 30,
     y_lim: tuple = (0, 1.05),
     show_values: bool = True,
     show: bool = True,
@@ -2204,18 +2282,32 @@ def plot_hybridization_profile_comparison(
     file_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Draw a barplot comparing hybridization methods from profile AUC results.
+    Calculate profile AUCs from master results and compare hybridizations.
 
-    The input should be the DataFrame returned by
-    ``performance_plot_with_ranks`` or
-    ``performance_plot_hybridization_with_ranks``. Hybridization is stored as
-    ``mixing method``. Use ``fp_kernels`` and ``count_kernels`` to compare
-    methods within a kernel family, or ``kernel_triples`` to select exact
-    ``(fp_kernel, count_kernel, mixing_method)`` combinations. When the input
-    has one AUC per kernel combination, bars summarize mean +/- std across
-    kernels. When the input has one direct AUC per hybridization method, bars
-    show that direct AUC.
+    Hybridization is stored as ``mixing method``. Use ``fp_kernels`` and
+    ``count_kernels`` to compare methods within a kernel family, or
+    ``kernel_triples`` to select exact combinations. AUC is calculated for
+    every selected kernel configuration and bars summarize mean +/- std across
+    those configurations. Set ``plot_profile=True`` to also draw the curves;
+    ``profile_options`` customizes that optional profile plot.
     """
+    calculated_auc_df = _profile_auc_from_master_data(
+        df=df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        tree_feature_importance=tree_feature_importance,
+        plot_profile=plot_profile,
+        profile_options={
+            "show": show,
+            "high_quality": high_quality,
+            "save_dir": save_dir,
+            **dict(profile_options or {}),
+        },
+    )
     required_columns = {
         "model",
         "fp kernel",
@@ -2223,14 +2315,14 @@ def plot_hybridization_profile_comparison(
         "mixing method",
         auc_column,
     }
-    missing_columns = required_columns.difference(prof_results.columns)
+    missing_columns = required_columns.difference(calculated_auc_df.columns)
     if missing_columns:
         raise ValueError(
-            "prof_results is missing required columns: "
+            "Calculated profile results are missing required columns: "
             + ", ".join(sorted(missing_columns))
         )
 
-    plot_df = prof_results.copy()
+    plot_df = calculated_auc_df.copy()
     plot_df = _filter_selection(plot_df, "model", model)
     plot_df = _filter_selection(plot_df, "fp kernel", fp_kernels, keep_missing=True)
     plot_df = _filter_selection(plot_df, "count kernel", count_kernels, keep_missing=True)
@@ -2248,7 +2340,11 @@ def plot_hybridization_profile_comparison(
             f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
         )
 
-    plot_df["hybridization method"] = plot_df["mixing method"].map(_mixing_method_label)
+    plot_df["hybridization method"] = plot_df["mixing method"].map(
+        lambda method: _mixing_method_label(method)
+        .replace("ΣF", "F")
+        .replace("ΠF", "F")
+    )
     selected_models = _selection_values(model)
     include_model = selected_models is None or len(selected_models) > 1
     x_col = "model hybridization method" if include_model else "hybridization method"
@@ -3324,7 +3420,7 @@ def _hybridization_profile_auc_dataframe(
     return pd.DataFrame(rows)
 
 
-def performance_plot_with_ranks(
+def _calculate_performance_profile_results(
     df: pd.DataFrame,
     metric: str = "r2",
     model: Any = "GPytorchMAP",
@@ -3333,47 +3429,11 @@ def performance_plot_with_ranks(
     mixing_methods: Any = None,
     kernel_triples: Any = None,
     tree_feature_importance: str = "MDI",
-    p_threshold: float = 0.05,
-    title: Optional[str] = None,
-    show: bool = True,
-    high_quality: bool = True,
     dataset_as_experiment_points: bool = False,
     show_error_band: bool = False,
     error_band_stat: str = "std",
-    error_band_alpha: float = 0.18,
-    fontsize: float = 12,
-    figsize: tuple = (7, 5),
-    legend_ncols: Optional[int] = None,
-    legend_nrows: Optional[int] = None,
-    save_dir: Optional[Path] = HERE / "result_analysis",
-    file_name: Optional[str] = "performance_profile.png",
-):
-    """
-    Plot model/kernel performance profiles from the master result dataset.
-
-    Following the cat_gp profile code, each row is one
-    ``dataset * target * seed/fold`` repeat for a model/kernel. Percentile
-    ranks are computed within each ``dataset * target`` task using all selected
-    model/kernel repeats, then the plotted profile is the CDF of those ranks.
-    Returns a DataFrame with one AUC row per model/kernel combination.
-
-    For exact GP kernel choices, pass ``kernel_triples`` as one triple or a
-    list of ``(fp_kernel, count_kernel, mixing_method)`` triples. The older
-    separate ``fp_kernels``, ``count_kernels``, and ``mixing_methods`` filters
-    are still supported.
-
-    If ``dataset_as_experiment_points`` is True, the main profile first averages
-    seed/fold scores within each dataset/target so each target contributes one
-    profile point. If ``show_error_band`` is True, this dataset-level mode is
-    used and the shaded band is the std/sem across seed/fold repeat profiles.
-    ``legend_ncols`` and ``legend_nrows`` control the legend layout above the
-    plot. If both are omitted, up to three columns are used.
-
-    Use ``metric="feature_stability"`` to rank the mixed feature-stability
-    metric used by ``plot_model_feature_importance_stability_comparison``:
-    GP-style models use ``lengthscale_kendalls_w`` and tree models use MDI or
-    SHAP stability according to ``tree_feature_importance``.
-    """
+) -> Dict[str, Any]:
+    """Calculate model/kernel profile curves and AUCs without plotting."""
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     profile_df = _expand_master_scores_for_profile(
         df,
@@ -3392,7 +3452,6 @@ def performance_plot_with_ranks(
         )
 
     higher_is_better = _metric_higher_is_better(metric)
-
     if show_error_band:
         dataset_as_experiment_points = True
 
@@ -3417,29 +3476,159 @@ def performance_plot_with_ranks(
         profile_index_cols,
     )
 
-    linn = np.linspace(0, 1, max(len(percentile_matrix), 2))
-    all_percentages = _profile_curves(percentile_matrix, linn)
+    tau_grid = np.linspace(0, 1, max(len(percentile_matrix), 2))
+    curves = _profile_curves(percentile_matrix, tau_grid)
     error_bands = (
         _repeat_profile_error_bands(
             profile_df,
             metric,
             higher_is_better,
-            linn,
+            tau_grid,
             error_band_stat,
         )
         if show_error_band
         else {}
     )
-
     aucs = {
-        kernel_name: auc(linn, percentages)
-        for kernel_name, percentages in all_percentages.items()
+        kernel_name: auc(tau_grid, percentages)
+        for kernel_name, percentages in curves.items()
     }
     sorted_names = [
         kernel_name
-        for kernel_name, _ in sorted(aucs.items(), key=lambda x: x[1], reverse=True)
+        for kernel_name, _ in sorted(aucs.items(), key=lambda item: item[1], reverse=True)
     ]
-    auc_df = _profile_auc_dataframe(profile_df, aucs, sorted_names, metric)
+
+    return {
+        "auc_df": _profile_auc_dataframe(
+            profile_df,
+            aucs,
+            sorted_names,
+            metric,
+        ),
+        "profile_df": profile_df,
+        "profile_score_matrix": profile_score_matrix,
+        "higher_is_better": higher_is_better,
+        "tau_grid": tau_grid,
+        "curves": curves,
+        "error_bands": error_bands,
+        "aucs": aucs,
+        "sorted_names": sorted_names,
+    }
+
+
+def calculate_performance_profile_auc(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
+    dataset_as_experiment_points: bool = False,
+    show_error_band: bool = False,
+    error_band_stat: str = "std",
+) -> pd.DataFrame:
+    """
+    Calculate profile AUC rows directly from master performance data.
+
+    This is the non-plotting counterpart of ``performance_plot_with_ranks``.
+    The model/kernel filters define the cases ranked against one another.
+    """
+    results = _calculate_performance_profile_results(
+        df=df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        tree_feature_importance=tree_feature_importance,
+        dataset_as_experiment_points=dataset_as_experiment_points,
+        show_error_band=show_error_band,
+        error_band_stat=error_band_stat,
+    )
+    return results["auc_df"].copy()
+
+
+def performance_plot_with_ranks(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    tree_feature_importance: str = "MDI",
+    p_threshold: float = 0.05,
+    title: Optional[str] = None,
+    show: bool = True,
+    high_quality: bool = True,
+    dataset_as_experiment_points: bool = False,
+    show_error_band: bool = False,
+    error_band_stat: str = "std",
+    error_band_alpha: float = 0.18,
+    fontsize: float = 12,
+    figsize: tuple = (7, 5),
+    legend_ncols: Optional[int] = None,
+    legend_nrows: Optional[int] = None,
+    plot_profile: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = "performance_profile.png",
+):
+    """
+    Plot model/kernel performance profiles from the master result dataset.
+
+    Following the cat_gp profile code, each row is one
+    ``dataset * target * seed/fold`` repeat for a model/kernel. Percentile
+    ranks are computed within each ``dataset * target`` task using all selected
+    model/kernel repeats, then the plotted profile is the CDF of those ranks.
+    Returns a DataFrame with one AUC row per model/kernel combination.
+
+    For exact GP kernel choices, pass ``kernel_triples`` as one triple or a
+    list of ``(fp_kernel, count_kernel, mixing_method)`` triples. The older
+    separate ``fp_kernels``, ``count_kernels``, and ``mixing_methods`` filters
+    are still supported.
+
+    If ``dataset_as_experiment_points`` is True, the main profile first averages
+    seed/fold scores within each dataset/target so each target contributes one
+    profile point. If ``show_error_band`` is True, this dataset-level mode is
+    used and the shaded band is the std/sem across seed/fold repeat profiles.
+    Set ``plot_profile=False`` to calculate and return AUC rows without creating
+    a figure. For calculation-only callers, ``calculate_performance_profile_auc``
+    is the clearer public entry point.
+    ``legend_ncols`` and ``legend_nrows`` control the legend layout above the
+    plot. If both are omitted, up to three columns are used.
+
+    Use ``metric="feature_stability"`` to rank the mixed feature-stability
+    metric used by ``plot_model_feature_importance_stability_comparison``:
+    GP-style models use ``lengthscale_kendalls_w`` and tree models use MDI or
+    SHAP stability according to ``tree_feature_importance``.
+    """
+    profile_results = _calculate_performance_profile_results(
+        df=df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        tree_feature_importance=tree_feature_importance,
+        dataset_as_experiment_points=dataset_as_experiment_points,
+        show_error_band=show_error_band,
+        error_band_stat=error_band_stat,
+    )
+    auc_df = profile_results["auc_df"]
+    if not plot_profile:
+        return auc_df
+
+    profile_score_matrix = profile_results["profile_score_matrix"]
+    higher_is_better = profile_results["higher_is_better"]
+    linn = profile_results["tau_grid"]
+    all_percentages = profile_results["curves"]
+    error_bands = profile_results["error_bands"]
+    aucs = profile_results["aucs"]
+    sorted_names = profile_results["sorted_names"]
 
 
     groups_of_same_ranks = []
@@ -3791,12 +3980,17 @@ def performance_plot_hybridization_with_ranks(
 
 
 def plot_profile_auc_heatmap(
-    auc_df: pd.DataFrame,
+    df: pd.DataFrame,
     model: Any = None,
     fp_kernels: Any = None,
     count_kernels: Any = None,
     mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "r2",
     auc_column: str = "auc",
+    tree_feature_importance: str = "MDI",
+    plot_profile: bool = False,
+    profile_options: Optional[Dict[str, Any]] = None,
     figsize: tuple = (12, 4),
     title: Optional[str] = None,
     vmin: float = 0,
@@ -3809,11 +4003,29 @@ def plot_profile_auc_heatmap(
     file_name: Optional[str] = "profile_auc_heatmap.png",
 ) -> pd.DataFrame:
     """
-    Plot profile-performance AUC values as a heatmap.
+    Calculate profile AUCs from master results and draw a heatmap.
 
-    The input should be the DataFrame returned by ``performance_plot_with_ranks``.
     Rows are hybridization methods and columns are FP/count kernel combinations.
+    Set ``plot_profile=True`` to also draw the performance-profile curves;
+    ``profile_options`` customizes that optional profile plot.
     """
+    auc_df = _profile_auc_from_master_data(
+        df=df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        tree_feature_importance=tree_feature_importance,
+        plot_profile=plot_profile,
+        profile_options={
+            "show": show,
+            "high_quality": high_quality,
+            "save_dir": save_dir,
+            **dict(profile_options or {}),
+        },
+    )
     required_columns = {
         "model",
         "fp kernel",
@@ -3824,7 +4036,7 @@ def plot_profile_auc_heatmap(
     missing_columns = required_columns.difference(auc_df.columns)
     if missing_columns:
         raise ValueError(
-            "auc_df is missing required columns: "
+            "Calculated profile results are missing required columns: "
             + ", ".join(sorted(missing_columns))
         )
 
@@ -4424,6 +4636,319 @@ def plot_model_average_performance_vs_data_number(
     return summary_df
 
 
+def plot_hybridization_performance_vs_data_number(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    dataset_as_experiment_points: bool = True,
+    figsize: tuple = (10, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Number of datapoints",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 0,
+    y_lim: Optional[tuple] = None,
+    log_y: bool = False,
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot grouped bars of hybridization performance versus dataset size.
+
+    Each color represents a hybridization method. Selected fingerprint/count
+    kernel configurations are averaged within each dataset-target and method,
+    so a dataset contributes equally regardless of the number of selected
+    kernel configurations or seed/fold scores. Error bars show the standard
+    deviation across dataset-target values having the same datapoint count.
+    """
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=False)
+    is_scalar_metric = (
+        metric in df.columns
+        and f"{metric}_seed_fold_scores" not in df.columns
+    )
+    plot_df = _expand_master_scores_for_profile(
+        df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+    )
+    plot_df = plot_df.dropna(subset=["mixing method"]).copy()
+    if plot_df.empty:
+        raise ValueError(
+            f"No {metric} values found for model={model} with "
+            f"fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+            f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
+        )
+
+    plot_df = _add_datapoint_counts(plot_df)
+    plot_df["hybridization method"] = plot_df["mixing method"].map(
+        lambda method: _mixing_method_label(method)
+        .replace("ΣF", "F")
+        .replace("ΠF", "F")
+    )
+    selected_models = _selection_values(model)
+    include_model = selected_models is None or len(selected_models) > 1
+    hue_col = (
+        "model hybridization method"
+        if include_model
+        else "hybridization method"
+    )
+    if include_model:
+        plot_df[hue_col] = (
+            plot_df["model"].astype(str)
+            + "\n"
+            + plot_df["hybridization method"].astype(str)
+        )
+
+    if dataset_as_experiment_points:
+        dataset_group_cols = [
+            "dataset",
+            "target",
+            "n datapoints",
+            hue_col,
+            "hybridization method",
+            "model",
+            "mixing method",
+        ]
+        dataset_group_cols = list(dict.fromkeys(dataset_group_cols))
+        plot_df = (
+            plot_df.groupby(
+                dataset_group_cols,
+                dropna=False,
+                as_index=False,
+            )[metric]
+            .mean()
+            .copy()
+        )
+
+    summary_group_cols = list(dict.fromkeys([
+        "n datapoints",
+        hue_col,
+        "hybridization method",
+        "model",
+        "mixing method",
+    ]))
+    summary_df = (
+        plot_df.groupby(summary_group_cols, dropna=False)[metric]
+        .agg(["mean", "std", "count"])
+        .reset_index()
+        .rename(columns={
+            "mean": f"{metric}_mean",
+            "std": f"{metric}_std",
+            "count": f"{metric}_count",
+        })
+    )
+    summary_df[f"{metric}_std"] = summary_df[f"{metric}_std"].fillna(0.0)
+
+    selected_mixes = _selection_values(mixing_methods) or globals()["mixing_methods"]
+    selected_models = selected_models or plot_df["model"].drop_duplicates().tolist()
+    method_order = {
+        str(method).lower(): index
+        for index, method in enumerate(selected_mixes)
+    }
+    model_order = {
+        str(model_name).lower(): index
+        for index, model_name in enumerate(selected_models)
+    }
+    config_order = summary_df[
+        [hue_col, "model", "mixing method"]
+    ].drop_duplicates(subset=[hue_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: (
+            *_model_order_sort_key(row["model"], model_order),
+            method_order.get(
+                str(row["mixing method"]).lower(),
+                len(method_order),
+            ),
+            str(row["mixing method"]),
+        ),
+        axis=1,
+    )
+    config_order = config_order.sort_values("sort_key", kind="mergesort")
+    hue_order = config_order[hue_col].tolist()
+    data_number_order = sorted(summary_df["n datapoints"].dropna().unique())
+
+    order_lookup = {label: index for index, label in enumerate(hue_order)}
+    summary_df["_plot_order"] = summary_df[hue_col].map(order_lookup)
+    summary_df = (
+        summary_df.sort_values(
+            ["n datapoints", "_plot_order"],
+            kind="stable",
+        )
+        .drop(columns="_plot_order")
+        .copy()
+    )
+
+    fallback_colors = sns.color_palette("Set2", n_colors=max(len(hue_order), 1))
+    palette = {
+        row[hue_col]: HYBRIDIZATION_METHOD_COLORS.get(
+            str(row["mixing method"]),
+            fallback_colors[index % len(fallback_colors)],
+        )
+        for index, (_, row) in enumerate(config_order.iterrows())
+    }
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(
+        data=summary_df,
+        x="n datapoints",
+        y=f"{metric}_mean",
+        hue=hue_col,
+        order=data_number_order,
+        hue_order=hue_order,
+        palette=palette,
+        width=0.9,
+        errorbar=None,
+        ax=ax,
+    )
+
+    summary_lookup = summary_df.set_index(["n datapoints", hue_col])[
+        [f"{metric}_mean", f"{metric}_std"]
+    ]
+    max_label_y = None
+    for hue_index, container in enumerate(ax.containers[:len(hue_order)]):
+        hue_value = hue_order[hue_index]
+        for data_index, bar in enumerate(container.patches):
+            if data_index >= len(data_number_order):
+                continue
+            data_value = data_number_order[data_index]
+            if (data_value, hue_value) not in summary_lookup.index:
+                continue
+
+            values = summary_lookup.loc[(data_value, hue_value)]
+            mean_value = float(values[f"{metric}_mean"])
+            std_value = float(values[f"{metric}_std"])
+            if np.isnan(mean_value):
+                continue
+
+            x_position = bar.get_x() + bar.get_width() / 2
+            if std_value > 0:
+                ax.errorbar(
+                    x_position,
+                    mean_value,
+                    yerr=std_value,
+                    fmt="none",
+                    ecolor="black",
+                    elinewidth=1.1,
+                    capsize=3,
+                    capthick=1.1,
+                    zorder=4,
+                )
+            label_y = mean_value + (std_value if std_value > 0 else 0) + 0.01
+            max_label_y = label_y if max_label_y is None else max(max_label_y, label_y)
+            if show_values:
+                bottom, top = ax.get_ylim()
+                value_y = bottom + 0.02 * (top - bottom)
+                ax.text(
+                    x_position,
+                    value_y,
+                    f"{mean_value:.2f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=max(fontsize - 6, 6),
+                    fontweight="bold",
+                    color="black" if mean_value < 0.1 else "white",
+                    rotation=90,
+                )
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(
+        y_label or f"Mean {metric}",
+        fontsize=fontsize,
+        fontweight="bold",
+    )
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    ax.set_xticks(range(len(data_number_order)))
+    ax.set_xticklabels(
+        [
+            f"{int(value)}" if float(value).is_integer() else f"{value:g}"
+            for value in data_number_order
+        ],
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+
+    if log_y:
+        positive_values = pd.to_numeric(
+            summary_df[f"{metric}_mean"],
+            errors="coerce",
+        )
+        if (positive_values.dropna() <= 0).any():
+            raise ValueError("log_y=True requires all plotted values to be positive.")
+        ax.set_yscale("log")
+
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    elif log_y:
+        ax.set_ylim(
+            bottom=pd.to_numeric(
+                summary_df[f"{metric}_mean"],
+                errors="coerce",
+            ).min() * 0.8
+        )
+    elif str(metric).strip().lower() in {"r2", "oof_r2"}:
+        ax.set_ylim(0, 1.05)
+    elif is_scalar_metric or not _metric_higher_is_better(metric):
+        ax.set_ylim(bottom=0)
+    if max_label_y is not None:
+        bottom, top = ax.get_ylim()
+        ax.set_ylim(bottom, max(top, max_label_y + 0.05))
+
+    legend = ax.get_legend()
+    if legend is not None:
+        handles, labels = ax.get_legend_handles_labels()
+        legend.remove()
+        legend = ax.legend(
+            handles,
+            labels,
+            loc="lower center",
+            bbox_to_anchor=(0.5, 1.02),
+            ncol=max(1, len(labels)),
+            frameon=False,
+            title=None,
+        )
+        for text in legend.get_texts():
+            text.set_fontsize(fontsize - 3)
+
+    plt.tight_layout(rect=(0, 0, 1, 0.92))
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(
+                str(value)
+                for value in (_selection_values(model) or ["all"])
+            )
+            file_name = (
+                f"{model_name}_{metric}_hybridization_performance_"
+                "vs_data_number.png"
+            )
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return summary_df
+
+
 
 
 
@@ -4435,42 +4960,12 @@ if __name__ == "__main__":
     COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
 
-    # prof_results = performance_plot_with_ranks(
-    #     df=result_df,
-    #     metric="r2",
-    #     model=["GPytorchMAP"],
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     # title="GPyTorch MAP R² Performance Profile",
-    #     dataset_as_experiment_points=False,
-    #     # show_error_band=True,
-    #     show=False,
-    #     save_dir= HERE / "result_analysis",
-    #     file_name="r2_GpytorchMAP_SK_performance_profile.png",
-    # )
+
     #"r2", "nll", "cvpp_ama", "ece"
     # for metric in ["feature_stability"]:
     #     tree_fi = "MDI"  # or "SHAP"
-    #     prof_results = performance_plot_with_ranks(
-    #         df=result_df,
-    #         metric=metric,
-    #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #         kernel_triples=[
-    #             ("Matern32", "Matern32", "product"),
-    #             ("TanimotoMatern32", "Matern32", "product"),
-    #             # ("Graph", "Matern32", "product"),
-    #         ],
-    #         tree_feature_importance=tree_fi,
-    #         legend_ncols=2,
-    #         fontsize=17,
-    #         figsize=(7, 5),
-    #         show=True,
-    #         show_error_band=False,
-    #         save_dir= HERE / "result_analysis",
-    #         file_name=f"{metric}_{tree_fi}_lengthscale_model_performance_profile_curve_comparison.png",
-    #     )
     #     plot_model_profile_comparison(
-    #         prof_results=prof_results,
+    #         df=result_df,
     #         model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
     #         kernel_triples=[
     #             ("Matern32", "Matern32", "product"),
@@ -4479,6 +4974,15 @@ if __name__ == "__main__":
     #         ],
     #         metric=metric,
     #         tree_feature_importance=tree_fi,
+    #         plot_profile=True,
+    #         profile_options={
+    #             "legend_ncols": 2,
+    #             "fontsize": 17,
+    #             "figsize": (7, 5),
+    #             "show_error_band": False,
+    #             "save_dir": HERE / "result_analysis",
+    #             "file_name": f"{metric}_{tree_fi}_lengthscale_model_performance_profile_curve_comparison.png",
+    #         },
     #         y_label=f"Profile AUC of feature stability",
     #         fontsize=17,
     #         figsize=(5, 5),
@@ -4487,7 +4991,8 @@ if __name__ == "__main__":
     #     )
 
     # plot_profile_auc_heatmap(
-    #     auc_df=prof_results,
+    #     df=result_df,
+    #     metric="r2",
     #     fontsize=13.4,
     #     figsize=(15, 4.1),
     #     model=["GPytorchMAP"],
@@ -4533,7 +5038,7 @@ if __name__ == "__main__":
     # )
     
     # plot_hybridization_profile_comparison(
-    #     prof_results=prof_results,
+    #     df=result_df,
     #     model="GPytorchMAP",
     #     metric="r2",
     #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
@@ -4545,16 +5050,45 @@ if __name__ == "__main__":
     #     file_name="r2_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-    # plot_hybridization_profile_comparison(
-    # prof_results=hybrid_prof_results,
-    # model="GPytorchMAP",
-    # metric="r2",
-    # y_label="Profile AUC of R²",
-    # fontsize=17,
-    # figsize=(5, 5),
-    # save_dir=HERE / "result_analysis",
-    # file_name="r2_GPytorchMAP_bitwise_hybridization_profile_comparison_pure.png",
+    plot_hybridization_profile_comparison(
+    df=result_df,
+    model="GPytorchMAP",
+    fp_kernels=["TanimotoMatern32"],
+    count_kernels=["Matern32"],
+    mixing_methods=[
+    "sum","product",    
+    "(count:+)x(fp:x)",
+    # "(count:+)x(fp:+)",
+    "(count:x)+(fp:x)"],
+    metric="r2",
+    y_label="Profile AUC of R²",
+    fontsize=17,
+    figsize=(5, 5),
+    save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+    file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32.png",
+    )
+
+    # plot_hybridization_performance_vs_data_number(
+    #     df=result_df,
+    #     metric="OOF_R2",
+    #     model="GPytorchMAP",
+    #     fp_kernels=["TanimotoMatern32"],
+    #     count_kernels=["Matern32"],
+    #     mixing_methods=[
+    #                     "sum",
+    #                     "product",
+    #                     "(count:+)x(fp:x)",
+    #                     # "(count:+)x(fp:+)",
+    #                     "(count:x)+(fp:x)"
+    #                     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(11, 6),
+    #     show=True,
+    #     save_dir=HERE / "result_analysis"/"absolute_metric"/"hybridization_comparison",
+    #     file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32_vs_data_number.png",
     # )
+
 
     # plot_hybridization_topsis_comparison(
     #     df=result_df,
@@ -4671,22 +5205,22 @@ if __name__ == "__main__":
     # )
 
 
-    plot_model_performance_TOPSIS(
-        df=result_df,
-        metrics=["OOF_R2", "OOF_cvpp_ama", "feature_stability"],
-        tree_feature_importance="SHAP",
-        criteria_weights=[.5, 0.2, 0.3],
-        criteria_types=[1, -1, 1],
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-        kernel_triples=[
-            ("TanimotoMatern32", "Matern32", "product"),
-            ("Matern32", "Matern32", "product"),
-            # ("Graph", "Matern32", "product")
-        ],
-        show=True,
-        fontsize=17,
-        y_lim=(0, 1.1),
-        figsize=(6, 5),
-        save_dir=HERE / "result_analysis",
-        file_name=f"R2_AMA_feature_stability_SHAP_TOPSIS_comparison.png",
-    )
+    # plot_model_performance_TOPSIS(
+    #     df=result_df,
+    #     metrics=["OOF_R2", "OOF_cvpp_ama", "feature_stability"],
+    #     tree_feature_importance="SHAP",
+    #     criteria_weights=[.5, 0.2, 0.3],
+    #     criteria_types=[1, -1, 1],
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+    #     kernel_triples=[
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Matern32", "Matern32", "product"),
+    #         # ("Graph", "Matern32", "product")
+    #     ],
+    #     show=True,
+    #     fontsize=17,
+    #     y_lim=(0, 1.1),
+    #     figsize=(6, 5),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name=f"R2_AMA_feature_stability_SHAP_TOPSIS_comparison.png",
+    # )
