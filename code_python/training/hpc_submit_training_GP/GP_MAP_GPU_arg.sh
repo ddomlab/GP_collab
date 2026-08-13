@@ -12,9 +12,6 @@ k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
 k_mixing_methods=("(count:x)+(fp:x)")
 
-# "(count:+)x(graph:x)"
-# "(count:+)x(graph:+)"
-# "(count:x)+(graph:x)"
 
 for mixing_method in "${k_mixing_methods[@]}"; do
     for dataset in "${datasets[@]}"; do
