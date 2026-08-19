@@ -7,7 +7,7 @@ datasets=("Rg data with clusters aging imputed")
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-models=("GPytorchMAP")
+model="GPytorchMAP"
 k_fps=("Tanimoto")
 k_counts=("Matern32")
 k_mixing_methods=("sum")
@@ -17,15 +17,14 @@ for mixing_method in "${k_mixing_methods[@]}"; do
     for dataset in "${datasets[@]}"; do
         for fp_kernel in "${k_fps[@]}"; do
             for count_kernel in "${k_counts[@]}"; do
-                for model in "${models[@]}"; do
-                    bsub <<EOT
+                bsub <<EOT
 
 
 #BSUB -n 1
 #BSUB -W 1:45
 #BSUB -q "short_gpu"
 #BSUB -gpu "num=1:mode=shared:mps=no"
-#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "rusage[mem=8GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
 #BSUB -J "structure_numerical_${DATE}_${model}"
 #BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
@@ -44,7 +43,6 @@ python ../train_structure_numerical.py  --K_fp $fp_kernel \
                                         --regressor_type "$model" 
 
 EOT
-                done
             done
         done
     done
