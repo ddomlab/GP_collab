@@ -1,8 +1,8 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-datasets=("flux_data_imputed" "separation_data_imputed")
+paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+datasets=("cleaned_suzuki_synthesis")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
@@ -10,7 +10,7 @@ mkdir -p "$output_dir"
 model="GPytorchMAP"
 k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Matern32" "Matern52" "RBF")
 k_counts=("Matern32" "Matern52" "RBF")
-k_mixing_methods=("sum" "prodcut" "averageProduct" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
+k_mixing_methods=("sum" "product" "averageProduct" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
