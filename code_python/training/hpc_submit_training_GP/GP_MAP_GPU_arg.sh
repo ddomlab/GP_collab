@@ -8,9 +8,9 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 model="GPytorchMAP"
-k_fps=("Tanimoto")
-k_counts=("Matern32")
-k_mixing_methods=("sum")
+k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Matern32" "Matern52" "RBF")
+k_counts=("Matern32" "Matern52" "RBF")
+k_mixing_methods=("sum" "prodcut" "averageProduct" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
