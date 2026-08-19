@@ -1467,16 +1467,92 @@ def plot_model_comparison(
     high_quality: bool = True,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = None,
+    runtime_devices: Any = None,
+    average_over_tasks: bool = False,
 ) -> pd.DataFrame:
     """
     Make a box plot of a metric score for selected models/kernels.
 
     Score metrics use ``<metric>_seed_fold_scores``. Scalar columns such as
     ``Running time (CPU)`` are plotted directly across dataset/model rows.
+    For a mixed CPU/GPU runtime plot, pass one entry in ``runtime_devices``
+    for each entry in ``model``. For example, ``["CPU", "CPU", "GPU"]``
+    selects the runtime column independently for each model. In that case,
+    ``metric`` may be ``"Running time"``, ``"Running time (CPU)```, or
+    ``"Running time (GPU)``; the per-model selection takes precedence.
     For GP models, pass ``kernel_triples`` as one triple or a list of
     ``(fp_kernel, count_kernel, mixing_method)`` triples.
+    Set ``average_over_tasks=True`` to give every dataset/target task equal
+    weight and print the resulting mean for each displayed model
+    configuration. This does not change the distributional plot.
     Set ``log_y=True`` to show the y-axis on a log scale.
     """
+    runtime_device_map = None
+    if runtime_devices is not None:
+        selected_models = _selection_values(model)
+        if selected_models is None:
+            raise ValueError(
+                "model must be specified when runtime_devices is provided."
+            )
+
+        if isinstance(runtime_devices, str):
+            selected_devices = [runtime_devices] * len(selected_models)
+        else:
+            selected_devices = list(runtime_devices)
+        if len(selected_devices) != len(selected_models):
+            raise ValueError(
+                "runtime_devices must contain one CPU/GPU entry for each model "
+                f"({len(selected_models)} expected, {len(selected_devices)} received)."
+            )
+
+        runtime_device_map = {}
+        for model_name, device in zip(selected_models, selected_devices):
+            normalized_device = str(device).strip().upper()
+            if normalized_device not in {"CPU", "GPU"}:
+                raise ValueError(
+                    "runtime_devices entries must be either 'CPU' or 'GPU'."
+                )
+            model_key = str(model_name).lower()
+            if (
+                model_key in runtime_device_map
+                and runtime_device_map[model_key] != normalized_device
+            ):
+                raise ValueError(
+                    f"Model {model_name!r} has conflicting runtime device selections."
+                )
+            runtime_device_map[model_key] = normalized_device
+
+        runtime_metric_names = {
+            "running time",
+            "running time (cpu)",
+            "running time (gpu)",
+        }
+        if str(metric).strip().lower() not in runtime_metric_names:
+            raise ValueError(
+                "runtime_devices can only be used with a running-time metric."
+            )
+
+        required_runtime_columns = {
+            f"Running time ({device})" for device in runtime_device_map.values()
+        }
+        missing_columns = required_runtime_columns.difference(df.columns)
+        if missing_columns:
+            raise ValueError(
+                "df is missing required runtime columns: "
+                + ", ".join(sorted(missing_columns))
+            )
+
+        df = df.copy()
+        device_by_row = df["model"].astype(str).str.lower().map(runtime_device_map)
+        metric = "Running time"
+        df[metric] = np.nan
+        for device in sorted(set(runtime_device_map.values())):
+            device_mask = device_by_row.eq(device)
+            df.loc[device_mask, metric] = pd.to_numeric(
+                df.loc[device_mask, f"Running time ({device})"],
+                errors="coerce",
+            )
+
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
     plot_df = _expand_master_scores_for_profile(
@@ -1495,6 +1571,42 @@ def plot_model_comparison(
         lambda row: _model_config_label(row, include_kernel_config),
         axis=1,
     )
+    if runtime_device_map is not None:
+        plot_df["runtime device"] = (
+            plot_df["model"].astype(str).str.lower().map(runtime_device_map)
+        )
+
+    selected_models = _selection_values(model) or MODELS
+    model_order = {
+        str(model_name).lower(): idx
+        for idx, model_name in enumerate(selected_models)
+    }
+    config_order = plot_df[
+        [x_col, "model", "fp kernel", "count kernel", "mixing method"]
+    ].drop_duplicates(subset=[x_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    order = config_order.sort_values("sort_key", kind="mergesort")[x_col].tolist()
+
+    if average_over_tasks:
+        task_group_cols = ["dataset", "target", x_col, "model"]
+        summary_group_cols = [x_col, "model"]
+        if runtime_device_map is not None:
+            task_group_cols.append("runtime device")
+            summary_group_cols.append("runtime device")
+        average_df = (
+            plot_df.groupby(task_group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+            .groupby(summary_group_cols, dropna=False, as_index=False)[metric]
+            .mean()
+        )
+        print(f"Average {metric.lower()} across all tasks:")
+        average_lookup = average_df.set_index(x_col)[metric]
+        unit = " s" if metric.lower().startswith("running time") else ""
+        for label in order:
+            print(f"  {label}: {average_lookup.loc[label]:.3f}{unit}")
 
     if dataset_as_experiment_points:
         group_cols = [
@@ -1512,21 +1624,12 @@ def plot_model_comparison(
             .copy()
         )
 
-    selected_models = _selection_values(model) or MODELS
-    model_order = {str(model_name).lower(): idx for idx, model_name in enumerate(selected_models)}
-    config_order = plot_df[
-        [x_col, "model", "fp kernel", "count kernel", "mixing method"]
-    ].drop_duplicates(subset=[x_col])
-    config_order["sort_key"] = config_order.apply(
-        lambda row: _model_config_sort_key(row, model_order),
-        axis=1,
-    )
-    order = config_order.sort_values("sort_key", kind="mergesort")[x_col].tolist()
     violin_palette = {
         label: _model_type_color(plot_df.loc[plot_df[x_col] == label, "model"].iloc[0])
         for label in order
     }
     fig, ax = plt.subplots(figsize=figsize)
+    positions = list(range(len(order)))
     sns.violinplot(
         data=plot_df,
         x=x_col,
@@ -1543,7 +1646,6 @@ def plot_model_comparison(
         dodge=False,
         legend=False,
     )
-    positions = list(range(len(order)))
     for collection in ax.collections:
         if not isinstance(collection, PolyCollection):
             continue
@@ -1627,6 +1729,8 @@ def plot_model_comparison(
         plt.show()
     else:
         plt.close(fig)
+
+    return plot_df
 
 
 def plot_model_feature_importance_stability_comparison(
@@ -5005,24 +5109,45 @@ if __name__ == "__main__":
     # )
 
     
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="r2",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "product"),
+    #         ("TanimotoMatern32", "Matern32", "product"),
+    #         ("Graph", "Matern32", "product"),
+    #         ],
+    #     y_label="R²",
+    #     fontsize=17,
+    #     show=True,
+    #     y_lim=(0,1.05),
+    #     figsize=(6, 5),
+    #     # log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="r2_distributional_model_comparison.png",
+    # )
+
     plot_model_comparison(
         df=result_df,
-        metric="r2",
-        model=["RF", "XGBR","NGB","GPytorchMAP"],
+        metric="Running time",
+        model=["RF", "XGBR","NGB","GPytorchMAP",  "GpyroHMC"],
+        runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
         kernel_triples=[
-            ("Matern32", "Matern32", "product"),
-            ("TanimotoMatern32", "Matern32", "product"),
-            ("Graph", "Matern32", "product"),
-            ],
-        y_label="R²",
+            ("Matern32", "Matern32", "averageProduct"),
+            ("TanimotoMatern32", "Matern32", "averageProduct"),
+        ],
+        average_over_tasks=True,
+        y_label="Running time (s)",
         fontsize=17,
         show=True,
-        y_lim=(0,1.05),
+        # y_lim=(0, 100),
         figsize=(6, 5),
-        # log_y=True,
+        log_y=True,
         save_dir=HERE / "result_analysis",
-        file_name="r2_distributional_model_comparison.png",
+        file_name="running_time_distributional_model_comparison.png",
     )
+
 
     # plot_hybridization_method_comparison(
     #     df=result_df,

@@ -14,28 +14,11 @@ import numpy as np
 from pyro.nn import PyroSample
 from pyro.nn.module import PyroParam
 from torch.distributions import constraints
+from GPytorch_kernel_mix import weighted_tanimoto
 
 
 def _as_torch_tensor(value, *, dtype=None, device=None):
     return torch.as_tensor(value, dtype=dtype or torch.float32, device=device)
-
-
-def weighted_tanimoto(x1, x2, eps=1e-6,dist=True):
-    x1e = x1.unsqueeze(-2)
-    x2e = x2.unsqueeze(-3)
-
-    numerator = torch.min(x1e, x2e).sum(dim=-1)
-    denominator = torch.max(x1e, x2e).sum(dim=-1)
-
-    sim = torch.where(
-        denominator > 0,
-        numerator / (denominator + eps),
-        torch.zeros_like(denominator),
-    )
-    if dist:
-        dist = 1.0 - sim
-        return torch.clamp(dist, min=0.)
-    return torch.clamp(sim, min=0.)
 
 
 class TanimotoRBF(pk.Kernel):
@@ -435,13 +418,13 @@ class MixingKernelPyro:
 
             fp_kernel = self._combine(
                 fp_kernels,
-                SumMultipleWithVariance,
+                ProductMultipleWithVariance,
                 variance=self._tensor(1.0),
                 learn_variance=False,
             )
             count_kernel = self._combine(
                 count_kernels,
-                ProductMultipleWithVariance,
+                SumMultipleWithVariance,
                 variance=self._tensor(1.0),
                 learn_variance=False,
             )
@@ -518,6 +501,13 @@ class GPMixPyro(gp.models.GPRegression):
 
         self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
         self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
+        if mixing_method == "averageProduct":
+            # The count kernel computes the arithmetic mean of its component
+            # kernels. Infer a multiplier for that mean, matching the trainable
+            # inner ScaleKernel used by the GPyTorch implementation.
+            self.kernel.kern1.variance = PyroSample(
+                dist.LogNormal(0.0, 1.0)
+            )
 
         # Dynamically assign lengthscales to all sub-kernels
         fp_keys = sorted(
@@ -539,18 +529,18 @@ class GPMixPyro(gp.models.GPRegression):
                     continue
                 if "tanimoto" in self.kernel_method["fp"].lower():
                     target_kern.lengthscale = PyroSample(
-                        dist.InverseGamma(5.0, 5.0)
+                        dist.Gamma(5.0, 5.0)
                     )
                 else:
                     ard_length = len(self.feat_idx[fp_keys[i]])
                     target_kern.lengthscale = PyroSample(
-                        dist.InverseGamma(5.0, 5.0)
+                        dist.Gamma(5.0, 5.0)
                         .expand([ard_length])
                         .to_event(1)
                     )
             else:
                 target_kern.lengthscale = PyroSample(
-                    dist.InverseGamma(5.0, 5.0)
+                    dist.Gamma(5.0, 5.0)
                 )
 
 
@@ -562,7 +552,6 @@ def run_inference(gp_model,
                 num_samples,
                 warmup_steps,
                 num_chains,
-                num_drawn_samples,
                 random_state=42,
                 jit_compile=False,
                 ):
@@ -585,7 +574,7 @@ def run_inference(gp_model,
     )
 
     mcmc.run()
-    return mcmc.get_samples(num_samples=num_drawn_samples)
+    return mcmc.get_samples()
 
 
 
@@ -596,7 +585,6 @@ class GpyroHMCRegressor:
         num_samples=200,
         warmup_steps=200,
         num_chains=1,
-        num_drawn_samples=100,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
@@ -609,7 +597,6 @@ class GpyroHMCRegressor:
         self.warmup_steps = warmup_steps
         self.num_chains = num_chains
         self.random_state = random_state
-        self.num_drawn_samples = num_drawn_samples
         self.kernel_mixing_method = kernel_mixing_method
         self.kernel_type = (
             kernel_type
@@ -743,7 +730,6 @@ class GpyroHMCRegressor:
             warmup_steps=self.warmup_steps,
             num_chains=self.num_chains,
             random_state=self.random_state,
-            num_drawn_samples=self.num_drawn_samples,
             jit_compile=self.jit_compile,
         )
 
@@ -763,22 +749,21 @@ class GpyroHMCRegressor:
 
     def _predictive_strategy(self, X_new):
         """
-        Method used by Pyro's Predictive class.
-        Must be a method of the class to allow pickling.
+        Record conditional predictive moments for each HMC parameter draw.
+
+        ``noiseless=False`` includes observation noise in the conditional
+        variance, matching the GPyTorch MAP prediction path. Observation noise
+        does not change the conditional mean.
         """
-        # GP forward returns predictive mean and variance (including noise if noiseless=False)
         f_loc, f_var = self.gp_model_(X_new, full_cov=False, noiseless=False)
 
-        # Stability: clamp variance to avoid sqrt of negative numbers due to float errors
-        f_scale = f_var.sqrt()
-
-        # Sample observations
-        pyro.sample(
-            "y_pred",
-            dist.Normal(f_loc, f_scale).to_event(1),
+        pyro.deterministic("predictive_mean", f_loc)
+        pyro.deterministic(
+            "predictive_variance",
+            f_var.clamp_min(0.0),
         )
             
-    def _predictive_samples(self, X_test: pd.DataFrame):
+    def _predictive_moments(self, X_test: pd.DataFrame):
         if not self.is_fitted_:
             raise RuntimeError("Call fit before predict.")
 
@@ -790,28 +775,31 @@ class GpyroHMCRegressor:
         predictive = Predictive(
             self._predictive_strategy,
             posterior_samples=self.samples_,
-            return_sites=("y_pred",),
+            return_sites=("predictive_mean", "predictive_variance"),
             parallel=False,
         )
 
-        # draw predictive samples
         with torch.no_grad():
-            samples_pred = predictive(X_t)
-            y_samples = samples_pred["y_pred"]  # shape [S, N] or [S, N, 1]
+            predictive_moments = predictive(X_t)
+            mean_samples = predictive_moments["predictive_mean"]
+            variance_samples = predictive_moments["predictive_variance"]
 
-        if y_samples.ndim == 3:
-            y_samples = y_samples.squeeze(-1)
+        # Average the conditional GP distributions over HMC parameter draws.
+        mean_pred = mean_samples.mean(dim=0)
+        variance_pred = (
+            (variance_samples + mean_samples.square()).mean(dim=0)
+            - mean_pred.square()
+        ).clamp_min(0.0)
 
-        return y_samples
+        return mean_pred, variance_pred
 
     def predict(self, X_test: pd.DataFrame, return_std=False):
-        y_samples = self._predictive_samples(X_test)
+        mean_pred, variance_pred = self._predictive_moments(X_test)
 
-        mean_pred = y_samples.mean(dim=0)
         y_pred = mean_pred.detach().cpu().numpy() * self.y_std_ + self.y_mean_
 
         if return_std:
-            std_pred = y_samples.std(dim=0, unbiased=False)
+            std_pred = variance_pred.sqrt()
             y_std = std_pred.detach().cpu().numpy() * self.y_std_
         else:
             y_std = None
@@ -888,17 +876,12 @@ class GpyroHMCRegressor:
 
 
 """
-points about the std of predictions:
-y_std reflects the spread of sampled predicted observations. It is not simply:
-std of 100 posterior means
-It is:
-std of 100 sampled predicted y values
-
-where each predicted y draw includes:
-1. HMC posterior variation in GP parameters
-2. GP predictive variance at X_test
-3. observation/noise variance, because noiseless=False
-4. Monte Carlo randomness from Normal sampling
+The predictive moments integrate the conditional GP distributions over HMC
+parameter draws. ``y_pred`` is the average conditional mean, while ``y_std``
+uses the law of total variance and includes:
+1. variation in conditional means across HMC parameter draws,
+2. conditional GP predictive variance at X_test, and
+3. observation noise because ``noiseless=False``.
 
 """
 
@@ -910,7 +893,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         num_samples=200,
         warmup_steps=200,
         num_chains=1,
-        num_drawn_samples=100,
         use_cuda=False,
         random_state=42,
         kernel_mixing_method:str="product",
@@ -922,7 +904,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         self.num_samples = num_samples
         self.warmup_steps = warmup_steps
         self.num_chains = num_chains
-        self.num_drawn_samples = num_drawn_samples
         self.use_cuda = use_cuda
         self.random_state = random_state
         self.kernel_mixing_method = kernel_mixing_method
@@ -942,7 +923,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
             num_samples=self.num_samples,
             warmup_steps=self.warmup_steps,
             num_chains=self.num_chains,
-            num_drawn_samples=self.num_drawn_samples,
             use_cuda=self.use_cuda,
             random_state=self.random_state,
             kernel_mixing_method=self.kernel_mixing_method,

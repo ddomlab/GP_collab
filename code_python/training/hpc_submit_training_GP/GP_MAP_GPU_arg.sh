@@ -1,14 +1,14 @@
 #!/bin/bash
 
 DATE=$(date +%Y%m%d)
-model="GPytorchMAP"
+models=("GPytorchMAP" "GpyroHMC")
 paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
 datasets=("cleaned_dataset_Ultrafiltration Membrane_imputed")
 ##flux_data_imputed
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-k_fps=("TanimotoMatern32")
+k_fps=("TanimotoRBF")
 k_counts=("Matern32")
 k_mixing_methods=("(count:x)+(fp:x)")
 
@@ -17,11 +17,12 @@ for mixing_method in "${k_mixing_methods[@]}"; do
     for dataset in "${datasets[@]}"; do
         for fp_kernel in "${k_fps[@]}"; do
             for count_kernel in "${k_counts[@]}"; do
+                for model in "${models[@]}"; do
                 bsub <<EOT
 
 
 #BSUB -n 1
-#BSUB -W 1:50
+#BSUB -W 1:55
 #BSUB -q "short_gpu"
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -43,7 +44,7 @@ python ../train_structure_numerical.py  --K_fp $fp_kernel \
                                         --regressor_type "$model" 
 
 EOT
-
+                done
             done
         done
     done

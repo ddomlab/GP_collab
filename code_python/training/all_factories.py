@@ -194,7 +194,6 @@ def optimized_models(
                                     num_samples=kwargs.get('num_samples', 200),
                                     warmup_steps=kwargs.get('warmup_steps', 200),
                                     num_chains=kwargs.get('num_chains', 1),
-                                    num_drawn_samples=kwargs.get('num_drawn_samples', 100),
                                     use_cuda=kwargs.get('use_cuda', False),
                                     random_state=random_state,
                                     kernel_mixing_method=kernel_mixing_method,

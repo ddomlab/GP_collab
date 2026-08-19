@@ -405,7 +405,7 @@ class GPytorchMAPRegressor:
         ssk_parameters: dict | None = None,
         progbar: bool = True,
         prior=False,
-        normalize_y: bool = False,
+        normalize_y: bool = True,
         use_cuda: bool = True,
     ):
         self.feat_group = feat_group
@@ -608,8 +608,8 @@ class GPytorchMAPRegressor:
         self.likelihood_.eval()
 
         with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.cholesky_jitter(
-            float_value=1e-1,
-            double_value=1e-1,
+            float_value=1e-4,
+            double_value=1e-4,
         ), gpytorch.settings.cholesky_max_tries(5):
             posterior = self.likelihood_(self.gp_model_(X_test))
 
@@ -745,7 +745,7 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         ssk_parameters: dict | None = None,
         progbar: bool = True,
         prior=False,
-        normalize_y: bool = False,
+        normalize_y: bool = True,
         use_cuda: bool = True,
     ):
         self.feat_group = feat_group
