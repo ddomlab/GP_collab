@@ -18,7 +18,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
         for fp_kernel in "${k_fps[@]}"; do
             for count_kernel in "${k_counts[@]}"; do
                 for model in "${models[@]}"; do
-                bsub <<EOT
+                    bsub <<EOT
 
 
 #BSUB -n 1
