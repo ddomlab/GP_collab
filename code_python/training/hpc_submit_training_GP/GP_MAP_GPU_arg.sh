@@ -7,7 +7,7 @@ datasets=("cleaned_dataset_Ultrafiltration Membrane_imputed")
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-models=("GPytorchMAP")
+models=("GPytorchMAP" "GpyroHMC")
 k_fps=("Tanimoto" "TanimotoMatern52" "TanimotoMatern32" "TanimotoRBF" "Matern32" "Matern52" "RBF")
 k_counts=("Matern32" "Matern52" "RBF")
 k_mixing_methods=("sum" "product" "averageProduct" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
@@ -23,7 +23,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 #BSUB -n 1
 #BSUB -W 1:55
-#BSUB -q "gpu"
+#BSUB -q "short_gpu"
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
