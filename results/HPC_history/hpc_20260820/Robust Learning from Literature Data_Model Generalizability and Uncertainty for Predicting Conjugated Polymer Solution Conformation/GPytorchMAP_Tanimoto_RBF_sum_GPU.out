@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.31±0.06	 r2: 0.73±0.11
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Tanimoto-RBF_sum)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 27928: <structure_numerical_20260820_GPytorchMAP> in cluster <Hazel> Done
+
+Job <structure_numerical_20260820_GPytorchMAP> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Aug 20 09:51:37 2026
+Job was executed on host(s) <gpu26>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Aug 20 11:03:03 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Aug 20 11:03:03 2026
+Terminated at Thu Aug 20 11:06:05 2026
+Results reported at Thu Aug 20 11:06:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 1:50
+#BSUB -q short_gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260820_GPytorchMAP"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_Tanimoto_RBF_sum_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_Tanimoto_RBF_sum_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Tanimoto                                         --K_count RBF                                         --Kernel_mixing_method "sum"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --dataset "Rg data with clusters aging imputed"                                         --regressor_type "GPytorchMAP" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   161.94 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.88 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               7.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                9
+    Run time :                                   199 sec.
+    Turnaround time :                            4468 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/GPytorchMAP_Tanimoto_RBF_sum_GPU.err> for stderr output of this job.
+
