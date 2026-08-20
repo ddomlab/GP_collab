@@ -7,7 +7,7 @@ datasets=("cleaned_suzuki_synthesis")
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
-model="GPytorchMAP"
+model="GpyroHMC"
 k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Matern32" "Matern52" "RBF")
 k_counts=("Matern32" "Matern52" "RBF")
 k_mixing_methods=("sum" "product" "averageProduct" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
@@ -21,7 +21,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 1:45
+#BSUB -W 3:20
 #BSUB -q short_gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=8GB]"

@@ -499,14 +499,18 @@ class GPMixPyro(gp.models.GPRegression):
         kernel = self.kernel_builder.build()
         super().__init__(X, y, kernel, jitter=1e-4)
 
-        self.noise = PyroSample(dist.LogNormal(0.0, 1.0))
-        self.kernel.variance = PyroSample(dist.LogNormal(0.0, 1.0))
+        zero = X.new_tensor(0.0)
+        one = X.new_tensor(1.0)
+        five = X.new_tensor(5.0)
+
+        self.noise = PyroSample(dist.LogNormal(zero, one))
+        self.kernel.variance = PyroSample(dist.LogNormal(zero, one))
         if mixing_method == "averageProduct":
             # The count kernel computes the arithmetic mean of its component
             # kernels. Infer a multiplier for that mean, matching the trainable
             # inner ScaleKernel used by the GPyTorch implementation.
             self.kernel.kern1.variance = PyroSample(
-                dist.LogNormal(0.0, 1.0)
+                dist.LogNormal(zero, one)
             )
 
         # Dynamically assign lengthscales to all sub-kernels
@@ -529,18 +533,18 @@ class GPMixPyro(gp.models.GPRegression):
                     continue
                 if "tanimoto" in self.kernel_method["fp"].lower():
                     target_kern.lengthscale = PyroSample(
-                        dist.Gamma(5.0, 5.0)
+                        dist.Gamma(five, five)
                     )
                 else:
                     ard_length = len(self.feat_idx[fp_keys[i]])
                     target_kern.lengthscale = PyroSample(
-                        dist.Gamma(5.0, 5.0)
+                        dist.Gamma(five, five)
                         .expand([ard_length])
                         .to_event(1)
                     )
             else:
                 target_kern.lengthscale = PyroSample(
-                    dist.Gamma(5.0, 5.0)
+                    dist.Gamma(five, five)
                 )
 
 
