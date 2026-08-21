@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.08 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 15.28±0.89	 r2: 0.76±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_Matern32-RBF_(count:x)+(fp:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 27917: <structure_numerical_20260820_GpyroHMC> in cluster <Hazel> Done
+
+Job <structure_numerical_20260820_GpyroHMC> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Aug 20 09:46:27 2026
+Job was executed on host(s) <gpu26>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Aug 20 19:57:02 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Aug 20 19:57:02 2026
+Terminated at Thu Aug 20 20:16:54 2026
+Results reported at Thu Aug 20 20:16:54 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 3:20
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260820_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_Matern32_RBF_(count:x)+(fp:x)_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_Matern32_RBF_(count:x)+(fp:x)_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count RBF                                         --Kernel_mixing_method "(count:x)+(fp:x)"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --dataset "cleaned_suzuki_synthesis"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1167.71 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.75 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               6.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                10
+    Run time :                                   910 sec.
+    Turnaround time :                            37827 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260820/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GpyroHMC_Matern32_RBF_(count:x)+(fp:x)_GPU.err> for stderr output of this job.
+
