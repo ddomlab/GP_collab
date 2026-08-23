@@ -1,0 +1,98 @@
+Data filtering and preprocessing took 0.04 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 73.03±10.34	 r2: 0.78±0.06
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.15±1.35	 r2: 0.67±0.13
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.3±1.48	 r2: 0.7±0.08
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.44±1.36	 r2: 0.33±0.1
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.45±1.65	 r2: 0.7±0.1
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.44±1.36	 r2: 0.33±0.1
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_RBF-RBF_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 34037: <structure_numerical_20260822_GPytorchMAP> in cluster <Hazel> Done
+
+Job <structure_numerical_20260822_GPytorchMAP> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sat Aug 22 18:45:02 2026
+Job was executed on host(s) <gpu26>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Sat Aug 22 19:35:57 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sat Aug 22 19:35:57 2026
+Terminated at Sat Aug 22 20:03:09 2026
+Results reported at Sat Aug 22 20:03:09 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 1:59
+#BSUB -q short_gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260822_GPytorchMAP"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_RBF_RBF_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_RBF_RBF_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp RBF                                         --K_count RBF                                         --Kernel_mixing_method "product"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane_imputed"                                         --regressor_type "GPytorchMAP" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1601.46 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               7.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                9
+    Run time :                                   1804 sec.
+    Turnaround time :                            4687 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/GPytorchMAP_RBF_RBF_product_GPU.err> for stderr output of this job.
+

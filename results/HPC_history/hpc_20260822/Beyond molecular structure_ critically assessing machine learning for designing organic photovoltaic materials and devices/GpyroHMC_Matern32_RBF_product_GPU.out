@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.21 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.96±0.21	 r2: 0.08±0.03
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_Matern32-RBF_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 33754: <structure_numerical_20260822_GpyroHMC> in cluster <Hazel> Done
+
+Job <structure_numerical_20260822_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sat Aug 22 17:08:04 2026
+Job was executed on host(s) <gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sat Aug 22 21:40:01 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sat Aug 22 21:40:01 2026
+Terminated at Sat Aug 22 22:09:53 2026
+Results reported at Sat Aug 22 22:09:53 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 30:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260822_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_Matern32_RBF_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_Matern32_RBF_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count RBF                                         --Kernel_mixing_method "product"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1763.69 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             2.64 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               4.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                10
+    Run time :                                   1793 sec.
+    Turnaround time :                            18109 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260822/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_Matern32_RBF_product_GPU.err> for stderr output of this job.
+
