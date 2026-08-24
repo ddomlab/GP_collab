@@ -6,7 +6,7 @@ import pyro
 import pyro.distributions as dist
 import pyro.contrib.gp as gp
 # from numpyro.infer import MCMC, NUTS
-from pyro.infer import MCMC, NUTS, Predictive
+from pyro.infer import MCMC, NUTS
 from sklearn.base import BaseEstimator, RegressorMixin
 import pandas as pd
 import numpy as np
@@ -760,12 +760,15 @@ class GpyroHMCRegressor:
         does not change the conditional mean.
         """
         f_loc, f_var = self.gp_model_(X_new, full_cov=False, noiseless=False)
+        f_var = f_var.clamp_min(0.0)
 
         pyro.deterministic("predictive_mean", f_loc)
         pyro.deterministic(
             "predictive_variance",
-            f_var.clamp_min(0.0),
+            f_var,
         )
+
+        return f_loc, f_var
             
     def _predictive_moments(self, X_test: pd.DataFrame):
         if not self.is_fitted_:
@@ -776,17 +779,41 @@ class GpyroHMCRegressor:
         if X_t.ndim == 1:
             X_t = X_t.unsqueeze(0)
 
-        predictive = Predictive(
-            self._predictive_strategy,
-            posterior_samples=self.samples_,
-            return_sites=("predictive_mean", "predictive_variance"),
-            parallel=False,
-        )
+        if not self.samples_:
+            raise RuntimeError("No posterior samples are available.")
+
+        sample_counts = {sample.size(0) for sample in self.samples_.values()}
+        if len(sample_counts) != 1:
+            raise RuntimeError(
+                "Posterior sample sites have inconsistent sample counts: "
+                f"{sorted(sample_counts)}"
+            )
+
+        num_draws = sample_counts.pop()
+        mean_samples = []
+        variance_samples = []
 
         with torch.no_grad():
-            predictive_moments = predictive(X_t)
-            mean_samples = predictive_moments["predictive_mean"]
-            variance_samples = predictive_moments["predictive_variance"]
+            # Pyro's Predictive first executes the strategy without conditioning
+            # on posterior samples in order to infer plate nesting and output
+            # shapes. For a GP, that extra prior draw can yield a nearly singular
+            # training covariance and fail Cholesky before posterior prediction
+            # begins. Condition each evaluation explicitly instead.
+            for draw_idx in range(num_draws):
+                draw = {
+                    name: samples[draw_idx]
+                    for name, samples in self.samples_.items()
+                }
+                conditioned_strategy = pyro.poutine.condition(
+                    self._predictive_strategy,
+                    data=draw,
+                )
+                draw_mean, draw_variance = conditioned_strategy(X_t)
+                mean_samples.append(draw_mean)
+                variance_samples.append(draw_variance)
+
+            mean_samples = torch.stack(mean_samples, dim=0)
+            variance_samples = torch.stack(variance_samples, dim=0)
 
         # Average the conditional GP distributions over HMC parameter draws.
         mean_pred = mean_samples.mean(dim=0)

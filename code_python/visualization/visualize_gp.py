@@ -386,6 +386,10 @@ INDIVIDUAL_MODEL_COLORS = {
     "MGK": "#CB6D01",
 }
 
+MODEL_DISPLAY_NAMES = {
+    "XGBR": "XGB",
+}
+
 MODELS= ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP", "MGK"]
 GPU_SCORE_MODELS = {"MGK"}
 DEFAULT_SCORE_METRICS = ["rmse", "r2", "mae", "cvpp_ama", "nll", "ece", "Cv", "RUSC"]
@@ -452,6 +456,11 @@ label_conversion_source = {
 
 def _is_tree_model(model: str) -> bool:
     return model in TREE_MODELS
+
+
+def _display_model_name(model: Any) -> str:
+    model = str(model)
+    return MODEL_DISPLAY_NAMES.get(model, model)
 
 
 def _uses_gpu_scores(model: str) -> bool:
@@ -1118,7 +1127,7 @@ def _filter_selection(
 
 
 def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
-    model = str(row["model"])
+    model = _display_model_name(row["model"])
     if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
         return model
 
@@ -1127,9 +1136,10 @@ def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
 
 
 def _metric_higher_is_better(metric: str) -> bool:
+    # AMA is an absolute calibration error, so lower values are better.
     return (
         str(metric).strip().lower()
-        in {"r2", "oof_r2", "rusc", "oof_rusc", "cvpp_ama", "oof_cvpp_ama"}
+        in {"r2", "oof_r2", "rusc", "oof_rusc"}
         or metric in FEATURE_STABILITY_COLUMNS
         or _is_feature_stability_metric(metric)
     )
@@ -1260,10 +1270,11 @@ def _expand_master_scores_for_profile(
 
 
 def _model_config_label(row: pd.Series, include_kernel_config: bool = True) -> str:
-    model = str(row["model"])
+    raw_model = str(row["model"])
+    model = _display_model_name(raw_model)
     if not include_kernel_config:
         return model
-    if model == "MGK":
+    if raw_model == "MGK":
         return model
     if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
         return model
@@ -1979,7 +1990,7 @@ def plot_hybridization_method_comparison(
     x_col = "model hybridization method" if include_model else "hybridization method"
     if include_model:
         plot_df[x_col] = (
-            plot_df["model"].astype(str)
+            plot_df["model"].map(_display_model_name)
             + "\n"
             + plot_df["hybridization method"].astype(str)
         )
@@ -2455,7 +2466,7 @@ def plot_hybridization_profile_comparison(
     x_col = "model hybridization method" if include_model else "hybridization method"
     if include_model:
         plot_df[x_col] = (
-            plot_df["model"].astype(str)
+            plot_df["model"].map(_display_model_name)
             + "\n"
             + plot_df["hybridization method"].astype(str)
         )
@@ -3061,7 +3072,7 @@ def plot_hybridization_topsis_comparison(
     x_col = "model hybridization method" if include_model else "hybridization method"
     if include_model:
         plot_df[x_col] = (
-            plot_df["model"].astype(str)
+            plot_df["model"].map(_display_model_name)
             + "\n"
             + plot_df["hybridization method"].astype(str)
         )
@@ -3904,7 +3915,7 @@ def performance_plot_hybridization_with_ranks(
     )
     if include_model:
         profile_df["kernel"] = (
-            profile_df["model"].astype(str)
+            profile_df["model"].map(_display_model_name)
             + ": "
             + profile_df["hybridization method"].astype(str)
         )
@@ -4808,7 +4819,7 @@ def plot_hybridization_performance_vs_data_number(
     )
     if include_model:
         plot_df[hue_col] = (
-            plot_df["model"].astype(str)
+            plot_df["model"].map(_display_model_name)
             + "\n"
             + plot_df["hybridization method"].astype(str)
         )
@@ -5128,25 +5139,25 @@ if __name__ == "__main__":
     #     file_name="r2_distributional_model_comparison.png",
     # )
 
-    plot_model_comparison(
-        df=result_df,
-        metric="Running time",
-        model=["RF", "XGBR","NGB","GPytorchMAP",  "GpyroHMC"],
-        runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "averageProduct"),
-            ("TanimotoMatern32", "Matern32", "averageProduct"),
-        ],
-        average_over_tasks=True,
-        y_label="Running time (s)",
-        fontsize=17,
-        show=True,
-        # y_lim=(0, 100),
-        figsize=(6, 5),
-        log_y=True,
-        save_dir=HERE / "result_analysis",
-        file_name="running_time_distributional_model_comparison.png",
-    )
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="Running time",
+    #     model=["RF", "XGBR","NGB","GPytorchMAP",  "GpyroHMC"],
+    #     runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #     ],
+    #     average_over_tasks=True,
+    #     y_label="Running time (s)",
+    #     fontsize=17,
+    #     show=True,
+    #     # y_lim=(0, 100),
+    #     figsize=(6, 5),
+    #     log_y=True,
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="running_time_distributional_model_comparison.png",
+    # )
 
 
     # plot_hybridization_method_comparison(
@@ -5242,16 +5253,31 @@ if __name__ == "__main__":
     #         ("TanimotoMatern32", "Matern32", "averageProduct"),
     #         # ("Graph", "Matern32", "product"),
     #     ],
-    #     metric="OOF_",
+    #     metric="OOF_cvpp_ama",
     #     # tree_feature_importance=tree_fi,
-    #     y_label=f"Profile AUC: NLL",
+    #     y_label="Profile AUC: OOF AMA",
     #     fontsize=17,
     #     figsize=(5, 5),
     #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-    #     file_name=f"NLL_model_profile_comparison.png",
+    #     file_name=f"AMA_OOF_model_profile_comparison.png",
     # )
 
-
+    plot_model_profile_comparison(
+        df=result_df,
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "averageProduct"),
+            ("TanimotoMatern32", "Matern32", "averageProduct"),
+            # ("Graph", "Matern32", "product"),
+        ],
+        metric="feature_stability",
+        tree_feature_importance="MDI",
+        y_label="Profile AUC: Kendall's W",
+        fontsize=17,
+        figsize=(5, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
+        file_name=f"feature_stability_MDI_lengthscale_model_profile_comparison.png",
+    )
 
 
     # plot_model_performance_vs_data_number(
