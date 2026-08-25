@@ -5270,13 +5270,13 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "averageProduct"),
             # ("Graph", "Matern32", "product"),
         ],
-        metric="feature_stability",
-        tree_feature_importance="MDI",
-        y_label="Profile AUC: Kendall's W",
+        metric="nll",
+        # tree_feature_importance="MDI",
+        y_label="Profile AUC: NLL",
         fontsize=17,
         figsize=(5, 5),
         save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name=f"feature_stability_MDI_lengthscale_model_profile_comparison.png",
+        file_name=f"NLL_model_profile_comparison.png",
     )
 
 
