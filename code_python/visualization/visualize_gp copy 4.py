@@ -20,7 +20,6 @@ import seaborn as sns
 # import krippendorff
 import pingouin as pg
 from scipy.stats import kendalltau
-from scipy.stats import t as student_t
 from sklearn.metrics import auc
 from scipy.stats import wilcoxon
 from sklearn.metrics._scorer import r2_scorer
@@ -119,27 +118,27 @@ def _tolerance_rank_row(
     """Rank one run after grouping features whose full span is within tolerance."""
     values = pd.to_numeric(row, errors="coerce").astype(float)
 
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_absolute":
         if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when tolerance is used."
             )
-    elif tolerance_mode == "gp_normalized":
+        total_importance = values.sum()
+        comparison_values = (
+            values / total_importance
+            if total_importance > 0
+            else pd.Series(0.0, index=values.index)
+        )
+    elif tolerance_mode == "gp_ratio":
         if (values <= 0).any():
             raise ValueError(
-                "GP lengthscales must be positive when tolerance is used."
+                "GP lengthscales must be positive when ratio tolerance is used."
             )
+        comparison_values = values
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_absolute' or 'gp_ratio'."
         )
-
-    total_value = values.sum()
-    comparison_values = (
-        values / total_value
-        if total_value > 0
-        else pd.Series(0.0, index=values.index)
-    )
 
     ordered = comparison_values.sort_values(ascending=False, kind="mergesort")
     groups = []
@@ -157,7 +156,10 @@ def _tolerance_rank_row(
 
         candidate_min = min(group_min, value)
         candidate_max = max(group_max, value)
-        within_tolerance = candidate_max - candidate_min <= tolerance_fraction
+        if tolerance_mode == "tree_absolute":
+            within_tolerance = candidate_max - candidate_min <= tolerance_fraction
+        else:
+            within_tolerance = candidate_max / candidate_min <= 1.0 + tolerance_fraction
 
         if within_tolerance:
             current_group.append(feature)
@@ -181,165 +183,12 @@ def _tolerance_rank_row(
     return ranks
 
 
-def _p_statistics_similarity_matrix(
-    df_input: pd.DataFrame,
-    tolerance_mode: str,
-    p_threshold: float = 0.05,
-) -> np.ndarray:
-    """Return pairwise non-significance decisions from paired t-tests."""
-    values = df_input.to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
-        if (values < 0).any():
-            raise ValueError(
-                "Tree feature importances must be non-negative when p-statistics "
-                "ties are used."
-            )
-        row_totals = values.sum(axis=1, keepdims=True)
-        comparison_values = np.divide(
-            values,
-            row_totals,
-            out=np.zeros_like(values),
-            where=row_totals > 0,
-        )
-    elif tolerance_mode == "gp_normalized":
-        if (values <= 0).any():
-            raise ValueError(
-                "GP lengthscales must be positive when p-statistics ties are used."
-            )
-        comparison_values = np.log(values)
-    else:
-        raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
-        )
-
-    n_runs = comparison_values.shape[0]
-    means = comparison_values.mean(axis=0)
-    mean_differences = means[:, None] - means[None, :]
-    covariance = np.atleast_2d(
-        np.cov(comparison_values, rowvar=False, ddof=1)
-    )
-    variances = np.diag(covariance)
-    difference_variances = (
-        variances[:, None] + variances[None, :] - 2.0 * covariance
-    )
-    difference_variances = np.maximum(difference_variances, 0.0)
-    standard_errors = np.sqrt(difference_variances / n_runs)
-
-    p_values = np.zeros_like(mean_differences, dtype=float)
-    has_standard_error = standard_errors > np.finfo(float).eps
-    t_statistics = np.zeros_like(mean_differences, dtype=float)
-    np.divide(
-        np.abs(mean_differences),
-        standard_errors,
-        out=t_statistics,
-        where=has_standard_error,
-    )
-    p_values[has_standard_error] = 2.0 * student_t.sf(
-        t_statistics[has_standard_error],
-        df=n_runs - 1,
-    )
-    no_detectable_difference = np.isclose(
-        mean_differences,
-        0.0,
-        rtol=1e-12,
-        atol=1e-15,
-    )
-    p_values[~has_standard_error & no_detectable_difference] = 1.0
-    np.fill_diagonal(p_values, 1.0)
-    return p_values >= p_threshold
-
-
-def _p_statistics_rank_row(
-    row: pd.Series,
-    tolerance_mode: str,
-    similarity_matrix: np.ndarray,
-) -> pd.Series:
-    """Rank one run, tying only mutually non-significant feature groups."""
-    values = pd.to_numeric(row, errors="coerce").to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
-        total_importance = values.sum()
-        comparison_values = (
-            values / total_importance
-            if total_importance > 0
-            else np.zeros_like(values)
-        )
-    elif tolerance_mode == "gp_normalized":
-        comparison_values = values
-    else:
-        raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
-        )
-
-    ordered_positions = np.argsort(-comparison_values, kind="stable")
-    groups = []
-    current_group = []
-    for position in ordered_positions:
-        position = int(position)
-        if not current_group or similarity_matrix[position, current_group].all():
-            current_group.append(position)
-        else:
-            groups.append(current_group)
-            current_group = [position]
-    if current_group:
-        groups.append(current_group)
-
-    ranks = np.empty(len(row), dtype=float)
-    first_rank = 1
-    for group in groups:
-        last_rank = first_rank + len(group) - 1
-        ranks[group] = (first_rank + last_rank) / 2.0
-        first_rank = last_rank + 1
-    return pd.Series(ranks, index=row.index)
-
-
-def _top_n_feature_scores_per_run(
-    feature_records: Any,
-    top_n: int,
-    higher_is_more_important: bool,
-) -> pd.DataFrame:
-    """Keep each run's own top-n features and tie the remainder at the bottom."""
-    df_input = _feature_records_dataframe(feature_records)
-    df_input = df_input.dropna(axis=1, how="any")
-    if not isinstance(top_n, (int, np.integer)) or top_n < 2:
-        raise ValueError("top_n must be an integer of at least 2.")
-
-    values = df_input.to_numpy(dtype=float)
-    importance_scores = values if higher_is_more_important else -values
-    n_features = importance_scores.shape[1]
-    if top_n >= n_features:
-        return pd.DataFrame(
-            importance_scores,
-            index=df_input.index,
-            columns=df_input.columns,
-        )
-
-    truncated_scores = np.empty_like(importance_scores)
-    for run_idx, run_scores in enumerate(importance_scores):
-        selected_positions = np.argsort(
-            -run_scores,
-            kind="stable",
-        )[:top_n]
-        bottom_score = np.nextafter(np.min(run_scores), -np.inf)
-        truncated_scores[run_idx, :] = bottom_score
-        truncated_scores[run_idx, selected_positions] = run_scores[
-            selected_positions
-        ]
-
-    return pd.DataFrame(
-        truncated_scores,
-        index=df_input.index,
-        columns=df_input.columns,
-    )
-
-
 def kendalls_w(
     df_input,
     tie_corrected=True,
     fill_missing_value: Optional[float] = None,
     tolerance_percent: Optional[float] = None,
     tolerance_mode: Optional[str] = None,
-    p_statistics: bool = False,
-    p_threshold: float = 0.05,
 ):
     """
     Kendall's W for agreement across raters (rows) on items (columns).
@@ -350,32 +199,17 @@ def kendalls_w(
     rater to rank the same items.
 
     When ``tolerance_percent`` is provided, practically equal values are tied
-    before W is calculated. Both ``tree_normalized`` and ``gp_normalized``
-    divide each run's values by their sum, then use
-    ``max(normalized) - min(normalized) <= tolerance / 100``.
-    With ``p_statistics=True``, paired t-tests across runs replace the numeric
-    tolerance: pairs with ``p >= p_threshold`` are eligible to be tied.
+    before W is calculated. ``tree_absolute`` normalizes each tree-importance
+    row to sum to one and uses ``|p_i - p_j| <= tolerance / 100``. ``gp_ratio``
+    uses ``max(lengthscale) / min(lengthscale) <= 1 + tolerance / 100``.
     """
     tolerance_percent = _validate_tolerance_percent(tolerance_percent)
-    if tolerance_percent is not None and p_statistics:
-        raise ValueError(
-            "Use either tolerance_percent or p_statistics, not both."
-        )
-    if not 0 < p_threshold < 1:
-        raise ValueError("p_threshold must be between 0 and 1.")
     if tolerance_percent is not None and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
+        "tree_absolute",
+        "gp_ratio",
     }:
         raise ValueError(
             "A valid tolerance_mode is required when tolerance_percent is provided."
-        )
-    if p_statistics and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
-    }:
-        raise ValueError(
-            "A valid tolerance_mode is required when p_statistics is enabled."
         )
 
     df_input = _feature_records_dataframe(df_input, fill_missing_value=fill_missing_value)
@@ -397,21 +231,7 @@ def kendalls_w(
 
     # Rank each row. With a tolerance, complete-span groups ensure every pair
     # inside a tie group satisfies the requested similarity criterion.
-    if p_statistics:
-        similarity_matrix = _p_statistics_similarity_matrix(
-            df_input,
-            tolerance_mode,
-            p_threshold=p_threshold,
-        )
-        ranks = pd.DataFrame(
-            [
-                _p_statistics_rank_row(row, tolerance_mode, similarity_matrix)
-                for _, row in df_input.iterrows()
-            ],
-            index=df_input.index,
-            columns=df_input.columns,
-        )
-    elif tolerance_percent is None:
+    if tolerance_percent is None:
         ranks = df_input.rank(axis=1, ascending=False, method="average")
     else:
         tolerance_fraction = tolerance_percent / 100.0
@@ -1135,23 +955,17 @@ def _seed_fold_feature_records(
 
 
 def _feature_kendalls_w(
-    records: Any,
+    records: Optional[List[Dict[str, Any]]],
     tolerance_percent: Optional[float] = None,
     tolerance_mode: Optional[str] = None,
-    p_statistics: bool = False,
 ) -> Optional[float]:
-    if records is None or (
-        isinstance(records, pd.DataFrame) and records.empty
-    ):
-        return None
-    if not isinstance(records, pd.DataFrame) and not records:
+    if not records:
         return None
 
     value = kendalls_w(
         records,
         tolerance_percent=tolerance_percent,
         tolerance_mode=tolerance_mode,
-        p_statistics=p_statistics,
     )["Kendall's W"]
     return None if pd.isna(value) else value
 
@@ -1503,8 +1317,6 @@ def _expand_master_scores_for_profile(
     mixing_methods: Any = None,
     tree_feature_importance: str = "MDI",
     tolerance_percent: Optional[float] = None,
-    p_statistics: bool = False,
-    top_n_by_task: Optional[Dict[tuple, int]] = None,
 ) -> pd.DataFrame:
     rows = []
     selected_models = _selection_values(model)
@@ -1518,30 +1330,18 @@ def _expand_master_scores_for_profile(
 
     if feature_stability_metric:
         tree_stability_col = _tree_feature_stability_column(tree_feature_importance)
-        recompute_with_ties = tolerance_percent is not None or p_statistics
-        use_sk_feature_count = top_n_by_task is not None
-        if recompute_with_ties and use_sk_feature_count:
-            raise ValueError(
-                "Top-n feature selection cannot be combined with tolerance ties."
-            )
-
-        if not recompute_with_ties and not use_sk_feature_count:
+        if tolerance_percent is None:
             required_columns = {"lengthscale_kendalls_w"}
             if model_df["model"].apply(_is_tree_model).any():
                 required_columns.add(tree_stability_col)
         else:
             required_columns = set()
-            for _, feature_row in model_df.iterrows():
-                score_column = _feature_stability_column_for_model(
-                    feature_row["model"],
-                    tree_feature_importance,
+            if (~model_df["model"].apply(_is_tree_model)).any():
+                required_columns.add("lengthscale")
+            if model_df["model"].apply(_is_tree_model).any():
+                required_columns.add(
+                    tree_stability_col.removesuffix("_kendalls_w")
                 )
-                if recompute_with_ties or _uses_sk_feature_count(feature_row):
-                    required_columns.add(
-                        score_column.removesuffix("_kendalls_w")
-                    )
-                else:
-                    required_columns.add(score_column)
         missing_columns = required_columns.difference(df.columns)
         if missing_columns:
             raise ValueError(
@@ -1567,45 +1367,22 @@ def _expand_master_scores_for_profile(
                 row["model"],
                 tree_feature_importance,
             )
-            if use_sk_feature_count and not _uses_sk_feature_count(row):
-                # SK GP already contains exactly its own feature-lengthscale
-                # set; MGK and other non-bitwise models also stay unchanged.
+            if tolerance_percent is None:
                 scores = [row[score_col]]
-            elif use_sk_feature_count:
+            else:
                 if _is_tree_model(row["model"]):
                     feature_data_col = score_col.removesuffix("_kendalls_w")
-                    higher_is_more_important = True
+                    tolerance_mode = "tree_absolute"
                 else:
                     feature_data_col = "lengthscale"
-                    higher_is_more_important = False
-                top_n = top_n_by_task.get((row["paper"], row["target"]))
-                if top_n is None:
-                    continue
-                per_run_top_n_scores = _top_n_feature_scores_per_run(
-                    row[feature_data_col],
-                    top_n,
-                    higher_is_more_important=higher_is_more_important,
-                )
-                scores = [
-                    _feature_kendalls_w(per_run_top_n_scores)
-                ]
-            elif recompute_with_ties:
-                if _is_tree_model(row["model"]):
-                    feature_data_col = score_col.removesuffix("_kendalls_w")
-                    tolerance_mode = "tree_normalized"
-                else:
-                    feature_data_col = "lengthscale"
-                    tolerance_mode = "gp_normalized"
+                    tolerance_mode = "gp_ratio"
                 scores = [
                     _feature_kendalls_w(
                         row[feature_data_col],
                         tolerance_percent=tolerance_percent,
                         tolerance_mode=tolerance_mode,
-                        p_statistics=p_statistics,
                     )
                 ]
-            else:
-                scores = [row[score_col]]
             feature_stability_source = _feature_stability_source_label(score_col)
             tree_feature_source = _feature_stability_source_label(
                 _tree_feature_stability_column(tree_feature_importance)
@@ -1685,27 +1462,6 @@ def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]]
 
 def _is_tree_model(model: Any) -> bool:
     return str(model).upper() in TREE_MODELS
-
-
-def _is_sk_gp_row(row: pd.Series) -> bool:
-    """Return whether a results row is a similarity-kernel GP."""
-    return (
-        not _is_tree_model(row["model"])
-        and "tanimoto" in str(row["fp kernel"]).lower()
-    )
-
-
-def _uses_sk_feature_count(row: pd.Series) -> bool:
-    """Top-rank tree models and bitwise GPs, but leave SK GPs unchanged."""
-    if _is_tree_model(row["model"]):
-        return True
-    fp_kernel = row["fp kernel"]
-    return (
-        "GP" in str(row["model"]).upper()
-        and pd.notna(fp_kernel)
-        and str(fp_kernel).lower() != "graph"
-        and not _is_sk_gp_row(row)
-    )
 
 
 def _model_group_sort_rank(model: Any) -> int:
@@ -1856,63 +1612,6 @@ def _filter_kernel_triples(
             & df["mixing method"].isna()
         )
     return df[mask].copy()
-
-
-def _infer_top_n_by_task(
-    df: pd.DataFrame,
-    kernel_triples: Any = None,
-) -> Dict[tuple, int]:
-    """Count complete feature lengthscales in the selected SK for each task."""
-    if "lengthscale" not in df.columns:
-        raise ValueError("df is missing required column: lengthscale")
-
-    selected_reference_df = _filter_kernel_triples(
-        df,
-        kernel_triples,
-        keep_missing=False,
-    )
-    selected_reference_df = selected_reference_df[
-        selected_reference_df["fp kernel"]
-        .astype(str)
-        .str.contains("tanimoto", case=False, na=False)
-    ]
-
-    if selected_reference_df.empty:
-        raise ValueError(
-            "Top-n stability requires a selected SK kernel to supply n."
-        )
-
-    feature_counts_by_task = {}
-    for _, row in selected_reference_df.iterrows():
-        records_df = _feature_records_dataframe(row["lengthscale"])
-        records_df = records_df.dropna(axis=1, how="any")
-        n_features = len(records_df.columns)
-        if n_features < 2:
-            continue
-        task = (row["paper"], row["target"])
-        feature_counts_by_task.setdefault(task, set()).add(n_features)
-
-    if not feature_counts_by_task:
-        raise ValueError(
-            "No usable SK lengthscale records were found to determine top n."
-        )
-
-    ambiguous_tasks = {
-        task: counts
-        for task, counts in feature_counts_by_task.items()
-        if len(counts) > 1
-    }
-    if ambiguous_tasks:
-        raise ValueError(
-            "Selected SK kernels have different feature-lengthscale counts for "
-            "the same task; select one SK feature dimensionality for top-n "
-            "stability."
-        )
-
-    return {
-        task: next(iter(counts))
-        for task, counts in feature_counts_by_task.items()
-    }
 
 
 def plot_model_comparison(
@@ -2391,325 +2090,6 @@ def plot_model_feature_importance_stability_comparison(
     return plot_df
 
 
-def _safe_filename_component(value: Any) -> str:
-    value = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value)).strip("._")
-    return value or "model"
-
-
-def _pairwise_feature_difference_percentages(
-    values: pd.Series,
-    difference_mode: str,
-    pair_indices: tuple[np.ndarray, np.ndarray],
-) -> np.ndarray:
-    values = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
-    left_indices, right_indices = pair_indices
-
-    if difference_mode in {"tree_normalized", "gp_normalized"}:
-        if difference_mode == "tree_normalized" and (values < 0).any():
-            raise ValueError(
-                "Tree feature importances must be non-negative when pairwise "
-                "differences are plotted."
-            )
-        if difference_mode == "gp_normalized" and (values <= 0).any():
-            raise ValueError(
-                "GP lengthscales must be positive when pairwise differences "
-                "are plotted."
-            )
-        total_value = values.sum()
-        normalized_values = (
-            values / total_value
-            if total_value > 0
-            else np.zeros_like(values)
-        )
-        return (
-            np.abs(
-                normalized_values[left_indices]
-                - normalized_values[right_indices]
-            )
-            * 100.0
-        )
-
-    raise ValueError(
-        "difference_mode must be either 'tree_normalized' or 'gp_normalized'."
-    )
-
-
-def plot_feature_importance_difference_distribution(
-    df: pd.DataFrame,
-    model: Any = None,
-    kernel_triples: Any = None,
-    tree_feature_importance: str = "MDI",
-    include_kernel_config: bool = True,
-    kind: str = "ecdf",
-    bins: int = 100,
-    max_pairs_per_run: Optional[int] = 10_000,
-    max_ecdf_points: int = 10_000,
-    random_state: Optional[int] = 0,
-    reference_tolerances: Any = None,
-    figsize: tuple = (7, 5),
-    fontsize: int = 12,
-    title: Optional[str] = None,
-    x_label: str = "Pairwise feature-importance difference (%)",
-    y_label: Optional[str] = None,
-    x_lim: Optional[tuple] = None,
-    log_x: bool = False,
-    log_linthresh: float = 1e-4,
-    show: bool = True,
-    high_quality: bool = True,
-    save_dir: Optional[Path] = HERE / "result_analysis",
-    file_name: Optional[str] = None,
-) -> None:
-    """
-    Plot pairwise feature-importance difference distributions by model.
-
-    Differences use the same definitions as percentage-tolerance ranking.
-    For both tree and GP runs, values are normalized to sum to one and the
-    plotted difference is ``100 * |normalized_i - normalized_j|``.
-
-    Pairwise differences are calculated independently inside every seed/fold
-    run and then pooled for each displayed model configuration. By default, a
-    reproducible sample of at most 10,000 feature pairs per run is plotted to
-    control memory use; pass ``max_pairs_per_run=None`` to use every pair.
-    ``kind`` may be ``"ecdf"`` or ``"histogram"``. Separate figures are saved
-    with each model/configuration name when ``file_name`` is omitted.
-    Set ``log_x=True`` to use a symmetric-log x-axis; its small linear region
-    preserves zero differences, which a standard logarithmic axis cannot show.
-    """
-    kind = str(kind).strip().lower()
-    if kind not in {"ecdf", "histogram"}:
-        raise ValueError("kind must be either 'ecdf' or 'histogram'.")
-    if not isinstance(bins, int) or bins < 1:
-        raise ValueError("bins must be a positive integer.")
-    if max_pairs_per_run is not None and (
-        not isinstance(max_pairs_per_run, int) or max_pairs_per_run < 1
-    ):
-        raise ValueError("max_pairs_per_run must be a positive integer or None.")
-    if not isinstance(max_ecdf_points, int) or max_ecdf_points < 2:
-        raise ValueError("max_ecdf_points must be an integer of at least 2.")
-    if not np.isfinite(log_linthresh) or log_linthresh <= 0:
-        raise ValueError("log_linthresh must be a positive number.")
-
-    if reference_tolerances is None:
-        tolerance_lines = []
-    elif np.isscalar(reference_tolerances):
-        tolerance_lines = [float(reference_tolerances)]
-    else:
-        tolerance_lines = [float(value) for value in reference_tolerances]
-    if any(not np.isfinite(value) or value < 0 for value in tolerance_lines):
-        raise ValueError("reference_tolerances must contain non-negative numbers.")
-
-    tree_stability_col = _tree_feature_stability_column(tree_feature_importance)
-    tree_feature_col = tree_stability_col.removesuffix("_kendalls_w")
-    required_columns = {
-        "paper",
-        "target",
-        "model",
-        "fp kernel",
-        "count kernel",
-        "mixing method",
-    }
-    missing_columns = required_columns.difference(df.columns)
-    if missing_columns:
-        raise ValueError(
-            "df is missing required columns: "
-            + ", ".join(sorted(missing_columns))
-        )
-
-    filtered_df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
-    filtered_df = _filter_selection(filtered_df, "model", model)
-    if filtered_df.empty:
-        raise ValueError(
-            f"No rows found for model={model} and kernel_triples={kernel_triples}."
-        )
-
-    required_feature_columns = set()
-    if filtered_df["model"].apply(_is_tree_model).any():
-        required_feature_columns.add(tree_feature_col)
-    if (~filtered_df["model"].apply(_is_tree_model)).any():
-        required_feature_columns.add("lengthscale")
-    missing_feature_columns = required_feature_columns.difference(df.columns)
-    if missing_feature_columns:
-        raise ValueError(
-            "df is missing required feature columns: "
-            + ", ".join(sorted(missing_feature_columns))
-        )
-
-    config_col = "model configuration"
-    filtered_df = filtered_df.copy()
-    filtered_df[config_col] = filtered_df.apply(
-        lambda row: _model_config_label(row, include_kernel_config),
-        axis=1,
-    )
-    configurations = filtered_df[config_col].drop_duplicates().tolist()
-    if file_name is not None and len(configurations) > 1:
-        raise ValueError(
-            "file_name can only be provided when one model configuration is plotted. "
-            "Omit it to create an automatically named file for each configuration."
-        )
-
-    rng = np.random.default_rng(random_state)
-    pair_indices_cache = {}
-    plotted_any = False
-
-    for configuration in configurations:
-        config_df = filtered_df[filtered_df[config_col] == configuration]
-        raw_model = str(config_df["model"].iloc[0])
-        is_tree = _is_tree_model(raw_model)
-        feature_col = tree_feature_col if is_tree else "lengthscale"
-        difference_mode = (
-            "tree_normalized" if is_tree else "gp_normalized"
-        )
-        difference_source = (
-            _feature_stability_source_label(tree_stability_col)
-            if is_tree
-            else "Lengthscale"
-        )
-
-        sampled_differences = []
-        for _, row in config_df.iterrows():
-            records_df = _feature_records_dataframe(row[feature_col])
-            records_df = records_df.dropna(axis=1, how="any")
-            n_features = len(records_df.columns)
-            if n_features < 2:
-                continue
-
-            if n_features not in pair_indices_cache:
-                pair_indices_cache[n_features] = np.triu_indices(n_features, k=1)
-            all_pair_indices = pair_indices_cache[n_features]
-            n_pairs = len(all_pair_indices[0])
-
-            for _, run_values in records_df.iterrows():
-                if max_pairs_per_run is not None and n_pairs > max_pairs_per_run:
-                    selected_positions = rng.choice(
-                        n_pairs,
-                        size=max_pairs_per_run,
-                        replace=False,
-                    )
-                    pair_indices = (
-                        all_pair_indices[0][selected_positions],
-                        all_pair_indices[1][selected_positions],
-                    )
-                else:
-                    pair_indices = all_pair_indices
-
-                differences = _pairwise_feature_difference_percentages(
-                    run_values,
-                    difference_mode,
-                    pair_indices,
-                )
-                differences = differences[np.isfinite(differences)]
-                if len(differences) == 0:
-                    continue
-                sampled_differences.append(differences)
-
-        if not sampled_differences:
-            continue
-        plotted_any = True
-
-        # Pairwise differences are magnitudes; enforce non-negativity before
-        # plotting even if upstream floating-point calculations introduce a
-        # tiny signed value.
-        difference_values = np.abs(np.concatenate(sampled_differences))
-        sorted_values = np.sort(difference_values)
-        color = INDIVIDUAL_MODEL_COLORS.get(
-            configuration,
-            INDIVIDUAL_MODEL_COLORS.get(raw_model, _model_type_color(raw_model)),
-        )
-
-        fig, ax = plt.subplots(figsize=figsize)
-        if kind == "ecdf":
-            if len(sorted_values) > max_ecdf_points:
-                plot_indices = np.linspace(
-                    0,
-                    len(sorted_values) - 1,
-                    max_ecdf_points,
-                    dtype=int,
-                )
-                x_values = sorted_values[plot_indices]
-                y_values = 100.0 * (plot_indices + 1) / len(sorted_values)
-            else:
-                x_values = sorted_values
-                y_values = 100.0 * (
-                    np.arange(1, len(sorted_values) + 1) / len(sorted_values)
-                )
-            ax.plot(x_values, y_values, color=color, linewidth=2.2)
-            effective_y_label = y_label or "Cumulative feature pairs (%)"
-        else:
-            sns.histplot(
-                difference_values,
-                bins=bins,
-                stat="percent",
-                color=color,
-                alpha=0.72,
-                edgecolor="white",
-                linewidth=0.4,
-                ax=ax,
-            )
-            effective_y_label = y_label or "Feature pairs per bin (%)"
-
-        tolerance_colors = sns.color_palette(
-            "colorblind",
-            n_colors=len(tolerance_lines),
-        )
-        for tolerance_value, tolerance_color in zip(
-            tolerance_lines,
-            tolerance_colors,
-        ):
-            ax.axvline(
-                tolerance_value,
-                color=tolerance_color,
-                linestyle="--",
-                linewidth=1.2,
-                alpha=0.9,
-                label=f"Tolerance = {tolerance_value:g}%",
-            )
-        if tolerance_lines:
-            ax.legend(fontsize=fontsize - 2, frameon=False)
-
-        plot_title = configuration if title is None else title
-        if title is not None and len(configurations) > 1:
-            plot_title = f"{title}: {configuration}"
-        ax.set_title(plot_title, fontsize=fontsize + 2)
-        ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
-        ax.set_ylabel(effective_y_label, fontsize=fontsize, fontweight="bold")
-        ax.tick_params(axis="both", labelsize=fontsize - 2)
-        if log_x:
-            ax.set_xscale("symlog", linthresh=log_linthresh)
-        if x_lim is not None:
-            ax.set_xlim(*x_lim)
-        if kind == "ecdf":
-            ax.set_ylim(0, 100.5)
-        plt.tight_layout()
-
-        if save_dir is not None:
-            save_path = ensure_long_path(Path(save_dir))
-            os.makedirs(save_path, exist_ok=True)
-            output_name = file_name
-            if output_name is None:
-                output_name = (
-                    f"{_safe_filename_component(configuration)}_"
-                    f"{difference_source.lower()}_"
-                    "feature_importance_difference_distribution.png"
-                )
-            fig.savefig(
-                ensure_long_path(save_path / output_name),
-                bbox_inches="tight",
-                format="png",
-                dpi=900 if high_quality else 100,
-            )
-
-        if show:
-            plt.show()
-        else:
-            plt.close(fig)
-
-    if not plotted_any:
-        raise ValueError(
-            "No pairwise feature-importance differences could be calculated for "
-            f"model={model} and kernel_triples={kernel_triples}."
-        )
-
-
 def plot_hybridization_method_comparison(
     df: pd.DataFrame,
     metric: str = "r2",
@@ -2907,8 +2287,6 @@ def _profile_auc_from_master_data(
     plot_profile: bool,
     profile_options: Optional[Dict[str, Any]],
     tolerance_percent: Optional[float] = None,
-    p_statistics: bool = False,
-    top_n: bool = False,
 ) -> pd.DataFrame:
     """Calculate AUC rows and optionally render the corresponding profile."""
     options = dict(profile_options or {})
@@ -2922,8 +2300,6 @@ def _profile_auc_from_master_data(
         "kernel_triples",
         "tree_feature_importance",
         "tolerance_percent",
-        "p_statistics",
-        "top_n",
         "plot_profile",
     }
     overlapping_options = reserved_options.intersection(options)
@@ -2943,8 +2319,6 @@ def _profile_auc_from_master_data(
         "kernel_triples": kernel_triples,
         "tree_feature_importance": tree_feature_importance,
         "tolerance_percent": tolerance_percent,
-        "p_statistics": p_statistics,
-        "top_n": top_n,
     }
     if plot_profile:
         options.setdefault("file_name", None)
@@ -2994,7 +2368,7 @@ def plot_model_profile_comparison(
     high_quality: bool = True,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = None,
-    tolerance: Any = None,
+    tolerance: Optional[float] = None,
 ) -> pd.DataFrame:
     """
     Calculate profile AUCs from master results and draw a model barplot.
@@ -3010,35 +2384,12 @@ def plot_model_profile_comparison(
 
     For ``metric="feature_stability"``, pass ``tolerance`` as a percentage to
     recalculate stability with practical ties. For example, ``tolerance=1``
-    means a maximum difference of 0.01 after normalizing each run's feature
-    values to sum to one. Alternatively, pass
-    ``tolerance="p-statistics"`` to use paired tests across seed/fold runs;
-    pairs with p >= 0.05 are eligible to be tied. Pass ``tolerance="top n"``
-    to count the feature lengthscales in the selected SK separately for every
-    dataset/target. Every seed/fold then retains its own top n tree features or
-    bitwise GP features before exact, no-tolerance Kendall's W is calculated.
-    The SK GP value stays unchanged. If omitted, the existing exact-tie
-    stability values are used unchanged.
+    means a maximum normalized importance difference of 0.01 for tree models,
+    and a maximum lengthscale ratio of 1.01 for GP models. If omitted, the
+    existing exact-tie stability values are used unchanged.
     """
-    p_statistics = False
-    top_n = False
-    if isinstance(tolerance, str):
-        tolerance_method = re.sub(r"[-_]+", " ", tolerance.strip().lower())
-        if tolerance_method == "p statistics":
-            p_statistics = True
-        elif tolerance_method == "top n":
-            top_n = True
-        else:
-            raise ValueError(
-                "String tolerance must be either 'p-statistics' or 'top n'."
-            )
-        tolerance_percent = None
-    else:
-        tolerance_percent = _validate_tolerance_percent(tolerance)
-
-    if (
-        tolerance_percent is not None or p_statistics or top_n
-    ) and not _is_feature_stability_metric(metric):
+    tolerance = _validate_tolerance_percent(tolerance)
+    if tolerance is not None and not _is_feature_stability_metric(metric):
         raise ValueError(
             "tolerance can only be used with metric='feature_stability'."
         )
@@ -3052,9 +2403,7 @@ def plot_model_profile_comparison(
         mixing_methods=mixing_methods,
         kernel_triples=kernel_triples,
         tree_feature_importance=tree_feature_importance,
-        tolerance_percent=tolerance_percent,
-        p_statistics=p_statistics,
-        top_n=top_n,
+        tolerance_percent=tolerance,
         plot_profile=plot_profile,
         profile_options={
             "show": show,
@@ -4372,15 +3721,8 @@ def _calculate_performance_profile_results(
     show_error_band: bool = False,
     error_band_stat: str = "std",
     tolerance_percent: Optional[float] = None,
-    p_statistics: bool = False,
-    top_n: bool = False,
 ) -> Dict[str, Any]:
     """Calculate model/kernel profile curves and AUCs without plotting."""
-    top_n_by_task = (
-        _infer_top_n_by_task(df, kernel_triples=kernel_triples)
-        if top_n
-        else None
-    )
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     profile_df = _expand_master_scores_for_profile(
         df,
@@ -4391,8 +3733,6 @@ def _calculate_performance_profile_results(
         mixing_methods=mixing_methods,
         tree_feature_importance=tree_feature_importance,
         tolerance_percent=tolerance_percent,
-        p_statistics=p_statistics,
-        top_n_by_task=top_n_by_task,
     )
     if profile_df.empty:
         raise ValueError(
@@ -4479,8 +3819,6 @@ def calculate_performance_profile_auc(
     show_error_band: bool = False,
     error_band_stat: str = "std",
     tolerance_percent: Optional[float] = None,
-    p_statistics: bool = False,
-    top_n: bool = False,
 ) -> pd.DataFrame:
     """
     Calculate profile AUC rows directly from master performance data.
@@ -4498,8 +3836,6 @@ def calculate_performance_profile_auc(
         kernel_triples=kernel_triples,
         tree_feature_importance=tree_feature_importance,
         tolerance_percent=tolerance_percent,
-        p_statistics=p_statistics,
-        top_n=top_n,
         dataset_as_experiment_points=dataset_as_experiment_points,
         show_error_band=show_error_band,
         error_band_stat=error_band_stat,
@@ -4532,8 +3868,6 @@ def performance_plot_with_ranks(
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = "performance_profile.png",
     tolerance_percent: Optional[float] = None,
-    p_statistics: bool = False,
-    top_n: bool = False,
 ):
     """
     Plot model/kernel performance profiles from the master result dataset.
@@ -4564,12 +3898,7 @@ def performance_plot_with_ranks(
     GP-style models use ``lengthscale_kendalls_w`` and tree models use MDI or
     SHAP stability according to ``tree_feature_importance``. When
     ``tolerance_percent`` is provided, stability is recalculated from the raw
-    fold-level values using percentage-based practical ties. With
-    ``p_statistics=True``, paired tests at p=0.05 are used instead.
-    With ``top_n=True``, each task counts the feature lengthscales in its
-    selected SK. Every seed/fold independently retains that many top-ranked
-    tree or bitwise GP features before exact Kendall's W is calculated; SK GP
-    stability stays unchanged.
+    fold-level values using percentage-based practical ties.
     """
     profile_results = _calculate_performance_profile_results(
         df=df,
@@ -4581,8 +3910,6 @@ def performance_plot_with_ranks(
         kernel_triples=kernel_triples,
         tree_feature_importance=tree_feature_importance,
         tolerance_percent=tolerance_percent,
-        p_statistics=p_statistics,
-        top_n=top_n,
         dataset_as_experiment_points=dataset_as_experiment_points,
         show_error_band=show_error_band,
         error_band_stat=error_band_stat,
@@ -6130,26 +5457,8 @@ if __name__ == "__main__":
         fontsize=17,
         figsize=(5, 5),
         save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name="feature_stability_0.01%tol_tree_method_MDI_lengthscale_profile_comparison.png",
+        file_name=f"feature_stability_0.01%tol_MDI_leangthscale_profile_comparison.png",
     )
-
-
-    # plot_feature_importance_difference_distribution(
-    #     df=result_df,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #     ],
-    #     tree_feature_importance="MDI",
-    #     kind="ecdf",
-    #     reference_tolerances=[0.01, 0.1, 1],
-    #     fontsize=17,
-    #     log_x=True,
-    #     show=False,
-    #     figsize=(7, 5),
-    #     save_dir=HERE / "result_analysis" / "feature_importance_difference_distributions",
-    # )
 
 
     # plot_model_performance_vs_data_number(

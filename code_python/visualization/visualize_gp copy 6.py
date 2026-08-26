@@ -119,27 +119,22 @@ def _tolerance_rank_row(
     """Rank one run after grouping features whose full span is within tolerance."""
     values = pd.to_numeric(row, errors="coerce").astype(float)
 
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_ratio":
         if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when tolerance is used."
             )
-    elif tolerance_mode == "gp_normalized":
+        comparison_values = values
+    elif tolerance_mode == "gp_ratio":
         if (values <= 0).any():
             raise ValueError(
-                "GP lengthscales must be positive when tolerance is used."
+                "GP lengthscales must be positive when ratio tolerance is used."
             )
+        comparison_values = values
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_ratio' or 'gp_ratio'."
         )
-
-    total_value = values.sum()
-    comparison_values = (
-        values / total_value
-        if total_value > 0
-        else pd.Series(0.0, index=values.index)
-    )
 
     ordered = comparison_values.sort_values(ascending=False, kind="mergesort")
     groups = []
@@ -157,7 +152,10 @@ def _tolerance_rank_row(
 
         candidate_min = min(group_min, value)
         candidate_max = max(group_max, value)
-        within_tolerance = candidate_max - candidate_min <= tolerance_fraction
+        if candidate_min == 0:
+            within_tolerance = candidate_max == 0
+        else:
+            within_tolerance = candidate_max / candidate_min <= 1.0 + tolerance_fraction
 
         if within_tolerance:
             current_group.append(feature)
@@ -188,7 +186,7 @@ def _p_statistics_similarity_matrix(
 ) -> np.ndarray:
     """Return pairwise non-significance decisions from paired t-tests."""
     values = df_input.to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_ratio":
         if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when p-statistics "
@@ -201,7 +199,7 @@ def _p_statistics_similarity_matrix(
             out=np.zeros_like(values),
             where=row_totals > 0,
         )
-    elif tolerance_mode == "gp_normalized":
+    elif tolerance_mode == "gp_ratio":
         if (values <= 0).any():
             raise ValueError(
                 "GP lengthscales must be positive when p-statistics ties are used."
@@ -209,7 +207,7 @@ def _p_statistics_similarity_matrix(
         comparison_values = np.log(values)
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_ratio' or 'gp_ratio'."
         )
 
     n_runs = comparison_values.shape[0]
@@ -256,18 +254,18 @@ def _p_statistics_rank_row(
 ) -> pd.Series:
     """Rank one run, tying only mutually non-significant feature groups."""
     values = pd.to_numeric(row, errors="coerce").to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_ratio":
         total_importance = values.sum()
         comparison_values = (
             values / total_importance
             if total_importance > 0
             else np.zeros_like(values)
         )
-    elif tolerance_mode == "gp_normalized":
+    elif tolerance_mode == "gp_ratio":
         comparison_values = values
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_ratio' or 'gp_ratio'."
         )
 
     ordered_positions = np.argsort(-comparison_values, kind="stable")
@@ -350,9 +348,9 @@ def kendalls_w(
     rater to rank the same items.
 
     When ``tolerance_percent`` is provided, practically equal values are tied
-    before W is calculated. Both ``tree_normalized`` and ``gp_normalized``
-    divide each run's values by their sum, then use
-    ``max(normalized) - min(normalized) <= tolerance / 100``.
+    before W is calculated. ``tree_ratio`` and ``gp_ratio`` both use
+    ``max(value) / min(value) <= 1 + tolerance / 100``. For tree importances,
+    exact zeros tie only with other zeros.
     With ``p_statistics=True``, paired t-tests across runs replace the numeric
     tolerance: pairs with ``p >= p_threshold`` are eligible to be tied.
     """
@@ -364,16 +362,13 @@ def kendalls_w(
     if not 0 < p_threshold < 1:
         raise ValueError("p_threshold must be between 0 and 1.")
     if tolerance_percent is not None and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
+        "tree_ratio",
+        "gp_ratio",
     }:
         raise ValueError(
             "A valid tolerance_mode is required when tolerance_percent is provided."
         )
-    if p_statistics and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
-    }:
+    if p_statistics and tolerance_mode not in {"tree_ratio", "gp_ratio"}:
         raise ValueError(
             "A valid tolerance_mode is required when p_statistics is enabled."
         )
@@ -1592,10 +1587,10 @@ def _expand_master_scores_for_profile(
             elif recompute_with_ties:
                 if _is_tree_model(row["model"]):
                     feature_data_col = score_col.removesuffix("_kendalls_w")
-                    tolerance_mode = "tree_normalized"
+                    tolerance_mode = "tree_ratio"
                 else:
                     feature_data_col = "lengthscale"
-                    tolerance_mode = "gp_normalized"
+                    tolerance_mode = "gp_ratio"
                 scores = [
                     _feature_kendalls_w(
                         row[feature_data_col],
@@ -2404,33 +2399,43 @@ def _pairwise_feature_difference_percentages(
     values = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
     left_indices, right_indices = pair_indices
 
-    if difference_mode in {"tree_normalized", "gp_normalized"}:
-        if difference_mode == "tree_normalized" and (values < 0).any():
+    if difference_mode == "tree_ratio":
+        if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when pairwise "
                 "differences are plotted."
             )
-        if difference_mode == "gp_normalized" and (values <= 0).any():
+        left_values = values[left_indices]
+        right_values = values[right_indices]
+        minimum_values = np.minimum(left_values, right_values)
+        maximum_values = np.maximum(left_values, right_values)
+        differences = np.full_like(minimum_values, np.inf, dtype=float)
+        both_zero = maximum_values == 0
+        differences[both_zero] = 0.0
+        positive_minimum = minimum_values > 0
+        differences[positive_minimum] = (
+            maximum_values[positive_minimum]
+            / minimum_values[positive_minimum]
+            - 1.0
+        )
+        return differences * 100.0
+
+    if difference_mode == "gp_ratio":
+        if (values <= 0).any():
             raise ValueError(
                 "GP lengthscales must be positive when pairwise differences "
                 "are plotted."
             )
-        total_value = values.sum()
-        normalized_values = (
-            values / total_value
-            if total_value > 0
-            else np.zeros_like(values)
-        )
+        left_values = values[left_indices]
+        right_values = values[right_indices]
         return (
-            np.abs(
-                normalized_values[left_indices]
-                - normalized_values[right_indices]
-            )
-            * 100.0
-        )
+            np.maximum(left_values, right_values)
+            / np.minimum(left_values, right_values)
+            - 1.0
+        ) * 100.0
 
     raise ValueError(
-        "difference_mode must be either 'tree_normalized' or 'gp_normalized'."
+        "difference_mode must be either 'tree_ratio' or 'gp_ratio'."
     )
 
 
@@ -2463,8 +2468,10 @@ def plot_feature_importance_difference_distribution(
     Plot pairwise feature-importance difference distributions by model.
 
     Differences use the same definitions as percentage-tolerance ranking.
-    For both tree and GP runs, values are normalized to sum to one and the
-    plotted difference is ``100 * |normalized_i - normalized_j|``.
+    For both tree and GP runs, the plotted relative difference is
+    ``100 * (max(value_i, value_j) / min(...) - 1)``. Two zero tree
+    importances have zero difference; a zero and a positive importance have
+    infinite relative difference and are omitted from the finite plot values.
 
     Pairwise differences are calculated independently inside every seed/fold
     run and then pooled for each displayed model configuration. By default, a
@@ -2556,9 +2563,7 @@ def plot_feature_importance_difference_distribution(
         raw_model = str(config_df["model"].iloc[0])
         is_tree = _is_tree_model(raw_model)
         feature_col = tree_feature_col if is_tree else "lengthscale"
-        difference_mode = (
-            "tree_normalized" if is_tree else "gp_normalized"
-        )
+        difference_mode = "tree_ratio" if is_tree else "gp_ratio"
         difference_source = (
             _feature_stability_source_label(tree_stability_col)
             if is_tree
@@ -3010,8 +3015,7 @@ def plot_model_profile_comparison(
 
     For ``metric="feature_stability"``, pass ``tolerance`` as a percentage to
     recalculate stability with practical ties. For example, ``tolerance=1``
-    means a maximum difference of 0.01 after normalizing each run's feature
-    values to sum to one. Alternatively, pass
+    means a maximum importance or lengthscale ratio of 1.01. Alternatively, pass
     ``tolerance="p-statistics"`` to use paired tests across seed/fold runs;
     pairs with p >= 0.05 are eligible to be tied. Pass ``tolerance="top n"``
     to count the feature lengthscales in the selected SK separately for every
@@ -6130,7 +6134,7 @@ if __name__ == "__main__":
         fontsize=17,
         figsize=(5, 5),
         save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name="feature_stability_0.01%tol_tree_method_MDI_lengthscale_profile_comparison.png",
+        file_name="feature_stability_0.01%tol_SK_method_MDI_lengthscale_profile_comparison.png",
     )
 
 

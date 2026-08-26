@@ -119,27 +119,27 @@ def _tolerance_rank_row(
     """Rank one run after grouping features whose full span is within tolerance."""
     values = pd.to_numeric(row, errors="coerce").astype(float)
 
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_absolute":
         if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when tolerance is used."
             )
-    elif tolerance_mode == "gp_normalized":
+        total_importance = values.sum()
+        comparison_values = (
+            values / total_importance
+            if total_importance > 0
+            else pd.Series(0.0, index=values.index)
+        )
+    elif tolerance_mode == "gp_ratio":
         if (values <= 0).any():
             raise ValueError(
-                "GP lengthscales must be positive when tolerance is used."
+                "GP lengthscales must be positive when ratio tolerance is used."
             )
+        comparison_values = values
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_absolute' or 'gp_ratio'."
         )
-
-    total_value = values.sum()
-    comparison_values = (
-        values / total_value
-        if total_value > 0
-        else pd.Series(0.0, index=values.index)
-    )
 
     ordered = comparison_values.sort_values(ascending=False, kind="mergesort")
     groups = []
@@ -157,7 +157,10 @@ def _tolerance_rank_row(
 
         candidate_min = min(group_min, value)
         candidate_max = max(group_max, value)
-        within_tolerance = candidate_max - candidate_min <= tolerance_fraction
+        if tolerance_mode == "tree_absolute":
+            within_tolerance = candidate_max - candidate_min <= tolerance_fraction
+        else:
+            within_tolerance = candidate_max / candidate_min <= 1.0 + tolerance_fraction
 
         if within_tolerance:
             current_group.append(feature)
@@ -188,7 +191,7 @@ def _p_statistics_similarity_matrix(
 ) -> np.ndarray:
     """Return pairwise non-significance decisions from paired t-tests."""
     values = df_input.to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_absolute":
         if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when p-statistics "
@@ -201,7 +204,7 @@ def _p_statistics_similarity_matrix(
             out=np.zeros_like(values),
             where=row_totals > 0,
         )
-    elif tolerance_mode == "gp_normalized":
+    elif tolerance_mode == "gp_ratio":
         if (values <= 0).any():
             raise ValueError(
                 "GP lengthscales must be positive when p-statistics ties are used."
@@ -209,7 +212,7 @@ def _p_statistics_similarity_matrix(
         comparison_values = np.log(values)
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_absolute' or 'gp_ratio'."
         )
 
     n_runs = comparison_values.shape[0]
@@ -256,18 +259,18 @@ def _p_statistics_rank_row(
 ) -> pd.Series:
     """Rank one run, tying only mutually non-significant feature groups."""
     values = pd.to_numeric(row, errors="coerce").to_numpy(dtype=float)
-    if tolerance_mode == "tree_normalized":
+    if tolerance_mode == "tree_absolute":
         total_importance = values.sum()
         comparison_values = (
             values / total_importance
             if total_importance > 0
             else np.zeros_like(values)
         )
-    elif tolerance_mode == "gp_normalized":
+    elif tolerance_mode == "gp_ratio":
         comparison_values = values
     else:
         raise ValueError(
-            "tolerance_mode must be either 'tree_normalized' or 'gp_normalized'."
+            "tolerance_mode must be either 'tree_absolute' or 'gp_ratio'."
         )
 
     ordered_positions = np.argsort(-comparison_values, kind="stable")
@@ -292,44 +295,43 @@ def _p_statistics_rank_row(
     return pd.Series(ranks, index=row.index)
 
 
-def _top_n_feature_scores_per_run(
-    feature_records: Any,
+def _select_top_n_feature_columns(
+    df_input: pd.DataFrame,
     top_n: int,
-    higher_is_more_important: bool,
+    tolerance_mode: str,
 ) -> pd.DataFrame:
-    """Keep each run's own top-n features and tie the remainder at the bottom."""
-    df_input = _feature_records_dataframe(feature_records)
-    df_input = df_input.dropna(axis=1, how="any")
+    """Select one fixed top-n feature set using all runs for the task."""
     if not isinstance(top_n, (int, np.integer)) or top_n < 2:
         raise ValueError("top_n must be an integer of at least 2.")
+    if top_n >= len(df_input.columns):
+        return df_input
 
     values = df_input.to_numpy(dtype=float)
-    importance_scores = values if higher_is_more_important else -values
-    n_features = importance_scores.shape[1]
-    if top_n >= n_features:
-        return pd.DataFrame(
-            importance_scores,
-            index=df_input.index,
-            columns=df_input.columns,
+    if tolerance_mode == "tree_absolute":
+        if (values < 0).any():
+            raise ValueError(
+                "Tree feature importances must be non-negative in top-n mode."
+            )
+        row_totals = values.sum(axis=1, keepdims=True)
+        normalized_values = np.divide(
+            values,
+            row_totals,
+            out=np.zeros_like(values),
+            where=row_totals > 0,
+        )
+        aggregate_scores = normalized_values.mean(axis=0)
+        selected_positions = np.argsort(-aggregate_scores, kind="stable")[:top_n]
+    elif tolerance_mode == "gp_ratio":
+        if (values <= 0).any():
+            raise ValueError("GP lengthscales must be positive in top-n mode.")
+        aggregate_scores = np.log(values).mean(axis=0)
+        selected_positions = np.argsort(aggregate_scores, kind="stable")[:top_n]
+    else:
+        raise ValueError(
+            "tolerance_mode must be either 'tree_absolute' or 'gp_ratio'."
         )
 
-    truncated_scores = np.empty_like(importance_scores)
-    for run_idx, run_scores in enumerate(importance_scores):
-        selected_positions = np.argsort(
-            -run_scores,
-            kind="stable",
-        )[:top_n]
-        bottom_score = np.nextafter(np.min(run_scores), -np.inf)
-        truncated_scores[run_idx, :] = bottom_score
-        truncated_scores[run_idx, selected_positions] = run_scores[
-            selected_positions
-        ]
-
-    return pd.DataFrame(
-        truncated_scores,
-        index=df_input.index,
-        columns=df_input.columns,
-    )
+    return df_input.iloc[:, selected_positions]
 
 
 def kendalls_w(
@@ -340,6 +342,7 @@ def kendalls_w(
     tolerance_mode: Optional[str] = None,
     p_statistics: bool = False,
     p_threshold: float = 0.05,
+    top_n: Optional[int] = None,
 ):
     """
     Kendall's W for agreement across raters (rows) on items (columns).
@@ -350,11 +353,13 @@ def kendalls_w(
     rater to rank the same items.
 
     When ``tolerance_percent`` is provided, practically equal values are tied
-    before W is calculated. Both ``tree_normalized`` and ``gp_normalized``
-    divide each run's values by their sum, then use
-    ``max(normalized) - min(normalized) <= tolerance / 100``.
+    before W is calculated. ``tree_absolute`` normalizes each tree-importance
+    row to sum to one and uses ``|p_i - p_j| <= tolerance / 100``. ``gp_ratio``
+    uses ``max(lengthscale) / min(lengthscale) <= 1 + tolerance / 100``.
     With ``p_statistics=True``, paired t-tests across runs replace the numeric
     tolerance: pairs with ``p >= p_threshold`` are eligible to be tied.
+    With ``top_n`` provided, one fixed set of the most important ``n`` features
+    is selected from the mean scores across runs before exact ranks are formed.
     """
     tolerance_percent = _validate_tolerance_percent(tolerance_percent)
     if tolerance_percent is not None and p_statistics:
@@ -364,16 +369,13 @@ def kendalls_w(
     if not 0 < p_threshold < 1:
         raise ValueError("p_threshold must be between 0 and 1.")
     if tolerance_percent is not None and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
+        "tree_absolute",
+        "gp_ratio",
     }:
         raise ValueError(
             "A valid tolerance_mode is required when tolerance_percent is provided."
         )
-    if p_statistics and tolerance_mode not in {
-        "tree_normalized",
-        "gp_normalized",
-    }:
+    if p_statistics and tolerance_mode not in {"tree_absolute", "gp_ratio"}:
         raise ValueError(
             "A valid tolerance_mode is required when p_statistics is enabled."
         )
@@ -381,6 +383,20 @@ def kendalls_w(
     df_input = _feature_records_dataframe(df_input, fill_missing_value=fill_missing_value)
     if fill_missing_value is None:
         df_input = df_input.dropna(axis=1, how="any")
+    if top_n is not None:
+        if tolerance_percent is not None or p_statistics:
+            raise ValueError(
+                "top_n cannot be combined with tolerance_percent or p_statistics."
+            )
+        if tolerance_mode not in {"tree_absolute", "gp_ratio"}:
+            raise ValueError(
+                "A valid tolerance_mode is required when top_n is provided."
+            )
+        df_input = _select_top_n_feature_columns(
+            df_input,
+            top_n,
+            tolerance_mode,
+        )
 
     m = len(df_input)          # raters / folds
     n = len(df_input.columns)  # items / features
@@ -1135,16 +1151,13 @@ def _seed_fold_feature_records(
 
 
 def _feature_kendalls_w(
-    records: Any,
+    records: Optional[List[Dict[str, Any]]],
     tolerance_percent: Optional[float] = None,
     tolerance_mode: Optional[str] = None,
     p_statistics: bool = False,
+    top_n: Optional[int] = None,
 ) -> Optional[float]:
-    if records is None or (
-        isinstance(records, pd.DataFrame) and records.empty
-    ):
-        return None
-    if not isinstance(records, pd.DataFrame) and not records:
+    if not records:
         return None
 
     value = kendalls_w(
@@ -1152,6 +1165,7 @@ def _feature_kendalls_w(
         tolerance_percent=tolerance_percent,
         tolerance_mode=tolerance_mode,
         p_statistics=p_statistics,
+        top_n=top_n,
     )["Kendall's W"]
     return None if pd.isna(value) else value
 
@@ -1518,30 +1532,23 @@ def _expand_master_scores_for_profile(
 
     if feature_stability_metric:
         tree_stability_col = _tree_feature_stability_column(tree_feature_importance)
-        recompute_with_ties = tolerance_percent is not None or p_statistics
-        use_sk_feature_count = top_n_by_task is not None
-        if recompute_with_ties and use_sk_feature_count:
-            raise ValueError(
-                "Top-n feature selection cannot be combined with tolerance ties."
-            )
-
-        if not recompute_with_ties and not use_sk_feature_count:
+        recompute_stability = (
+            tolerance_percent is not None
+            or p_statistics
+            or top_n_by_task is not None
+        )
+        if not recompute_stability:
             required_columns = {"lengthscale_kendalls_w"}
             if model_df["model"].apply(_is_tree_model).any():
                 required_columns.add(tree_stability_col)
         else:
             required_columns = set()
-            for _, feature_row in model_df.iterrows():
-                score_column = _feature_stability_column_for_model(
-                    feature_row["model"],
-                    tree_feature_importance,
+            if (~model_df["model"].apply(_is_tree_model)).any():
+                required_columns.add("lengthscale")
+            if model_df["model"].apply(_is_tree_model).any():
+                required_columns.add(
+                    tree_stability_col.removesuffix("_kendalls_w")
                 )
-                if recompute_with_ties or _uses_sk_feature_count(feature_row):
-                    required_columns.add(
-                        score_column.removesuffix("_kendalls_w")
-                    )
-                else:
-                    required_columns.add(score_column)
         missing_columns = required_columns.difference(df.columns)
         if missing_columns:
             raise ValueError(
@@ -1567,45 +1574,29 @@ def _expand_master_scores_for_profile(
                 row["model"],
                 tree_feature_importance,
             )
-            if use_sk_feature_count and not _uses_sk_feature_count(row):
-                # SK GP already contains exactly its own feature-lengthscale
-                # set; MGK and other non-bitwise models also stay unchanged.
+            if not recompute_stability:
                 scores = [row[score_col]]
-            elif use_sk_feature_count:
+            else:
                 if _is_tree_model(row["model"]):
                     feature_data_col = score_col.removesuffix("_kendalls_w")
-                    higher_is_more_important = True
+                    tolerance_mode = "tree_absolute"
                 else:
                     feature_data_col = "lengthscale"
-                    higher_is_more_important = False
-                top_n = top_n_by_task.get((row["paper"], row["target"]))
-                if top_n is None:
-                    continue
-                per_run_top_n_scores = _top_n_feature_scores_per_run(
-                    row[feature_data_col],
-                    top_n,
-                    higher_is_more_important=higher_is_more_important,
-                )
-                scores = [
-                    _feature_kendalls_w(per_run_top_n_scores)
-                ]
-            elif recompute_with_ties:
-                if _is_tree_model(row["model"]):
-                    feature_data_col = score_col.removesuffix("_kendalls_w")
-                    tolerance_mode = "tree_normalized"
-                else:
-                    feature_data_col = "lengthscale"
-                    tolerance_mode = "gp_normalized"
+                    tolerance_mode = "gp_ratio"
+                top_n = None
+                if top_n_by_task is not None:
+                    top_n = top_n_by_task.get((row["paper"], row["target"]))
+                    if top_n is None:
+                        continue
                 scores = [
                     _feature_kendalls_w(
                         row[feature_data_col],
                         tolerance_percent=tolerance_percent,
                         tolerance_mode=tolerance_mode,
                         p_statistics=p_statistics,
+                        top_n=top_n,
                     )
                 ]
-            else:
-                scores = [row[score_col]]
             feature_stability_source = _feature_stability_source_label(score_col)
             tree_feature_source = _feature_stability_source_label(
                 _tree_feature_stability_column(tree_feature_importance)
@@ -1685,27 +1676,6 @@ def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]]
 
 def _is_tree_model(model: Any) -> bool:
     return str(model).upper() in TREE_MODELS
-
-
-def _is_sk_gp_row(row: pd.Series) -> bool:
-    """Return whether a results row is a similarity-kernel GP."""
-    return (
-        not _is_tree_model(row["model"])
-        and "tanimoto" in str(row["fp kernel"]).lower()
-    )
-
-
-def _uses_sk_feature_count(row: pd.Series) -> bool:
-    """Top-rank tree models and bitwise GPs, but leave SK GPs unchanged."""
-    if _is_tree_model(row["model"]):
-        return True
-    fp_kernel = row["fp kernel"]
-    return (
-        "GP" in str(row["model"]).upper()
-        and pd.notna(fp_kernel)
-        and str(fp_kernel).lower() != "graph"
-        and not _is_sk_gp_row(row)
-    )
 
 
 def _model_group_sort_rank(model: Any) -> int:
@@ -1862,7 +1832,7 @@ def _infer_top_n_by_task(
     df: pd.DataFrame,
     kernel_triples: Any = None,
 ) -> Dict[tuple, int]:
-    """Count complete feature lengthscales in the selected SK for each task."""
+    """Infer each task's top-n size from its selected SK feature dimension."""
     if "lengthscale" not in df.columns:
         raise ValueError("df is missing required column: lengthscale")
 
@@ -1877,12 +1847,16 @@ def _infer_top_n_by_task(
         .str.contains("tanimoto", case=False, na=False)
     ]
 
+    # If no SK configuration was selected explicitly, use all available SK
+    # rows as the dimensionality reference.
     if selected_reference_df.empty:
-        raise ValueError(
-            "Top-n stability requires a selected SK kernel to supply n."
-        )
+        selected_reference_df = df[
+            df["fp kernel"]
+            .astype(str)
+            .str.contains("tanimoto", case=False, na=False)
+        ]
 
-    feature_counts_by_task = {}
+    top_n_by_task = {}
     for _, row in selected_reference_df.iterrows():
         records_df = _feature_records_dataframe(row["lengthscale"])
         records_df = records_df.dropna(axis=1, how="any")
@@ -1890,29 +1864,13 @@ def _infer_top_n_by_task(
         if n_features < 2:
             continue
         task = (row["paper"], row["target"])
-        feature_counts_by_task.setdefault(task, set()).add(n_features)
+        top_n_by_task[task] = max(top_n_by_task.get(task, 0), n_features)
 
-    if not feature_counts_by_task:
+    if not top_n_by_task:
         raise ValueError(
             "No usable SK lengthscale records were found to determine top n."
         )
-
-    ambiguous_tasks = {
-        task: counts
-        for task, counts in feature_counts_by_task.items()
-        if len(counts) > 1
-    }
-    if ambiguous_tasks:
-        raise ValueError(
-            "Selected SK kernels have different feature-lengthscale counts for "
-            "the same task; select one SK feature dimensionality for top-n "
-            "stability."
-        )
-
-    return {
-        task: next(iter(counts))
-        for task, counts in feature_counts_by_task.items()
-    }
+    return top_n_by_task
 
 
 def plot_model_comparison(
@@ -2404,21 +2362,16 @@ def _pairwise_feature_difference_percentages(
     values = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
     left_indices, right_indices = pair_indices
 
-    if difference_mode in {"tree_normalized", "gp_normalized"}:
-        if difference_mode == "tree_normalized" and (values < 0).any():
+    if difference_mode == "tree_absolute":
+        if (values < 0).any():
             raise ValueError(
                 "Tree feature importances must be non-negative when pairwise "
                 "differences are plotted."
             )
-        if difference_mode == "gp_normalized" and (values <= 0).any():
-            raise ValueError(
-                "GP lengthscales must be positive when pairwise differences "
-                "are plotted."
-            )
-        total_value = values.sum()
+        total_importance = values.sum()
         normalized_values = (
-            values / total_value
-            if total_value > 0
+            values / total_importance
+            if total_importance > 0
             else np.zeros_like(values)
         )
         return (
@@ -2429,8 +2382,22 @@ def _pairwise_feature_difference_percentages(
             * 100.0
         )
 
+    if difference_mode == "gp_ratio":
+        if (values <= 0).any():
+            raise ValueError(
+                "GP lengthscales must be positive when pairwise differences "
+                "are plotted."
+            )
+        left_values = values[left_indices]
+        right_values = values[right_indices]
+        return (
+            np.maximum(left_values, right_values)
+            / np.minimum(left_values, right_values)
+            - 1.0
+        ) * 100.0
+
     raise ValueError(
-        "difference_mode must be either 'tree_normalized' or 'gp_normalized'."
+        "difference_mode must be either 'tree_absolute' or 'gp_ratio'."
     )
 
 
@@ -2463,8 +2430,9 @@ def plot_feature_importance_difference_distribution(
     Plot pairwise feature-importance difference distributions by model.
 
     Differences use the same definitions as percentage-tolerance ranking.
-    For both tree and GP runs, values are normalized to sum to one and the
-    plotted difference is ``100 * |normalized_i - normalized_j|``.
+    For a tree run, importances are normalized to sum to one and the plotted
+    value is ``100 * |p_i - p_j|``. For a GP run, the plotted value is
+    ``100 * (max(lengthscale_i, lengthscale_j) / min(...) - 1)``.
 
     Pairwise differences are calculated independently inside every seed/fold
     run and then pooled for each displayed model configuration. By default, a
@@ -2556,9 +2524,7 @@ def plot_feature_importance_difference_distribution(
         raw_model = str(config_df["model"].iloc[0])
         is_tree = _is_tree_model(raw_model)
         feature_col = tree_feature_col if is_tree else "lengthscale"
-        difference_mode = (
-            "tree_normalized" if is_tree else "gp_normalized"
-        )
+        difference_mode = "tree_absolute" if is_tree else "gp_ratio"
         difference_source = (
             _feature_stability_source_label(tree_stability_col)
             if is_tree
@@ -3010,15 +2976,13 @@ def plot_model_profile_comparison(
 
     For ``metric="feature_stability"``, pass ``tolerance`` as a percentage to
     recalculate stability with practical ties. For example, ``tolerance=1``
-    means a maximum difference of 0.01 after normalizing each run's feature
-    values to sum to one. Alternatively, pass
+    means a maximum normalized importance difference of 0.01 for tree models,
+    and a maximum lengthscale ratio of 1.01 for GP models. Alternatively, pass
     ``tolerance="p-statistics"`` to use paired tests across seed/fold runs;
     pairs with p >= 0.05 are eligible to be tied. Pass ``tolerance="top n"``
-    to count the feature lengthscales in the selected SK separately for every
-    dataset/target. Every seed/fold then retains its own top n tree features or
-    bitwise GP features before exact, no-tolerance Kendall's W is calculated.
-    The SK GP value stays unchanged. If omitted, the existing exact-tie
-    stability values are used unchanged.
+    to infer n separately for every dataset/target from its selected SK feature
+    dimensionality and rank only the n most-important features. If omitted,
+    the existing exact-tie stability values are used unchanged.
     """
     p_statistics = False
     top_n = False
@@ -4566,10 +4530,8 @@ def performance_plot_with_ranks(
     ``tolerance_percent`` is provided, stability is recalculated from the raw
     fold-level values using percentage-based practical ties. With
     ``p_statistics=True``, paired tests at p=0.05 are used instead.
-    With ``top_n=True``, each task counts the feature lengthscales in its
-    selected SK. Every seed/fold independently retains that many top-ranked
-    tree or bitwise GP features before exact Kendall's W is calculated; SK GP
-    stability stays unchanged.
+    With ``top_n=True``, each task uses the dimensionality of its selected SK
+    feature set and ranks only that many most-important features.
     """
     profile_results = _calculate_performance_profile_results(
         df=df,
@@ -6124,13 +6086,13 @@ if __name__ == "__main__":
             # ("Graph", "Matern32", "product"),
         ],
         metric="feature_stability",
-        tolerance=0.01,
+        tolerance=1,
         tree_feature_importance="MDI",
         y_label="Profile AUC: Kendall's W",
         fontsize=17,
         figsize=(5, 5),
         save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name="feature_stability_0.01%tol_tree_method_MDI_lengthscale_profile_comparison.png",
+        file_name="feature_stability_1%tol_method_MDI_lengthscale_profile_comparison.png",
     )
 
 
