@@ -6123,14 +6123,14 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "averageProduct"),
             # ("Graph", "Matern32", "product"),
         ],
-        metric="feature_stability",
-        tolerance=0.01,
-        tree_feature_importance="MDI",
-        y_label="Profile AUC: Kendall's W",
+        metric="r2",
+        # tolerance=0.01,
+        # tree_feature_importance="MDI",
+        y_label="Profile AUC: R²",
         fontsize=17,
         figsize=(5, 5),
         save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name="feature_stability_0.01%tol_tree_method_MDI_lengthscale_profile_comparison.png",
+        file_name="R2_model_profile_comparison.png",
     )
 
 
