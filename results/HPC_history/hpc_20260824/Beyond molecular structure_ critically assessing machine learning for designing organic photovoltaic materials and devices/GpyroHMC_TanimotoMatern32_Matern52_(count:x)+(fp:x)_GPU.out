@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.20 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.09±0.13	 r2: 0.54±0.04
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern32-Matern52_(count:x)+(fp:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 76611: <structure_numerical_20260824_GpyroHMC> in cluster <Hazel> Done
+
+Job <structure_numerical_20260824_GpyroHMC> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Mon Aug 24 23:20:09 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Aug 24 23:43:58 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Aug 24 23:43:58 2026
+Terminated at Tue Aug 25 01:27:22 2026
+Results reported at Tue Aug 25 01:27:22 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 20:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260824_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260824/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern52_(count:x)+(fp:x)_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260824/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern52_(count:x)+(fp:x)_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp TanimotoMatern32                                         --K_count Matern52                                         --Kernel_mixing_method "(count:x)+(fp:x)"                                         --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                         --dataset "Beyond molecular structure_seifrid_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   6164.13 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             2.57 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               4.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                10
+    Run time :                                   6228 sec.
+    Turnaround time :                            7633 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260824/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/GpyroHMC_TanimotoMatern32_Matern52_(count:x)+(fp:x)_GPU.err> for stderr output of this job.
+

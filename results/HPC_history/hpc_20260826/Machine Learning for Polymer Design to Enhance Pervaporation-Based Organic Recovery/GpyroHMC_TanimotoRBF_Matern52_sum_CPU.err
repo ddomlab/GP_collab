@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 7, in <module>
+    from ngboost import NGBRegressor
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/ngboost/__init__.py", line 9, in <module>
+    from .api import NGBClassifier, NGBRegressor, NGBSurvival
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/ngboost/api.py", line 6, in <module>
+    from ngboost.distns import (
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/ngboost/distns/__init__.py", line 3, in <module>
+    from .beta import Beta
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/ngboost/distns/beta.py", line 13, in <module>
+    import sympy as sp
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/__init__.py", line 77, in <module>
+    from .polys import (Poly, PurePoly, poly_from_expr, parallel_poly_from_expr,
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/polys/__init__.py", line 79, in <module>
+    from .polyfuncs import (symmetrize, horner, interpolate,
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/polys/polyfuncs.py", line 10, in <module>
+    from sympy.polys.specialpolys import (
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/polys/specialpolys.py", line 298, in <module>
+    from sympy.polys.rings import ring
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/polys/rings.py", line 31, in <module>
+    from sympy.printing.defaults import DefaultPrinting
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/printing/__init__.py", line 3, in <module>
+    from .pretty import pager_print, pretty, pretty_print, pprint, pprint_use_unicode, pprint_try_use_unicode
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/printing/pretty/__init__.py", line 3, in <module>
+    from .pretty import (pretty, pretty_print, pprint, pprint_use_unicode,
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/printing/pretty/pretty.py", line 20, in <module>
+    from sympy.printing.pretty.stringpict import prettyForm, stringPict
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sympy/printing/pretty/stringpict.py", line 17, in <module>
+    from .pretty_symbology import hobj, vobj, xsym, xobj, pretty_use_unicode, line_width, center
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1322, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1256, in _find_spec
+  File "<frozen importlib._bootstrap>", line 1222, in __enter__
+KeyboardInterrupt

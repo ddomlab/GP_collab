@@ -1,0 +1,74 @@
+Data filtering and preprocessing took 0.06 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.2±0.03	 r2: 0.9±0.03
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern52-RBF_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.04 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.29±0.09	 r2: 0.97±0.02
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_TanimotoMatern52-RBF_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 86153: <structure_numerical_20260825_GpyroHMC> in cluster <Hazel> Done
+
+Job <structure_numerical_20260825_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Tue Aug 25 11:04:49 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Tue Aug 25 11:10:40 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Aug 25 11:10:40 2026
+Terminated at Tue Aug 25 16:44:10 2026
+Results reported at Tue Aug 25 16:44:10 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 30:30
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260825_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260825/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern52_RBF_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260825/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern52_RBF_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp TanimotoMatern52                                         --K_count RBF                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   19927.27 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             2.50 GB
+    Total Requested Memory :                     8.00 GB
+    Delta Memory :                               5.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                10
+    Run time :                                   19727 sec.
+    Turnaround time :                            20361 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260825/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_TanimotoMatern52_RBF_product_GPU.err> for stderr output of this job.
+
