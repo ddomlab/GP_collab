@@ -22,8 +22,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 #BSUB -n 4
 #BSUB -W 40:50
-#BSUB -q gpu
-#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "structure_numerical_${DATE}_${model}_CPU"
 #BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_CPU.out"
