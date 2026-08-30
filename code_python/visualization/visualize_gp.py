@@ -5992,25 +5992,25 @@ if __name__ == "__main__":
     #     file_name="r2_distributional_model_comparison.png",
     # )
 
-    # plot_model_comparison(
-    #     df=result_df,
-    #     metric="Running time",
-    #     model=["RF", "XGBR","NGB","GPytorchMAP",  "GpyroHMC"],
-    #     runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #     ],
-    #     average_over_tasks=True,
-    #     y_label="Running time (s)",
-    #     fontsize=17,
-    #     show=True,
-    #     # y_lim=(0, 100),
-    #     figsize=(6, 5),
-    #     log_y=True,
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="running_time_distributional_model_comparison.png",
-    # )
+    plot_model_comparison(
+        df=result_df,
+        metric="r2",
+        model=["RF", "XGBR","NGB","GPytorchMAP"],
+        # runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
+        kernel_triples=[
+            ("RBF", "RBF", "product"),
+            ("TanimotoRBF", "RBF", "product"),
+        ],
+        # average_over_tasks=True,
+        y_label="R²",
+        fontsize=17,
+        show=True,
+        # y_lim=(0, 100),
+        figsize=(6, 5),
+        # log_y=True,
+        save_dir=HERE / "result_analysis"/"absolute_metric"/"model_comparison",
+        file_name="r2_distributional.png",
+    )
 
 
     # plot_hybridization_method_comparison(
@@ -6115,23 +6115,23 @@ if __name__ == "__main__":
     #     file_name=f"AMA_OOF_model_profile_comparison.png",
     # )
 
-    plot_model_profile_comparison(
-        df=result_df,
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-        kernel_triples=[
-            ("Matern32", "Matern32", "averageProduct"),
-            ("TanimotoMatern32", "Matern32", "averageProduct"),
-            # ("Graph", "Matern32", "product"),
-        ],
-        metric="r2",
-        # tolerance=0.01,
-        # tree_feature_importance="MDI",
-        y_label="Profile AUC: R²",
-        fontsize=17,
-        figsize=(5, 5),
-        save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name="R2_model_profile_comparison.png",
-    )
+    # plot_model_profile_comparison(
+    #     df=result_df,
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #         # ("Graph", "Matern32", "product"),
+    #     ],
+    #     metric="r2",
+    #     # tolerance=0.01,
+    #     # tree_feature_importance="MDI",
+    #     y_label="Profile AUC: R²",
+    #     fontsize=17,
+    #     figsize=(5, 5),
+    #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
+    #     file_name="R2_model_profile_comparison.png",
+    # )
 
 
     # plot_feature_importance_difference_distribution(

@@ -22,17 +22,39 @@ import os, sys
 import gc
 from Gpytorch_sskkernel import SubsequenceStringKernel
 
-def weighted_tanimoto(x1, x2, eps=1e-6, dist=True):
-    x1e = x1.unsqueeze(-2)
-    x2e = x2.unsqueeze(-3)
+def weighted_tanimoto(x1, x2, eps=1e-6, dist=True, batch_size=128):
+    """
+    Compute the pairwise weighted Tanimoto similarity or distance.
 
-    numerator = torch.min(x1e, x2e).sum(dim=-1)
-    denominator = torch.max(x1e, x2e).sum(dim=-1)
+    ``batch_size`` limits the number of rows from ``x1`` used in each
+    broadcasted pairwise calculation. Set it to ``None`` to use the original
+    full calculation.
+    """
+    if batch_size is not None:
+        if isinstance(batch_size, bool) or not isinstance(batch_size, int):
+            raise TypeError("batch_size must be a positive integer or None.")
+        if batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer or None.")
 
-    w_t = (numerator + eps) / (denominator + eps)
-    if dist:
-        w_t = 1.0 - w_t
-    return torch.clamp(w_t, min=0.)
+    def _calculate(x1_block):
+        x1e = x1_block.unsqueeze(-2)
+        x2e = x2.unsqueeze(-3)
+
+        numerator = torch.min(x1e, x2e).sum(dim=-1)
+        denominator = torch.max(x1e, x2e).sum(dim=-1)
+
+        w_t = (numerator + eps) / (denominator + eps)
+        if dist:
+            w_t = 1.0 - w_t
+        return torch.clamp(w_t, min=0.0)
+
+    if batch_size is None or batch_size >= x1.size(-2):
+        return _calculate(x1)
+
+    return torch.cat(
+        [_calculate(x1_block) for x1_block in x1.split(batch_size, dim=-2)],
+        dim=-2,
+    )
 
 
 class Tanimoto(Kernel):

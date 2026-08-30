@@ -30,6 +30,7 @@ from scoring import (
     process_scores,
     # _average_ls,
 )
+
 from utils import split_for_training
 from filter_data import sanitize_dataset
 
@@ -235,8 +236,6 @@ def _prepare_data(
                                     scaler=transform_type
                                 )
         
-
-
         preprocessor.set_output(transform="pandas")
         feat_group = create_feature_groups(unrolled_feats, unroll, numerical_feats)
         score,predication = run(
