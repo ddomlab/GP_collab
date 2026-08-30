@@ -7,22 +7,13 @@ from filter_data import ensure_long_path
 import numpy as np
 import pandas as pd
 from all_factories import radius_to_bits
+import torch
 
 HERE: Path = Path(__file__).resolve().parent
 ROOT: Path = HERE.parent.parent / "results"
 
 feature_abbrev: Dict[str, str] = {
-    "Lp (nm)":          "Lp",
     "Rg1 (nm)":         "Rg",
-    "Rh (IW avg log)":  "Rh",
-    "Concentration (mg/ml)":            "concentration",
-    "Temperature SANS/SLS/DLS/SEC (K)":         "temperature",
-    "Mn (g/mol)":         "Mn", 
-    "Mw (g/mol)":         "Mw", 
-    "First Peak":         "Rh First Peak",
-    "Second Peak":         "Rh Second Peak",
-    "First Peak":         "Rh First Peak",
-    "Third Peak":         "Rh Third Peak",
     "canonical_name": "Polymers cluster",
 }
 
@@ -71,7 +62,6 @@ def _save(
         regressor_type: Union[str, Dict],
         imputer: Optional[str],
         representation: str,
-        #   pu_type : Optional[str],
         radius: Optional[int],
         vector: Optional[str],
         numerical_feats: Optional[list[str]],
@@ -128,17 +118,13 @@ def _save(
     fname_root = f"{fname_root}_{target_transformer}" if target_transformer else f"{fname_root}_target_transformerOFF"
     fname_root = f"{fname_root}_lc" if learning_curve else fname_root
     fname_root = f"{fname_root}_{special_file_name}" if special_file_name else fname_root
-    fname_root = f"{fname_root}_GPU" if kwargs.get("use_cuda") else fname_root
+    fname_root = f"{fname_root}_GPU" if kwargs.get("use_cuda") and torch.cuda.is_available() else fname_root
     print("Filename:", fname_root)
 
     if scores:
             scores_file = ensure_long_path(results_dir / f"{fname_root}_scores.json")
             with open(scores_file, "w") as f:
                 json.dump(scores, f, cls=NumpyArrayEncoder, indent=2)
-        
-        # indices_file: Path = results_dir / f"{fname_root}_indices.json"
-        # with open(indices_file, "w") as f:
-        #     json.dump(cv_indices, f, cls=NumpyArrayEncoder, indent=2)
 
     if predictions is not None:
         if isinstance(predictions, pd.DataFrame):
@@ -168,7 +154,6 @@ def save_results(
                 target_features: list=None,
                 regressor_type: str=None,
                 representation: str=None,
-            #  pu_type : Optional[str]=None,
                 radius : Optional[int]=None,
                 vector : Optional[str]=None,
                 numerical_feats: Optional[list[str]]=None,
@@ -188,19 +173,10 @@ def save_results(
                  ) -> None:
     
     targets_dir: str = "-".join([feature_abbrev.get(target, target) for target in target_features])
-    # feature_ids = []
-    
-    
-    # if pu_type:
-    #     feature_ids.append(pu_type)
-    # if numerical_feats:
-    #     feature_ids.append('scaler')
-    # features_dir: str = "_".join(feature_ids)
     if cutoff:
         cutoff_parameter = "-".join(feature_abbrev.get(key,key) for key in cutoff)
     f_root_dir = f"target_{targets_dir}"
     f_root_dir = f"OOD_{f_root_dir}" if clustering_method else f_root_dir
-    # f_root_dir = f"{f_root_dir}_{target_transformer}FT" if target_transformer else f_root_dir
     f_root_dir = f"{f_root_dir}_filter_({cutoff_parameter})" if cutoff else f_root_dir
     f_root_dir = f"{f_root_dir}_{special_folder_name}" if special_folder_name else f_root_dir
 
@@ -219,7 +195,6 @@ def save_results(
         regressor_type=regressor_type,
         imputer=imputer,
         representation=representation,
-    #   pu_type=pu_type,
         radius=radius,
         vector=vector,
         numerical_feats=numerical_feats,

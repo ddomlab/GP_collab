@@ -7,19 +7,15 @@ from sklearn.svm import SVR
 from ngboost import NGBRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import Lasso
-# from GPR_model import GPRegressor
 from GPytorch_kernel_mix import GPytorchMCMCRegressor, GPytorchMAPsklearnRegressor
-# from pyro_kernel_mix import GPMixMCMCRegressor
 from GPyro_kernel_mix import GpyroHMCsklearnRegressor
 
 from sklearn.neural_network import MLPRegressor
-# from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 from sklearn.preprocessing import (StandardScaler,
                                    QuantileTransformer,
                                    MinMaxScaler,
-                                #    FunctionTransformer,
                                    RobustScaler)
 from sklearn.base import TransformerMixin
 from sklearn.experimental import enable_iterative_imputer
@@ -30,20 +26,7 @@ from types import NoneType
 from skopt.space import Integer, Real, Categorical
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-# from sklearn.gaussian_process.kernels import PairwiseKernel
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
-from Sklearn_kernel_mix import (JaccardKernel, custom_RBF,
-                            custom_Matern, AdditiveRBF,
-                            AdditiveMatern, ProductKernel,
-                            AddKernel, weighted_jaccard)
-
-cutoffs = {
-            # "Rh1 (nm)":1000,
-            # "Rg1 (nm)":1000,
-            # "Lc (nm)":1000,
-            # "Lp (nm)":(None,100),
-            # "Concentration (mg/ml)":(None,50)
-        }
 
 
 unrolling_feature_factory: dict[str, list[str]] = {
@@ -54,14 +37,6 @@ unrolling_feature_factory: dict[str, list[str]] = {
                                                  }
 
 
-def generate_acronym_string(feats):
-    acronym_list = []
-    for key, values in unrolling_feature_factory.items():
-        if any(feat in feats for feat in values):
-            acronym_list.append(key)
-    return "_".join(acronym_list)
-
-
 imputer_factory: Dict[str, TransformerMixin] = {
     "mean": SimpleImputer(strategy="mean"),
     "median": SimpleImputer(strategy="median"),
@@ -70,9 +45,6 @@ imputer_factory: Dict[str, TransformerMixin] = {
     "distance KNN": KNNImputer(weights="distance"),
     "iterative": IterativeImputer(sample_posterior=True),
 }
-
-def inverse_log_transform(X):
-    return np.power(10, X)
 
 transforms: dict[str, Callable] = {
     None:                None,
@@ -94,33 +66,8 @@ representation_scaling_factory: dict[str, dict[str, Union[Callable, str]]] = {
     "MACCS":                {"callable": None, "type": None},
     "Mordred":             {"callable": StandardScaler(),
                             "type":     "Standard"},
-    # "graph embeddings":    {"callable": MinMaxScaler,
-    #                         "type": "MinMax"},
-    # "BRICS":               {"callable": MinMaxScaler, "type": "MinMax"},
-    # "SELFIES":             {"callable": MinMaxScaler, "type": "MinMax"},
-    # "SMILES":              {"callable": MinMaxScaler, "type": "MinMax"},
-    # "OHE":                 {"callable": MinMaxScaler, "type": "MinMax"},
-    # "GNN":     {"callable": MinMaxScaler, "type": "MinMax"},
 }
 
-
-# regressor_factory: dict[str, type]={
-#     "MLR": LinearRegression(),
-#     "KNN": KNeighborsRegressor(),
-#     "SVR": SVR(),
-#     "XGBR": XGBRegressor(),
-#     "RF": RandomForestRegressor(),
-#     "Lasso": Lasso(),
-#     "DT": DecisionTreeRegressor(),
-#     "NGB": NGBRegressor(),
-#     "XGBC":XGBClassifier(),
-#     "RFC": RandomForestClassifier(),
-#     # "GPR": GPRegressor,
-#     "sklearn-GPR":GaussianProcessRegressor(),
-#     "MLP": MLPRegressor(),
-#     "HGBR": HistGradientBoostingRegressor(),
-#     # "GPMixR": GPMixRegressor(),
-# }
 
 def optimized_models(
                     model_name:str,
@@ -168,7 +115,6 @@ def optimized_models(
         return MLPRegressor(max_iter=200)
 
     if 'sklearn-GPR'==model_name:
-        # kernel = kwargs.get('kernel')
         return GaussianProcessRegressor(random_state=random_state, **kwargs)
     
     if "GPytorchMAP"==model_name:
@@ -185,7 +131,7 @@ def optimized_models(
                                     normalize_y=normalize_y,
                                     use_cuda=kwargs.get('use_cuda', True),
                                     )
-    if "GPytorchMCMC" == model_name:
+    if "GPytorchHMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
     
     if "GpyroHMC" == model_name:
@@ -201,15 +147,7 @@ def optimized_models(
                                     normalize_y=normalize_y,
                                     )
     
-    # if "MGK" == model_name:
-    #     from mgktools.models.regression.gpr.gpr import MarginalizedGaussianProcessRegressor
 
-    #     return MarginalizedGaussianProcessRegressor(
-    #             kernel=graph_kernel_config.kernel,
-    #             optimizer="L-BFGS-B",
-    #             alpha=alpha,
-    #             normalize_y=normalize_y,
-    #             )
     if "MGK" == model_name:
         from mgktools.models.regression.gpr.gpr import MGKRegressorSklearn
 
@@ -226,89 +164,6 @@ def optimized_models(
     else:
         raise ValueError(f"Model {model_name} not recognized in optimized_models factory.")
 
-
-kernel_space = {
-    'matern': custom_Matern,
-    'rbf': custom_RBF,
-    'additive_rbf': AdditiveRBF, #just for count
-    'additive_matern': AdditiveMatern, #just for count
-    'product': ProductKernel,
-    'add': AddKernel,
-    'jaccard': JaccardKernel
-}
-
-
-def _parse_kernel(kernel_name: str):
-    """Return (base_name, kwargs) — e.g. ('matern', {'nu': 2.5})"""
-    if kernel_name is None:
-        return None, {}
-    # Detect Matern with nu suffix
-    if kernel_name.lower().startswith("matern"):
-        # Try to extract numeric part after 'matern'
-        try:
-            nu_val = float(kernel_name.lower().replace("matern", ""))
-            return "matern", {"nu": nu_val}
-        except ValueError:
-            return "matern", {}
-    return kernel_name, {}
-
-
-def _get_gp_kernel(gp_info: dict, idx: Optional[dict[str, list[int]]] = None):
-    """
-    Build GP kernel based on gp_info and feature index dictionary.
-    """
-
-    # --- Mixing is OFF ---
-    if gp_info['mixing'] is None:
-        active_key = next((k for k, v in gp_info['kernel'].items() if v is not None), None)
-        if active_key is None:
-            raise ValueError("No active kernel found when mixing is off.")
-
-        if active_key == 'fp':
-            length_scale = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
-            active_kernel_name, extra_args = _parse_kernel(gp_info['kernel']['fP'])
-            kernel_class = kernel_space[active_kernel_name]
-            kernel = kernel_class(length_scale=length_scale, metric=weighted_jaccard, **extra_args)
-        else:
-            length_scale = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
-            active_kernel_name, extra_args = _parse_kernel(gp_info['kernel']['count'])
-            kernel_class = kernel_space[active_kernel_name]
-            kernel = kernel_class(length_scale=length_scale, **extra_args)
-
-    # --- Additive Mixing ---
-    elif gp_info['mixing'] == 'additive':
-        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
-        length_scale_count = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
-
-        fp_name, fp_args = _parse_kernel(gp_info['kernel']['fP'])
-        count_name, count_args = _parse_kernel(gp_info['kernel']['count'])
-
-        kernel = AddKernel(
-            kernel_cont=kernel_space[count_name](length_scale=length_scale_count, **count_args),
-            kernel_fp=kernel_space[fp_name](length_scale=length_scale_fp, metric=weighted_jaccard, **fp_args),
-            cont_idx=idx['count'],
-            fp_idx=idx['fp']
-        )
-
-    # --- Product Mixing ---
-    elif gp_info['mixing'] == 'product':
-        length_scale_fp = np.full(len(idx['fp']), 1.0) if idx and idx.get('fp') else 1.0
-        length_scale_count = np.full(len(idx['count']), 1.0) if idx and idx.get('count') else 1.0
-
-        fp_name, fp_args = _parse_kernel(gp_info['kernel']['fP'])
-        count_name, count_args = _parse_kernel(gp_info['kernel']['count'])
-
-        kernel = ProductKernel(
-            kernel_cont=kernel_space[count_name](length_scale=length_scale_count, **count_args),
-            kernel_fp=kernel_space[fp_name](length_scale=length_scale_fp, metric=weighted_jaccard, **fp_args),
-            cont_idx=idx['count'],
-            fp_idx=idx['fp']
-        )
-
-    else:
-        raise ValueError(f"Unknown mixing method: {gp_info['mixing']}")
-
-    return kernel
 
 
 def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
@@ -374,27 +229,4 @@ def get_regressor_search_space(algortihm:str, kernel:str=None) -> Dict :
     }
     return SEARCH_SPACES.get(algortihm, {})
 
-
-results = {
-    "model": [],
-    "best_params":[],
-    "imputer": [],
-    "cv_score":[],
-    "r2_train":[],
-    "rmse_train":[],
-    "r2_test":[],
-    "rmse_test":[]
-}
-
-
-def construct_kernel(algorithm:str, kernel:str=None):
-    if algorithm == "GPR":
-        return kernel
-    elif algorithm == "sklearn-GPR":
-        if kernel == "rbf":
-            return RBF()
-        elif kernel == "matern":
-            return Matern()    
-    else:
-        return None
 
