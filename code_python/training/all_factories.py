@@ -1,24 +1,17 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor,RandomForestClassifier
-from xgboost import XGBRegressor, XGBClassifier, callback
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.svm import SVR
 from ngboost import NGBRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.linear_model import Lasso
 from GPytorch_kernel_mix import GPytorchMCMCRegressor, GPytorchMAPsklearnRegressor
 from GPyro_kernel_mix import GpyroHMCsklearnRegressor
 
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 from sklearn.preprocessing import (StandardScaler,
                                    QuantileTransformer,
                                    MinMaxScaler,
                                    RobustScaler)
 from sklearn.base import TransformerMixin
-from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 
 from typing import Callable, Optional, Union, Dict
@@ -26,7 +19,6 @@ from types import NoneType
 from skopt.space import Integer, Real, Categorical
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
 
 
 unrolling_feature_factory: dict[str, list[str]] = {
@@ -48,8 +40,6 @@ imputer_factory: Dict[str, TransformerMixin] = {
 
 transforms: dict[str, Callable] = {
     None:                None,
-    "Log":                  FunctionTransformer(np.log10, inverse_func=inverse_log_transform,
-                                                    check_inverse=True, validate=False),
     "MinMax":               MinMaxScaler(),
     "Standard":             StandardScaler(),
     "RobustScaler":        RobustScaler(),

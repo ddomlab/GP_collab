@@ -1,6 +1,4 @@
-from itertools import product
 from typing import Callable, Union, Dict, List
-from xml.parsers.expat import model
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
@@ -8,13 +6,10 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.pipeline import Pipeline
 from sklearn.metrics._scorer import r2_scorer
 from sklearn.model_selection import (
-    cross_val_predict,
     cross_validate,
     train_test_split,
-    learning_curve
     )
 
-# from _validation import multioutput_cross_validate 
 from utils import split_for_training
 import shap
 from sklearn.base import clone
@@ -22,7 +17,6 @@ from sklearn.ensemble import BaggingRegressor
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
-    mean_squared_error,
     root_mean_squared_error,
     r2_score,
     roc_auc_score,
@@ -41,7 +35,6 @@ from utils_uncertainty_calibration import (
     compute_Cv,
     compute_sharpness
     )
-
 
 import inspect
 import copy
