@@ -1,15 +1,10 @@
 from typing import Callable, Optional, Union, List
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import FunctionTransformer
 
-from sklearn.compose import ColumnTransformer, make_column_selector
-# from sklearn.multioutput import MultiOutputRegressor
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from all_factories import (imputer_factory, 
-                           representation_scaling_factory,
-                           transforms)
-
+from all_factories import transforms
 import numbers
 
 

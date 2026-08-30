@@ -12,7 +12,7 @@ from sklearn.preprocessing import (StandardScaler,
                                    MinMaxScaler,
                                    RobustScaler)
 from sklearn.base import TransformerMixin
-from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
+from sklearn.impute import KNNImputer, SimpleImputer
 
 from typing import Callable, Optional, Union, Dict
 from types import NoneType
@@ -35,7 +35,7 @@ imputer_factory: Dict[str, TransformerMixin] = {
     "most-frequent": SimpleImputer(strategy="most_frequent"),
     "uniform KNN": KNNImputer(weights="uniform"),
     "distance KNN": KNNImputer(weights="distance"),
-    "iterative": IterativeImputer(sample_posterior=True),
+    # "iterative": IterativeImputer(sample_posterior=True),
 }
 
 transforms: dict[str, Callable] = {

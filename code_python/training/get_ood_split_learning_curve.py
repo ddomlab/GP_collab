@@ -11,7 +11,8 @@ from data_handling import remove_unserializable_keys, save_results
 from filter_data import filter_dataset
 from all_factories import (
                             transforms,
-                            get_regressor_search_space)
+                            get_regressor_search_space
+                            )
 from collections import Counter
 
 from imputation_normalization import preprocessing_workflow
@@ -19,7 +20,6 @@ from training_utils_gp_special import get_target_transformer, split_for_training
 from scoring import (
                     train_and_predict_ood,
                     process_ood_learning_curve_score,
-                    get_incremental_split
                 )
 from all_factories import optimized_models
 

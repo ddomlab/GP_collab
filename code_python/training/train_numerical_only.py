@@ -1,7 +1,6 @@
 import pandas as pd
 from pathlib import Path
 from training_utils_gp_special import train_regressor
-from all_factories import radius_to_bits,cutoffs
 from filter_data import _get_dataset_features
 from typing import Callable, Optional, Union, Dict, Tuple
 import numpy as np

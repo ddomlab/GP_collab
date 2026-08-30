@@ -15,7 +15,7 @@ from skopt import BayesSearchCV
 from sklearn.multioutput import MultiOutputRegressor
 
 ## packages
-from data_handling import remove_unserializable_keys, save_results
+from data_handling import remove_unserializable_keys
 from filter_data import filter_dataset
 from all_factories import (
                             transforms,
@@ -28,9 +28,7 @@ from imputation_normalization import preprocessing_workflow
 from scoring import (
     cross_validate_regressor,
     process_scores,
-    # _average_ls,
 )
-
 from utils import split_for_training
 from filter_data import sanitize_dataset
 

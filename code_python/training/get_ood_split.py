@@ -9,11 +9,9 @@ from skopt import BayesSearchCV
 from data_handling import remove_unserializable_keys, save_results
 from filter_data import filter_dataset
 from all_factories import (
-                            regressor_factory,
                             optimized_models,
-                            # regressor_search_space,
                             transforms,
-                            construct_kernel,
+                            # construct_kernel,
                             get_regressor_search_space)
 
 from imputation_normalization import preprocessing_workflow
