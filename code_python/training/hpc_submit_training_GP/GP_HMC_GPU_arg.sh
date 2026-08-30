@@ -8,9 +8,9 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 model="GpyroHMC"
-k_fps=("TanimotoMatern52")
+k_fps=("RBF")
 k_counts=("Matern32")
-k_mixing_methods=("(count:+)x(fp:x)" "(count:x)+(fp:x)")
+k_mixing_methods=("sum" "product" "averageProduct" "(count:+)x(fp:x)" "(count:x)+(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
