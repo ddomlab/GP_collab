@@ -163,7 +163,7 @@ def save_results(
                 hypop: Optional[bool]=True,
                 transform_type:Optional[str]=None,
                 target_transformer:Optional[str]=None,
-                clustering_method:str=None,
+                # clustering_method:str=None,
                 learning_curve:bool=False,
                 special_folder_name:Optional[str]=None,
                 special_file_name:Optional[str]=None,
@@ -176,13 +176,12 @@ def save_results(
     if cutoff:
         cutoff_parameter = "-".join(feature_abbrev.get(key,key) for key in cutoff)
     f_root_dir = f"target_{targets_dir}"
-    f_root_dir = f"OOD_{f_root_dir}" if clustering_method else f_root_dir
-    f_root_dir = f"{f_root_dir}_filter_({cutoff_parameter})" if cutoff else f_root_dir
+    # f_root_dir = f"OOD_{f_root_dir}" if kwargs.get("clustering_method", None) else f_root_dir
     f_root_dir = f"{f_root_dir}_{special_folder_name}" if special_folder_name else f_root_dir
 
     results_dir: Path = ROOT / output_dir_name / f_root_dir
-    clustering_method= feature_abbrev.get(clustering_method, clustering_method) if clustering_method else None
-    results_dir: Path = results_dir / clustering_method if clustering_method else results_dir
+    clustering_method= kwargs.get("clustering_method", None)
+    results_dir: Path = results_dir / f"{clustering_method}_OOD" if clustering_method else results_dir
     results_dir: Path = results_dir / "test" if TEST else results_dir
 
 

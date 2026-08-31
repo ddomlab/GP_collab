@@ -487,6 +487,7 @@ def run(
                                             X, y, 
                                             cv_outer,
                                             cluster_group=cluster_group,
+                                            cluster_validation_mode="both",
                                             return_estimator=False,
                                             return_tree_importances=True,
                                             UQ=True,
