@@ -436,6 +436,56 @@ def _fit_predict_score(
     return test_idx, y_result, results
 
 
+def _fit_predict_score_iid(
+    estimator,
+    model_type,
+    X,
+    y,
+    reference_test_idx,
+    fold_idx,
+    group_name,
+    base_seed,
+    scoring,
+    return_ls: bool,
+    UQ: bool,
+    return_estimator: bool = False,
+    return_tree_importances: bool = False,
+):
+    n_samples = len(y)
+    test_size = len(reference_test_idx)
+
+    if test_size <= 0 or test_size >= n_samples:
+        raise ValueError(
+            f"Invalid IID test size {test_size} for dataset "
+            f"containing {n_samples} samples."
+        )
+
+    # Different RNG sequence for each group
+    iid_seed = base_seed + fold_idx * 10_000
+
+    rng = np.random.default_rng(iid_seed)
+    permutation = rng.permutation(n_samples)
+
+    iid_test_idx = np.sort(permutation[:test_size])
+    iid_train_idx = np.sort(permutation[test_size:])
+
+    test_idx, y_result, results = _fit_predict_score(
+        estimator=estimator,
+        model_type=model_type,
+        X=X,
+        y=y,
+        train_idx=iid_train_idx,
+        test_idx=iid_test_idx,
+        scoring=scoring,
+        return_ls=return_ls,
+        UQ=UQ,
+        return_estimator=return_estimator,
+        return_tree_importances=return_tree_importances,
+    )
+
+    return group_name, test_idx, y_result, results
+
+
 def cross_validate(
     estimator,
     model_type,
@@ -448,73 +498,124 @@ def cross_validate(
     return_ls,
     return_estimator,
     return_tree_importances,
-    cluster_group: Optional[str] = None
+    cluster_group=None,
+    cluster_validation_mode="ood",
 ):
     """
-    Returns:
-        scores: Dictionary of lists containing fold-wise metrics.
-        predictions: Dictionary containing out-of-fold predictions:
-            - predictions["y_pred"]: predicted means, shape (n_samples,)
-            - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
-              only available when returned by the model.
+    Cross-validation supporting:
+
+        cluster_validation_mode="ood"
+            Leave-one-group-out only.
+
+        cluster_validation_mode="iid"
+            Repeated random IID splits matched to each group's test-set size.
+
+        cluster_validation_mode="both"
+            Run both OOD and matched IID validation.
+
+    If cluster_group is None, standard CV behavior is used.
     """
+
+    if cluster_validation_mode not in {"ood", "iid", "both"}:
+        raise ValueError(
+            "validation_mode must be one of: "
+            "'ood', 'iid', or 'both'."
+        )
+
     grouped_cv = cluster_group is not None
     n_samples = len(y)
-    parallel_kwargs = {"n_jobs": n_jobs, "verbose": 0}
+
+    # ---------------------------------------------------------
+    # Parallel configuration
+    # ---------------------------------------------------------
+
+    parallel_kwargs = {
+        "n_jobs": n_jobs,
+        "verbose": 0,
+    }
+
     if "gp" in model_type.lower() or "mgk" in model_type.lower():
         parallel_kwargs["require"] = "sharedmem"
     else:
         parallel_kwargs["pre_dispatch"] = "all"
 
-    splits = (
-        cv.split(X, y, groups=cluster_group)
-        if grouped_cv
-        else cv.split(X, y)
-    )
+    # =========================================================
+    # STANDARD NON-GROUPED CV
+    # =========================================================
 
-    parallel_results = Parallel(**parallel_kwargs)(
-        delayed(_fit_predict_score)(
-            estimator,
-            model_type,
-            X,
-            y,
-            train_idx,
-            test_idx,
-            scoring,
-            return_ls,
-            UQ,
-            return_estimator,
-            return_tree_importances,
+    if not grouped_cv:
+
+        splits = cv.split(X, y)
+
+        parallel_results = Parallel(**parallel_kwargs)(
+            delayed(_fit_predict_score)(
+                estimator,
+                model_type,
+                X,
+                y,
+                train_idx,
+                test_idx,
+                scoring,
+                return_ls,
+                UQ,
+                return_estimator,
+                return_tree_importances,
+            )
+            for train_idx, test_idx in splits
         )
-        for train_idx, test_idx in splits
-    )
 
-    scores = defaultdict(dict if grouped_cv else list)
+        scores = defaultdict(list)
 
-    predictions = (
-        {
-            "y_pred": {},
-            "y_std": {},
-            "test_idx": {},
-        }
-        if grouped_cv
-        else {
+        predictions = {
             "y_pred": np.full(n_samples, np.nan),
             "y_std": np.full(n_samples, np.nan),
         }
-    )
-    if grouped_cv:
+
+        for test_idx, y_result, fold_scores in parallel_results:
+
+            predictions["y_pred"][test_idx] = y_result["y_pred"]
+
+            if y_result.get("y_std") is not None:
+                predictions["y_std"][test_idx] = y_result["y_std"]
+
+            for key, val in fold_scores.items():
+
+                score_key = (
+                    key
+                    if key == "estimator"
+                    else f"test_{key}"
+                )
+
+                scores[score_key].append(val)
+
+    # =========================================================
+    # GROUP-BASED VALIDATION
+    # =========================================================
+
+    else:
+
         cluster_group_array = np.asarray(cluster_group)
 
-    for test_idx, y_result, fold_scores in parallel_results:
-        if grouped_cv:
+        raw_splits = list(
+            cv.split(
+                X,
+                y,
+                groups=cluster_group
+            )
+        )
+
+        # -----------------------------------------------------
+        # Build fold metadata once
+        # -----------------------------------------------------
+
+        folds = []
+
+        for fold_idx, (train_idx, test_idx) in enumerate(raw_splits):
 
             unique_groups = np.unique(
                 cluster_group_array[test_idx]
             )
 
-            # LeaveOneGroupOut should have exactly one
-            # held-out group per test fold.
             if len(unique_groups) != 1:
                 raise ValueError(
                     "Expected exactly one held-out group per fold, "
@@ -526,47 +627,164 @@ def cross_validate(
             if isinstance(group_name, np.generic):
                 group_name = group_name.item()
 
-            predictions["y_pred"][group_name] = y_result["y_pred"]
-
-            predictions["y_std"][group_name] = (
-                y_result["y_std"]
-                if y_result.get("y_std") is not None
-                else None
+            folds.append(
+                {
+                    "fold_idx": fold_idx,
+                    "group_name": group_name,
+                    "train_idx": train_idx,
+                    "test_idx": test_idx,
+                }
             )
 
-            predictions["test_idx"][group_name] = np.asarray(
-                test_idx
+        scores = {}
+        predictions = {}
+
+        # =========================================================
+        # OOD VALIDATION
+        # =====================================================
+
+        if cluster_validation_mode in {"ood", "both"}:
+
+            ood_results = Parallel(**parallel_kwargs)(
+                delayed(_fit_predict_score)(
+                    estimator,
+                    model_type,
+                    X,
+                    y,
+                    fold["train_idx"],
+                    fold["test_idx"],
+                    scoring,
+                    return_ls,
+                    UQ,
+                    return_estimator,
+                    return_tree_importances,
+                )
+                for fold in folds
             )
 
-            for key, val in fold_scores.items():
+            ood_scores = defaultdict(dict)
 
-                score_key = (
-                    key
-                    if key == "estimator"
-                    else f"test_{key}"
+            ood_predictions = {
+                "y_pred": {},
+                "y_std": {},
+                "test_idx": {},
+            }
+
+            for fold, (
+                test_idx,
+                y_result,
+                fold_scores,
+            ) in zip(folds, ood_results):
+
+                group_name = fold["group_name"]
+
+                # Store predictions
+                ood_predictions["y_pred"][group_name] = (
+                    y_result["y_pred"]
                 )
 
-                scores[score_key][group_name] = val
-
-        else:
-
-            predictions["y_pred"][test_idx] = (
-                y_result["y_pred"]
-            )
-
-            if y_result.get("y_std") is not None:
-                predictions["y_std"][test_idx] = (
+                ood_predictions["y_std"][group_name] = (
                     y_result["y_std"]
+                    if y_result.get("y_std") is not None
+                    else None
                 )
 
-            for key, val in fold_scores.items():
-
-                score_key = (
-                    key
-                    if key == "estimator"
-                    else f"test_{key}"
+                ood_predictions["test_idx"][group_name] = (
+                    np.asarray(test_idx)
                 )
-                scores[score_key].append(val)
+
+                # Store scores
+                for key, val in fold_scores.items():
+
+                    score_key = (
+                        key
+                        if key == "estimator"
+                        else f"test_{key}"
+                    )
+
+                    ood_scores[score_key][group_name] = val
+
+            scores["ood"] = ood_scores
+            predictions["ood"] = ood_predictions
+
+        # =====================================================
+        # MATCHED IID VALIDATION
+        # =====================================================
+
+        if cluster_validation_mode in {"iid", "both"}:
+
+            IID_SEEDS = [17, 29, 43, 71, 97]
+
+            iid_parallel_results = Parallel(**parallel_kwargs)(
+                delayed(_fit_predict_score_iid)(
+                    estimator=estimator,
+                    model_type=model_type,
+                    X=X,
+                    y=y,
+                    reference_test_idx=fold["test_idx"],
+                    fold_idx=fold["fold_idx"],
+                    group_name=fold["group_name"],
+                    base_seed=base_seed,
+                    scoring=scoring,
+                    return_ls=return_ls,
+                    UQ=UQ,
+                    return_estimator=return_estimator,
+                    return_tree_importances=return_tree_importances,
+                )
+                for fold in folds
+                for base_seed in IID_SEEDS
+            )
+
+            iid_scores = defaultdict(dict)
+
+            iid_predictions = {
+                "y_pred": {},
+                "y_std": {},
+                "test_idx": {},
+            }
+
+            for (
+                group_name,
+                test_idx,
+                y_result,
+                fold_scores,
+            ) in iid_parallel_results:
+
+                if group_name not in iid_predictions["y_pred"]:
+                    iid_predictions["y_pred"][group_name] = []
+                    iid_predictions["y_std"][group_name] = []
+                    iid_predictions["test_idx"][group_name] = []
+
+                # Store predictions
+                iid_predictions["y_pred"][group_name].append(
+                    y_result["y_pred"]
+                )
+
+                iid_predictions["y_std"][group_name].append(
+                    y_result["y_std"]
+                    if y_result.get("y_std") is not None
+                    else None
+                )
+
+                iid_predictions["test_idx"][group_name].append(
+                    np.asarray(test_idx)
+                )
+
+                # Store scores
+                for key, val in fold_scores.items():
+
+                    score_key = (
+                        key
+                        if key == "estimator"
+                        else f"test_{key}"
+                    )
+
+                    if group_name not in iid_scores[score_key]:
+                        iid_scores[score_key][group_name] = []
+
+                    iid_scores[score_key][group_name].append(val)
+            scores["iid"] = iid_scores
+            predictions["iid"] = iid_predictions
 
     return scores, predictions
 
@@ -574,14 +792,15 @@ def cross_validate(
 def cross_validate_regressor(
     regressor, 
     model_type:str, 
-    X, y, 
+    X, y,
     cv, 
     UQ:bool=False,
     return_ls:bool=False,
     return_estimator:bool=False,
     return_tree_importances:bool=False,
     n_jobs:int=1,     
-    cluster_group: Optional[str]=None
+    cluster_group: Optional[str]=None,
+    cluster_validation_mode: str="ood"
     ) -> tuple[dict[str, float], dict[str, np.ndarray]]:
 
 
@@ -604,5 +823,6 @@ def cross_validate_regressor(
             return_estimator=return_estimator,
             return_tree_importances=return_tree_importances,
             cluster_group=cluster_group,
+            cluster_validation_mode=cluster_validation_mode
             )
         return score, predictions
