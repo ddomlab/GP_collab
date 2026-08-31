@@ -1,4 +1,4 @@
-from typing import Callable, Union, Dict, List
+from typing import Callable, Union, Dict, List, Optional
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
@@ -448,6 +448,7 @@ def cross_validate(
     return_ls,
     return_estimator,
     return_tree_importances,
+    cluster_group: Optional[str] = None
 ):
     """
     Returns:
@@ -457,11 +458,19 @@ def cross_validate(
             - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
               only available when returned by the model.
     """
+    grouped_cv = cluster_group is not None
+    n_samples = len(y)
     parallel_kwargs = {"n_jobs": n_jobs, "verbose": 0}
     if "gp" in model_type.lower() or "mgk" in model_type.lower():
         parallel_kwargs["require"] = "sharedmem"
     else:
         parallel_kwargs["pre_dispatch"] = "all"
+
+    splits = (
+        cv.split(X, y, groups=cluster_group)
+        if grouped_cv
+        else cv.split(X, y)
+    )
 
     parallel_results = Parallel(**parallel_kwargs)(
         delayed(_fit_predict_score)(
@@ -477,26 +486,87 @@ def cross_validate(
             return_estimator,
             return_tree_importances,
         )
-        for train_idx, test_idx in cv.split(X, y)
+        for train_idx, test_idx in splits
     )
 
-    scores = defaultdict(list)
-    n_samples = len(y)
+    scores = defaultdict(dict if grouped_cv else list)
 
-    predictions = {
-        "y_pred": np.full(n_samples, np.nan),
-        "y_std": np.full(n_samples, np.nan),
-    }
+    predictions = (
+        {
+            "y_pred": {},
+            "y_std": {},
+            "test_idx": {},
+        }
+        if grouped_cv
+        else {
+            "y_pred": np.full(n_samples, np.nan),
+            "y_std": np.full(n_samples, np.nan),
+        }
+    )
+    if grouped_cv:
+        cluster_group_array = np.asarray(cluster_group)
 
     for test_idx, y_result, fold_scores in parallel_results:
-        predictions["y_pred"][test_idx] = y_result["y_pred"]
+        if grouped_cv:
 
-        if y_result.get("y_std") is not None:
-            predictions["y_std"][test_idx] = y_result["y_std"]
+            unique_groups = np.unique(
+                cluster_group_array[test_idx]
+            )
 
-        for key, val in fold_scores.items():
-            score_key = key if key == "estimator" else f"test_{key}"
-            scores[score_key].append(val)
+            # LeaveOneGroupOut should have exactly one
+            # held-out group per test fold.
+            if len(unique_groups) != 1:
+                raise ValueError(
+                    "Expected exactly one held-out group per fold, "
+                    f"but found {len(unique_groups)}: {unique_groups}"
+                )
+
+            group_name = unique_groups[0]
+
+            if isinstance(group_name, np.generic):
+                group_name = group_name.item()
+
+            predictions["y_pred"][group_name] = y_result["y_pred"]
+
+            predictions["y_std"][group_name] = (
+                y_result["y_std"]
+                if y_result.get("y_std") is not None
+                else None
+            )
+
+            predictions["test_idx"][group_name] = np.asarray(
+                test_idx
+            )
+
+            for key, val in fold_scores.items():
+
+                score_key = (
+                    key
+                    if key == "estimator"
+                    else f"test_{key}"
+                )
+
+                scores[score_key][group_name] = val
+
+        else:
+
+            predictions["y_pred"][test_idx] = (
+                y_result["y_pred"]
+            )
+
+            if y_result.get("y_std") is not None:
+                predictions["y_std"][test_idx] = (
+                    y_result["y_std"]
+                )
+
+            for key, val in fold_scores.items():
+
+                score_key = (
+                    key
+                    if key == "estimator"
+                    else f"test_{key}"
+                )
+                scores[score_key].append(val)
 
     return scores, predictions
 
@@ -511,7 +581,7 @@ def cross_validate_regressor(
     return_estimator:bool=False,
     return_tree_importances:bool=False,
     n_jobs:int=1,     
-
+    cluster_group: Optional[str]=None
     ) -> tuple[dict[str, float], dict[str, np.ndarray]]:
 
 
@@ -533,5 +603,6 @@ def cross_validate_regressor(
             UQ=UQ,
             return_estimator=return_estimator,
             return_tree_importances=return_tree_importances,
+            cluster_group=cluster_group,
             )
         return score, predictions

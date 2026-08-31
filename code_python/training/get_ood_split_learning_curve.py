@@ -17,7 +17,7 @@ from collections import Counter
 
 from imputation_normalization import preprocessing_workflow
 from training_utils_gp_special import get_target_transformer, split_for_training,set_globals
-from scoring import (
+from code_python.training.scoring_validation import (
                     train_and_predict_ood,
                     process_ood_learning_curve_score,
                 )

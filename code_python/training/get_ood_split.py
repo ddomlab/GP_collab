@@ -16,7 +16,7 @@ from all_factories import (
 
 from imputation_normalization import preprocessing_workflow
 from training_utils_gp_special import get_target_transformer, split_for_training,_optimize_hyperparams,set_globals
-from scoring import (
+from code_python.training.scoring_validation import (
                     cross_validate_regressor,
                     process_scores,
                     train_and_predict_ood,

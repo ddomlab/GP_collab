@@ -22,7 +22,7 @@ from training_utils import (
     )
 from all_factories import optimized_models
 from imputation_normalization import preprocessing_workflow
-from scoring import (
+from code_python.training.scoring_validation import (
     process_learning_score,
     get_incremental_split
     )

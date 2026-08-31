@@ -9,7 +9,7 @@ import pandas as pd
 from collections import defaultdict
 
 from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, LeaveOneGroupOut
 from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
 from sklearn.multioutput import MultiOutputRegressor
@@ -25,7 +25,7 @@ from all_factories import (
 from all_factories import optimized_models
 
 from imputation_normalization import preprocessing_workflow
-from scoring import (
+from scoring_validation import (
     cross_validate_regressor,
     process_scores,
 )
@@ -147,6 +147,8 @@ def _prepare_data(
     """
     here you should change the names
     """
+    clustering_method = kwargs.get("clustering_method")
+    cluster_group = dataset[clustering_method] if clustering_method is not None else None
 
     if "mgk" in regressor_type.lower():
         from mgktools.data.data import Dataset
@@ -207,6 +209,7 @@ def _prepare_data(
                             hyperparameter_optimization=hyperparameter_optimization,
                             kernel_parameters=mgk_kernel_config,
                             target_transformer=target_transformer,
+                            cluster_group=cluster_group,
                             **kwargs
                             )
         y = mgk_dataset.y
@@ -247,6 +250,7 @@ def _prepare_data(
                                 kernel_parameters=kernel_parameters,
                                 kernel_type=kernel_type,
                                 kernel_mixing_method=kernel_mixing_method,
+                                cluster_group=cluster_group,
                                 **kwargs,
                                 )
     
@@ -266,6 +270,7 @@ def run(
     kernel_parameters: Optional[Any]=None,
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
+    cluster_group: Optional[str]=None,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -276,8 +281,8 @@ def run(
     for seed in SEEDS:
 
         print(f"Running seed: {seed}")
-        cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
-
+        cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
+        #### Clustering Method would be group (series)
 
         if "mgk" in regressor_type.lower():
             X, y = full_dataset.X, full_dataset.y
@@ -320,7 +325,7 @@ def run(
                                 ("regressor", model),
                                 ])
                 scores, predictions = cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs,
-                                                                cv=cv_outer, UQ=True, return_ls=True)
+                                                                cv=cv_outer, UQ=True, return_ls=True, cluster_group=cluster_group)
             else:
                 model = optimized_models(regressor_type, 
                                          graph_kernel_config=kernel_parameters,
@@ -331,8 +336,15 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = cross_validate_regressor(regressor, regressor_type, X, y, n_jobs=n_jobs,
-                                                                cv=cv_outer, return_ls=True, UQ=True)
+                scores, predictions = cross_validate_regressor(
+                                                                regressor, 
+                                                                regressor_type, X, y, 
+                                                                n_jobs=n_jobs,
+                                                                cv=cv_outer, 
+                                                                cluster_group=cluster_group,
+                                                                return_ls=True, 
+                                                                UQ=True, 
+                                                                )
         else:
             
             if hyperparameter_optimization:
@@ -364,7 +376,7 @@ def run(
                                 ])
 
                 regressor.set_output(transform="pandas")
-                cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed)
+                cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
                 best_estimator, regressor_params = _optimize_hyperparams(
                                                                         X,
                                                                         y,
@@ -379,7 +391,9 @@ def run(
                                                                         )
                 
                 scores, predictions = cross_validate_regressor(
-                                        best_estimator, regressor_type, X, y, cv_outer
+                                        best_estimator, regressor_type, X, y, cv_outer,
+                                        n_jobs=n_jobs,
+                                        cluster_group=cluster_group,
                                         )
                 scores["best_params"] = regressor_params
             else:
@@ -408,6 +422,7 @@ def run(
                                             regressor_type, 
                                             X, y,
                                             cv_outer,
+                                            cluster_group=cluster_group,
                                             n_jobs=n_jobs,
                                             return_ls=True,
                                             UQ=True
@@ -429,6 +444,7 @@ def run(
                                             regressor_type, 
                                             X, y, 
                                             cv_outer,
+                                            cluster_group=cluster_group,
                                             return_estimator=False,
                                             return_tree_importances=True,
                                             UQ=True,
@@ -547,6 +563,8 @@ def _pd_to_np(data):
 def get_target_transformer(y_transformer:str) -> Pipeline:
     return transforms[y_transformer] # StandardScaler to standardize the target
 
-def get_default_kfold_splitter(n_splits: int,random_state:int):
+def get_default_kfold_splitter(n_splits: int,random_state:int, cluster_group: Optional[str]=None) -> Union[KFold, StratifiedKFold, LeaveOneGroupOut]:
+    if cluster_group is not None:
+        return LeaveOneGroupOut()
     return KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
 
