@@ -87,9 +87,11 @@ def train_regressor(
                                             hyperparameter_optimization=hyperparameter_optimization,
                                             **keyword
                                             )
-        scores = process_scores(scores)
-        end = time.time()
-        scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
+        
+        if keyword.get("clustering_method",None) is None:
+            scores = process_scores(scores)
+            end = time.time()
+            scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
   
         return scores, predictions
         
@@ -255,8 +257,47 @@ def _prepare_data(
                                 )
     
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
-    combined_prediction_ground_truth = pd.concat([predication, y_frame], axis=1)
+    combined_prediction_ground_truth = (
+        predication
+        if cluster_group is not None
+        else pd.concat([predication, y_frame], axis=1)
+    )
     return score, combined_prediction_ground_truth
+
+
+def grouped_predictions_to_dataframe(predictions: dict) -> pd.DataFrame:
+    iid_seeds = [17, 29, 43, 71, 97]
+    records = []
+
+    if "ood" in predictions:
+        ood_predictions = predictions["ood"]
+        for cluster, y_pred in ood_predictions["y_pred"].items():
+            y_std = ood_predictions["y_std"][cluster]
+            records.append({
+                "validation": "ood",
+                "cluster": cluster,
+                "iid_seed": None,
+                "y_pred": np.asarray(y_pred),
+                "y_std": np.asarray(y_std) if y_std is not None else None,
+            })
+
+    if "iid" in predictions:
+        iid_predictions = predictions["iid"]
+        for cluster, prediction_runs in iid_predictions["y_pred"].items():
+            for run_idx, y_pred in enumerate(prediction_runs):
+                y_std = iid_predictions["y_std"][cluster][run_idx]
+                records.append({
+                    "validation": "iid",
+                    "cluster": cluster,
+                    "iid_seed": iid_seeds[run_idx],
+                    "y_pred": np.asarray(y_pred),
+                    "y_std": np.asarray(y_std) if y_std is not None else None,
+                })
+
+    prediction_frame = pd.DataFrame.from_records(records)
+    if not prediction_frame.empty:
+        prediction_frame["iid_seed"] = prediction_frame["iid_seed"].astype("Int64")
+    return prediction_frame
 
 
 def run(
@@ -278,7 +319,8 @@ def run(
     seed_predictions: dict[int, np.ndarray] = {}
     n_jobs = 1 if kwargs.get("use_cuda", False) and torch.cuda.is_available() else -1
     n_jobs = 1 if "hmc" in regressor_type.lower() else n_jobs
-    for seed in SEEDS:
+    seeds = [42] if cluster_group is not None else SEEDS
+    for seed in seeds:
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
@@ -453,14 +495,20 @@ def run(
 
         seed_scores[seed] = scores.copy()
         seed_scores[seed].pop("estimator", None)
-        seed_predictions[f"seed_{seed}_y_pred"] = np.asarray(predictions["y_pred"]).ravel()
 
-        if "y_std" in predictions:
-            seed_predictions[f"seed_{seed}_y_std"] = np.asarray(predictions["y_std"]).ravel()
-    seed_predictions = pd.DataFrame.from_dict(
-        seed_predictions,
-        orient="columns",
-    )
+        if cluster_group is not None:
+            seed_predictions = grouped_predictions_to_dataframe(predictions)
+        else:
+            seed_predictions[f"seed_{seed}_y_pred"] = np.asarray(predictions["y_pred"]).ravel()
+
+            if "y_std" in predictions:
+                seed_predictions[f"seed_{seed}_y_std"] = np.asarray(predictions["y_std"]).ravel()
+
+    if cluster_group is None:
+        seed_predictions = pd.DataFrame.from_dict(
+            seed_predictions,
+            orient="columns",
+        )
 
     return seed_scores, seed_predictions
 
@@ -563,8 +611,8 @@ def _pd_to_np(data):
 def get_target_transformer(y_transformer:str) -> Pipeline:
     return transforms[y_transformer] # StandardScaler to standardize the target
 
+
 def get_default_kfold_splitter(n_splits: int,random_state:int, cluster_group: Optional[str]=None) -> Union[KFold, StratifiedKFold, LeaveOneGroupOut]:
     if cluster_group is not None:
         return LeaveOneGroupOut()
     return KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
-

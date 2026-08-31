@@ -1,4 +1,5 @@
 from typing import Callable, Union, Dict, List, Optional
+from time import perf_counter
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
@@ -371,6 +372,8 @@ def _fit_predict_score(
     - predict on test
     - compute scores with provided scorers
     """
+    fold_start = perf_counter()
+
     if "mgk" in model_type.lower():
         est = copy.deepcopy(estimator)
     else:
@@ -432,6 +435,8 @@ def _fit_predict_score(
                 results[name] = float(uq_scorer(y_result["y_std"]))
             else:
                 results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
+
+    results["run_time_sec"] = perf_counter() - fold_start
 
     return test_idx, y_result, results
 
