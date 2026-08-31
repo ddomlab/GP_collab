@@ -1,7 +1,8 @@
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
+# from sklearn.ensemble import RandomForestRegressor
+# from xgboost import XGBRegressor
+# from ngboost import NGBRegressor
+from modified_tree_models import RFRegressor, XGBRegressor, NGBRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
-from ngboost import NGBRegressor
 from GPytorch_kernel_mix import GPytorchMCMCRegressor, GPytorchMAPsklearnRegressor
 from GPyro_kernel_mix import GpyroHMCsklearnRegressor
 
@@ -71,12 +72,16 @@ def optimized_models(
                     target_transformer:str|None=None,
                      **kwargs):
     normalize_y = bool(target_transformer)
+
     if 'NGB'==model_name:
-        return NGBRegressor(n_estimators=500, learning_rate=0.01, tol=1e-4,
-                             random_state=random_state, verbose=False,
+        return NGBRegressor(n_estimators=500, 
+                            learning_rate=0.01, 
+                            tol=1e-4,
+                            random_state=random_state,
+                            verbose=False,
+                            normalize_y=normalize_y,
                             #  early_stopping_rounds=50,
                             #  **kwargs,
-                             
                              )
     if 'XGBR'==model_name:
         # params = callback.EarlyStopping(rounds=50, metric_name="rmse")
@@ -85,17 +90,22 @@ def optimized_models(
                             random_state=random_state, 
                             n_jobs=-1,
                             n_estimators=100,
-                            verbose=False,
+                            # verbose=False,
+                            importance_type="total_gain", 
+                            normalize_y=normalize_y,
                             # callbacks=[params]
                             # early_stopping_rounds=3
                             #    **kwargs,
                         )
     
     if 'RF'==model_name:
-        return RandomForestRegressor(n_estimators=100, max_depth=None, 
-                                        random_state=random_state, n_jobs=-1,
-                                        max_features="sqrt"
-                                        )
+        return RFRegressor(n_estimators=100, 
+                                    max_depth=None, 
+                                    random_state=random_state, 
+                                    n_jobs=-1,
+                                    max_features="sqrt",
+                                    normalize_y=normalize_y,
+                                    )
     if 'HGBR'==model_name:
         return HistGradientBoostingRegressor(max_iter=2000, max_depth=None, 
                                             #  min_samples_leaf=20, max_leaf_nodes=1000,

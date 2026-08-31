@@ -81,7 +81,7 @@ def main_structural_numerical(
 
 
 if __name__ == "__main__":
-    if DEBUGGING is False:
+    if DEBUGGING is True:
         args = parse_arguments()
         PAPER = args.paper
         dataset_name =args.dataset
@@ -131,20 +131,20 @@ if __name__ == "__main__":
                 representation="ECFP", #"ECFP" # MG #SSK
                 radius=3,
                 vector="count",
-                regressor_type="GPytorchMAP", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
+                regressor_type="XGBR", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
                 polymer_unit=polymer_unit,
                 target_features=[targ],  
                 feat_transformer="Standard",
                 target_transformer="Standard",
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                kernel_type={
-                    "fp": "TanimotoRBF", #Graph #"TanimotoRBF" #args.K_fp
-                    "count": "RBF" #"Matern32"   #args.K_count
-                    # "fp": "Graph", 
-                    # "count": "Matern32"
-                    },
-                kernel_mixing_method="product",
+                # kernel_type={
+                #     "fp": "TanimotoRBF", #Graph #"TanimotoRBF" #args.K_fp
+                #     "count": "RBF" #"Matern32"   #args.K_count
+                #     # "fp": "Graph", 
+                #     # "count": "Matern32"
+                #     },
+                # kernel_mixing_method="product",
                 use_cuda=False, #True for GPU, False for CPU
                 # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
                 # hyperparameter_save_dir=optuna_save_dir, # for MGK

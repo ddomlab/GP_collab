@@ -5,10 +5,15 @@ import pandas as pd
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.pipeline import Pipeline
 from sklearn.metrics._scorer import r2_scorer
-from sklearn.model_selection import cross_validate
+from sklearn.model_selection import (
+    cross_validate,
+    train_test_split,
+    )
 from collections import defaultdict
 from utils import split_for_training
+import shap
 from sklearn.base import clone
+from sklearn.ensemble import BaggingRegressor
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
@@ -31,6 +36,7 @@ from utils_uncertainty_calibration import (
     compute_sharpness
     )
 
+import inspect
 import copy
 
 
@@ -574,21 +580,9 @@ def process_learning_score(score: dict[int, dict[str, np.ndarray]]):
 
 
 
-def _fit_predict_score(
-    estimator,
-    model_type,
-    X,
-    y,
-    train_idx,
-    test_idx,
-    scoring,
-    return_ls: bool,
-    UQ: bool,
-    return_estimator: bool = False,
-    return_tree_importances: bool = False,
-):
+def _gp_fit_predict_score(estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls: bool, UQ: bool):
     """
-    Shared GP/tree worker that runs inside a parallel worker:
+    Runs inside a parallel worker:
     - clone estimator
     - fit on train
     - predict on test
@@ -605,42 +599,20 @@ def _fit_predict_score(
     y_train = split_for_training(y, train_idx)
     y_test  = split_for_training(y, test_idx)
 
+    # Fit model (with Pyro MCMC)
     est.fit(X_train, y_train)
 
-    # All project GP/tree wrappers return the same prediction dictionary.
+    # Predict
     y_result = est.predict(X_test, return_std=UQ)
-    if not isinstance(y_result, dict) or "y_pred" not in y_result:
-        raise TypeError(
-            f"{type(est).__name__}.predict must return a dictionary containing "
-            "'y_pred' and 'y_std'."
-        )
-
-    y_result["y_pred"] = np.asarray(y_result["y_pred"]).ravel()
-    if y_result.get("y_std") is not None:
-        y_result["y_std"] = np.asarray(y_result["y_std"]).ravel()
-
     results = {}
-    fitted_regressor = (
-        est.named_steps["regressor"]
-        if isinstance(est, Pipeline)
-        else est
-    )
+    if return_ls: 
+        results["lengthscale"] = est.named_steps["regressor"]._get_lengthscale()
+    # Compute scoring: scoring[name] is a scorer from make_scorer
 
-    if return_ls:
-        results["lengthscale"] = fitted_regressor._get_lengthscale()
-
-    if return_tree_importances:
-        results["feature_importance_MDI"] = fitted_regressor._get_MDI()
-        results["feature_importance_SHAP"] = fitted_regressor._get_SHAP()
-
-    if return_estimator:
-        results["estimator"] = est
-
-    y_test = np.asarray(y_test).ravel()
+    y_test = y_test.flatten()
     for name, scorer in scoring.items():
         results[name] = scorer(y_test, y_result["y_pred"])
-
-    if UQ and y_result.get("y_std") is not None:
+    if UQ:
         UQ_scorers = {
             "ece": compute_ece,
             "RUSC": compute_RUSC,
@@ -651,7 +623,7 @@ def _fit_predict_score(
             "sharpness": compute_sharpness
         }
         for name, uq_scorer in UQ_scorers.items():
-            if name in {"Cv", "sharpness"}:
+            if name in ["Cv", "sharpness"]:
                 results[name] = float(uq_scorer(y_result["y_std"]))
             else:
                 results[name] = float(uq_scorer(y_test, y_result["y_pred"], y_result["y_std"]))
@@ -670,7 +642,8 @@ def cross_validate(
     n_jobs,
     return_ls,
     return_estimator,
-    return_tree_importances,
+    return_feature_importances,
+    early_stopping
 ):
     """
     Returns:
@@ -680,28 +653,21 @@ def cross_validate(
             - predictions["y_std"]: predicted standard deviations, shape (n_samples,)
               only available when returned by the model.
     """
-    parallel_kwargs = {"n_jobs": n_jobs, "verbose": 0}
     if "gp" in model_type.lower() or "mgk" in model_type.lower():
-        parallel_kwargs["require"] = "sharedmem"
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                delayed(_gp_fit_predict_score)(
+                    estimator, model_type, X, y, train_idx, test_idx, scoring, return_ls, UQ
+                )
+                for train_idx, test_idx in cv.split(X, y)
+            )
     else:
-        parallel_kwargs["pre_dispatch"] = "all"
-
-    parallel_results = Parallel(**parallel_kwargs)(
-        delayed(_fit_predict_score)(
-            estimator,
-            model_type,
-            X,
-            y,
-            train_idx,
-            test_idx,
-            scoring,
-            return_ls,
-            UQ,
-            return_estimator,
-            return_tree_importances,
-        )
-        for train_idx, test_idx in cv.split(X, y)
-    )
+        parallel_results = Parallel(n_jobs=n_jobs, verbose=0, pre_dispatch="all")(
+        delayed(_tree_fit_predict_score)(
+                estimator, model_type, X, y, train_idx, test_idx,
+                scoring, return_estimator, return_feature_importances, early_stopping, UQ
+                )
+                for train_idx, test_idx in cv.split(X, y)
+            )
 
     scores = defaultdict(list)
     n_samples = len(y)
@@ -714,12 +680,11 @@ def cross_validate(
     for test_idx, y_result, fold_scores in parallel_results:
         predictions["y_pred"][test_idx] = y_result["y_pred"]
 
-        if y_result.get("y_std") is not None:
+        if "y_std" in y_result:
             predictions["y_std"][test_idx] = y_result["y_std"]
 
         for key, val in fold_scores.items():
-            score_key = key if key == "estimator" else f"test_{key}"
-            scores[score_key].append(val)
+            scores[f"test_{key}"].append(val)
 
     return scores, predictions
 
@@ -732,7 +697,8 @@ def cross_validate_regressor(
     UQ:bool=False,
     return_ls:bool=False,
     return_estimator:bool=False,
-    return_tree_importances:bool=False,
+    return_feature_importances:bool=False,
+    early_stopping:bool=False,
     n_jobs:int=1,     
 
     ) -> tuple[dict[str, float], dict[str, np.ndarray]]:
@@ -755,6 +721,10 @@ def cross_validate_regressor(
             return_ls=return_ls,
             UQ=UQ,
             return_estimator=return_estimator,
-            return_tree_importances=return_tree_importances,
+            return_feature_importances=return_feature_importances,
+            early_stopping=early_stopping
             )
         return score, predictions
+
+
+

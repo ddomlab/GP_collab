@@ -414,23 +414,23 @@ def run(
                                             )
                     
                 else:
-                    y_transform = get_target_transformer(target_transformer)
-                    y_transform_regressor = TransformedTargetRegressor(
-                                            regressor= model,
-                                            transformer=y_transform,
-                                            )
+                    # y_transform = get_target_transformer(target_transformer)
+                    # y_transform_regressor = TransformedTargetRegressor(
+                    #                         regressor= model,
+                    #                         transformer=y_transform,
+                    #                         )
                     regressor :Pipeline= Pipeline(steps=[
                                             ("preprocessor", preprocessor),
-                                            ("regressor", y_transform_regressor),
-                                            ])
+                                            ("regressor", model),
+                                                ]
+                                            )
                     scores, predictions = cross_validate_regressor(
                                             regressor, 
                                             regressor_type, 
                                             X, y, 
                                             cv_outer,
-                                            early_stopping=False,
                                             return_estimator=False,
-                                            return_feature_importances=True,
+                                            return_tree_importances=True,
                                             UQ=True,
                                             n_jobs=-1
                                             )
