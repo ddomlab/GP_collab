@@ -85,38 +85,63 @@ if __name__ == "__main__":
     if DEBUGGING is False:
         args = parse_arguments()
         PAPER = args.paper
-        dataset_name =args.dataset
-        w_data, feats, all_targets, polymer_unit = _get_dataset_features(DATASETS, PAPER, dataset_name)
+        dataset_name = args.dataset
+        model_name = args.regressor_type
+        w_data, feats, all_targets, polymer_unit = _get_dataset_features(
+            DATASETS,
+            PAPER,
+            dataset_name,
+        )
+
+        is_mgk = model_name == "MGK"
+        is_kernel_mix_gp = model_name in {"GPytorchMAP", "GpyroHMC"}
+
+        representation_options = {
+            "representation": "MG" if is_mgk else "ECFP",
+            "radius": None if is_mgk else 3,
+            "vector": None if is_mgk else "count",
+        }
+
+        model_options = {}
+        if is_mgk:
+            model_options = {
+                "kernel_type": {
+                    "fp": "Graph",
+                    "count": args.K_count or "Matern32",
+                },
+                "kernel_mixing_method": (
+                    args.Kernel_mixing_method or "product"
+                ),
+                "kernel_feature_mode": (
+                    args.kernel_feature_mode or "per_feature"
+                ),
+                "use_cuda": True,
+            }
+        elif is_kernel_mix_gp:
+            model_options = {
+                "kernel_type": {
+                    "fp": args.K_fp or "TanimotoRBF",
+                    "count": args.K_count or "Matern32",
+                },
+                "kernel_mixing_method": (
+                    args.Kernel_mixing_method or "product"
+                ),
+                "use_cuda": True,
+            }
 
         for targ in all_targets:
-            # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
             main_structural_numerical(
                 dataset=w_data,
-                representation="MG" if args.regressor_type =="MGK" else "ECFP", #"ECFP" # MG #SSK
-                radius=None if args.regressor_type =="MGK" else 3,
-                vector=None if args.regressor_type =="MGK" else "count",
-                regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
-                # GPytorchMixMCMC
-                # GPMixMCMC
+                regressor_type=model_name,
                 polymer_unit=polymer_unit,
-                target_features=[targ],  
+                target_features=[targ],
                 feat_transformer="Standard",
                 target_transformer="Standard",
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                kernel_type={
-                    "fp": args.K_fp, #Graph #"TanimotoRBF" #args.K_fp
-                    "count": args.K_count #"Matern32"   #args.K_count
-                #     # "fp": "Graph", 
-                #     # "count": "Matern32"
-                    },
-                kernel_mixing_method=args.Kernel_mixing_method,
-                use_cuda=True, #True for GPU, False for CPU
-                kernel_feature_mode=args.kernel_feature_mode, #joint, #per_feature for MGK
                 output_dir_name=PAPER,
-                # hyperparameter_save_dir=optuna_save_dir, # for MGK
-                # imputer="mean",
-                # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
+                **representation_options,
+                **model_options,
                 )
 
 
