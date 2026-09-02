@@ -1,0 +1,378 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 213390: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login04> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 02:18:17 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun Aug 30 07:51:19 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Aug 30 07:51:19 2026
+Terminated at Sun Aug 30 07:51:49 2026
+Results reported at Sun Aug 30 07:51:49 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 25:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   13.70 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            20012 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 213392: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login04> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 02:18:18 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun Aug 30 07:53:18 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Aug 30 07:53:18 2026
+Terminated at Sun Aug 30 07:53:48 2026
+Results reported at Sun Aug 30 07:53:48 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 25:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   13.65 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            20130 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 226088: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:20:58 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:24:58 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Aug 30 15:24:58 2026
+Terminated at Sun Aug 30 15:25:50 2026
+Results reported at Sun Aug 30 15:25:50 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 25:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   16.89 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            292 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 226090: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:20:59 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:26:57 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Aug 30 15:26:57 2026
+Terminated at Sun Aug 30 15:27:48 2026
+Results reported at Sun Aug 30 15:27:48 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 25:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   16.74 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            409 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
+Data filtering and preprocessing took 0.37 seconds.
+Running seed: 6
+Data filtering and preprocessing took 0.32 seconds.
+Running seed: 6
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 226396: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:40:44 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Aug 31 00:53:04 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Aug 31 00:53:04 2026
+Terminated at Mon Aug 31 01:32:13 2026
+Results reported at Mon Aug 31 01:32:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 30:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 130.
+
+Resource usage summary:
+
+    CPU time :                                   2317.08 sec.
+    Max Memory :                                 10 GB
+    Average Memory :                             7.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               22.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   2498 sec.
+    Turnaround time :                            35489 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 226394: <structure_numerical_20260830_GpyroHMC> in cluster <Hazel> Exited
+
+Job <structure_numerical_20260830_GpyroHMC> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Aug 30 15:40:43 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Aug 31 00:29:07 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Aug 31 00:29:07 2026
+Terminated at Mon Aug 31 01:32:13 2026
+Results reported at Mon Aug 31 01:32:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 2
+#BSUB -W 30:10
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "structure_numerical_20260830_GpyroHMC"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp Matern32                                         --K_count Matern32                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GpyroHMC" 
+
+
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 130.
+
+Resource usage summary:
+
+    CPU time :                                   3749.85 sec.
+    Max Memory :                                 7 GB
+    Average Memory :                             5.60 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               25.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                8
+    Run time :                                   3787 sec.
+    Turnaround time :                            35490 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260830/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GpyroHMC_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+

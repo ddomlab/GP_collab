@@ -1,0 +1,231 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 51, in <module>
+    "Log":                  FunctionTransformer(np.log10, inverse_func=inverse_log_transform,
+                                                                       ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'inverse_log_transform' is not defined
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 51, in <module>
+    "Log":                  FunctionTransformer(np.log10, inverse_func=inverse_log_transform,
+                                                                       ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'inverse_log_transform' is not defined
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 51, in <module>
+    "Log":                  FunctionTransformer(np.log10, inverse_func=inverse_log_transform,
+                                                                       ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'inverse_log_transform' is not defined
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 4, in <module>
+    from filter_data import _get_dataset_features, get_structural_info
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 7, in <module>
+    from all_factories import radius_to_bits,cutoffs, imputer_factory
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/all_factories.py", line 51, in <module>
+    "Log":                  FunctionTransformer(np.log10, inverse_func=inverse_log_transform,
+                                                                       ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'inverse_log_transform' is not defined
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 92, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 46, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 74, in train_regressor
+    scores, predictions = _prepare_data(
+Traceback (most recent call last):
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 239, in _prepare_data
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 92, in <module>
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 406, in run
+    scores, predictions = cross_validate_regressor(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 716, in cross_validate_regressor
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 46, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 74, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 239, in _prepare_data
+    score, predictions = cross_validate(
+    score,predication = run(
+                        ^^^^
+                         ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 406, in run
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 660, in cross_validate
+    scores, predictions = cross_validate_regressor(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 716, in cross_validate_regressor
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    score, predictions = cross_validate(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+                         ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 660, in cross_validate
+    parallel_results = Parallel(n_jobs=n_jobs, verbose=0, require="sharedmem")(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 606, in _gp_fit_predict_score
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring.py", line 606, in _gp_fit_predict_score
+    est.fit(X_train, y_train)
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 965, in fit
+    return fit_method(estimator, *args, **kwargs)
+    self.regressor_.fit(X, y)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 731, in fit
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    samples = run_inference(
+              ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 580, in run_inference
+    mcmc.run()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 565, in run
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 965, in fit
+    for x, chain_id in self.sampler.run(*args, **kwargs):
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 225, in run
+    self.regressor_.fit(X, y)
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 731, in fit
+    for sample in _gen_samples(
+                  ^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 152, in _gen_samples
+    params = kernel.sample(params)
+    samples = run_inference(
+             ^^^^^^^^^^^^^^^^^^^^^
+              ^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 437, in sample
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/GPyro_kernel_mix.py", line 580, in run_inference
+    new_tree = self._build_tree(
+    mcmc.run()
+               ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+    other_half_tree = self._build_tree(
+    return fn(*args, **kwargs)
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 565, in run
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    for x, chain_id in self.sampler.run(*args, **kwargs):
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 225, in run
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+    for sample in _gen_samples(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+                  ^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/api.py", line 152, in _gen_samples
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+    params = kernel.sample(params)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 452, in sample
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 254, in _build_tree
+    return self._build_basetree(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 199, in _build_basetree
+    new_tree = self._build_tree(
+               ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+    z_new, r_new, z_grads, potential_energy = velocity_verlet(
+                                              ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 39, in velocity_verlet
+    other_half_tree = self._build_tree(
+    z_next, r_next, z_grads, potential_energy = _single_step_verlet(
+                      ^^^^^^^^^^^^^^^^^
+                                                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 61, in _single_step_verlet
+    z_grads, potential_energy = potential_grad(potential_fn, z)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 83, in potential_grad
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    potential_energy = potential_fn(z)
+                       ^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/util.py", line 294, in _potential_fn_jit
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 259, in _build_tree
+    half_tree = self._build_tree(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 281, in _build_tree
+    other_half_tree = self._build_tree(
+                      ^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 254, in _build_tree
+    return self._build_basetree(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/nuts.py", line 199, in _build_basetree
+    z_new, r_new, z_grads, potential_energy = velocity_verlet(
+                                              ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 39, in velocity_verlet
+    z_next, r_next, z_grads, potential_energy = _single_step_verlet(
+                                                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 61, in _single_step_verlet
+    z_grads, potential_energy = potential_grad(potential_fn, z)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/ops/integrator.py", line 83, in potential_grad
+    potential_energy = potential_fn(z)
+                       ^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pyro/infer/mcmc/util.py", line 294, in _potential_fn_jit
+    return self._compiled_fn(*vals)
+    return self._compiled_fn(*vals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
