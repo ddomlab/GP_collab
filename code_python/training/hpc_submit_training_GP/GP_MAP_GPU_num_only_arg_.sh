@@ -24,7 +24,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 #BSUB -W 1:59
 #BSUB -q short_gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
 #BSUB -J "numerical_only_${DATE}_${model}"
 #BSUB -o "${output_dir}/${model}_${dataset}_${count_kernel}_${mixing_method}_GPU.out"
