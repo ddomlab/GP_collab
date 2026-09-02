@@ -32,6 +32,7 @@ def main_structural_numerical(
     target_transformer:str,
     representation:str,
     polymer_unit: str,
+    output_dir_name: str,
     numerical_feats: Optional[list[str]]=None,
     hyperparameter_optimization: bool=False,
     columns_to_impute: Optional[list[str]]=None,
@@ -72,7 +73,7 @@ def main_structural_numerical(
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
                 imputer=imputer,
-                output_dir_name= PAPER,
+                output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='hp_RF_differences',
                 # special_file_name='GPU',
@@ -112,6 +113,7 @@ if __name__ == "__main__":
                 kernel_mixing_method=args.Kernel_mixing_method,
                 use_cuda=True, #True for GPU, False for CPU
                 kernel_feature_mode=args.kernel_feature_mode, #joint, #per_feature for MGK
+                output_dir_name=PAPER,
                 # hyperparameter_save_dir=optuna_save_dir, # for MGK
                 # imputer="mean",
                 # columns_to_impute=['P_MW','surface tension (mN/m)','pore maker molecular weight (Da)','organic compound size (Da)','solubility parameter (MPa1/2)',]
@@ -138,6 +140,8 @@ if __name__ == "__main__":
                 target_transformer="Standard",
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
+                output_dir_name=PAPER,
+
                 # kernel_type={
                 #     "fp": "TanimotoRBF", #Graph #"TanimotoRBF" #args.K_fp
                 #     "count": "RBF" #"Matern32"   #args.K_count
