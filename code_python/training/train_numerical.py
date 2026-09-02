@@ -28,26 +28,45 @@ if __name__ == "__main__":
     if DEBUGGING is False:
         args = parse_arguments()
         PAPER = args.paper
-        dataset_name =args.dataset
-        w_data, feats, all_targets, _ = _get_dataset_features(DATASETS, PAPER, dataset_name)
+        dataset_name = args.dataset
+        model_name = args.regressor_type
+        w_data, feats, all_targets, _ = _get_dataset_features(
+            DATASETS,
+            PAPER,
+            dataset_name,
+        )
+
+        if model_name == "MGK":
+            raise ValueError(
+                "MGK requires molecular graph inputs. Use "
+                "train_structure_numerical.py for MGK training."
+            )
+
+        model_options = {}
+        if model_name in {"GPytorchMAP", "GpyroHMC"}:
+            model_options = {
+                "kernel_type": {
+                    "count": args.K_count or "Matern32",
+                },
+                "kernel_mixing_method": (
+                    args.Kernel_mixing_method or "product"
+                ),
+                "use_cuda": True,
+            }
 
         for targ in all_targets:
             main_structural_numerical(
                 dataset=w_data,
+                regressor_type=model_name,
                 output_dir_name=PAPER,
                 representation=None,
                 polymer_unit=None,
-                regressor_type=args.regressor_type, #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
-                target_features=[targ],  
+                target_features=[targ],
                 feat_transformer="Standard",
                 target_transformer="Standard",
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
-                kernel_type={
-                    "count": args.K_count #"Matern32"   #args.K_count
-                    },
-                kernel_mixing_method=args.Kernel_mixing_method,
-                use_cuda=True, #True for GPU, False for CPU
+                **model_options,
                 )
 
 
