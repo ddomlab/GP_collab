@@ -8,9 +8,9 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 model="GpyroHMC"
-k_fps=("Matern32" "Matern52")
-k_counts=("Matern32")
-k_mixing_methods=("sum" "product" "averageProduct" "(count:+)x(fp:x)" "(count:x)+(fp:x)")
+k_fps=("Matern32" "Matern52" "RBF")
+k_counts=("RBF")
+k_mixing_methods=("sum" "product" "(count:+)x(fp:x)" "(count:x)+(fp:x)")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
@@ -21,7 +21,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 2
-#BSUB -W 30:10
+#BSUB -W 50:10
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
