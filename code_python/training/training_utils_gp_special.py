@@ -101,24 +101,64 @@ def create_feature_groups(
     unroll_info: Union[dict, list, None], 
     numerical_feats: Optional[list[str]]
 ) -> dict[str, list[str]]:
-    feat_group = {}
+    """Map available feature families to the columns consumed by GP kernels."""
+    feat_group: dict[str, list[str]] = {}
+    unrolled_feats = list(unrolled_feats or [])
+    numerical_feats = list(numerical_feats or [])
 
     if unrolled_feats and unroll_info:
-        units = []
-        if isinstance(unroll_info, dict):
-            units = unroll_info.get("unit_name", [])
-        elif isinstance(unroll_info, list):
-            for d in unroll_info:
-                u = d.get("unit_name", [])
-                if isinstance(u, list):
-                    units.extend(u)
-                else:
-                    units.append(u)
+        units: list[str] = []
+        unroll_configs = (
+            [unroll_info] if isinstance(unroll_info, dict) else unroll_info
+        )
+        if not isinstance(unroll_configs, list) or not all(
+            isinstance(config, dict) for config in unroll_configs
+        ):
+            raise TypeError(
+                "unroll_info must be a dictionary, a list of dictionaries, "
+                "or None."
+            )
+
+        for config in unroll_configs:
+            config_units = config.get("unit_name")
+            if config_units is None:
+                continue
+            if isinstance(config_units, str):
+                units.append(config_units)
+            else:
+                units.extend(config_units)
+
+        # Preserve the declared unit order while avoiding duplicate groups.
+        units = list(dict.fromkeys(units))
 
         for unit in units:
-            unit_cols = [col for col in unrolled_feats if col.startswith(f"{unit}_")]
+            unit_cols = [
+                col for col in unrolled_feats
+                if col.startswith((f"{unit}_", f"{unit} "))
+            ]
             if unit_cols:
                 feat_group[f'fp_{unit}'] = unit_cols
+
+        grouped_structural_cols = {
+            col
+            for group_name, columns in feat_group.items()
+            if group_name.startswith("fp_")
+            for col in columns
+        }
+        ungrouped_cols = [
+            col for col in unrolled_feats
+            if col not in grouped_structural_cols
+        ]
+        if ungrouped_cols:
+            raise ValueError(
+                "Could not assign structural columns to fingerprint groups: "
+                f"{ungrouped_cols}. Check unroll_info['unit_name']."
+            )
+
+    elif unrolled_feats:
+        raise ValueError(
+            "unroll_info is required when structural features are present."
+        )
 
     if numerical_feats:
         feat_group['count'] = numerical_feats

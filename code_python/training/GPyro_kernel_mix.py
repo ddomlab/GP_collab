@@ -134,8 +134,8 @@ class ProductMultipleWithVariance(pk.Kernel):
     in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
     """
     def __init__(self, *kernels, variance=None, learn_variance=True):
-        if len(kernels) < 2:
-            raise ValueError("At least two kernels are required")
+        if len(kernels) < 1:
+            raise ValueError("At least one kernel is required")
 
         # type checks
         for k in kernels:
@@ -174,8 +174,8 @@ class SumMultipleWithVariance(pk.Kernel):
     in the style of Pyro's Combination kernel (kern0, kern1, kern2, ...).
     """
     def __init__(self, *kernels, variance=None, learn_variance=True, average=False):
-        if len(kernels) < 2:
-            raise ValueError("At least two kernels are required")
+        if len(kernels) < 1:
+            raise ValueError("At least one kernel is required")
 
         # type checks
         for k in kernels:
@@ -339,16 +339,6 @@ class MixingKernelPyro:
             **kwargs,
         )
 
-    def _validate_grouped_kernels(self, fp_kernels, count_kernels):
-        if not fp_kernels:
-            raise ValueError(
-                f"{self.mixing_method} requires at least one fp kernel"
-            )
-        if not count_kernels:
-            raise ValueError(
-                f"{self.mixing_method} requires at least one count kernel"
-            )
-
     def build(self):
         fp_kernels = []
         count_kernels = []
@@ -379,11 +369,15 @@ class MixingKernelPyro:
             )
             count_kernels.append(k_c)
 
+        if not fp_kernels and not count_kernels:
+            raise ValueError(
+                "No kernels could be created: provide at least one fingerprint "
+                "or continuous ('count') feature."
+            )
+
         # Compose based on mixing method
         if self.mixing_method in ("sum", "product"):
             all_kernels = fp_kernels + count_kernels
-            if len(all_kernels) < 2:
-                raise ValueError(f"{self.mixing_method} mixing requires at least two kernels total")
             return mixing_factory[self.mixing_method](
                 *all_kernels,
                 variance=self._variance_tensor(),
@@ -391,90 +385,90 @@ class MixingKernelPyro:
             )
 
         if self.mixing_method == "averageProduct":
-            self._validate_grouped_kernels(fp_kernels, count_kernels)
-
-            fp_kernel = self._combine(
-                fp_kernels,
-                ProductMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
-            count_kernel = self._combine(
-                count_kernels,
-                SumMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-                average=True,
-            )
+            grouped_kernels = []
+            if fp_kernels:
+                grouped_kernels.append(self._combine(
+                    fp_kernels,
+                    ProductMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
+            if count_kernels:
+                grouped_kernels.append(self._combine(
+                    count_kernels,
+                    SumMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                    average=True,
+                ))
             return ProductMultipleWithVariance(
-                fp_kernel,
-                count_kernel,
+                *grouped_kernels,
                 variance=self._variance_tensor(),
                 learn_variance=True,
             )
 
         if self.mixing_method =="(count:+)x(fp:x)":
-            self._validate_grouped_kernels(fp_kernels, count_kernels)
-
-            fp_kernel = self._combine(
-                fp_kernels,
-                ProductMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
-            count_kernel = self._combine(
-                count_kernels,
-                SumMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
+            grouped_kernels = []
+            if fp_kernels:
+                grouped_kernels.append(self._combine(
+                    fp_kernels,
+                    ProductMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
+            if count_kernels:
+                grouped_kernels.append(self._combine(
+                    count_kernels,
+                    SumMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
             return ProductMultipleWithVariance(
-                fp_kernel,
-                count_kernel,
+                *grouped_kernels,
                 variance=self._variance_tensor(),
                 learn_variance=True,
             )
 
         if self.mixing_method == "(count:+)x(fp:+)":
-            self._validate_grouped_kernels(fp_kernels, count_kernels)
-
-            fp_kernel = self._combine(
-                fp_kernels,
-                SumMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
-            count_kernel = self._combine(
-                count_kernels,
-                SumMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
+            grouped_kernels = []
+            if fp_kernels:
+                grouped_kernels.append(self._combine(
+                    fp_kernels,
+                    SumMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
+            if count_kernels:
+                grouped_kernels.append(self._combine(
+                    count_kernels,
+                    SumMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
             return ProductMultipleWithVariance(
-                fp_kernel,
-                count_kernel,
+                *grouped_kernels,
                 variance=self._variance_tensor(),
                 learn_variance=True,
             )
 
         if self.mixing_method == "(count:x)+(fp:x)":
-            self._validate_grouped_kernels(fp_kernels, count_kernels)
-
-            fp_kernel = self._combine(
-                fp_kernels,
-                ProductMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
-            count_kernel = self._combine(
-                count_kernels,
-                ProductMultipleWithVariance,
-                variance=self._tensor(1.0),
-                learn_variance=False,
-            )
+            grouped_kernels = []
+            if fp_kernels:
+                grouped_kernels.append(self._combine(
+                    fp_kernels,
+                    ProductMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
+            if count_kernels:
+                grouped_kernels.append(self._combine(
+                    count_kernels,
+                    ProductMultipleWithVariance,
+                    variance=self._tensor(1.0),
+                    learn_variance=False,
+                ))
             return SumMultipleWithVariance(
-                fp_kernel,
-                count_kernel,
+                *grouped_kernels,
                 variance=self._variance_tensor(),
                 learn_variance=True,
             )
@@ -505,7 +499,12 @@ class GPMixPyro(gp.models.GPRegression):
 
         self.noise = PyroSample(dist.LogNormal(zero, one))
         self.kernel.variance = PyroSample(dist.LogNormal(zero, one))
-        if mixing_method == "averageProduct":
+        has_fp = any(
+            key.startswith("fp_") and indices
+            for key, indices in feat_idx.items()
+        )
+        has_count = bool(feat_idx.get("count", []))
+        if mixing_method == "averageProduct" and has_fp and has_count:
             # The count kernel computes the arithmetic mean of its component
             # kernels. Infer a multiplier for that mean, matching the trainable
             # inner ScaleKernel used by the GPyTorch implementation.

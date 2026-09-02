@@ -270,7 +270,18 @@ def filter_dataset(
     Returns:
         Input features and targets.
     """
-    # Add multiple lists together as long as they are not NoneType
+    structure_feats = list(structure_feats or [])
+    scalar_feats = list(scalar_feats or [])
+    target_feats = list(target_feats or [])
+
+    if not target_feats:
+        raise ValueError("target_feats must contain at least one target column.")
+    if not structure_feats and not scalar_feats:
+        raise ValueError(
+            "At least one structural or continuous feature is required."
+        )
+
+    # Add multiple lists together as long as they are non-empty.
     kernel_parameters = {}
     all_feats: list[str] = [
         feat
@@ -283,46 +294,154 @@ def filter_dataset(
         if cluster_type=="substructure cluster":
             all_feats.append("Side Chain Cluster")
 
-    dataset: pd.DataFrame = raw_dataset[all_feats]
+    # Avoid duplicate DataFrame columns if a caller accidentally repeats a
+    # feature name while preserving the requested order.
+    all_feats = list(dict.fromkeys(all_feats))
+    dataset: pd.DataFrame = raw_dataset.loc[:, all_feats].copy()
     dataset = sanitize_dataset(dataset,
         target_feats, dropna=dropna
         )
     if cutoff:
         dataset = apply_cutoff(dataset,cutoff)
 
-    representation = unroll.get("representation") if unroll else None
-
-    
-    if representation in {"Mordred", "MACCS", "ECFP", "HDF"}:
-        structure_features: pd.DataFrame = unrolling_factory[
-            representation](dataset[structure_feats], **unroll)
+    if unroll is None:
+        unroll_configs = []
+    elif isinstance(unroll, dict):
+        unroll_configs = [unroll]
+    elif isinstance(unroll, list) and all(
+        isinstance(config, dict) for config in unroll
+    ):
+        unroll_configs = unroll
     else:
-       # generalize for donor acceptor
-        list_of_fp_features = []
-        if representation is not None:
-            for unit in unroll["unit_name"]:
-                feat_name = f"{unit} SMILES"
-                if representation.lower() == "ssk":
-                    all_encoded_smiles, parameters = _ssk_emb(dataset[feat_name].values)
-                    kernel_parameters[f"fp_{unit}"] = parameters
-                    df_features = pd.DataFrame(
-                    all_encoded_smiles,
-                    columns=[f"{unit}_ssk_emb_{i}" for i in range(all_encoded_smiles.shape[1])]
-                    )
-                    list_of_fp_features.append(df_features)
+        raise TypeError(
+            "unroll must be a dictionary, a list of dictionaries, or None."
+        )
 
-                else:
-                    list_of_fp_features.append(dataset[feat_name])
-        structure_features: pd.DataFrame = (
-                                            pd.concat(list_of_fp_features, axis=1)
-                                            if list_of_fp_features
-                                            else dataset[[]]
-                                            )
+    structural_frames: list[pd.DataFrame] = []
+
+    def _aligned_frame(frame: pd.DataFrame) -> pd.DataFrame:
+        if not isinstance(frame, pd.DataFrame):
+            frame = pd.DataFrame(frame)
+        if len(frame) != len(dataset):
+            raise ValueError(
+                "Unrolled structural features have a different number of rows "
+                "than the filtered dataset."
+            )
+        if not frame.index.equals(dataset.index):
+            frame = frame.copy()
+            frame.index = dataset.index
+        return frame
+
+    for config in unroll_configs:
+        config = config.copy()
+        if isinstance(config.get("unit_name"), str):
+            config["unit_name"] = [config["unit_name"]]
+        representation = config.get("representation")
+
+        if representation in {"Mordred", "MACCS", "ECFP", "HDF"}:
+            if not structure_feats:
+                raise ValueError(
+                    f"structure_feats is required for {representation} features."
+                )
+            if representation in {"Mordred", "MACCS"}:
+                config_units = config.get("unit_name")
+                if isinstance(config_units, str):
+                    config_units = [config_units]
+                source_columns = config.get("col_names")
+                if not config_units or not source_columns:
+                    raise ValueError(
+                        "unit_name and col_names are required for "
+                        f"{representation}."
+                    )
+                if len(config_units) != len(source_columns):
+                    raise ValueError(
+                        "unit_name and col_names must contain the same number "
+                        f"of entries for {representation}."
+                    )
+
+                for unit, source_column in zip(config_units, source_columns):
+                    unit_config = {
+                        **config,
+                        "unit_name": unit,
+                        "col_names": [source_column],
+                    }
+                    structural_frames.append(_aligned_frame(
+                        unrolling_factory[representation](
+                            dataset[[source_column]].reset_index(drop=True),
+                            **unit_config,
+                        )
+                    ))
+            else:
+                structural_frames.append(_aligned_frame(
+                    unrolling_factory[representation](
+                        dataset[structure_feats], **config
+                    )
+                ))
+            continue
+
+        if representation is None:
+            continue
+
+        config_units = config.get("unit_name")
+        if isinstance(config_units, str):
+            config_units = [config_units]
+        elif config_units is None:
+            raise ValueError(
+                f"unit_name is required for {representation} features."
+            )
+
+        for unit in config_units:
+            feat_name = f"{unit} SMILES"
+            if feat_name not in dataset.columns:
+                raise ValueError(
+                    f"Structural column {feat_name!r} is missing from the "
+                    "dataset."
+                )
+
+            if representation.lower() == "ssk":
+                all_encoded_smiles, parameters = _ssk_emb(
+                    dataset[feat_name].values
+                )
+                kernel_parameters[f"fp_{unit}"] = parameters
+                structural_frames.append(_aligned_frame(pd.DataFrame(
+                    all_encoded_smiles,
+                    index=dataset.index,
+                    columns=[
+                        f"{unit}_ssk_emb_{i}"
+                        for i in range(all_encoded_smiles.shape[1])
+                    ],
+                )))
+            else:
+                structural_frames.append(dataset[[feat_name]])
+
+    structure_features: pd.DataFrame = (
+        pd.concat(structural_frames, axis=1)
+        if structural_frames
+        else dataset[[]]
+    )
+    if structure_feats and structure_features.shape[1] == 0:
+        raise ValueError(
+            "Structural features were requested, but no structural columns "
+            "were produced. Check the unroll configuration."
+        )
 
     if scalar_feats:
-        scalar_features: pd.DataFrame = dataset[scalar_feats]
+        scalar_features: pd.DataFrame = dataset.loc[:, scalar_feats].copy()
         if feat_to_impute:
-            scalar_features[feat_to_impute] = imputer_factory[imputer].fit_transform(scalar_features[feat_to_impute])
+            missing_impute_cols = [
+                feature for feature in feat_to_impute
+                if feature not in scalar_features.columns
+            ]
+            if missing_impute_cols:
+                raise ValueError(
+                    "Columns requested for imputation are not continuous "
+                    f"features: {missing_impute_cols}."
+                )
+            if imputer not in imputer_factory:
+                raise ValueError(f"Unknown imputer: {imputer!r}.")
+            scalar_features[feat_to_impute] = imputer_factory[
+                imputer
+            ].fit_transform(scalar_features[feat_to_impute])
 
     else:
         scalar_features: pd.DataFrame = dataset[[]]
@@ -331,8 +450,18 @@ def filter_dataset(
         [structure_features, scalar_features], axis=1
     )
 
-    targets = dataset[target_feats].squeeze()
-    targets = np.vstack(targets.values)
+    if not training_features.index.equals(dataset.index):
+        raise RuntimeError(
+            "Feature rows became misaligned while constructing the training "
+            "dataset."
+        )
+    if training_features.columns.has_duplicates:
+        duplicate_cols = training_features.columns[
+            training_features.columns.duplicated()
+        ].tolist()
+        raise ValueError(f"Duplicate training feature columns: {duplicate_cols}.")
+
+    targets = dataset.loc[:, target_feats].to_numpy()
 
     # if not (scalars_available and struct_available):
     new_struct_feats: list[str] = structure_features.columns.tolist()

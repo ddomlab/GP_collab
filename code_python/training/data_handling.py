@@ -46,12 +46,66 @@ def get_cv_splits(score_for_indices):
     return indices
 
 
-def get_model_name(regressor_name, kernel_type:dict, kernel_mixing_method:str, kernel_feature_mode:Optional[str]) -> str:
+def get_model_name(
+        regressor_name,
+        kernel_type: Optional[dict],
+        kernel_mixing_method: Optional[str],
+        kernel_feature_mode: Optional[str],
+        *,
+        has_fp: Optional[bool] = None,
+        has_count: Optional[bool] = None,
+        ) -> str:
+    """Build a model label using only the kernel families in the dataset.
 
-    if isinstance(regressor_name, str):
-        model_info = f'({regressor_name}_{kernel_type["fp"]}-{kernel_type["count"]}_{kernel_mixing_method})' if kernel_mixing_method else regressor_name
-        model_info = f"{model_info}_ARD" if kernel_feature_mode =="joint" else model_info
-        return model_info
+    ``has_fp`` and ``has_count`` are optional for backward compatibility. When
+    they are omitted, all configured kernel families are included, matching the
+    previous behavior.
+    """
+    if not isinstance(regressor_name, str):
+        return regressor_name
+
+    if kernel_mixing_method:
+        if not isinstance(kernel_type, dict):
+            raise ValueError(
+                "kernel_type must be a dictionary when kernel_mixing_method is set."
+            )
+
+        if has_fp is None and has_count is None:
+            active_families = [
+                family for family in ("fp", "count")
+                if kernel_type.get(family) is not None
+            ]
+        else:
+            active_families = []
+            if has_fp:
+                active_families.append("fp")
+            if has_count:
+                active_families.append("count")
+
+        missing_families = [
+            family for family in active_families
+            if kernel_type.get(family) is None
+        ]
+        if missing_families:
+            raise ValueError(
+                "Missing kernel type for active feature family/families: "
+                f"{', '.join(missing_families)}."
+            )
+        if not active_families:
+            raise ValueError(
+                "Cannot name a kernel model without fingerprint or "
+                "continuous features."
+            )
+
+        kernel_name = "-".join(kernel_type[family] for family in active_families)
+        model_info = (
+            f"({regressor_name}_{kernel_name}_{kernel_mixing_method})"
+        )
+    else:
+        model_info = regressor_name
+
+    return f"{model_info}_ARD" if kernel_feature_mode == "joint" else model_info
+
 
 def _save(
         scores: Optional[Dict[int, Dict[str, float]]],
@@ -84,7 +138,9 @@ def _save(
     regressor_type = get_model_name(regressor_type,
                                     kernel_type=kernel_type,
                                     kernel_mixing_method=kernel_mixing_method,
-                                    kernel_feature_mode=kernel_feature_mode
+                                    kernel_feature_mode=kernel_feature_mode,
+                                    has_fp=bool(representation),
+                                    has_count=bool(numerical_feats),
                                     )
     if numerical_feats and representation is None:
         fname_root = f"({short_num_feats})_{regressor_type}"
@@ -101,7 +157,7 @@ def _save(
 
 
     # === Case 3: structural-only features ===
-    elif numerical_feats is None:
+    elif not numerical_feats:
         if radius:
             fname_root = (
                 f"({representation}{radius}_{vector}_"
@@ -205,4 +261,3 @@ def save_results(
         special_numerical_group=special_numerical_group,
         **kwargs
           )
-

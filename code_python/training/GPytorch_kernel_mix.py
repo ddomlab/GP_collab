@@ -240,33 +240,42 @@ class MixingKernel:
         fp_kernels = self._make_fp_kernels()
         count_kernels = self._make_count_kernels()
 
+        if not fp_kernels and not count_kernels:
+            raise ValueError(
+                "No kernels could be created: provide at least one fingerprint "
+                "or continuous ('count') feature."
+            )
+
         if self.mixing_method in {"sum", "product"}:
             kernels = fp_kernels + count_kernels
-            if len(kernels) < 2:
-                raise ValueError(
-                    f"{self.mixing_method} mixing requires at least two kernels"
-                )
-
             if self.mixing_method == "sum":
-                return AdditiveKernel(*kernels)
+                return self._combine(kernels, AdditiveKernel)
 
-            return ProductKernel(*kernels)
+            return self._combine(kernels, ProductKernel)
 
         if self.mixing_method == "averageProduct":
-            if not fp_kernels:
-                raise ValueError("averageProduct requires at least one fp kernel")
-            if not count_kernels:
-                raise ValueError("averageProduct requires at least one count kernel")
+            if fp_kernels and count_kernels:
+                fp_product_kernel = self._combine(fp_kernels, ProductKernel)
+                count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
 
-            fp_product_kernel = self._combine(fp_kernels, ProductKernel)
-            count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
+                averaged_count_kernel = ScaleKernel(count_sum_kernel)
+                averaged_count_kernel.outputscale = 1.0 / len(count_kernels)
 
-            averaged_count_kernel = ScaleKernel(count_sum_kernel)
-            averaged_count_kernel.outputscale = 1.0 / len(count_kernels)
+                return ProductKernel(fp_product_kernel, averaged_count_kernel)
 
-            return ProductKernel(fp_product_kernel, averaged_count_kernel)
+            # With one feature family, the cross-family product reduces to the
+            # kernel for the family that is present.  The outer ScaleKernel in
+            # GPMix supplies the model variance, so a constant averaging factor
+            # for count-only data would be redundant.
+            if fp_kernels:
+                return self._combine(fp_kernels, ProductKernel)
+            return self._combine(count_kernels, AdditiveKernel)
 
         if self.mixing_method =="(count:+)x(fp:x)":
+            if not fp_kernels:
+                return self._combine(count_kernels, AdditiveKernel)
+            if not count_kernels:
+                return self._combine(fp_kernels, ProductKernel)
 
             fp_product_kernel = self._combine(fp_kernels, ProductKernel)
             count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
@@ -275,9 +284,9 @@ class MixingKernel:
 
         if self.mixing_method == "(count:+)x(fp:+)":
             if not fp_kernels:
-                raise ValueError("(count:+)x(fp:+) requires at least one fp kernel")
+                return self._combine(count_kernels, AdditiveKernel)
             if not count_kernels:
-                raise ValueError("(count:+)x(fp:+) requires at least one count kernel")
+                return self._combine(fp_kernels, AdditiveKernel)
 
             fp_sum_kernel = self._combine(fp_kernels, AdditiveKernel)
             count_sum_kernel = self._combine(count_kernels, AdditiveKernel)
@@ -285,9 +294,9 @@ class MixingKernel:
 
         if self.mixing_method == "(count:x)+(fp:x)":
             if not fp_kernels:
-                raise ValueError("(count:x)+(fp:x) requires at least one fp kernel")
+                return self._combine(count_kernels, ProductKernel)
             if not count_kernels:
-                raise ValueError("(count:x)+(fp:x) requires at least one count kernel")
+                return self._combine(fp_kernels, ProductKernel)
 
             fp_product_kernel = self._combine(fp_kernels, ProductKernel)
             count_product_kernel = self._combine(count_kernels, ProductKernel)
@@ -331,14 +340,19 @@ class GPMix(gpytorch.models.ExactGP):
 
         root_kernel = self.covar_module.base_kernel
         if prior:
-            fp_has_lengthscale = kernel_method["fp"].lower() not in {
+            fp_has_lengthscale = bool(fp_keys) and kernel_method["fp"].lower() not in {
                 "tanimoto",
                 "ssk",
             }
 
-            def _sub_kernels(kernel):
+            def _leaf_kernels(kernel):
+                if isinstance(kernel, ScaleKernel):
+                    return _leaf_kernels(kernel.base_kernel)
                 if isinstance(kernel, (AdditiveKernel, ProductKernel)):
-                    return list(kernel.kernels)
+                    leaves = []
+                    for sub_kernel in kernel.kernels:
+                        leaves.extend(_leaf_kernels(sub_kernel))
+                    return leaves
                 return [kernel]
 
             def _register_fp_priors(kernels):
@@ -360,25 +374,9 @@ class GPMix(gpytorch.models.ExactGP):
                         "lengthscale",
                     )
 
-            if mixing_method in ("sum", "product"):
-                sub_kernels = _sub_kernels(root_kernel)
-                _register_fp_priors(sub_kernels[:len(fp_keys)])
-                _register_count_priors(sub_kernels[len(fp_keys):])
-
-            elif mixing_method == "averageProduct":
-                fp_product_kernel = root_kernel.kernels[0]
-                count_sum_kernel = root_kernel.kernels[1].base_kernel
-                _register_fp_priors(_sub_kernels(fp_product_kernel))
-                _register_count_priors(_sub_kernels(count_sum_kernel))
-
-            elif mixing_method in {"(count:+)x(fp:+)", "(count:x)+(fp:x)", "(count:+)x(fp:x)"}:
-                fp_group_kernel = root_kernel.kernels[0]
-                count_group_kernel = root_kernel.kernels[1]
-                _register_fp_priors(_sub_kernels(fp_group_kernel))
-                _register_count_priors(_sub_kernels(count_group_kernel))
-
-            else:
-                raise ValueError(f"Unknown mixing_method: {mixing_method}")
+            leaf_kernels = _leaf_kernels(root_kernel)
+            _register_fp_priors(leaf_kernels[:len(fp_keys)])
+            _register_count_priors(leaf_kernels[len(fp_keys):])
             
 
     
@@ -693,9 +691,14 @@ class GPytorchMAPRegressor:
                 key_prefix: float(np.asarray(ls).squeeze())
             }
 
-        def _sub_kernels(kernel):
+        def _leaf_kernels(kernel):
+            if isinstance(kernel, ScaleKernel):
+                return _leaf_kernels(kernel.base_kernel)
             if isinstance(kernel, (AdditiveKernel, ProductKernel)):
-                return list(kernel.kernels)
+                leaves = []
+                for sub_kernel in kernel.kernels:
+                    leaves.extend(_leaf_kernels(sub_kernel))
+                return leaves
             return [kernel]
 
         def _add_fp_lengthscales(kernels):
@@ -724,33 +727,9 @@ class GPytorchMAPRegressor:
                 count_key = count_names[i]
                 summary.update(_extract_ls(sk, count_key))
 
-        if self.kernel_mixing_method in ("sum", "product"):
-            sub_kernels = _sub_kernels(root_kernel)
-            _add_fp_lengthscales(sub_kernels[:len(fp_keys)])
-            _add_count_lengthscales(sub_kernels[len(fp_keys):])
-
-        elif self.kernel_mixing_method == "averageProduct":
-            fp_product_kernel = root_kernel.kernels[0]
-            count_sum_kernel = root_kernel.kernels[1].base_kernel
-
-            _add_fp_lengthscales(_sub_kernels(fp_product_kernel))
-            _add_count_lengthscales(_sub_kernels(count_sum_kernel))
-
-        elif self.kernel_mixing_method in {
-            "(count:+)x(fp:+)",
-            "(count:x)+(fp:x)",
-            "(count:+)x(fp:x)",
-        }:
-            fp_group_kernel = root_kernel.kernels[0]
-            count_group_kernel = root_kernel.kernels[1]
-
-            _add_fp_lengthscales(_sub_kernels(fp_group_kernel))
-            _add_count_lengthscales(_sub_kernels(count_group_kernel))
-
-        else:
-            raise ValueError(
-                f"Unknown mixing_method: {self.kernel_mixing_method}"
-            )
+        leaf_kernels = _leaf_kernels(root_kernel)
+        _add_fp_lengthscales(leaf_kernels[:len(fp_keys)])
+        _add_count_lengthscales(leaf_kernels[len(fp_keys):])
 
         return summary
     
@@ -1019,4 +998,3 @@ class GPytorchMCMCRegressor(BaseEstimator, RegressorMixin):
                     summary[key] = self._samples[param_name].float().cpu().numpy()
 
             return summary
-

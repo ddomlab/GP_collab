@@ -70,8 +70,18 @@ def preprocessing_workflow(
     # all_columns = list(set(columns_to_impute)|set(special_column))
     # imputation of columns
     steps = []
+    numerical_feat = list(numerical_feat or [])
+    structural_feat = list(structural_feat or [])
+
+    overlapping_features = sorted(set(numerical_feat) & set(structural_feat))
+    if overlapping_features:
+        raise ValueError(
+            "Features cannot be both structural and continuous: "
+            f"{overlapping_features}."
+        )
+
     # imputation
-    if "mgk" in regressor_type.lower() and regressor_type is not None:
+    if regressor_type is not None and "mgk" in regressor_type.lower():
         from mgktools.graph.hashgraph import HashGraph
         if scaler:
             scaling = ("scaling features",
