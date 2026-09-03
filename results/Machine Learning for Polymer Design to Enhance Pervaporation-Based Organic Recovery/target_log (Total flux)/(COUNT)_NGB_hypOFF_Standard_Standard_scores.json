@@ -1,0 +1,634 @@
+{
+  "6": {
+    "test_feature_importance_MDI": [
+      {
+        "Selective_layer_thickness": 0.2373724951828166,
+        "Filler_size": 0.024697649974262402,
+        "Filler_concentration": 0.014548903899287957,
+        "Crosslinker_concentration": 0.04886108638876561,
+        "Organic_Hildebrand_solubility_parameter": 0.034496479166561865,
+        "Organic_molecular_volume": 0.04249415103534155,
+        "Effective_area": 0.2455802517050107,
+        "Mass_ratio(A/B)": 0.08221491817782481,
+        "Experimental_temperature": 0.12051299100470854,
+        "Downstream_pressure": 0.1492210734654198
+      },
+      {
+        "Selective_layer_thickness": 0.22734862943846476,
+        "Filler_size": 0.02094746415020675,
+        "Filler_concentration": 0.028303206529228207,
+        "Crosslinker_concentration": 0.04246360041201605,
+        "Organic_Hildebrand_solubility_parameter": 0.04648882360368353,
+        "Organic_molecular_volume": 0.058260007487524614,
+        "Effective_area": 0.19949572391972673,
+        "Mass_ratio(A/B)": 0.1167735130656444,
+        "Experimental_temperature": 0.13336166471068547,
+        "Downstream_pressure": 0.12655736668281942
+      },
+      {
+        "Selective_layer_thickness": 0.22284575442286245,
+        "Filler_size": 0.017142340811660196,
+        "Filler_concentration": 0.01989724389932153,
+        "Crosslinker_concentration": 0.05064621200909954,
+        "Organic_Hildebrand_solubility_parameter": 0.026438002945650938,
+        "Organic_molecular_volume": 0.049315325176154126,
+        "Effective_area": 0.26711615627121355,
+        "Mass_ratio(A/B)": 0.08470512871916867,
+        "Experimental_temperature": 0.12669427895920332,
+        "Downstream_pressure": 0.13519955678566573
+      },
+      {
+        "Selective_layer_thickness": 0.22822376386743765,
+        "Filler_size": 0.016605101769541587,
+        "Filler_concentration": 0.016075500503425134,
+        "Crosslinker_concentration": 0.05261466927591555,
+        "Organic_Hildebrand_solubility_parameter": 0.03556872546341834,
+        "Organic_molecular_volume": 0.057285758316395145,
+        "Effective_area": 0.25356596793919123,
+        "Mass_ratio(A/B)": 0.07681039495661,
+        "Experimental_temperature": 0.12280598548554338,
+        "Downstream_pressure": 0.1404441324225221
+      },
+      {
+        "Selective_layer_thickness": 0.21566025737296088,
+        "Filler_size": 0.020009315765602772,
+        "Filler_concentration": 0.023974549067259206,
+        "Crosslinker_concentration": 0.04380156051662626,
+        "Organic_Hildebrand_solubility_parameter": 0.03849071149882382,
+        "Organic_molecular_volume": 0.04633201345530729,
+        "Effective_area": 0.2581913802465593,
+        "Mass_ratio(A/B)": 0.09635881460965878,
+        "Experimental_temperature": 0.11750761443605504,
+        "Downstream_pressure": 0.1396737830311467
+      }
+    ],
+    "test_feature_importance_SHAP": [
+      {
+        "Selective_layer_thickness": 0.20566311483952074,
+        "Filler_size": 0.023092689734438135,
+        "Filler_concentration": 0.00738589762892988,
+        "Crosslinker_concentration": 0.013269737304042819,
+        "Organic_Hildebrand_solubility_parameter": 0.01462499441020153,
+        "Organic_molecular_volume": 0.032972743989844414,
+        "Effective_area": 0.061258026215207345,
+        "Mass_ratio(A/B)": 0.05235614969386932,
+        "Experimental_temperature": 0.10955821897928643,
+        "Downstream_pressure": 0.04766815125160518
+      },
+      {
+        "Selective_layer_thickness": 0.2042766106644498,
+        "Filler_size": 0.01349842033041506,
+        "Filler_concentration": 0.016209820071647764,
+        "Crosslinker_concentration": 0.018535258658753412,
+        "Organic_Hildebrand_solubility_parameter": 0.02483294663514816,
+        "Organic_molecular_volume": 0.03235824404759592,
+        "Effective_area": 0.0604000215770717,
+        "Mass_ratio(A/B)": 0.07717574400827544,
+        "Experimental_temperature": 0.11869319910540331,
+        "Downstream_pressure": 0.044445368561269794
+      },
+      {
+        "Selective_layer_thickness": 0.21246906888308612,
+        "Filler_size": 0.012228369282823065,
+        "Filler_concentration": 0.004832485448587912,
+        "Crosslinker_concentration": 0.02410079882291589,
+        "Organic_Hildebrand_solubility_parameter": 0.02220123701107313,
+        "Organic_molecular_volume": 0.03554254948630538,
+        "Effective_area": 0.057080464104792075,
+        "Mass_ratio(A/B)": 0.07274041721806254,
+        "Experimental_temperature": 0.12259093981996719,
+        "Downstream_pressure": 0.04852926672368526
+      },
+      {
+        "Selective_layer_thickness": 0.2161572190321375,
+        "Filler_size": 0.012879712257729487,
+        "Filler_concentration": 0.010525414249542123,
+        "Crosslinker_concentration": 0.011765069482864885,
+        "Organic_Hildebrand_solubility_parameter": 0.02206196368177642,
+        "Organic_molecular_volume": 0.031062528872834297,
+        "Effective_area": 0.06698864537255339,
+        "Mass_ratio(A/B)": 0.05290842342733361,
+        "Experimental_temperature": 0.12345762314985108,
+        "Downstream_pressure": 0.046110806283319254
+      },
+      {
+        "Selective_layer_thickness": 0.2172776272129252,
+        "Filler_size": 0.021053927872778513,
+        "Filler_concentration": 0.00548084016733568,
+        "Crosslinker_concentration": 0.022425983163121235,
+        "Organic_Hildebrand_solubility_parameter": 0.0225131747550034,
+        "Organic_molecular_volume": 0.02465518742865769,
+        "Effective_area": 0.051118456656882624,
+        "Mass_ratio(A/B)": 0.06290073380934127,
+        "Experimental_temperature": 0.1136023652907174,
+        "Downstream_pressure": 0.0448283939779287
+      }
+    ],
+    "test_rmse": [
+      0.44853442264130533,
+      0.5470940930723174,
+      0.4430754535271167,
+      0.43823946168130795,
+      0.4550108781355878
+    ],
+    "test_mae": [
+      0.33333036389902954,
+      0.37373784326965154,
+      0.33147111384682737,
+      0.32861197349640286,
+      0.3302747941612775
+    ],
+    "test_r2": [
+      0.5965285987352884,
+      0.5771095035347635,
+      0.6242199875654155,
+      0.6122648008182137,
+      0.5695259392850169
+    ],
+    "test_ece": [
+      0.024748358862144416,
+      0.018884026258205684,
+      0.009606126914660822,
+      0.019736842105263153,
+      0.030087719298245608
+    ],
+    "test_RUSC": [
+      0.42268626560898176,
+      0.4615562280812499,
+      0.34795513762316516,
+      0.44548769352929907,
+      0.3655998568694828
+    ],
+    "test_cdf_ama": [
+      0.029876625166643963,
+      0.00852987304888089,
+      0.01358492111586702,
+      0.02467092576035179,
+      0.029231314075230965
+    ],
+    "test_cvpp_ama": [
+      0.012275711159737425,
+      0.019861415025528843,
+      0.010481400437636767,
+      0.008961988304093569,
+      0.010862573099415209
+    ],
+    "test_nll": [
+      0.5171977358734401,
+      0.5574076117767414,
+      0.5003908317906708,
+      0.4535962048930611,
+      0.4761744743832627
+    ],
+    "test_Cv": [
+      0.30594767127541894,
+      0.3400481584900735,
+      0.28701548098726215,
+      0.3161174084260793,
+      0.2892260316608279
+    ],
+    "test_sharpness": [
+      0.39811014226899877,
+      0.3993796572403748,
+      0.39631658673222026,
+      0.3916619862310965,
+      0.40115194300793394
+    ],
+    "test_run_time_sec": [
+      37.4219557326287,
+      39.01335692405701,
+      39.05715499818325,
+      38.19267509877682,
+      38.04703303985298
+    ]
+  },
+  "13": {
+    "test_feature_importance_MDI": [
+      {
+        "Selective_layer_thickness": 0.2391635454884082,
+        "Filler_size": 0.017121762323725056,
+        "Filler_concentration": 0.02261254672618944,
+        "Crosslinker_concentration": 0.055860198005153,
+        "Organic_Hildebrand_solubility_parameter": 0.02742392651747988,
+        "Organic_molecular_volume": 0.0492709685708026,
+        "Effective_area": 0.22555848069065929,
+        "Mass_ratio(A/B)": 0.09094772809313723,
+        "Experimental_temperature": 0.11672215593870607,
+        "Downstream_pressure": 0.15531868764573917
+      },
+      {
+        "Selective_layer_thickness": 0.2113842573319899,
+        "Filler_size": 0.021738970631601122,
+        "Filler_concentration": 0.02639259788403552,
+        "Crosslinker_concentration": 0.05193091804301915,
+        "Organic_Hildebrand_solubility_parameter": 0.0324123267823746,
+        "Organic_molecular_volume": 0.04913857348844829,
+        "Effective_area": 0.26341358632900536,
+        "Mass_ratio(A/B)": 0.09362207896907965,
+        "Experimental_temperature": 0.1245739869913788,
+        "Downstream_pressure": 0.12539270354906773
+      },
+      {
+        "Selective_layer_thickness": 0.23693795929978298,
+        "Filler_size": 0.014919299153567451,
+        "Filler_concentration": 0.01916553128508126,
+        "Crosslinker_concentration": 0.04922954977600461,
+        "Organic_Hildebrand_solubility_parameter": 0.02713450118019749,
+        "Organic_molecular_volume": 0.03998477095960379,
+        "Effective_area": 0.2552441033228155,
+        "Mass_ratio(A/B)": 0.08803468130130383,
+        "Experimental_temperature": 0.11707106792678926,
+        "Downstream_pressure": 0.1522785357948538
+      },
+      {
+        "Selective_layer_thickness": 0.22404941155074493,
+        "Filler_size": 0.022154661969323183,
+        "Filler_concentration": 0.01995378875168974,
+        "Crosslinker_concentration": 0.03873910469684271,
+        "Organic_Hildebrand_solubility_parameter": 0.04023297927280203,
+        "Organic_molecular_volume": 0.041059344782979436,
+        "Effective_area": 0.2645492059672137,
+        "Mass_ratio(A/B)": 0.08094880362445327,
+        "Experimental_temperature": 0.11253822928400337,
+        "Downstream_pressure": 0.15577447009994766
+      },
+      {
+        "Selective_layer_thickness": 0.2134004533333193,
+        "Filler_size": 0.02191664821631912,
+        "Filler_concentration": 0.017833219909041367,
+        "Crosslinker_concentration": 0.03287334853138087,
+        "Organic_Hildebrand_solubility_parameter": 0.04241730200352133,
+        "Organic_molecular_volume": 0.06041243540918719,
+        "Effective_area": 0.2697134304397986,
+        "Mass_ratio(A/B)": 0.07809159705041094,
+        "Experimental_temperature": 0.1405512844278586,
+        "Downstream_pressure": 0.12279028067916262
+      }
+    ],
+    "test_feature_importance_SHAP": [
+      {
+        "Selective_layer_thickness": 0.21120868202302476,
+        "Filler_size": 0.0163897817893509,
+        "Filler_concentration": 0.010625795663599263,
+        "Crosslinker_concentration": 0.017519954175639018,
+        "Organic_Hildebrand_solubility_parameter": 0.017757368478907493,
+        "Organic_molecular_volume": 0.0329862233951776,
+        "Effective_area": 0.06369140709778956,
+        "Mass_ratio(A/B)": 0.07404448779312475,
+        "Experimental_temperature": 0.12707397649347466,
+        "Downstream_pressure": 0.06234815160838602
+      },
+      {
+        "Selective_layer_thickness": 0.21593712887826425,
+        "Filler_size": 0.019122536878236084,
+        "Filler_concentration": 0.006041465271544848,
+        "Crosslinker_concentration": 0.018313161169783536,
+        "Organic_Hildebrand_solubility_parameter": 0.01599914580007076,
+        "Organic_molecular_volume": 0.033766857655922584,
+        "Effective_area": 0.06642384042295667,
+        "Mass_ratio(A/B)": 0.06611296379561628,
+        "Experimental_temperature": 0.11154591201973119,
+        "Downstream_pressure": 0.04662943192284455
+      },
+      {
+        "Selective_layer_thickness": 0.21047790314133427,
+        "Filler_size": 0.014899888192980403,
+        "Filler_concentration": 0.00982877471524841,
+        "Crosslinker_concentration": 0.02007709964771271,
+        "Organic_Hildebrand_solubility_parameter": 0.018450164876256316,
+        "Organic_molecular_volume": 0.030611361492861366,
+        "Effective_area": 0.06149317231815141,
+        "Mass_ratio(A/B)": 0.061838082469680804,
+        "Experimental_temperature": 0.11912505336757713,
+        "Downstream_pressure": 0.04579292090404172
+      },
+      {
+        "Selective_layer_thickness": 0.2174898556543534,
+        "Filler_size": 0.010718418305947558,
+        "Filler_concentration": 0.015951684022912527,
+        "Crosslinker_concentration": 0.018073661124657706,
+        "Organic_Hildebrand_solubility_parameter": 0.024488349616689786,
+        "Organic_molecular_volume": 0.02903268348356169,
+        "Effective_area": 0.06158843168691658,
+        "Mass_ratio(A/B)": 0.059965767448946126,
+        "Experimental_temperature": 0.11518857511453295,
+        "Downstream_pressure": 0.04822613533337241
+      },
+      {
+        "Selective_layer_thickness": 0.19652246115263783,
+        "Filler_size": 0.01920889706740664,
+        "Filler_concentration": 0.007504873417926089,
+        "Crosslinker_concentration": 0.011999081222160297,
+        "Organic_Hildebrand_solubility_parameter": 0.023297059895333504,
+        "Organic_molecular_volume": 0.03712762835537076,
+        "Effective_area": 0.06371759868144097,
+        "Mass_ratio(A/B)": 0.050065550351149575,
+        "Experimental_temperature": 0.12424688772255213,
+        "Downstream_pressure": 0.03878250454463789
+      }
+    ],
+    "test_rmse": [
+      0.4382678252853372,
+      0.45415072075449964,
+      0.4695432027984961,
+      0.47249409811397525,
+      0.4545300075262578
+    ],
+    "test_mae": [
+      0.32632547344619384,
+      0.33156598534719145,
+      0.340604393198448,
+      0.33793137793541206,
+      0.34527467918913607
+    ],
+    "test_r2": [
+      0.6424339483237773,
+      0.6255707650342173,
+      0.5856850772587598,
+      0.635447514855656,
+      0.5658271258976868
+    ],
+    "test_ece": [
+      0.006892778993435463,
+      0.03774617067833698,
+      0.015426695842450752,
+      0.020482456140350873,
+      0.031096491228070178
+    ],
+    "test_RUSC": [
+      0.38744674218056374,
+      0.3603679477544699,
+      0.4001563196663031,
+      0.46432746749263004,
+      0.4104969412301752
+    ],
+    "test_cdf_ama": [
+      0.007885005178220038,
+      0.03756008131140891,
+      0.012157429932212822,
+      0.020854460786771934,
+      0.03065123327945286
+    ],
+    "test_cvpp_ama": [
+      0.006032093362509122,
+      0.010029175784099205,
+      0.00988329686360323,
+      0.013654970760233906,
+      0.028786549707602364
+    ],
+    "test_nll": [
+      0.48398353893055845,
+      0.46032697020797475,
+      0.49788216373839883,
+      0.46024837015749415,
+      0.5213416831181817
+    ],
+    "test_Cv": [
+      0.3015629640026279,
+      0.3435741826577053,
+      0.337595432268764,
+      0.3618899150690992,
+      0.2814405896837223
+    ],
+    "test_sharpness": [
+      0.3958443798774468,
+      0.4002492880379492,
+      0.39760128367435216,
+      0.40921677098962966,
+      0.38997686888577243
+    ],
+    "test_run_time_sec": [
+      38.75924130901694,
+      38.56003574281931,
+      39.10204594768584,
+      38.90283512510359,
+      37.79466953128576
+    ]
+  },
+  "42": {
+    "test_feature_importance_MDI": [
+      {
+        "Selective_layer_thickness": 0.24054547711057417,
+        "Filler_size": 0.0157335925863173,
+        "Filler_concentration": 0.025081168104618252,
+        "Crosslinker_concentration": 0.04548405020066635,
+        "Organic_Hildebrand_solubility_parameter": 0.03166466806248248,
+        "Organic_molecular_volume": 0.0718739658452489,
+        "Effective_area": 0.23139549581562527,
+        "Mass_ratio(A/B)": 0.08957068525098642,
+        "Experimental_temperature": 0.12708862673544752,
+        "Downstream_pressure": 0.12156227028803333
+      },
+      {
+        "Selective_layer_thickness": 0.2000638413392826,
+        "Filler_size": 0.016858135861439857,
+        "Filler_concentration": 0.021367649524114542,
+        "Crosslinker_concentration": 0.04684023865591878,
+        "Organic_Hildebrand_solubility_parameter": 0.03146357415397353,
+        "Organic_molecular_volume": 0.04448560714558258,
+        "Effective_area": 0.2686292211531309,
+        "Mass_ratio(A/B)": 0.103371345111543,
+        "Experimental_temperature": 0.10916245345181329,
+        "Downstream_pressure": 0.15775793360320095
+      },
+      {
+        "Selective_layer_thickness": 0.23504493179946104,
+        "Filler_size": 0.020155079044349915,
+        "Filler_concentration": 0.011860231755394695,
+        "Crosslinker_concentration": 0.04627765527646124,
+        "Organic_Hildebrand_solubility_parameter": 0.035106907992271286,
+        "Organic_molecular_volume": 0.049436303197567186,
+        "Effective_area": 0.24674326263679733,
+        "Mass_ratio(A/B)": 0.09032498194420405,
+        "Experimental_temperature": 0.11345926919710249,
+        "Downstream_pressure": 0.1515913771563908
+      },
+      {
+        "Selective_layer_thickness": 0.2445047908630885,
+        "Filler_size": 0.020358239889292248,
+        "Filler_concentration": 0.018282223643461055,
+        "Crosslinker_concentration": 0.040069670696509484,
+        "Organic_Hildebrand_solubility_parameter": 0.03236791709466802,
+        "Organic_molecular_volume": 0.045119573339393745,
+        "Effective_area": 0.24917166100408453,
+        "Mass_ratio(A/B)": 0.09992806560324825,
+        "Experimental_temperature": 0.11532104418895824,
+        "Downstream_pressure": 0.13487681367729606
+      },
+      {
+        "Selective_layer_thickness": 0.23661321934765914,
+        "Filler_size": 0.01103779470483719,
+        "Filler_concentration": 0.024722099864292975,
+        "Crosslinker_concentration": 0.042517752813310015,
+        "Organic_Hildebrand_solubility_parameter": 0.040228880038318066,
+        "Organic_molecular_volume": 0.06240243234868419,
+        "Effective_area": 0.24743855086323766,
+        "Mass_ratio(A/B)": 0.1024511431887316,
+        "Experimental_temperature": 0.09727949964224979,
+        "Downstream_pressure": 0.13530862718867942
+      }
+    ],
+    "test_feature_importance_SHAP": [
+      {
+        "Selective_layer_thickness": 0.20306658914609585,
+        "Filler_size": 0.01107843973618161,
+        "Filler_concentration": 0.010953098711355745,
+        "Crosslinker_concentration": 0.017170753448998037,
+        "Organic_Hildebrand_solubility_parameter": 0.020590063692267735,
+        "Organic_molecular_volume": 0.035292763823345216,
+        "Effective_area": 0.056493390049941944,
+        "Mass_ratio(A/B)": 0.06577676315599468,
+        "Experimental_temperature": 0.12285530886166554,
+        "Downstream_pressure": 0.05215325164410823
+      },
+      {
+        "Selective_layer_thickness": 0.19810879424020394,
+        "Filler_size": 0.015338438328570564,
+        "Filler_concentration": 0.00736473146195926,
+        "Crosslinker_concentration": 0.019295017466313576,
+        "Organic_Hildebrand_solubility_parameter": 0.026087971367030477,
+        "Organic_molecular_volume": 0.03084031609344858,
+        "Effective_area": 0.0714485767027165,
+        "Mass_ratio(A/B)": 0.055795460476035307,
+        "Experimental_temperature": 0.12529017477411866,
+        "Downstream_pressure": 0.0505904430797472
+      },
+      {
+        "Selective_layer_thickness": 0.2199400413713799,
+        "Filler_size": 0.017267705172998814,
+        "Filler_concentration": 0.00593072451739349,
+        "Crosslinker_concentration": 0.015500190512103119,
+        "Organic_Hildebrand_solubility_parameter": 0.01965291090115972,
+        "Organic_molecular_volume": 0.036873331193337446,
+        "Effective_area": 0.05822838003665027,
+        "Mass_ratio(A/B)": 0.06775002934967544,
+        "Experimental_temperature": 0.11238542899570116,
+        "Downstream_pressure": 0.05296928410478905
+      },
+      {
+        "Selective_layer_thickness": 0.21755414080416904,
+        "Filler_size": 0.022252386120148276,
+        "Filler_concentration": 0.00645013957276572,
+        "Crosslinker_concentration": 0.016883232936691292,
+        "Organic_Hildebrand_solubility_parameter": 0.01668512932213328,
+        "Organic_molecular_volume": 0.03113452179897075,
+        "Effective_area": 0.06666551417826018,
+        "Mass_ratio(A/B)": 0.05963341536304054,
+        "Experimental_temperature": 0.12031004303159627,
+        "Downstream_pressure": 0.03795059156474023
+      },
+      {
+        "Selective_layer_thickness": 0.22084847053805168,
+        "Filler_size": 0.007831002938069834,
+        "Filler_concentration": 0.015337529291788552,
+        "Crosslinker_concentration": 0.020918381948700337,
+        "Organic_Hildebrand_solubility_parameter": 0.01371834304850417,
+        "Organic_molecular_volume": 0.025948601556935846,
+        "Effective_area": 0.07011355583156167,
+        "Mass_ratio(A/B)": 0.07068178712093526,
+        "Experimental_temperature": 0.11726043051009916,
+        "Downstream_pressure": 0.04332795710154287
+      }
+    ],
+    "test_rmse": [
+      0.4402532640766556,
+      0.5049729403183285,
+      0.44051911977965247,
+      0.45651759352635335,
+      0.4656910456339084
+    ],
+    "test_mae": [
+      0.3248494277806394,
+      0.372624313681984,
+      0.3302331125910684,
+      0.32585833610544346,
+      0.3443383519331557
+    ],
+    "test_r2": [
+      0.621972296034594,
+      0.5890432557473341,
+      0.6262652710079919,
+      0.5953897518398301,
+      0.598447456427188
+    ],
+    "test_ece": [
+      0.03258205689277898,
+      0.027855579868708964,
+      0.010043763676148775,
+      0.0086842105263158,
+      0.02894736842105264
+    ],
+    "test_RUSC": [
+      0.4166483205919344,
+      0.41123158596667014,
+      0.3538128165460709,
+      0.39337298340936794,
+      0.38897266391273677
+    ],
+    "test_cdf_ama": [
+      0.03373530443036071,
+      0.030973671147318714,
+      0.008991191664778343,
+      0.010386401327700731,
+      0.03216503715168963
+    ],
+    "test_cvpp_ama": [
+      0.01646243617797227,
+      0.029576951130561666,
+      0.009445660102115243,
+      0.014590643274853786,
+      0.024342105263157925
+    ],
+    "test_nll": [
+      0.41215315627220517,
+      0.6137783772752866,
+      0.4891968842670222,
+      0.4611251605454295,
+      0.5031345083069615
+    ],
+    "test_Cv": [
+      0.35981415049945203,
+      0.2945256318414561,
+      0.31988446479536536,
+      0.32449774634540746,
+      0.3102405578108547
+    ],
+    "test_sharpness": [
+      0.40712601868891424,
+      0.39737122559797594,
+      0.4033325743183113,
+      0.3925333404076973,
+      0.3873080228279688
+    ],
+    "test_run_time_sec": [
+      38.77781858853996,
+      38.19873125292361,
+      37.97417646087706,
+      38.50159323588014,
+      38.77774103358388
+    ]
+  },
+  "rmse_avg": 0.46192627512473994,
+  "rmse_stdev": 0.028362124289340106,
+  "mae_avg": 0.33846876932545744,
+  "mae_stdev": 0.01492926100876187,
+  "r2_avg": 0.6043820861577154,
+  "r2_stdev": 0.023542558204438194,
+  "ece_avg": 0.021521376380411274,
+  "ece_stdev": 0.009512064909232867,
+  "RUSC_avg": 0.4020079313642067,
+  "RUSC_stdev": 0.03548063743012246,
+  "cdf_ama_avg": 0.022083565025125953,
+  "cdf_ama_stdev": 0.010372008749400736,
+  "cvpp_ama_avg": 0.015016464696874704,
+  "cvpp_ama_stdev": 0.007123460009413575,
+  "nll_avg": 0.4938625114357792,
+  "nll_stdev": 0.04612915122164526,
+  "Cv_avg": 0.3182253590542744,
+  "Cv_stdev": 0.025031586723307266,
+  "sharpness_avg": 0.3978120059191094,
+  "sharpness_stdev": 0.005834922006146324,
+  "run_time_sec_avg": 38.472070934747656,
+  "run_time_sec_stdev": 0.4925227274613824,
+  "run_time_sec": 46.297
+}

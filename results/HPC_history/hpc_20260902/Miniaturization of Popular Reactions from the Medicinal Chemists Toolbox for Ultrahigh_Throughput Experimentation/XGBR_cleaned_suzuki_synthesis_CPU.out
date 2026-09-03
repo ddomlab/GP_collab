@@ -1,0 +1,122 @@
+Data filtering and preprocessing took 0.05 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 6.98±0.95	 r2: 0.95±0.01
+Filename: (ECFP3_count_512-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c013n02>
+Subject: Job 252776: <tree_selected_20260902_14> in cluster <Hazel> Done
+
+Job <tree_selected_20260902_14> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Sep  2 17:15:40 2026
+Job was executed on host(s) <6*c013n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Sep  2 18:48:06 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Sep  2 18:48:06 2026
+Terminated at Wed Sep  2 18:49:17 2026
+Results reported at Wed Sep  2 18:49:17 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 6
+#BSUB -W 45:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_selected_20260902_14"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "XGBR"                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   146.16 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.20 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   73 sec.
+    Turnaround time :                            5617 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.err> for stderr output of this job.
+
+Data filtering and preprocessing took 0.00 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 31.94±0.98	 r2: -0.05±0.05
+Filename: (COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c015n02>
+Subject: Job 252830: <tree_selected_20260902_14> in cluster <Hazel> Done
+
+Job <tree_selected_20260902_14> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Sep  2 17:32:45 2026
+Job was executed on host(s) <6*c015n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Wed Sep  2 19:15:42 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Sep  2 19:15:42 2026
+Terminated at Wed Sep  2 19:16:45 2026
+Results reported at Wed Sep  2 19:16:45 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 6
+#BSUB -W 20:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_selected_20260902_14"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_numerical.py --regressor_type "XGBR"                                         --dataset "cleaned_suzuki_synthesis"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   73.48 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             0.75 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   65 sec.
+    Turnaround time :                            6240 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/XGBR_cleaned_suzuki_synthesis_CPU.err> for stderr output of this job.
+
