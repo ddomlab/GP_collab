@@ -17,19 +17,18 @@ k_mixing_methods=("sum" "product")
 for mixing_method in "${k_mixing_methods[@]}"; do
     for dataset in "${datasets[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
-            sbatch <<EOT
-#!/bin/bash
+            bsub <<EOT
 
 
-#SBATCH --ntasks=1
-#SBATCH --time=01:59:00
-#SBATCH --partition=gpu_partners
-#SBATCH --qos=short_gpu
-#SBATCH --gres=gpu:1
-#SBATCH --mem=32G
-#SBATCH --job-name="numerical_only_${DATE}_${model}"
-#SBATCH --output="${output_dir}/${model}_${dataset}_${count_kernel}_${mixing_method}_GPU.out"
-#SBATCH --error="${output_dir}/${model}_${dataset}_${count_kernel}_${mixing_method}_GPU.err"
+#BSUB -n 1
+#BSUB -W 1:59
+#BSUB -q short_gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "numerical_only_${DATE}_${model}"
+#BSUB -o "${output_dir}/${model}_${dataset}_${count_kernel}_${mixing_method}_GPU.out"
+#BSUB -e "${output_dir}/${model}_${dataset}_${count_kernel}_${mixing_method}_GPU.err"
 
 source ~/.bashrc
 module load cuda/12.1

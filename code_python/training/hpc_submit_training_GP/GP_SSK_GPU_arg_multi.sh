@@ -15,18 +15,16 @@ mkdir -p "$output_dir"
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
-            sbatch <<EOT
-#!/bin/bash
+            bsub <<EOT
 
-#SBATCH --ntasks=1
-#SBATCH --time=08:50:00
-#SBATCH --partition=gpu
-#SBATCH --qos=gpu
-#SBATCH --gres=gpu:1
-#SBATCH --mem=16G
-#SBATCH --job-name="structure_numerical_${DATE}"
-#SBATCH --output="${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
-#SBATCH --error="${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
+#BSUB -n 1
+#BSUB -W 8:50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -J "structure_numerical_${DATE}"
+#BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
+#BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.err"
 
 source ~/.bashrc
 module load cuda/12.1

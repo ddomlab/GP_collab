@@ -39,18 +39,14 @@ for training_set in "${selected_training_sets[@]}"; do
     for model in "${models[@]}"; do
         job_index=$((job_index + 1))
 
-        sbatch <<EOT
-#!/bin/bash
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=6
-#SBATCH --nodes=1
-#SBATCH --time=02:00:00
-#SBATCH --mem=32G
-#SBATCH --partition=compute_partners
-#SBATCH --qos=short
-#SBATCH --job-name="tree_selected_${DATE}_${job_index}"
-#SBATCH --output="${output_dir}/${model}_${dataset_tag}_CPU.out"
-#SBATCH --error="${output_dir}/${model}_${dataset_tag}_CPU.err"
+        bsub <<EOT
+#BSUB -n 6
+#BSUB -W 20:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_selected_${DATE}_${job_index}"
+#BSUB -o "${output_dir}/${model}_${dataset_tag}_CPU.out"
+#BSUB -e "${output_dir}/${model}_${dataset_tag}_CPU.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
