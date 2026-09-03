@@ -1,0 +1,68 @@
+Data filtering and preprocessing took 0.01 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 30.46±0.69	 r2: 0.04±0.03
+Filename: (COUNT)_(GPytorchMAP_RBF_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 253039: <numerical_only_20260902_30> in cluster <Hazel> Done
+
+Job <numerical_only_20260902_30> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Sep  2 22:40:06 2026
+Job was executed on host(s) <gpu16>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Wed Sep  2 22:55:28 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Sep  2 22:55:28 2026
+Terminated at Wed Sep  2 22:56:57 2026
+Results reported at Wed Sep  2 22:56:57 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+
+#BSUB -n 1
+#BSUB -W 1:59
+#BSUB -q short_gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "numerical_only_20260902_30"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_cleaned_suzuki_synthesis_RBF_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_cleaned_suzuki_synthesis_RBF_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_numerical.py --K_count "RBF"                              --Kernel_mixing_method "product"                              --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                              --dataset "cleaned_suzuki_synthesis"                              --regressor_type "GPytorchMAP"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   59.98 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            1011 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260902/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/GPytorchMAP_cleaned_suzuki_synthesis_RBF_product_GPU.err> for stderr output of this job.
+
