@@ -15,17 +15,19 @@ k_mixing_methods=("sum" "product" "(count:+)x(fp:x)" "(count:+)x(fp:+)" "(count:
 for mixing_method in "${k_mixing_methods[@]}"; do
     for fp_kernel in "${k_fps[@]}"; do
         for count_kernel in "${k_counts[@]}"; do
-            bsub <<EOT
+            sbatch <<EOT
+#!/bin/bash
 
 
 
-#BSUB -n 6
-#BSUB -W 8:00
-#BSUB -R span[hosts=1]
-#BSUB -R "rusage[mem=32GB]"
-#BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.out"
-#BSUB -e "${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.err"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --nodes=1
+#SBATCH --time=08:00:00
+#SBATCH --mem=32G
+#SBATCH --job-name="structure_numerical_${DATE}"
+#SBATCH --output="${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.out"
+#SBATCH --error="${output_dir}/GPytorchMAP_${fp_kernel}_${count_kernel}_${mixing_method}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/torch_cpu

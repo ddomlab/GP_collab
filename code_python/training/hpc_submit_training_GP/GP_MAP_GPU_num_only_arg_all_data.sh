@@ -1,22 +1,12 @@
 #!/bin/bash
 
-# Submit RF, XGBR, and NGB only for the explicitly selected datasets below.
-# No datasets are discovered automatically. For each selected dataset,
-# train_structure_numerical.py trains its target(s) configured in filter_data.py.
-
 DATE=$(date +%Y%m%d)
-models=("RF" "XGBR" "NGB")
+model="GPytorchMAP"
+k_counts=("Matern32" "Matern52" "RBF")
+# With no fingerprint kernels, the other grouped mixing expressions collapse
+# to one of these two count-kernel compositions.
+k_mixing_methods=("sum" "product")
 
-# Selected datasets and their configured targets:
-# - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
-# - flux_data_imputed: log (Total flux)
-# - separation_data_imputed: log (Separation factor)
-# - cleaned_dataset_pervaporation_membranes_wang: log (Total flux),
-#   log (Separation factor)
-# - cleaned_suzuki_synthesis: Approx Conv (%)
-# - Rg data with clusters aging imputed: log Rg (nm)
-# - cleaned_dataset_Ultrafiltration Membrane_imputed: all six configured
-#   ultrafiltration targets
 selected_training_sets=(
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
@@ -36,28 +26,36 @@ for training_set in "${selected_training_sets[@]}"; do
     dataset_tag=${dataset// /_}
     mkdir -p "$output_dir"
 
-    for model in "${models[@]}"; do
-        job_index=$((job_index + 1))
+    for mixing_method in "${k_mixing_methods[@]}"; do
+        for count_kernel in "${k_counts[@]}"; do
+            job_index=$((job_index + 1))
 
-        sbatch <<EOT
+            sbatch <<EOT
 #!/bin/bash
+
+
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=6
-#SBATCH --nodes=1
-#SBATCH --time=02:00:00
+#SBATCH --time=01:59:00
+#SBATCH --partition=gpu_partners
+#SBATCH --qos=short_gpu
+#SBATCH --gres=gpu:1
 #SBATCH --mem=32G
-#SBATCH --partition=compute_partners
-#SBATCH --qos=short
-#SBATCH --job-name="tree_selected_${DATE}_${job_index}"
-#SBATCH --output="${output_dir}/${model}_${dataset_tag}_CPU.out"
-#SBATCH --error="${output_dir}/${model}_${dataset_tag}_CPU.err"
+#SBATCH --job-name="numerical_only_${DATE}_${job_index}"
+#SBATCH --output="${output_dir}/${model}_${dataset_tag}_${count_kernel}_${mixing_method}_GPU.out"
+#SBATCH --error="${output_dir}/${model}_${dataset_tag}_${count_kernel}_${mixing_method}_GPU.err"
 
 source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_numerical.py --regressor_type "$model" \
-                                        --dataset "$dataset" \
-                                        --paper "$paper"
+python ../train_numerical.py --K_count "$count_kernel" \
+                             --Kernel_mixing_method "$mixing_method" \
+                             --paper "$paper" \
+                             --dataset "$dataset" \
+                             --regressor_type "$model"
+
 EOT
+        done
     done
 done

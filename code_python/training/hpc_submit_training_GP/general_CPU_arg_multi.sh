@@ -14,15 +14,17 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 for model in "${models[@]}"; do
-    bsub <<EOT
+    sbatch <<EOT
+#!/bin/bash
 
-#BSUB -n 6
-#BSUB -W 1:30
-#BSUB -R span[hosts=1]
-#BSUB -R "rusage[mem=32GB]"
-#BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.out"
-#BSUB -e "${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.err"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --nodes=1
+#SBATCH --time=01:30:00
+#SBATCH --mem=32G
+#SBATCH --job-name="structure_numerical_${DATE}"
+#SBATCH --output="${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.out"
+#SBATCH --error="${output_dir}/${model}_${fp_kernel}_${count_kernel}_${mixing_method}.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
