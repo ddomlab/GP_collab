@@ -798,16 +798,20 @@ def _score_file_templates(
             return []
         return [
             (
-                f"(MG-COUNT)_(MGK_Graph-{count_k}_{mix_method})_hypOFF_Standard_Standard_GPU_scores"
+                f"(MG-COUNT)_(MGK_Graph-{count_k}_{mix_method})"
+                f"{suffix}_hypOFF_Standard_Standard_GPU_scores"
             )
+            for suffix in ["", "_mean"]
         ]
 
     device_suffix = "_GPU" if use_gpu else ""
     return [
         (
             f"(ECFP3_count_512-COUNT)_"
-            f"({model}_{fp_k}-{count_k}_{mix_method})_hypOFF_Standard_Standard{device_suffix}_scores"
+            f"({model}_{fp_k}-{count_k}_{mix_method})"
+            f"{suffix}_hypOFF_Standard_Standard{device_suffix}_scores"
         )
+        for suffix in ["", "_mean"]
     ]
 
 
