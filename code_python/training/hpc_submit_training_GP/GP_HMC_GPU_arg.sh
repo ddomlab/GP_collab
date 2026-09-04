@@ -9,7 +9,7 @@ mkdir -p "$output_dir"
 
 model="GpyroHMC"
 k_fps=("Matern32" "Matern52" "RBF")
-k_counts=("RBF")
+k_counts=("Matern52")
 k_mixing_methods=("sum" "product" "(count:+)x(fp:x)" "(count:x)+(fp:x)")
 
 
