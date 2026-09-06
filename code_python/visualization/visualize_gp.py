@@ -612,7 +612,7 @@ PAPER = {
             "target_irreversible fouling ratio(%)",
             "target_organic compound removal (%)",
             "target_reversible fouling ratio (%)",
-            r"target_water permeability (LMH\bar)"
+            "target_water permeability (LMH/bar)"
         ],
         "expert_impt": None,
         "n_datapoints": [318,318,318,318,318,318]
@@ -1175,6 +1175,34 @@ def _feature_row_values(
     }
 
 
+def _device_row_values(
+    cpu_data: Optional[Dict[str, Any]],
+    gpu_data: Optional[Dict[str, Any]],
+    score_metrics: List[str],
+    use_gpu: bool,
+    target: Optional[str] = None,
+    cpu_score_path: Optional[Path] = None,
+    gpu_score_path: Optional[Path] = None,
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Return values from exactly one GP device, without cross-device fallback."""
+    selected_cpu_data = None if use_gpu else cpu_data
+    selected_gpu_data = gpu_data if use_gpu else None
+    selected_cpu_path = None if use_gpu else cpu_score_path
+    selected_gpu_path = gpu_score_path if use_gpu else None
+
+    feature_info = _feature_row_values(selected_cpu_data, selected_gpu_data)
+    score_info = _score_row_values(
+        selected_cpu_data,
+        selected_gpu_data,
+        score_metrics,
+        prefer_gpu_scores=use_gpu,
+        target=target,
+        cpu_score_path=selected_cpu_path,
+        gpu_score_path=selected_gpu_path,
+    )
+    return feature_info, score_info
+
+
 def _score_row_values(
     cpu_data: Optional[Dict[str, Any]],
     gpu_data: Optional[Dict[str, Any]],
@@ -1254,15 +1282,28 @@ def _save_master_performance_data(df: pd.DataFrame, save_path: Path) -> None:
 
 
 def build_master_performance_data(
-    save_path: Optional[Path] = RESULTS / "master_performance_data",
+    save_path: Optional[Path] = (
+        RESULTS / "master_performance_data" / "Tree_and_GP"
+    ),
     score_metrics: Optional[List[str]] = None,
-) -> pd.DataFrame:
+) -> Dict[str, pd.DataFrame]:
+    """Build separate tree-plus-GP master datasets for CPU and GPU results.
+
+    Tree-model results are included in both datasets. GPytorchMAP, GpyroHMC,
+    and MGK rows use only the requested device: missing CPU results remain
+    missing in the CPU dataset, and missing GPU results remain missing in the
+    GPU dataset. There is no cross-device fallback.
+
+    When ``save_path`` is provided, it is treated as a base name and the
+    outputs are written to ``<save_path>_CPU.{pkl,csv}`` and
+    ``<save_path>_GPU.{pkl,csv}``.
+    """
     score_metrics = (
         DEFAULT_SCORE_METRICS
         if score_metrics is None
         else list(dict.fromkeys(score_metrics))
     )
-    rows = []
+    rows_by_device = {"CPU": [], "GPU": []}
 
     for paper_name, paper_info in PAPER.items():
         for target in paper_info["target"]:
@@ -1283,7 +1324,7 @@ def build_master_performance_data(
                         gpu_score_path=gpu_path,
                     )
                     feature_info = _feature_row_values(cpu_data, gpu_data)
-                    rows.append({
+                    row = {
                         "paper": paper_name,
                         "target": target,
                         "model": model,
@@ -1292,7 +1333,9 @@ def build_master_performance_data(
                         "mixing method": None,
                         **feature_info,
                         **score_info,
-                    })
+                    }
+                    for rows in rows_by_device.values():
+                        rows.append(row.copy())
                     continue
 
                 if model == "MGK":
@@ -1304,26 +1347,26 @@ def build_master_performance_data(
                                 count_k=count_k,
                                 mix_method=mix,
                             )
-                            score_info = _score_row_values(
-                                cpu_data,
-                                gpu_data,
-                                score_metrics,
-                                prefer_gpu_scores=True,
-                                target=target,
-                                cpu_score_path=cpu_path,
-                                gpu_score_path=gpu_path,
-                            )
-                            feature_info = _feature_row_values(cpu_data, gpu_data)
-                            rows.append({
-                                "paper": paper_name,
-                                "target": target,
-                                "model": model,
-                                "fp kernel": "Graph",
-                                "count kernel": count_k,
-                                "mixing method": mix,
-                                **feature_info,
-                                **score_info,
-                            })
+                            for device, rows in rows_by_device.items():
+                                feature_info, score_info = _device_row_values(
+                                    cpu_data,
+                                    gpu_data,
+                                    score_metrics,
+                                    use_gpu=device == "GPU",
+                                    target=target,
+                                    cpu_score_path=cpu_path,
+                                    gpu_score_path=gpu_path,
+                                )
+                                rows.append({
+                                    "paper": paper_name,
+                                    "target": target,
+                                    "model": model,
+                                    "fp kernel": "Graph",
+                                    "count kernel": count_k,
+                                    "mixing method": mix,
+                                    **feature_info,
+                                    **score_info,
+                                })
                     continue
 
                 for fp_k, count_k, mix in _kernel_configs_for_model(model):
@@ -1334,32 +1377,40 @@ def build_master_performance_data(
                         count_k=count_k,
                         mix_method=mix,
                     )
-                    score_info = _score_row_values(
-                        cpu_data,
-                        gpu_data,
-                        score_metrics,
-                        prefer_gpu_scores=_uses_gpu_scores(model),
-                        target=target,
-                        cpu_score_path=cpu_path,
-                        gpu_score_path=gpu_path,
-                    )
-                    feature_info = _feature_row_values(cpu_data, gpu_data)
-                    rows.append({
-                        "paper": paper_name,
-                        "target": target,
-                        "model": model,
-                        "fp kernel": fp_k,
-                        "count kernel": count_k,
-                        "mixing method": mix,
-                        **feature_info,
-                        **score_info,
-                    })
+                    for device, rows in rows_by_device.items():
+                        feature_info, score_info = _device_row_values(
+                            cpu_data,
+                            gpu_data,
+                            score_metrics,
+                            use_gpu=device == "GPU",
+                            target=target,
+                            cpu_score_path=cpu_path,
+                            gpu_score_path=gpu_path,
+                        )
+                        rows.append({
+                            "paper": paper_name,
+                            "target": target,
+                            "model": model,
+                            "fp kernel": fp_k,
+                            "count kernel": count_k,
+                            "mixing method": mix,
+                            **feature_info,
+                            **score_info,
+                        })
 
-    df = pd.DataFrame(rows, columns=_master_result_columns(score_metrics), dtype=object)
+    master_data = {
+        device: pd.DataFrame(
+            rows,
+            columns=_master_result_columns(score_metrics),
+            dtype=object,
+        )
+        for device, rows in rows_by_device.items()
+    }
     if save_path is not None:
-        _save_master_performance_data(df, save_path)
+        for device, df in master_data.items():
+            _save_master_performance_data(df, Path(f"{save_path}_{device}"))
 
-    return df
+    return master_data
 
 
 
@@ -5923,10 +5974,18 @@ def plot_hybridization_performance_vs_data_number(
 
 if __name__ == "__main__":
 
-    # build_master_performance_data(save_path=RESULTS/"master_performance_data"/"Tree_and_GP",
-    #                                score_metrics=DEFAULT_SCORE_METRICS)
+    # master_data = build_master_performance_data(
+    #     save_path=RESULTS / "master_performance_data" / "Tree_and_GP",
+    #     score_metrics=DEFAULT_SCORE_METRICS,
+    # )
+    # result_df = master_data["CPU"]  # Or master_data["GPU"].
 
-    COMBINED_RESULTS: pd.DataFrame = RESULTS / "master_performance_data"/ "Tree_and_GP.pkl"
+    master_device = os.environ.get("MASTER_GP_DEVICE", "CPU").upper()
+    if master_device not in {"CPU", "GPU"}:
+        raise ValueError("MASTER_GP_DEVICE must be either 'CPU' or 'GPU'.")
+    COMBINED_RESULTS: Path = (
+        RESULTS / "master_performance_data" / f"Tree_and_GP_{master_device}.pkl"
+    )
     result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
 
 
