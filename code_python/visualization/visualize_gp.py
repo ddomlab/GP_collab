@@ -663,7 +663,7 @@ HYBRIDIZATION_METHOD_COLORS = {
     "averageProduct": "#EDC525",
     "(count:+)x(fp:x)": "#5B8FF9",
     "(count:+)x(graph:x)": "#5B8FF9",
-    "(count:+)x(fp:+)": "#61DDAA",
+    "(count:+)x(fp:+)": "#5B8FF9",
     "(count:+)x(graph:+)": "#61DDAA",
     "(count:x)+(fp:x)": "#F6BD16",
     "(count:x)+(graph:x)": "#F6BD16",
@@ -6128,26 +6128,26 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32.png",
     # )
 
-    # plot_hybridization_performance_vs_data_number(
-    #     df=result_df,
-    #     metric="OOF_R2",
-    #     model="GPytorchMAP",
-    #     fp_kernels=["TanimotoMatern32"],
-    #     count_kernels=["Matern32"],
-    #     mixing_methods=[
-    #                     "sum",
-    #                     "product",
-    #                     "(count:+)x(fp:x)",
-    #                     # "(count:+)x(fp:+)",
-    #                     "(count:x)+(fp:x)"
-    #                     ],
-    #     y_label="R² (OOF)",
-    #     fontsize=17,
-    #     figsize=(11, 6),
-    #     show=True,
-    #     save_dir=HERE / "result_analysis"/"absolute_metric"/"hybridization_comparison",
-    #     file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32_vs_data_number.png",
-    # )
+    plot_hybridization_performance_vs_data_number(
+        df=result_df,
+        metric="OOF_R2",
+        model="GPytorchMAP",
+        fp_kernels=["TanimotoRBF"],
+        count_kernels=["RBF"],
+        mixing_methods=[
+                        "sum",
+                        "product",
+                        # "(count:+)x(fp:x)",
+                        "(count:+)x(fp:+)",
+                        "(count:x)+(fp:x)"
+                        ],
+        y_label="R² (OOF)",
+        fontsize=17,
+        figsize=(11, 6),
+        show=True,
+        save_dir=HERE / "result_analysis"/"absolute_metric"/"hybridization_comparison",
+        file_name="r2_GPytorchMAP_SK_TanimotoRBF_RBF_vs_data_number.png",
+    )
 
 
     # plot_hybridization_topsis_comparison(
@@ -6165,22 +6165,22 @@ if __name__ == "__main__":
     # )
     
 
-    plot_model_profile_comparison(
-        df=result_df,
-        model=["RF", "XGBR", "NGB", "GPytorchMAP", ],
-        kernel_triples=[
-            ("Matern32", "Matern32", "averageProduct"),
-            ("TanimotoMatern32", "Matern32", "averageProduct"),
-            # ("Graph", "Matern32", "product"),
-        ],
-        metric="OOF_cvpp_ama",
-        # tree_feature_importance=tree_fi,
-        y_label="Profile AUC: OOF AMA",
-        fontsize=17,
-        figsize=(5, 5),
-        save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-        file_name=f"AMA_OOF_model_profile_comparison.png",
-    )
+    # plot_model_profile_comparison(
+    #     df=result_df,
+    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "averageProduct"),
+    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
+    #         # ("Graph", "Matern32", "product"),
+    #     ],
+    #     metric="OOF_cvpp_ama",
+    #     # tree_feature_importance=tree_fi,
+    #     y_label="Profile AUC: OOF AMA",
+    #     fontsize=17,
+    #     figsize=(5, 5),
+    #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
+    #     file_name=f"AMA_OOF_model_profile_comparison.png",
+    # )
 
     # plot_model_profile_comparison(
     #     df=result_df,
@@ -6261,6 +6261,12 @@ if __name__ == "__main__":
     # )
 
 
+
+
+
+
+
+    ##############TOPSIS #################
     # plot_model_performance_TOPSIS(
     #     df=result_df,
     #     metrics=["OOF_cvpp_ama"],
