@@ -60,6 +60,9 @@ def _numeric_feature_value(value: Any) -> float:
     if value is None:
         return np.nan
 
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        return float(value)
+
     try:
         values = np.asarray(value, dtype=float)
     except (TypeError, ValueError):
@@ -76,19 +79,29 @@ def _feature_records_dataframe(
     feature_records: Any,
     fill_missing_value: Optional[float] = None,
 ) -> pd.DataFrame:
+    source_index = None
     if feature_records is None:
-        df_feature = pd.DataFrame()
+        records = []
     elif isinstance(feature_records, pd.DataFrame):
-        df_feature = feature_records.copy()
+        source_index = feature_records.index
+        records = feature_records.to_dict(orient="records")
     elif isinstance(feature_records, dict):
-        df_feature = pd.DataFrame([feature_records])
+        records = [feature_records]
     else:
-        df_feature = pd.DataFrame(
-            [record for record in feature_records if isinstance(record, dict)]
-        )
+        records = [
+            record for record in feature_records if isinstance(record, dict)
+        ]
 
-    for column in df_feature.columns:
-        df_feature[column] = df_feature[column].map(_numeric_feature_value)
+    normalized_records = [
+        {
+            feature: _numeric_feature_value(value)
+            for feature, value in record.items()
+        }
+        for record in records
+    ]
+    df_feature = pd.DataFrame.from_records(normalized_records)
+    if source_index is not None:
+        df_feature.index = source_index
 
     df_feature = df_feature.dropna(axis=1, how="all")
     if fill_missing_value is not None:
@@ -720,11 +733,6 @@ OOF_SCORE_COLUMNS = [
     "OOF_R2" if metric == "r2" else f"OOF_{metric}"
     for metric in OOF_SCORE_METRICS
 ]
-FEATURE_DATA_COLUMNS = [
-    "lengthscale",
-    "feature_importance_MDI",
-    "feature_importance_SHAP",
-]
 FEATURE_STABILITY_COLUMNS = [
     "lengthscale_kendalls_w",
     "feature_importance_MDI_kendalls_w",
@@ -1064,13 +1072,18 @@ def _load_score_files(
     Optional[Path],
     Optional[Path],
 ]:
-    cpu_path = _find_score_path(paper_loc, model, fp_k, count_k, mix_method)
-    cpu_data = _read_json(cpu_path)
+    cpu_data, cpu_path = _load_score_file(
+        paper_loc,
+        model,
+        fp_k,
+        count_k,
+        mix_method,
+    )
     gpu_path = None
     gpu_data = None
 
     if not _is_tree_model(model):
-        gpu_path = _find_score_path(
+        gpu_data, gpu_path = _load_score_file(
             paper_loc,
             model,
             fp_k,
@@ -1078,11 +1091,28 @@ def _load_score_files(
             mix_method,
             use_gpu=True,
         )
-        gpu_data = _read_json(
-            gpu_path
-        )
 
     return cpu_data, gpu_data, cpu_path, gpu_path
+
+
+def _load_score_file(
+    paper_loc: Path,
+    model: str,
+    fp_k: Optional[str] = None,
+    count_k: Optional[str] = None,
+    mix_method: Optional[str] = None,
+    use_gpu: bool = False,
+) -> tuple[Optional[Dict[str, Any]], Optional[Path]]:
+    """Load one score file for the requested device."""
+    score_path = _find_score_path(
+        paper_loc,
+        model,
+        fp_k,
+        count_k,
+        mix_method,
+        use_gpu=use_gpu,
+    )
+    return _read_json(score_path), score_path
 
 
 def _metric_result_columns(score_metrics: List[str]) -> List[str]:
@@ -1099,7 +1129,6 @@ def _metric_result_columns(score_metrics: List[str]) -> List[str]:
 def _master_result_columns(score_metrics: List[str]) -> List[str]:
     return (
         BASE_MASTER_RESULT_COLUMNS
-        + FEATURE_DATA_COLUMNS
         + FEATURE_STABILITY_COLUMNS
         + _metric_result_columns(score_metrics)
         + OOF_SCORE_COLUMNS
@@ -1166,9 +1195,6 @@ def _feature_row_values(
     shap = _seed_fold_feature_records(source_data, "test_feature_importance_SHAP")
 
     return {
-        "lengthscale": lengthscale,
-        "feature_importance_MDI": mdi,
-        "feature_importance_SHAP": shap,
         "lengthscale_kendalls_w": _feature_kendalls_w(lengthscale),
         "feature_importance_MDI_kendalls_w": _feature_kendalls_w(mdi),
         "feature_importance_SHAP_kendalls_w": _feature_kendalls_w(shap),
@@ -1274,7 +1300,7 @@ def _save_master_performance_data(df: pd.DataFrame, save_path: Path) -> None:
 
     output = df.copy()
     for column in output.columns:
-        if column.endswith("_seed_fold_scores") or column in FEATURE_DATA_COLUMNS:
+        if column.endswith("_seed_fold_scores"):
             output[column] = output[column].apply(
                 lambda value: json.dumps(value) if value is not None else None
             )
@@ -1286,13 +1312,15 @@ def build_master_performance_data(
         RESULTS / "master_performance_data" / "Tree_and_GP"
     ),
     score_metrics: Optional[List[str]] = None,
-) -> Dict[str, pd.DataFrame]:
+) -> None:
     """Build separate tree-plus-GP master datasets for CPU and GPU results.
 
     Tree-model results are included in both datasets. GPytorchMAP, GpyroHMC,
     and MGK rows use only the requested device: missing CPU results remain
     missing in the CPU dataset, and missing GPU results remain missing in the
-    GPU dataset. There is no cross-device fallback.
+    GPU dataset. There is no cross-device fallback. Raw fold-level lengthscale,
+    MDI, and SHAP records are not retained; only their precomputed Kendall's W
+    values are added to the master datasets.
 
     When ``save_path`` is provided, it is treated as a base name and the
     outputs are written to ``<save_path>_CPU.{pkl,csv}`` and
@@ -1303,59 +1331,62 @@ def build_master_performance_data(
         if score_metrics is None
         else list(dict.fromkeys(score_metrics))
     )
-    rows_by_device = {"CPU": [], "GPU": []}
+    for device in ("CPU", "GPU"):
+        use_gpu = device == "GPU"
+        rows = []
 
-    for paper_name, paper_info in PAPER.items():
-        for target in paper_info["target"]:
-            paper_loc = RESULTS / paper_name / target
+        for paper_name, paper_info in PAPER.items():
+            for target in paper_info["target"]:
+                paper_loc = RESULTS / paper_name / target
 
-            for model in MODELS:
-                if _is_tree_model(model):
-                    cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
-                        paper_loc=paper_loc,
-                        model=model,
-                    )
-                    score_info = _score_row_values(
-                        cpu_data,
-                        gpu_data,
-                        score_metrics,
-                        target=target,
-                        cpu_score_path=cpu_path,
-                        gpu_score_path=gpu_path,
-                    )
-                    feature_info = _feature_row_values(cpu_data, gpu_data)
-                    row = {
-                        "paper": paper_name,
-                        "target": target,
-                        "model": model,
-                        "fp kernel": None,
-                        "count kernel": None,
-                        "mixing method": None,
-                        **feature_info,
-                        **score_info,
-                    }
-                    for rows in rows_by_device.values():
-                        rows.append(row.copy())
-                    continue
+                for model in MODELS:
+                    if _is_tree_model(model):
+                        tree_data, tree_path = _load_score_file(
+                            paper_loc=paper_loc,
+                            model=model,
+                        )
+                        score_info = _score_row_values(
+                            tree_data,
+                            None,
+                            score_metrics,
+                            target=target,
+                            cpu_score_path=tree_path,
+                        )
+                        feature_info = _feature_row_values(tree_data, None)
+                        rows.append({
+                            "paper": paper_name,
+                            "target": target,
+                            "model": model,
+                            "fp kernel": None,
+                            "count kernel": None,
+                            "mixing method": None,
+                            **feature_info,
+                            **score_info,
+                        })
+                        continue
 
-                if model == "MGK":
-                    for count_k in count_kernels:
-                        for mix in MGK_MIXING_METHODS:
-                            cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
-                                paper_loc=paper_loc,
-                                model=model,
-                                count_k=count_k,
-                                mix_method=mix,
-                            )
-                            for device, rows in rows_by_device.items():
+                    if model == "MGK":
+                        for count_k in count_kernels:
+                            for mix in MGK_MIXING_METHODS:
+                                score_data, score_path = _load_score_file(
+                                    paper_loc=paper_loc,
+                                    model=model,
+                                    count_k=count_k,
+                                    mix_method=mix,
+                                    use_gpu=use_gpu,
+                                )
                                 feature_info, score_info = _device_row_values(
-                                    cpu_data,
-                                    gpu_data,
+                                    None if use_gpu else score_data,
+                                    score_data if use_gpu else None,
                                     score_metrics,
-                                    use_gpu=device == "GPU",
+                                    use_gpu=use_gpu,
                                     target=target,
-                                    cpu_score_path=cpu_path,
-                                    gpu_score_path=gpu_path,
+                                    cpu_score_path=(
+                                        None if use_gpu else score_path
+                                    ),
+                                    gpu_score_path=(
+                                        score_path if use_gpu else None
+                                    ),
                                 )
                                 rows.append({
                                     "paper": paper_name,
@@ -1367,25 +1398,25 @@ def build_master_performance_data(
                                     **feature_info,
                                     **score_info,
                                 })
-                    continue
+                        continue
 
-                for fp_k, count_k, mix in _kernel_configs_for_model(model):
-                    cpu_data, gpu_data, cpu_path, gpu_path = _load_score_files(
-                        paper_loc=paper_loc,
-                        model=model,
-                        fp_k=fp_k,
-                        count_k=count_k,
-                        mix_method=mix,
-                    )
-                    for device, rows in rows_by_device.items():
+                    for fp_k, count_k, mix in _kernel_configs_for_model(model):
+                        score_data, score_path = _load_score_file(
+                            paper_loc=paper_loc,
+                            model=model,
+                            fp_k=fp_k,
+                            count_k=count_k,
+                            mix_method=mix,
+                            use_gpu=use_gpu,
+                        )
                         feature_info, score_info = _device_row_values(
-                            cpu_data,
-                            gpu_data,
+                            None if use_gpu else score_data,
+                            score_data if use_gpu else None,
                             score_metrics,
-                            use_gpu=device == "GPU",
+                            use_gpu=use_gpu,
                             target=target,
-                            cpu_score_path=cpu_path,
-                            gpu_score_path=gpu_path,
+                            cpu_score_path=None if use_gpu else score_path,
+                            gpu_score_path=score_path if use_gpu else None,
                         )
                         rows.append({
                             "paper": paper_name,
@@ -1398,20 +1429,14 @@ def build_master_performance_data(
                             **score_info,
                         })
 
-    master_data = {
-        device: pd.DataFrame(
+        df = pd.DataFrame(
             rows,
             columns=_master_result_columns(score_metrics),
             dtype=object,
         )
-        for device, rows in rows_by_device.items()
-    }
-    if save_path is not None:
-        for device, df in master_data.items():
-            _save_master_performance_data(df, Path(f"{save_path}_{device}"))
-
-    return master_data
-
+        if save_path is not None:
+            device_save_path = Path(f"{save_path}_{device}")
+            _save_master_performance_data(df, device_save_path)
 
 
 def add_legend_box(
@@ -5974,19 +5999,15 @@ def plot_hybridization_performance_vs_data_number(
 
 if __name__ == "__main__":
 
-    # master_data = build_master_performance_data(
+    # build_master_performance_data(
     #     save_path=RESULTS / "master_performance_data" / "Tree_and_GP",
     #     score_metrics=DEFAULT_SCORE_METRICS,
     # )
-    # result_df = master_data["CPU"]  # Or master_data["GPU"].
-
-    master_device = os.environ.get("MASTER_GP_DEVICE", "CPU").upper()
-    if master_device not in {"CPU", "GPU"}:
-        raise ValueError("MASTER_GP_DEVICE must be either 'CPU' or 'GPU'.")
+    master_device = "GPU"
     COMBINED_RESULTS: Path = (
         RESULTS / "master_performance_data" / f"Tree_and_GP_{master_device}.pkl"
     )
-    result_df = pd.read_pickle(ensure_long_path(COMBINED_RESULTS))
+    result_df = pd.read_pickle(COMBINED_RESULTS)
 
 
     #"r2", "nll", "cvpp_ama", "ece"
@@ -6039,7 +6060,7 @@ if __name__ == "__main__":
     #     kernel_triples=[
     #         ("Matern32", "Matern32", "product"),
     #         ("TanimotoMatern32", "Matern32", "product"),
-    #         ("Graph", "Matern32", "product"),
+    #         # ("Graph", "Matern32", "product"),
     #         ],
     #     y_label="R²",
     #     fontsize=17,
@@ -6051,33 +6072,20 @@ if __name__ == "__main__":
     #     file_name="r2_distributional_model_comparison.png",
     # )
 
-    plot_model_comparison(
-        df=result_df,
-        metric="r2",
-        model=["RF", "XGBR","NGB","GPytorchMAP"],
-        # runtime_devices=["CPU", "CPU", "CPU", "GPU", "GPU"],
-        kernel_triples=[
-            ("RBF", "RBF", "product"),
-            ("TanimotoRBF", "RBF", "product"),
-        ],
-        # average_over_tasks=True,
-        y_label="R²",
-        fontsize=17,
-        show=True,
-        # y_lim=(0, 100),
-        figsize=(6, 5),
-        # log_y=True,
-        save_dir=HERE / "result_analysis"/"absolute_metric"/"model_comparison",
-        file_name="r2_distributional.png",
-    )
-
-
     # plot_hybridization_method_comparison(
     #     df=result_df,
     #     metric="r2",
     #     model="GPytorchMAP",
     #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         # "averageProduct",
+    #         "(count:+)x(fp:x)",
+    #         # "(count:+)x(fp:+)",
+    #         "(count:x)+(fp:x)"
+    #         ],
     #     figsize=(5, 5),
     #     fontsize=17,
     #     y_label="R²",
@@ -6107,15 +6115,15 @@ if __name__ == "__main__":
     # mixing_methods=[
     # "sum",
     # "product",
-    # "averageProduct",
-    # # "(count:+)x(fp:x)",
+    # # "averageProduct",
+    # "(count:+)x(fp:x)",
     # # "(count:+)x(fp:+)",
-    # # "(count:x)+(fp:x)"
+    # "(count:x)+(fp:x)"
     # ],
     # metric="r2",
     # y_label="Profile AUC of R²",
     # fontsize=17,
-    # figsize=(5, 5),
+    # figsize=(6, 5),
     # save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
     # file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32.png",
     # )
@@ -6157,22 +6165,22 @@ if __name__ == "__main__":
     # )
     
 
-    # plot_model_profile_comparison(
-    #     df=result_df,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #         # ("Graph", "Matern32", "product"),
-    #     ],
-    #     metric="OOF_cvpp_ama",
-    #     # tree_feature_importance=tree_fi,
-    #     y_label="Profile AUC: OOF AMA",
-    #     fontsize=17,
-    #     figsize=(5, 5),
-    #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-    #     file_name=f"AMA_OOF_model_profile_comparison.png",
-    # )
+    plot_model_profile_comparison(
+        df=result_df,
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", ],
+        kernel_triples=[
+            ("Matern32", "Matern32", "averageProduct"),
+            ("TanimotoMatern32", "Matern32", "averageProduct"),
+            # ("Graph", "Matern32", "product"),
+        ],
+        metric="OOF_cvpp_ama",
+        # tree_feature_importance=tree_fi,
+        y_label="Profile AUC: OOF AMA",
+        fontsize=17,
+        figsize=(5, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
+        file_name=f"AMA_OOF_model_profile_comparison.png",
+    )
 
     # plot_model_profile_comparison(
     #     df=result_df,
