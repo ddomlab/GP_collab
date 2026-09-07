@@ -9,7 +9,7 @@ mkdir -p "$output_dir"
 
 model="GpyroHMC"
 k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52")
-k_counts=("RBF")
+k_counts=("Matern32" "Matern52")
 k_mixing_methods=("sum" "product" "(count:+)x(fp:x)" "(count:x)+(fp:x)")
 
 
@@ -21,7 +21,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 60:10
+#BSUB -W 77:10
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
