@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Submit only the missing MGK GPU configurations for the multi-target datasets.
+# Submit the three MGK GPU configurations currently missing from the non-test
+# research datasets.
 
 DATE=$(date +%Y%m%d)
 model="MGK"
@@ -21,7 +22,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 2
-#BSUB -W 20:55
+#BSUB -W 55:55
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -45,19 +46,17 @@ python ../train_structure_numerical.py --K_fp "$fp_kernel" \
 EOT
 }
 
+# calculated PCE (%) -- 558 datapoints
+paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
+dataset="Beyond molecular structure_seifrid_imputed"
+
+submit_job "$paper" "$dataset" "sum"
+submit_job "$paper" "$dataset" "(count:x)+(graph:x)"
+
+# log (Total flux)
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-for dataset in "separation_data_imputed" "flux_data_imputed"; do
-    submit_job "$paper" "$dataset" "sum"
-    submit_job "$paper" "$dataset" "(count:+)x(graph:x)"
-    submit_job "$paper" "$dataset" "(count:x)+(graph:x)"
-done
+dataset="flux_data_imputed"
 
-paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset="cleaned_dataset_pervaporation_membranes_wang"
-submit_job "$paper" "$dataset" "(count:+)x(graph:x)"
-
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-dataset="cleaned_dataset_Ultrafiltration Membrane_imputed"
 submit_job "$paper" "$dataset" "sum"
 
 echo "Submitted ${job_index} MGK GPU jobs."
