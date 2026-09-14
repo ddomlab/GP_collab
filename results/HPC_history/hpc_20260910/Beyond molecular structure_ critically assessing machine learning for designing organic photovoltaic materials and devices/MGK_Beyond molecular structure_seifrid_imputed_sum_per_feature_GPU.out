@@ -1,0 +1,65 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 2.6±0.2	 r2: 0.28±0.1
+Filename: (MG-COUNT)_(MGK_Graph-Matern32_sum)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 268572: <mgk_missing_20260910_1> in cluster <Hazel> Done
+
+Job <mgk_missing_20260910_1> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Sep 10 01:16:26 2026
+Job was executed on host(s) <2*gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Sep 10 01:27:26 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Sep 10 01:27:26 2026
+Terminated at Thu Sep 10 23:23:05 2026
+Results reported at Thu Sep 10 23:23:05 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 2
+#BSUB -W 55:55
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "mgk_missing_20260910_1"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260910/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_sum_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260910/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_sum_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "Graph"                                       --K_count "Matern32"                                       --Kernel_mixing_method "sum"                                       --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                       --dataset "Beyond molecular structure_seifrid_imputed"                                       --kernel_feature_mode "per_feature"                                       --regressor_type "MGK"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   78791.31 sec.
+    Max Memory :                                 5 GB
+    Average Memory :                             1.05 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               27.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                18
+    Run time :                                   78940 sec.
+    Turnaround time :                            79599 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260910/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_sum_per_feature_GPU.err> for stderr output of this job.
+
