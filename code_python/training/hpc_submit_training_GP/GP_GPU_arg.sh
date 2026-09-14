@@ -11,7 +11,7 @@ mkdir -p "$output_dir"
 k_mixing_methods=("(count:+)x(graph:x)" "(count:+)x(graph:+)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
-k_counts=("RBF" "Matern52")
+k_counts=("RBF")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
@@ -30,8 +30,8 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
 #BSUB -J "structure_numerical_${DATE}"
-#BSUB -o "${output_dir}/${model}_${mixing_method}_${feature_mode}_GPU.out"
-#BSUB -e "${output_dir}/${model}_${mixing_method}_${feature_mode}_GPU.err"
+#BSUB -o "${output_dir}/${model}_${mixing_method}_${feature_mode}_${count_kernel}_GPU.out"
+#BSUB -e "${output_dir}/${model}_${mixing_method}_${feature_mode}_${count_kernel}_GPU.err"
 
 source ~/.bashrc
 module load cuda/12.1

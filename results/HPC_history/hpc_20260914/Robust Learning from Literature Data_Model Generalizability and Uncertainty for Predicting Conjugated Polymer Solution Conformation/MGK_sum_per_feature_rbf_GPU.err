@@ -1,0 +1,127 @@
+[Parallel(n_jobs=8)]: Using backend LokyBackend with 8 concurrent workers.
+[Parallel(n_jobs=8)]: Done  34 tasks      | elapsed:   16.2s
+[Parallel(n_jobs=8)]: Done 256 out of 256 | elapsed:   16.2s finished
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done  22 out of  22 | elapsed:    1.5s finished
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py:116: UserWarning: Kernel matrix singular, falling back to pseudoinverse
+  warnings.warn(
+/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py:116: UserWarning: Kernel matrix singular, falling back to pseudoinverse
+  warnings.warn(
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 133, in <module>
+    main_structural_numerical(
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 47, in main_structural_numerical
+    scores, predictions  =   train_regressor(
+                             ^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 74, in train_regressor
+    scores, predictions = _prepare_data(
+                          ^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 245, in _prepare_data
+    score,predication = run(
+                        ^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/training_utils_gp_special.py", line 421, in run
+    scores, predictions = cross_validate_regressor(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring_validation.py", line 818, in cross_validate_regressor
+    score, predictions = cross_validate(
+                         ^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring_validation.py", line 555, in cross_validate
+    parallel_results = Parallel(**parallel_kwargs)(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/joblib/parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/scoring_validation.py", line 388, in _fit_predict_score
+    est.fit(X_train, y_train)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/sklearn/pipeline.py", line 621, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/models/regression/gpr/gpr.py", line 140, in fit
+    self.regressor_.fit(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 112, in fit
+    opt = self._hyper_opt(
+          ^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 139, in _hyper_opt
+    opt_local = minimize(
+                ^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_minimize.py", line 784, in minimize
+    res = _minimize_lbfgsb(fun, x0, args, jac, bounds,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_lbfgsb_py.py", line 413, in _minimize_lbfgsb
+    sf = _prepare_scalar_function(fun, x0, jac=jac, args=args, epsilon=eps,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 310, in _prepare_scalar_function
+    sf = ScalarFunction(fun, x0, args, grad, hess,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 283, in __init__
+    self._update_fun()
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_differentiable_functions.py", line 362, in _update_fun
+    fx = self._wrapped_fun(self.x)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/_lib/_util.py", line 603, in __call__
+    fx = self.f(np.copy(x), *self.args)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 80, in __call__
+    self._compute_if_needed(x, *args)
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/scipy/optimize/_optimize.py", line 74, in _compute_if_needed
+    fg = self.fun(x, *args)
+         ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 114, in <lambda>
+    fun=lambda theta, objective=objective: objective(
+                                           ^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/gpr.py", line 276, in log_marginal_likelihood
+    K, dK = self._gramian(self.alpha, X, kernel=kernel, jac=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/model/gaussian_process/base.py", line 88, in _gramian
+    K, J = kernel(X, eval_gradient=True, **self.kernel_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 262, in __call__
+    covariances, gradients = self._kernel_outputs(
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/HybridKernel.py", line 133, in _kernel_outputs
+    output = kernel(Xi, Y=Yi, eval_gradient=eval_gradient)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/MGK_and_tools/mgktools/mgktools/kernels/GraphKernel.py", line 55, in __call__
+    return super().__call__(X, Y, eval_gradient=eval_gradient, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_kernel.py", line 240, in __call__
+    backend(
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 299, in __call__
+    kernel = self.module.get_function('graph_kernel_solver')
+             ^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 155, in module
+    self._module, self._compiler_message = self._compile(self.source)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/graphdot/kernel/marginalized/_backend_cuda.py", line 120, in _compile
+    module = SourceModule(
+             ^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/compiler.py", line 348, in __init__
+    cubin = compile(
+            ^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/compiler.py", line 295, in compile
+    return compile_plain(source, options, keep, nvcc, cache_dir, target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pycuda/compiler.py", line 129, in compile_plain
+    result, stdout, stderr = call_capture_output(
+                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pytools/prefork.py", line 308, in call_capture_output
+    return forker.call_capture_output(cmdline, cwd, error_on_nonzero)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/site-packages/pytools/prefork.py", line 103, in call_capture_output
+    stdout_data, stderr_data = popen.communicate()
+                               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/subprocess.py", line 2115, in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/usrapps/ddomlab/sdehgha2/env12/lib/python3.12/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
