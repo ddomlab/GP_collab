@@ -11,7 +11,7 @@ mkdir -p "$output_dir"
 k_mixing_methods=("(count:+)x(graph:x)" "(count:+)x(graph:+)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
-k_counts=("RBF")
+k_counts=("RBF" "Matern52")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do
