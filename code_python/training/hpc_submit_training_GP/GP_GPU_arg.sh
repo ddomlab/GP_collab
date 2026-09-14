@@ -2,8 +2,8 @@
 
 DATE=$(date +%Y%m%d)
 model="MGK"
-paper="Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
-datasets=("cleaned_dataset_Ultrafiltration Membrane_imputed")
+paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+datasets=("Rg data with clusters aging imputed")
 output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}/${paper}
 mkdir -p "$output_dir"
 
@@ -11,7 +11,7 @@ mkdir -p "$output_dir"
 k_mixing_methods=("(count:+)x(graph:x)" "(count:+)x(graph:+)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
-k_counts=("Matern32")
+k_counts=("RBF" "Matern52")
 
 
 for mixing_method in "${k_mixing_methods[@]}"; do

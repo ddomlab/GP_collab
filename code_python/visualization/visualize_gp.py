@@ -5690,6 +5690,7 @@ def plot_hybridization_performance_vs_data_number(
     mixing_methods: Any = None,
     kernel_triples: Any = None,
     dataset_as_experiment_points: bool = True,
+    show_all_targets: bool = True,
     figsize: tuple = (10, 5),
     fontsize: int = 12,
     title: Optional[str] = None,
@@ -5706,11 +5707,15 @@ def plot_hybridization_performance_vs_data_number(
 ) -> pd.DataFrame:
     """Plot grouped bars of hybridization performance versus dataset size.
 
-    Each color represents a hybridization method. Selected fingerprint/count
-    kernel configurations are averaged within each dataset-target and method,
-    so a dataset contributes equally regardless of the number of selected
-    kernel configurations or seed/fold scores. Error bars show the standard
-    deviation across dataset-target values having the same datapoint count.
+    Each color represents a hybridization method. When ``show_all_targets`` is
+    True, every dataset-target is a separate x-axis group. Repeat/fold scores
+    are first averaged for each selected fingerprint/count kernel
+    configuration; bars and error bars then show the mean and standard
+    deviation across those configurations.
+
+    Set ``show_all_targets=False`` for the previous behavior: targets with the
+    same datapoint count are combined, and error bars show the standard
+    deviation across their dataset-target means.
     """
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=False)
     is_scalar_metric = (
@@ -5753,7 +5758,57 @@ def plot_hybridization_performance_vs_data_number(
             + plot_df["hybridization method"].astype(str)
         )
 
-    if dataset_as_experiment_points:
+    if show_all_targets:
+        # Give every selected kernel configuration equal weight, regardless of
+        # the number of repeat/fold scores stored for it.
+        configuration_group_cols = [
+            "dataset",
+            "target",
+            "n datapoints",
+            hue_col,
+            "hybridization method",
+            "model",
+            "fp kernel",
+            "count kernel",
+            "mixing method",
+        ]
+        configuration_group_cols = list(dict.fromkeys(configuration_group_cols))
+        configuration_df = (
+            plot_df.groupby(
+                configuration_group_cols,
+                dropna=False,
+                as_index=False,
+            )[metric]
+            .mean()
+            .copy()
+        )
+
+        summary_group_cols = list(dict.fromkeys([
+            "dataset",
+            "target",
+            "n datapoints",
+            hue_col,
+            "hybridization method",
+            "model",
+            "mixing method",
+        ]))
+        summary_df = (
+            configuration_df.groupby(summary_group_cols, dropna=False)[metric]
+            .agg(["mean", "std", "count"])
+            .reset_index()
+            .rename(columns={
+                "mean": f"{metric}_mean",
+                "std": f"{metric}_std",
+                "count": f"{metric}_count",
+            })
+        )
+        x_col = "dataset target"
+        summary_df[x_col] = (
+            summary_df["dataset"].astype(str)
+            + "\n"
+            + summary_df["target"].astype(str)
+        )
+    elif dataset_as_experiment_points:
         dataset_group_cols = [
             "dataset",
             "target",
@@ -5774,23 +5829,25 @@ def plot_hybridization_performance_vs_data_number(
             .copy()
         )
 
-    summary_group_cols = list(dict.fromkeys([
-        "n datapoints",
-        hue_col,
-        "hybridization method",
-        "model",
-        "mixing method",
-    ]))
-    summary_df = (
-        plot_df.groupby(summary_group_cols, dropna=False)[metric]
-        .agg(["mean", "std", "count"])
-        .reset_index()
-        .rename(columns={
-            "mean": f"{metric}_mean",
-            "std": f"{metric}_std",
-            "count": f"{metric}_count",
-        })
-    )
+    if not show_all_targets:
+        summary_group_cols = list(dict.fromkeys([
+            "n datapoints",
+            hue_col,
+            "hybridization method",
+            "model",
+            "mixing method",
+        ]))
+        summary_df = (
+            plot_df.groupby(summary_group_cols, dropna=False)[metric]
+            .agg(["mean", "std", "count"])
+            .reset_index()
+            .rename(columns={
+                "mean": f"{metric}_mean",
+                "std": f"{metric}_std",
+                "count": f"{metric}_count",
+            })
+        )
+        x_col = "n datapoints"
     summary_df[f"{metric}_std"] = summary_df[f"{metric}_std"].fillna(0.0)
 
     selected_mixes = _selection_values(mixing_methods) or globals()["mixing_methods"]
@@ -5819,13 +5876,40 @@ def plot_hybridization_performance_vs_data_number(
     )
     config_order = config_order.sort_values("sort_key", kind="mergesort")
     hue_order = config_order[hue_col].tolist()
-    data_number_order = sorted(summary_df["n datapoints"].dropna().unique())
+    if show_all_targets:
+        target_order_df = (
+            summary_df[[x_col, "dataset", "target", "n datapoints"]]
+            .drop_duplicates(subset=[x_col])
+            .sort_values(
+                ["n datapoints", "dataset", "target"],
+                kind="mergesort",
+            )
+        )
+        x_order = target_order_df[x_col].tolist()
+        x_tick_labels = []
+        for _, row in target_order_df.iterrows():
+            n_datapoints = row["n datapoints"]
+            n_label = (
+                f"{int(n_datapoints)}"
+                if float(n_datapoints).is_integer()
+                else f"{n_datapoints:g}"
+            )
+            target_label = str(row["target"]).removeprefix("target_")
+            x_tick_labels.append(f"{target_label}\n(n={n_label})")
+    else:
+        x_order = sorted(summary_df["n datapoints"].dropna().unique())
+        x_tick_labels = [
+            f"{int(value)}" if float(value).is_integer() else f"{value:g}"
+            for value in x_order
+        ]
 
     order_lookup = {label: index for index, label in enumerate(hue_order)}
     summary_df["_plot_order"] = summary_df[hue_col].map(order_lookup)
     summary_df = (
         summary_df.sort_values(
-            ["n datapoints", "_plot_order"],
+            ["n datapoints", "dataset", "target", "_plot_order"]
+            if show_all_targets
+            else ["n datapoints", "_plot_order"],
             kind="stable",
         )
         .drop(columns="_plot_order")
@@ -5841,87 +5925,166 @@ def plot_hybridization_performance_vs_data_number(
         for index, (_, row) in enumerate(config_order.iterrows())
     }
 
-    fig, ax = plt.subplots(figsize=figsize)
-    sns.barplot(
-        data=summary_df,
-        x="n datapoints",
-        y=f"{metric}_mean",
-        hue=hue_col,
-        order=data_number_order,
-        hue_order=hue_order,
-        palette=palette,
-        width=0.9,
-        errorbar=None,
-        ax=ax,
-    )
+    plot_figsize = figsize
+    if show_all_targets:
+        plot_figsize = (
+            figsize[0],
+            max(figsize[1], 0.8 * len(x_order) + 2),
+        )
 
-    summary_lookup = summary_df.set_index(["n datapoints", hue_col])[
+    fig, ax = plt.subplots(figsize=plot_figsize)
+    if show_all_targets:
+        sns.barplot(
+            data=summary_df,
+            x=f"{metric}_mean",
+            y=x_col,
+            hue=hue_col,
+            order=x_order,
+            hue_order=hue_order,
+            palette=palette,
+            width=0.72,
+            errorbar=None,
+            orient="h",
+            ax=ax,
+        )
+    else:
+        sns.barplot(
+            data=summary_df,
+            x=x_col,
+            y=f"{metric}_mean",
+            hue=hue_col,
+            order=x_order,
+            hue_order=hue_order,
+            palette=palette,
+            width=0.9,
+            errorbar=None,
+            ax=ax,
+        )
+
+    summary_lookup = summary_df.set_index([x_col, hue_col])[
         [f"{metric}_mean", f"{metric}_std"]
     ]
-    max_label_y = None
+    max_label_value = None
     for hue_index, container in enumerate(ax.containers[:len(hue_order)]):
         hue_value = hue_order[hue_index]
         for data_index, bar in enumerate(container.patches):
-            if data_index >= len(data_number_order):
+            if data_index >= len(x_order):
                 continue
-            data_value = data_number_order[data_index]
-            if (data_value, hue_value) not in summary_lookup.index:
+            x_value = x_order[data_index]
+            if (x_value, hue_value) not in summary_lookup.index:
                 continue
 
-            values = summary_lookup.loc[(data_value, hue_value)]
+            values = summary_lookup.loc[(x_value, hue_value)]
             mean_value = float(values[f"{metric}_mean"])
             std_value = float(values[f"{metric}_std"])
             if np.isnan(mean_value):
                 continue
 
-            x_position = bar.get_x() + bar.get_width() / 2
-            if std_value > 0:
-                ax.errorbar(
-                    x_position,
-                    mean_value,
-                    yerr=std_value,
-                    fmt="none",
-                    ecolor="black",
-                    elinewidth=1.1,
-                    capsize=3,
-                    capthick=1.1,
-                    zorder=4,
+            if show_all_targets:
+                score_position = bar.get_x() + bar.get_width()
+                target_position = bar.get_y() + bar.get_height() / 2
+                if std_value > 0:
+                    ax.errorbar(
+                        score_position,
+                        target_position,
+                        xerr=std_value,
+                        fmt="none",
+                        ecolor="black",
+                        elinewidth=1.1,
+                        capsize=3,
+                        capthick=1.1,
+                        zorder=4,
+                    )
+                label_value = mean_value + (
+                    std_value if std_value > 0 else 0
+                ) + 0.01
+                max_label_value = (
+                    label_value
+                    if max_label_value is None
+                    else max(max_label_value, label_value)
                 )
-            label_y = mean_value + (std_value if std_value > 0 else 0) + 0.01
-            max_label_y = label_y if max_label_y is None else max(max_label_y, label_y)
-            if show_values:
-                bottom, top = ax.get_ylim()
-                value_y = bottom + 0.02 * (top - bottom)
-                ax.text(
-                    x_position,
-                    value_y,
-                    f"{mean_value:.2f}",
-                    ha="center",
-                    va="bottom",
-                    fontsize=max(fontsize - 6, 6),
-                    fontweight="bold",
-                    color="black" if mean_value < 0.1 else "white",
-                    rotation=90,
+                if show_values:
+                    left, right = ax.get_xlim()
+                    value_x = left + 0.02 * (right - left)
+                    ax.text(
+                        value_x,
+                        target_position,
+                        f"{mean_value:.2f}",
+                        ha="left",
+                        va="center",
+                        fontsize=max(fontsize - 6, 6),
+                        fontweight="bold",
+                        color="black" if mean_value < 0.1 else "white",
+                    )
+            else:
+                data_position = bar.get_x() + bar.get_width() / 2
+                if std_value > 0:
+                    ax.errorbar(
+                        data_position,
+                        mean_value,
+                        yerr=std_value,
+                        fmt="none",
+                        ecolor="black",
+                        elinewidth=1.1,
+                        capsize=3,
+                        capthick=1.1,
+                        zorder=4,
+                    )
+                label_value = mean_value + (
+                    std_value if std_value > 0 else 0
+                ) + 0.01
+                max_label_value = (
+                    label_value
+                    if max_label_value is None
+                    else max(max_label_value, label_value)
                 )
+                if show_values:
+                    bottom, top = ax.get_ylim()
+                    value_y = bottom + 0.02 * (top - bottom)
+                    ax.text(
+                        data_position,
+                        value_y,
+                        f"{mean_value:.2f}",
+                        ha="center",
+                        va="bottom",
+                        fontsize=max(fontsize - 6, 6),
+                        fontweight="bold",
+                        color="black" if mean_value < 0.1 else "white",
+                        rotation=90,
+                    )
 
-    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
-    ax.set_ylabel(
-        y_label or f"Mean {metric}",
-        fontsize=fontsize,
-        fontweight="bold",
-    )
+    if show_all_targets:
+        ax.set_xlabel(
+            y_label or f"Mean {metric}",
+            fontsize=fontsize,
+            fontweight="bold",
+        )
+        target_axis_label = (
+            "Target (number of datapoints)"
+            if x_label == "Number of datapoints"
+            else x_label
+        )
+        ax.set_ylabel(target_axis_label, fontsize=fontsize, fontweight="bold")
+    else:
+        ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+        ax.set_ylabel(
+            y_label or f"Mean {metric}",
+            fontsize=fontsize,
+            fontweight="bold",
+        )
     if title is not None:
         ax.set_title(title, fontsize=fontsize + 2)
     ax.tick_params(axis="both", labelsize=fontsize - 2)
-    ax.set_xticks(range(len(data_number_order)))
-    ax.set_xticklabels(
-        [
-            f"{int(value)}" if float(value).is_integer() else f"{value:g}"
-            for value in data_number_order
-        ],
-        rotation=x_tick_rotation,
-        ha="right" if x_tick_rotation else "center",
-    )
+    if show_all_targets:
+        ax.set_yticks(range(len(x_order)))
+        ax.set_yticklabels(x_tick_labels)
+    else:
+        ax.set_xticks(range(len(x_order)))
+        ax.set_xticklabels(
+            x_tick_labels,
+            rotation=x_tick_rotation,
+            ha="right" if x_tick_rotation else "center",
+        )
 
     if log_y:
         positive_values = pd.to_numeric(
@@ -5930,24 +6093,42 @@ def plot_hybridization_performance_vs_data_number(
         )
         if (positive_values.dropna() <= 0).any():
             raise ValueError("log_y=True requires all plotted values to be positive.")
-        ax.set_yscale("log")
+        if show_all_targets:
+            ax.set_xscale("log")
+        else:
+            ax.set_yscale("log")
 
     if y_lim is not None:
-        ax.set_ylim(*y_lim)
+        if show_all_targets:
+            ax.set_xlim(*y_lim)
+        else:
+            ax.set_ylim(*y_lim)
     elif log_y:
-        ax.set_ylim(
-            bottom=pd.to_numeric(
-                summary_df[f"{metric}_mean"],
-                errors="coerce",
-            ).min() * 0.8
-        )
+        metric_minimum = pd.to_numeric(
+            summary_df[f"{metric}_mean"],
+            errors="coerce",
+        ).min() * 0.8
+        if show_all_targets:
+            ax.set_xlim(left=metric_minimum)
+        else:
+            ax.set_ylim(bottom=metric_minimum)
     elif str(metric).strip().lower() in {"r2", "oof_r2"}:
-        ax.set_ylim(0, 1.05)
+        if show_all_targets:
+            ax.set_xlim(0, 1.05)
+        else:
+            ax.set_ylim(0, 1.05)
     elif is_scalar_metric or not _metric_higher_is_better(metric):
-        ax.set_ylim(bottom=0)
-    if max_label_y is not None:
-        bottom, top = ax.get_ylim()
-        ax.set_ylim(bottom, max(top, max_label_y + 0.05))
+        if show_all_targets:
+            ax.set_xlim(left=0)
+        else:
+            ax.set_ylim(bottom=0)
+    if max_label_value is not None:
+        if show_all_targets:
+            left, right = ax.get_xlim()
+            ax.set_xlim(left, max(right, max_label_value + 0.05))
+        else:
+            bottom, top = ax.get_ylim()
+            ax.set_ylim(bottom, max(top, max_label_value + 0.05))
 
     legend = ax.get_legend()
     if legend is not None:
@@ -6131,22 +6312,23 @@ if __name__ == "__main__":
     plot_hybridization_performance_vs_data_number(
         df=result_df,
         metric="OOF_R2",
-        model="GPytorchMAP",
-        fp_kernels=["TanimotoRBF"],
-        count_kernels=["RBF"],
+        model="MGK",
+        fp_kernels=["Graph"],
+        count_kernels=["Matern32"],
+        show_all_targets=True,
         mixing_methods=[
                         "sum",
                         "product",
-                        # "(count:+)x(fp:x)",
-                        "(count:+)x(fp:+)",
-                        "(count:x)+(fp:x)"
+                        "(count:+)x(Graph:x)",
+                        # "(count:+)x(Graph:+)",
+                        "(count:x)+(Graph:x)"
                         ],
         y_label="R² (OOF)",
         fontsize=17,
-        figsize=(11, 6),
+        figsize=(11, 8),
         show=True,
         save_dir=HERE / "result_analysis"/"absolute_metric"/"hybridization_comparison",
-        file_name="r2_GPytorchMAP_SK_TanimotoRBF_RBF_vs_data_number.png",
+        file_name="r2_MGK_all_config_vs_data_number_all_targets.png",
     )
 
 
