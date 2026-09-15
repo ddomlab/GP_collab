@@ -35,10 +35,13 @@ from filter_data import sanitize_dataset
 HERE: Path = Path(__file__).resolve().parent
 
 
-def set_globals(Test: bool=False) -> None:
+def set_globals(Test: bool=False, ood_eval: bool=False) -> None:
     global SEEDS, N_FOLDS, BO_ITER
     if not Test:
-        SEEDS = [6, 13, 42]
+        if ood_eval:
+            SEEDS = [42]
+        else:
+            SEEDS = [6, 13, 42]
         N_FOLDS = 5
         BO_ITER = 42
     else:
@@ -62,6 +65,7 @@ def train_regressor(
     hyperparameter_optimization: bool=True,
     cutoff:Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     imputer: Optional[str] = None,
+    OOD_evaluation:bool=False,
     Test:bool=False,
     **keyword,
     ) -> None:
@@ -69,12 +73,11 @@ def train_regressor(
         you should change the name here for prepare
         """
             #seed scores and seed prediction
-        set_globals(Test)
+        set_globals(Test, OOD_evaluation)
         start = time.time()
         scores, predictions = _prepare_data(
                                             dataset=dataset,
                                             features_impute= features_impute,
-                                            special_impute= special_impute,
                                             structural_features=structural_features,
                                             unroll=unroll,
                                             numerical_feats = numerical_feats,
@@ -85,10 +88,11 @@ def train_regressor(
                                             imputer=imputer,
                                             cutoff=cutoff,
                                             hyperparameter_optimization=hyperparameter_optimization,
+                                            OOD_evaluation=OOD_evaluation,
                                             **keyword
                                             )
         
-        if keyword.get("clustering_method",None) is None:
+        if OOD_evaluation is False:
             scores = process_scores(scores)
             end = time.time()
             scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
@@ -171,7 +175,6 @@ def _prepare_data(
     target_features: list[str],
     regressor_type: str,
     features_impute: Optional[list[str]]=None,
-    special_impute: Optional[str]=None,
     structural_features: Optional[list[str]]=None,
     numerical_feats: Optional[list[str]]=None,
     unroll: Union[dict, list, None] = None,
@@ -182,6 +185,7 @@ def _prepare_data(
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     kernel_type: Optional[Dict]=None,
     kernel_mixing_method: Optional[str]=None,
+    OOD_evaluation: bool=False,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -252,6 +256,7 @@ def _prepare_data(
                             kernel_parameters=mgk_kernel_config,
                             target_transformer=target_transformer,
                             cluster_group=cluster_group,
+                            OOD_evaluation=OOD_evaluation,
                             **kwargs
                             )
         y = mgk_dataset.y
@@ -293,13 +298,14 @@ def _prepare_data(
                                 kernel_type=kernel_type,
                                 kernel_mixing_method=kernel_mixing_method,
                                 cluster_group=cluster_group,
+                                OOD_evaluation=OOD_evaluation,
                                 **kwargs,
                                 )
     
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = (
         predication
-        if cluster_group is not None
+        if OOD_evaluation is True
         else pd.concat([predication, y_frame], axis=1)
     )
     return score, combined_prediction_ground_truth
@@ -340,6 +346,30 @@ def grouped_predictions_to_dataframe(predictions: dict) -> pd.DataFrame:
     return prediction_frame
 
 
+def permute_feature_group(
+    df: pd.DataFrame,
+    features_to_permute: Union[str, list[str]],
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """Jointly shuffle a group of feature columns across rows.
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("df must be a pandas DataFrame.")
+
+    features = (
+        [features_to_permute]
+        if isinstance(features_to_permute, str)
+        else list(features_to_permute)
+    )
+    result = df.copy()
+
+    row_order = np.random.default_rng(random_state).permutation(len(df))
+    for feature in features:
+        result[feature] = df[feature].array.take(row_order)
+
+    return result
+
+
 def run(
     X=None, y=None,
     regressor_type: str=None,
@@ -351,7 +381,8 @@ def run(
     kernel_parameters: Optional[Any]=None,
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
-    cluster_group: Optional[str]=None,
+    cluster_group: Optional[pd.Series]=None,
+    OOD_evaluation: bool=False,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -359,8 +390,8 @@ def run(
     seed_predictions: dict[int, np.ndarray] = {}
     n_jobs = 1 if kwargs.get("use_cuda", False) and torch.cuda.is_available() else -1
     n_jobs = 1 if "hmc" in regressor_type.lower() else n_jobs
-    seeds = [42] if cluster_group is not None else SEEDS
-    for seed in seeds:
+    X_original = X.copy() if X is not None else None
+    for seed in SEEDS:
 
         print(f"Running seed: {seed}")
         cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
@@ -433,28 +464,10 @@ def run(
                 search_space = get_regressor_search_space(regressor_type)
                 skop_scoring = "neg_root_mean_squared_error"
 
-                if y.shape[1] > 1:
-                    y_transform_regressor = TransformedTargetRegressor(
-                    regressor = MultiOutputRegressor(
-                    estimator= optimized_models(regressor_type)
-                    ),
-                    transformer=y_transform,
-                    )
-                    
-                    search_space = {
-                    f"regressor__regressor__estimator__{key.split('__')[-1]}": value
-                    for key, value in search_space.items()
-                        }
-                else:
-                    y_transform_regressor = TransformedTargetRegressor(
-                            regressor= optimized_models(regressor_type),
-                            transformer=y_transform,
-                    )
-
                 preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
                 regressor :Pipeline= Pipeline(steps=[
                             ("preprocessor", preprocessor),
-                            ("regressor", y_transform_regressor),
+                            ("regressor", optimized_models(regressor_type)),
                                 ])
 
                 regressor.set_output(transform="pandas")
@@ -479,6 +492,14 @@ def run(
                                         )
                 scores["best_params"] = regressor_params
             else:
+                if kwargs.get("permute_features", False):
+                    fp_features = [
+                            column
+                            for group_name, columns in features_group.items()
+                            if group_name.startswith("fp_")
+                            for column in columns
+                        ]
+                    X = permute_feature_group(X_original, features_to_permute=fp_features, random_state=seed)
                 model = optimized_models(
                                         regressor_type,
                                         feat_group=features_group,
@@ -527,7 +548,7 @@ def run(
                                             X, y, 
                                             cv_outer,
                                             cluster_group=cluster_group,
-                                            cluster_validation_mode="both",
+                                            ood_validation_mode="both",
                                             return_estimator=False,
                                             return_tree_importances=True,
                                             UQ=True,
@@ -653,7 +674,7 @@ def get_target_transformer(y_transformer:str) -> Pipeline:
     return transforms[y_transformer] # StandardScaler to standardize the target
 
 
-def get_default_kfold_splitter(n_splits: int,random_state:int, cluster_group: Optional[str]=None) -> Union[KFold, StratifiedKFold, LeaveOneGroupOut]:
+def get_default_kfold_splitter(n_splits: int,random_state:int, cluster_group: Optional[pd.Series]=None) -> Union[KFold, StratifiedKFold, LeaveOneGroupOut]:
     if cluster_group is not None:
         return LeaveOneGroupOut()
     return KFold(n_splits=n_splits, shuffle=True, random_state=random_state)

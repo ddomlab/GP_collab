@@ -504,24 +504,24 @@ def cross_validate(
     return_estimator,
     return_tree_importances,
     cluster_group=None,
-    cluster_validation_mode="ood",
+    ood_validation_mode="ood",
 ):
     """
     Cross-validation supporting:
 
-        cluster_validation_mode="ood"
+        ood_validation_mode="ood"
             Leave-one-group-out only.
 
-        cluster_validation_mode="iid"
+        ood_validation_mode="iid"
             Repeated random IID splits matched to each group's test-set size.
 
-        cluster_validation_mode="both"
+        ood_validation_mode="both"
             Run both OOD and matched IID validation.
 
     If cluster_group is None, standard CV behavior is used.
     """
 
-    if cluster_validation_mode not in {"ood", "iid", "both"}:
+    if ood_validation_mode not in {"ood", "iid", "both"}:
         raise ValueError(
             "validation_mode must be one of: "
             "'ood', 'iid', or 'both'."
@@ -648,7 +648,7 @@ def cross_validate(
         # OOD VALIDATION
         # =====================================================
 
-        if cluster_validation_mode in {"ood", "both"}:
+        if ood_validation_mode in {"ood", "both"}:
 
             ood_results = Parallel(**parallel_kwargs)(
                 delayed(_fit_predict_score)(
@@ -716,7 +716,7 @@ def cross_validate(
         # MATCHED IID VALIDATION
         # =====================================================
 
-        if cluster_validation_mode in {"iid", "both"}:
+        if ood_validation_mode in {"iid", "both"}:
 
             IID_SEEDS = [17, 29, 43, 71, 97]
 
@@ -804,8 +804,8 @@ def cross_validate_regressor(
     return_estimator:bool=False,
     return_tree_importances:bool=False,
     n_jobs:int=1,     
-    cluster_group: Optional[str]=None,
-    cluster_validation_mode: str="ood"
+    cluster_group: Optional[pd.Series]=None,
+    ood_validation_mode: str="ood"
     ) -> tuple[dict[str, float], dict[str, np.ndarray]]:
 
 
@@ -828,6 +828,6 @@ def cross_validate_regressor(
             return_estimator=return_estimator,
             return_tree_importances=return_tree_importances,
             cluster_group=cluster_group,
-            cluster_validation_mode=cluster_validation_mode
+            ood_validation_mode=ood_validation_mode
             )
         return score, predictions

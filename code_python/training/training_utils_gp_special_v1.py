@@ -1,0 +1,649 @@
+import json
+from pathlib import Path
+import time
+from typing import Callable, Optional, Union, Dict, Tuple, Any
+import torch
+
+import numpy as np
+import pandas as pd
+from collections import defaultdict
+
+from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
+from sklearn.model_selection import KFold, StratifiedKFold, LeaveOneGroupOut
+from sklearn.pipeline import Pipeline
+from skopt import BayesSearchCV
+from sklearn.multioutput import MultiOutputRegressor
+
+## packages
+from data_handling import remove_unserializable_keys
+from filter_data import filter_dataset
+from all_factories import (
+                            transforms,
+                            get_regressor_search_space,
+                            imputer_factory
+                            )
+from all_factories import optimized_models
+
+from imputation_normalization import preprocessing_workflow
+from scoring_validation import (
+    cross_validate_regressor,
+    process_scores,
+)
+from utils import split_for_training
+from filter_data import sanitize_dataset
+
+HERE: Path = Path(__file__).resolve().parent
+
+
+def set_globals(Test: bool=False, ood_eval: bool=False) -> None:
+    global SEEDS, N_FOLDS, BO_ITER
+    if not Test:
+        if ood_eval:
+            SEEDS = [42]
+        else:
+            SEEDS = [6, 13, 42]
+        N_FOLDS = 5
+        BO_ITER = 42
+    else:
+        SEEDS = [42]
+        N_FOLDS = 2
+        BO_ITER = 1
+
+
+
+def train_regressor(
+    dataset: pd.DataFrame,
+    features_impute: Optional[list[str]],
+    special_impute: Optional[str],
+    structural_features: Optional[list[str]],
+    numerical_feats: Optional[list[str]],
+    unroll: Union[dict[str, str], list[dict[str, str]], None],
+    regressor_type: str,
+    target_features: list[str],
+    feat_transformer: str=None,
+    target_transformer:str=None,
+    hyperparameter_optimization: bool=True,
+    cutoff:Dict[str, Tuple[Optional[float], Optional[float]]]=None,
+    imputer: Optional[str] = None,
+    OOD_evaluation:bool=False,
+    Test:bool=False,
+    **keyword,
+    ) -> None:
+        """
+        you should change the name here for prepare
+        """
+            #seed scores and seed prediction
+        set_globals(Test, OOD_evaluation)
+        start = time.time()
+        scores, predictions = _prepare_data(
+                                            dataset=dataset,
+                                            features_impute= features_impute,
+                                            structural_features=structural_features,
+                                            unroll=unroll,
+                                            numerical_feats = numerical_feats,
+                                            target_features=target_features,
+                                            regressor_type=regressor_type,
+                                            transform_type=feat_transformer,
+                                            target_transformer=target_transformer,
+                                            imputer=imputer,
+                                            cutoff=cutoff,
+                                            hyperparameter_optimization=hyperparameter_optimization,
+                                            OOD_evaluation=OOD_evaluation,
+                                            **keyword
+                                            )
+        
+        if OOD_evaluation is False:
+            scores = process_scores(scores)
+            end = time.time()
+            scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
+  
+        return scores, predictions
+        
+
+def create_feature_groups(
+    unrolled_feats: Optional[list[str]], 
+    unroll_info: Union[dict, list, None], 
+    numerical_feats: Optional[list[str]]
+) -> dict[str, list[str]]:
+    """Map available feature families to the columns consumed by GP kernels."""
+    feat_group: dict[str, list[str]] = {}
+    unrolled_feats = list(unrolled_feats or [])
+    numerical_feats = list(numerical_feats or [])
+
+    if unrolled_feats and unroll_info:
+        units: list[str] = []
+        unroll_configs = (
+            [unroll_info] if isinstance(unroll_info, dict) else unroll_info
+        )
+        if not isinstance(unroll_configs, list) or not all(
+            isinstance(config, dict) for config in unroll_configs
+        ):
+            raise TypeError(
+                "unroll_info must be a dictionary, a list of dictionaries, "
+                "or None."
+            )
+
+        for config in unroll_configs:
+            config_units = config.get("unit_name")
+            if config_units is None:
+                continue
+            if isinstance(config_units, str):
+                units.append(config_units)
+            else:
+                units.extend(config_units)
+
+        # Preserve the declared unit order while avoiding duplicate groups.
+        units = list(dict.fromkeys(units))
+
+        for unit in units:
+            unit_cols = [
+                col for col in unrolled_feats
+                if col.startswith((f"{unit}_", f"{unit} "))
+            ]
+            if unit_cols:
+                feat_group[f'fp_{unit}'] = unit_cols
+
+        grouped_structural_cols = {
+            col
+            for group_name, columns in feat_group.items()
+            if group_name.startswith("fp_")
+            for col in columns
+        }
+        ungrouped_cols = [
+            col for col in unrolled_feats
+            if col not in grouped_structural_cols
+        ]
+        if ungrouped_cols:
+            raise ValueError(
+                "Could not assign structural columns to fingerprint groups: "
+                f"{ungrouped_cols}. Check unroll_info['unit_name']."
+            )
+
+    elif unrolled_feats:
+        raise ValueError(
+            "unroll_info is required when structural features are present."
+        )
+
+    if numerical_feats:
+        feat_group['count'] = numerical_feats
+
+    return feat_group
+
+
+def _prepare_data(
+    dataset: pd.DataFrame,
+    target_features: list[str],
+    regressor_type: str,
+    features_impute: Optional[list[str]]=None,
+    structural_features: Optional[list[str]]=None,
+    numerical_feats: Optional[list[str]]=None,
+    unroll: Union[dict, list, None] = None,
+    transform_type: str = "Standard",
+    target_transformer:str = None,
+    hyperparameter_optimization: bool = True,
+    imputer: Optional[str] = None,
+    cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
+    kernel_type: Optional[Dict]=None,
+    kernel_mixing_method: Optional[str]=None,
+    OOD_evaluation: bool=False,
+    **kwargs,
+    ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
+
+
+    """
+    here you should change the names
+    """
+    clustering_method = kwargs.get("clustering_method")
+    cluster_group = dataset[clustering_method] if clustering_method is not None else None
+
+    if "mgk" in regressor_type.lower():
+        from mgktools.data.data import Dataset
+        from mgktools.hyperparameters import additive, product
+        from mgktools.kernels.utils import get_kernel_config
+
+        graph_kernel_files = {
+            "product": [product],
+            "sum": [additive],
+            "(count:+)x(graph:x)": [product],
+            "(count:+)x(graph:+)": [additive],
+            "(count:x)+(graph:x)": [product],
+        }
+
+        df = dataset[structural_features + numerical_feats + target_features]
+        df = sanitize_dataset(dataset, target_features, dropna=True)
+        if features_impute:
+            imp = imputer_factory[imputer]
+            df[features_impute] = imp.fit_transform(df[features_impute])
+        mgk_dataset = Dataset.from_df(
+                          df=df,
+                          smiles_columns=structural_features,
+                          features_columns=numerical_feats,
+                          targets_columns=target_features,
+                          preserve_dataframe=True,
+                          )
+        mgk_dataset.set_status(graph_kernel_type='graph', features_generators=None, features_combination=None)
+        mgk_dataset.create_graphs(n_jobs=4)
+        mgk_dataset.unify_datatype()
+        # "per_feature"
+        # print(mgk_dataset)
+        mgk_kernel_config = get_kernel_config(
+                        dataset=mgk_dataset,
+                        graph_kernel_type="graph",
+                        mgk_hyperparameters_files=graph_kernel_files[kernel_mixing_method]*len(structural_features),
+                        features_kernel_type=kernel_type["count"],
+                        features_hyperparameters_file=f"{kernel_type['count']}.json",
+                        hybrid_rule=kernel_mixing_method,
+                        feature_mode=kwargs.get("kernel_feature_mode", None)
+                        )
+
+        preprocessor: Pipeline = preprocessing_workflow(
+                                                    # imputer=imputer,
+                                                    # feat_to_impute=features_impute,
+                                                    # numerical_feat=numerical_feats,
+                                                    # structural_feat=unrolled_feats,
+                                                    # special_column=special_impute,
+                                                    regressor_type=regressor_type,
+                                                    scaler=transform_type
+                                                    )
+
+        score,predication = run(
+                            # X,
+                            # y,
+                            full_dataset=mgk_dataset,
+                            preprocessor=preprocessor,
+                            regressor_type=regressor_type,
+                            hyperparameter_optimization=hyperparameter_optimization,
+                            kernel_parameters=mgk_kernel_config,
+                            target_transformer=target_transformer,
+                            cluster_group=cluster_group,
+                            OOD_evaluation=OOD_evaluation,
+                            **kwargs
+                            )
+        y = mgk_dataset.y
+    else:
+        start = time.time()
+        X, y, unrolled_feats, kernel_parameters = filter_dataset(
+                                                raw_dataset=dataset,
+                                                structure_feats=structural_features,
+                                                scalar_feats=numerical_feats,
+                                                target_feats=target_features,
+                                                cutoff=cutoff,
+                                                dropna = True,
+                                                unroll=unroll,
+                                                feat_to_impute=features_impute,
+                                                imputer=imputer,
+                                                )
+        final_time = time.time() - start
+        print(f"Data filtering and preprocessing took {final_time:.2f} seconds.")
+
+        # Pipline workflow here and preprocessor
+        preprocessor: Pipeline = preprocessing_workflow(
+                                    regressor_type=regressor_type,
+                                    numerical_feat=numerical_feats,
+                                    structural_feat=unrolled_feats,
+                                    scaler=transform_type
+                                )
+        
+        preprocessor.set_output(transform="pandas")
+        feat_group = create_feature_groups(unrolled_feats, unroll, numerical_feats)
+        score,predication = run(
+                                X,
+                                y,
+                                features_group=feat_group,
+                                preprocessor=preprocessor,
+                                target_transformer=target_transformer,
+                                regressor_type=regressor_type,
+                                hyperparameter_optimization=hyperparameter_optimization,
+                                kernel_parameters=kernel_parameters,
+                                kernel_type=kernel_type,
+                                kernel_mixing_method=kernel_mixing_method,
+                                cluster_group=cluster_group,
+                                OOD_evaluation=OOD_evaluation,
+                                **kwargs,
+                                )
+    
+    y_frame = pd.DataFrame(y.flatten(),columns=target_features)
+    combined_prediction_ground_truth = (
+        predication
+        if OOD_evaluation is True
+        else pd.concat([predication, y_frame], axis=1)
+    )
+    return score, combined_prediction_ground_truth
+
+
+def grouped_predictions_to_dataframe(predictions: dict) -> pd.DataFrame:
+    iid_seeds = [17, 29, 43, 71, 97]
+    records = []
+
+    if "ood" in predictions:
+        ood_predictions = predictions["ood"]
+        for cluster, y_pred in ood_predictions["y_pred"].items():
+            y_std = ood_predictions["y_std"][cluster]
+            records.append({
+                "validation": "ood",
+                "cluster": cluster,
+                "iid_seed": None,
+                "y_pred": np.asarray(y_pred),
+                "y_std": np.asarray(y_std) if y_std is not None else None,
+            })
+
+    if "iid" in predictions:
+        iid_predictions = predictions["iid"]
+        for cluster, prediction_runs in iid_predictions["y_pred"].items():
+            for run_idx, y_pred in enumerate(prediction_runs):
+                y_std = iid_predictions["y_std"][cluster][run_idx]
+                records.append({
+                    "validation": "iid",
+                    "cluster": cluster,
+                    "iid_seed": iid_seeds[run_idx],
+                    "y_pred": np.asarray(y_pred),
+                    "y_std": np.asarray(y_std) if y_std is not None else None,
+                })
+
+    prediction_frame = pd.DataFrame.from_records(records)
+    if not prediction_frame.empty:
+        prediction_frame["iid_seed"] = prediction_frame["iid_seed"].astype("Int64")
+    return prediction_frame
+
+def permute_feature_group(df: pd.DataFrame, features_to_permute, random_state: int = 42) -> pd.DataFrame:
+    pass
+
+def run(
+    X=None, y=None,
+    regressor_type: str=None,
+    full_dataset:Optional[Any]=None,
+    features_group: Optional[dict[str, list[int]]]=None,
+    preprocessor: Optional[Union[ColumnTransformer, Pipeline]]=None, 
+    target_transformer:str=None, 
+    hyperparameter_optimization: bool = False,
+    kernel_parameters: Optional[Any]=None,
+    kernel_type: Optional[str]=None,
+    kernel_mixing_method: Optional[str]=None,
+    cluster_group: Optional[pd.Series]=None,
+    OOD_evaluation: bool=False,
+    **kwargs,
+    ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
+
+    seed_scores: dict[int, dict[str, float]] = {}
+    seed_predictions: dict[int, np.ndarray] = {}
+    n_jobs = 1 if kwargs.get("use_cuda", False) and torch.cuda.is_available() else -1
+    n_jobs = 1 if "hmc" in regressor_type.lower() else n_jobs
+    for seed in SEEDS:
+
+        print(f"Running seed: {seed}")
+        cv_outer = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
+        #### Clustering Method would be group (series)
+
+        if "mgk" in regressor_type.lower():
+            X, y = full_dataset.X, full_dataset.y
+            if hyperparameter_optimization:
+                from mgktools.hyperparameters.optuna import bayesian_optimization
+                save_dir =kwargs.get("hyperparameter_save_dir")
+                save_dir = Path(save_dir) / f"_seed({seed})"
+                save_dir.mkdir(parents=True, exist_ok=True)
+                alpha = bayesian_optimization(
+                    save_dir=str(save_dir),
+                    datasets=[full_dataset],
+                    dataset_val=None,
+                    dataset_test=None,
+                    kernel_config=kernel_parameters,
+                    model_type='gpr',
+                    task_type='regression',
+                    metric='rmse',
+                    cross_validation='kFold',
+                    split_type='random',
+                    # split_sizes=[.8,.2],
+                    num_folds=N_FOLDS,
+                    n_splits=N_FOLDS,
+                    num_iters=BO_ITER,
+                    alpha=0.01,
+                    alpha_bounds=(0.001, 0.1),
+                    d_alpha=0.001,
+                    seed=seed,
+                    return_alpha=True,
+                    target_transformer=target_transformer,
+                    feature_transformer=preprocessor,
+                )
+
+                model = optimized_models(regressor_type, 
+                                         graph_kernel_config=kernel_parameters, 
+                                         alpha=float(alpha),
+                                         target_transformer=target_transformer
+                                         )
+                regressor :Pipeline= Pipeline(steps=[
+                                ("preprocessor", preprocessor),
+                                ("regressor", model),
+                                ])
+                scores, predictions = cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs,
+                                                                cv=cv_outer, UQ=True, return_ls=True, cluster_group=cluster_group)
+            else:
+                model = optimized_models(regressor_type, 
+                                         graph_kernel_config=kernel_parameters,
+                                         target_transformer=target_transformer,
+                                         **kwargs)
+
+                regressor :Pipeline= Pipeline(steps=[
+                                ("preprocessor", preprocessor),
+                                ("regressor", model),
+                                ])
+                scores, predictions = cross_validate_regressor(
+                                                                regressor, 
+                                                                regressor_type, X, y, 
+                                                                n_jobs=n_jobs,
+                                                                cv=cv_outer, 
+                                                                cluster_group=cluster_group,
+                                                                return_ls=True, 
+                                                                UQ=True, 
+                                                                )
+        else:
+            
+            if hyperparameter_optimization:
+                search_space = get_regressor_search_space(regressor_type)
+                skop_scoring = "neg_root_mean_squared_error"
+
+                preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                regressor :Pipeline= Pipeline(steps=[
+                            ("preprocessor", preprocessor),
+                            ("regressor", optimized_models(regressor_type)),
+                                ])
+
+                regressor.set_output(transform="pandas")
+                cv_in = get_default_kfold_splitter(n_splits=N_FOLDS,random_state=seed, cluster_group=cluster_group)
+                best_estimator, regressor_params = _optimize_hyperparams(
+                                                                        X,
+                                                                        y,
+                                                                        cv_outer=cv_outer,
+                                                                        cv_in=cv_in,
+                                                                        n_iter=BO_ITER,
+                                                                        seed=seed,
+                                                                        regressor_type=regressor_type,
+                                                                        search_space=search_space,
+                                                                        regressor=regressor,
+                                                                        scoring=skop_scoring,
+                                                                        )
+                
+                scores, predictions = cross_validate_regressor(
+                                        best_estimator, regressor_type, X, y, cv_outer,
+                                        n_jobs=n_jobs,
+                                        cluster_group=cluster_group,
+                                        )
+                scores["best_params"] = regressor_params
+            else:
+                model = optimized_models(
+                                        regressor_type,
+                                        feat_group=features_group,
+                                        kernel_parameters=kernel_parameters,
+                                        kernel_type=kernel_type,
+                                        kernel_mixing_method=kernel_mixing_method,
+                                        target_transformer=target_transformer,
+                                        **kwargs,
+                                        )
+                
+                preprocessor = 'passthrough' if len(preprocessor.steps) == 0 else preprocessor
+                y = y.flatten()
+
+                if "gp" in regressor_type.lower():
+                    regressor :Pipeline= Pipeline(steps=[
+                                            ("preprocessor", preprocessor),
+                                            ("regressor", model),
+                                                ]
+                                            )
+                    regressor.set_output(transform="pandas")
+                    scores, predictions = cross_validate_regressor(
+                                            regressor,
+                                            regressor_type, 
+                                            X, y,
+                                            cv_outer,
+                                            cluster_group=cluster_group,
+                                            n_jobs=n_jobs,
+                                            return_ls=True,
+                                            UQ=True
+                                            )
+                    
+                else:
+                    # y_transform = get_target_transformer(target_transformer)
+                    # y_transform_regressor = TransformedTargetRegressor(
+                    #                         regressor= model,
+                    #                         transformer=y_transform,
+                    #                         )
+                    regressor :Pipeline= Pipeline(steps=[
+                                            ("preprocessor", preprocessor),
+                                            ("regressor", model),
+                                                ]
+                                            )
+                    scores, predictions = cross_validate_regressor(
+                                            regressor, 
+                                            regressor_type, 
+                                            X, y, 
+                                            cv_outer,
+                                            cluster_group=cluster_group,
+                                            ood_validation_mode="both",
+                                            return_estimator=False,
+                                            return_tree_importances=True,
+                                            UQ=True,
+                                            n_jobs=-1
+                                            )
+
+        seed_scores[seed] = scores.copy()
+        seed_scores[seed].pop("estimator", None)
+
+        if cluster_group is not None:
+            seed_predictions = grouped_predictions_to_dataframe(predictions)
+        else:
+            seed_predictions[f"seed_{seed}_y_pred"] = np.asarray(predictions["y_pred"]).ravel()
+
+            if "y_std" in predictions:
+                seed_predictions[f"seed_{seed}_y_std"] = np.asarray(predictions["y_std"]).ravel()
+
+    if cluster_group is None:
+        seed_predictions = pd.DataFrame.from_dict(
+            seed_predictions,
+            orient="columns",
+        )
+
+    return seed_scores, seed_predictions
+
+
+
+def _to_torch_tensor(data):
+    """
+    Converts feature data (X) from DataFrame/NumPy to a float tensor
+    and moves it to CUDA if self.use_cuda is True.
+    """
+    if isinstance(data, pd.DataFrame):
+        data = data.to_numpy(dtype=np.float32)
+    elif isinstance(data, np.ndarray):
+        data = data.astype(np.float32)
+    
+    # Convert to tensor
+    tensor = torch.tensor(data, dtype=torch.float)
+    
+    # Move to device
+    return tensor
+
+
+
+class NumpyArrayEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, tuple):
+            return list(obj)
+        else:
+            return super(NumpyArrayEncoder, self).default(obj)
+
+
+def _optimize_hyperparams(
+    X, y, 
+    cv_outer, 
+    cv_in,seed: int,
+    n_iter:int,
+    regressor_type:str,
+    search_space:dict,
+    regressor: Pipeline,
+    scoring:Union[str,Callable]) -> tuple:
+
+    # Splitting for outer cross-validation loop
+    estimators: list[BayesSearchCV] = []
+    for train_index, _ in cv_outer.split(X, y):
+
+        X_train = split_for_training(X, train_index)
+        y_train = split_for_training(y, train_index)
+        # print(X_train)
+        # Splitting for inner hyperparameter optimization loop
+        # cv_inner = KFold(n_splits=N_FOLDS, shuffle=True, random_state=seed)
+        print("\n\n")
+        print(
+            "OPTIMIZING HYPERPARAMETERS FOR REGRESSOR", regressor_type, "\tSEED:", seed
+        )
+        # Bayesian hyperparameter optimization
+        bayes = BayesSearchCV(
+            regressor,
+            search_space,
+            n_iter=n_iter,
+            cv=cv_in,
+            n_jobs=-1,
+            random_state=seed,
+            refit=True,
+            scoring=scoring,
+            return_train_score=True,
+        )
+        bayes.fit(X_train, y_train)
+
+        print(f"\n\nBest parameters: {bayes.best_params_}\n\n")
+        estimators.append(bayes)
+
+    # Extract the best estimator from hyperparameter optimization
+    best_idx: int = np.argmax([est.best_score_ for est in estimators])
+    best_estimator: Pipeline = estimators[best_idx].best_estimator_
+    try:
+        regressor_params: dict = best_estimator.named_steps.regressor.get_params()
+        regressor_params = remove_unserializable_keys(regressor_params)
+    except:
+        regressor_params = {"bad params": "couldn't get them"}
+
+    return best_estimator, regressor_params
+
+
+
+def _pd_to_np(data):
+    if isinstance(data, pd.DataFrame):
+        return data.values
+    elif isinstance(data, np.ndarray):
+        return data
+    else:
+        raise ValueError("Data must be either a pandas DataFrame or a numpy array.")
+
+
+def get_target_transformer(y_transformer:str) -> Pipeline:
+    return transforms[y_transformer] # StandardScaler to standardize the target
+
+
+def get_default_kfold_splitter(n_splits: int,random_state:int, cluster_group: Optional[pd.Series]=None) -> Union[KFold, StratifiedKFold, LeaveOneGroupOut]:
+    if cluster_group is not None:
+        return LeaveOneGroupOut()
+    return KFold(n_splits=n_splits, shuffle=True, random_state=random_state)

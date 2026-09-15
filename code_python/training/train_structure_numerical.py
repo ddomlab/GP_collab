@@ -76,7 +76,7 @@ def main_structural_numerical(
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='hp_RF_differences',
-                # special_file_name='GPU',
+                special_file_name='random_fp_permutation' if kwargs.get("permute_features", False) else None,
                 **kwargs,
                 )
 
@@ -140,8 +140,10 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 output_dir_name=PAPER,
+                permute_features=True,
                 **representation_options,
                 **model_options,
+                
                 )
 
 
