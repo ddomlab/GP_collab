@@ -41,7 +41,7 @@ def set_globals(Test: bool=False, ood_eval: bool=False) -> None:
         if ood_eval:
             SEEDS = [42]
         else:
-            SEEDS = [6, 13, 42]
+            SEEDS = [6, 13, 42, 69, 100]
         N_FOLDS = 5
         BO_ITER = 42
     else:
