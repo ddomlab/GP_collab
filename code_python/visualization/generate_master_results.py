@@ -1,8 +1,8 @@
 """Build the consolidated CPU and GPU performance-result datasets.
 
-This module only defines the generation pipeline. Importing or running it does
-not build the datasets; call ``build_master_performance_data`` explicitly when
-new master-result files are required.
+Importing this module does not build datasets. Running it executes the
+selection in the ``__main__`` block; call ``build_master_performance_data``
+directly when using it from another module.
 """
 
 import json
@@ -80,13 +80,28 @@ OOF_SCORE_COLUMNS = [
     for metric in OOF_SCORE_METRICS
 ]
 TIME_COLUMNS = ["Running time (GPU)", "Running time (CPU)"]
-FeatureSet = Literal["count_only", "count_and_fingerprint"]
+FeatureSet = Literal[
+    "count_only",
+    "count_and_fingerprint",
+    "random_fp_permutation",
+]
 COUNT_ONLY_MODELS = ["RF", "XGBR", "NGB", "GPytorchMAP"]
 COUNT_ONLY_MIXING_METHODS = ["sum", "product"]
+RANDOM_FP_PERMUTATION_MODELS = ["GPytorchMAP"]
+RANDOM_FP_PERMUTATION_CONFIGS = [
+    ("TanimotoMatern32", "Matern32", "sum"),
+    ("TanimotoMatern32", "Matern32", "product"),
+    ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+    ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+]
 
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
-    valid_feature_sets = {"count_only", "count_and_fingerprint"}
+    valid_feature_sets = {
+        "count_only",
+        "count_and_fingerprint",
+        "random_fp_permutation",
+    }
     if feature_set not in valid_feature_sets:
         choices = ", ".join(sorted(valid_feature_sets))
         raise ValueError(f"feature_set must be one of: {choices}.")
@@ -114,6 +129,22 @@ def _score_file_stems(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
 ) -> List[str]:
+    if feature_set == "random_fp_permutation":
+        configuration = (fp_kernel, count_kernel, mixing_method)
+        if (
+            not use_gpu
+            or model not in RANDOM_FP_PERMUTATION_MODELS
+            or configuration not in RANDOM_FP_PERMUTATION_CONFIGS
+        ):
+            return []
+        return [
+            (
+                f"(ECFP3_count_512-COUNT)_"
+                f"({model}_{fp_kernel}-{count_kernel}_{mixing_method})"
+                "_hypOFF_Standard_Standard_random_fp_permutation_GPU_scores"
+            )
+        ]
+
     if _is_tree_model(model):
         if use_gpu:
             return []
@@ -566,13 +597,19 @@ def build_master_performance_data(
     ``feature_set="count_only"`` includes COUNT-only tree results and
     GPytorchMAP results for the Matern32, Matern52, and RBF count kernels with
     the ``sum`` and ``product`` mixing methods.
+    ``feature_set="random_fp_permutation"`` includes the GPU GPytorchMAP
+    results trained after randomly permuting fingerprint features. It uses the
+    TanimotoMatern32 fingerprint kernel, Matern32 count kernel, and the four
+    mixing methods present in those result files.
 
     Tree-model results are included in both device datasets. GP rows use only
     the requested device, with no cross-device fallback. Only precomputed
     Kendall's W values are retained for feature stability.
 
-    When ``save_path`` is provided, outputs are written to
-    ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``.
+    When ``save_path`` is provided, standard modes write
+    ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
+    fingerprint permutation results are GPU-only, so that mode writes only
+    ``<save_path>_GPU.{pkl,csv}``.
     """
     feature_set = _validate_feature_set(feature_set)
     metrics = list(
@@ -581,14 +618,21 @@ def build_master_performance_data(
         )
     )
 
-    for device in ("CPU", "GPU"):
+    devices = (
+        ("GPU",)
+        if feature_set == "random_fp_permutation"
+        else ("CPU", "GPU")
+    )
+    if feature_set == "count_only":
+        models = COUNT_ONLY_MODELS
+    elif feature_set == "random_fp_permutation":
+        models = RANDOM_FP_PERMUTATION_MODELS
+    else:
+        models = MODELS
+
+    for device in devices:
         use_gpu = device == "GPU"
         rows = []
-        models = (
-            COUNT_ONLY_MODELS
-            if feature_set == "count_only"
-            else MODELS
-        )
 
         for paper_name, paper_info in PAPER.items():
             for target in paper_info["target"]:
@@ -617,7 +661,9 @@ def build_master_performance_data(
                         )
                         continue
 
-                    if feature_set == "count_only":
+                    if feature_set == "random_fp_permutation":
+                        configurations = RANDOM_FP_PERMUTATION_CONFIGS
+                    elif feature_set == "count_only":
                         configurations = (
                             (None, count_kernel, mixing_method)
                             for count_kernel in count_kernels
@@ -671,14 +717,14 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "count_only"
+    feature_set: FeatureSet = "random_fp_permutation"
     output_name = {
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_only": "Tree_and_GP_COUNT_only",
+        "random_fp_permutation": "GP_random_fp_permutation",
     }[feature_set]
     build_master_performance_data(
         save_path=RESULTS / "master_performance_data" / output_name,
         score_metrics=DEFAULT_SCORE_METRICS,
         feature_set=feature_set,
     )
-

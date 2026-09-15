@@ -1,6 +1,8 @@
 """Analyze model performance across datasets of different sizes."""
 
 import os
+import re
+from hashlib import sha1
 from pathlib import Path
 from typing import Any, Optional
 
@@ -27,6 +29,14 @@ from visualize_gp import (
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE.parent.parent / "results"
 MASTER_DATA = RESULTS / "master_performance_data"
+SEPARATE_DATASET_DIR = (
+    HERE
+    / "result_analysis"
+    / "absolute_metric"
+    / "hybridization_comparison"
+    / "separate_dataset"
+)
+
 
 def plot_hybridization_performance_vs_data_number(
     df: pd.DataFrame,
@@ -522,39 +532,374 @@ def plot_hybridization_performance_vs_data_number(
     return summary_df
 
 
+def _safe_filename_component(value: Any) -> str:
+    """Return a filesystem-safe, readable filename component."""
+    component = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value)).strip("._")
+    return component or "unnamed"
+
+
+def _compact_filename_component(value: Any, max_length: int = 60) -> str:
+    """Shorten long components while retaining a collision-resistant suffix."""
+    component = _safe_filename_component(value)
+    if len(component) <= max_length:
+        return component
+    digest = sha1(component.encode("utf-8")).hexdigest()[:8]
+    return f"{component[:max_length - len(digest) - 1]}_{digest}"
+
+
+def plot_regular_vs_permuted_fp_performance_by_target(
+    regular_df: pd.DataFrame,
+    permuted_df: pd.DataFrame,
+    metric: str = "OOF_R2",
+    model: str = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    figsize: tuple = (7, 5),
+    fontsize: int = 13,
+    y_label: Optional[str] = None,
+    y_lim: Optional[tuple] = None,
+    log_y: bool = False,
+    show_values: bool = True,
+    show: bool = False,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = SEPARATE_DATASET_DIR,
+) -> pd.DataFrame:
+    """Compare regular and permuted-fingerprint performance for each target.
+
+    One grouped bar chart is created per dataset-target pair. Mixing methods
+    are shown on the x-axis and the two training conditions are placed next to
+    each other. A method/configuration is included only when both master
+    datasets contain a valid score for it.
+
+    ``fp_kernels`` and ``count_kernels`` accept either one kernel or a list.
+    When multiple matching kernel configurations are selected, their values
+    are averaged once for each mixing method and training condition. With one
+    matching configuration, its value is retained.
+
+    The returned DataFrame contains the plotted mean, standard deviation,
+    value count, and output path for every condition and mixing method.
+    """
+    selected_fp_kernels = _selection_values(fp_kernels) or ["TanimotoMatern32"]
+    selected_count_kernels = _selection_values(count_kernels) or ["Matern32"]
+    selected_methods = _selection_values(mixing_methods) or list(
+        DEFAULT_MIXING_METHODS
+    )
+    condition_frames = []
+    for condition, source_df in (
+        ("COUNT + FP", regular_df),
+        ("COUNT + permuted FP", permuted_df),
+    ):
+        expanded = _expand_master_scores_for_profile(
+            source_df,
+            metric=metric,
+            model=model,
+            fp_kernels=selected_fp_kernels,
+            count_kernels=selected_count_kernels,
+            mixing_methods=selected_methods,
+        )
+        if expanded.empty:
+            continue
+        expanded = expanded.dropna(subset=[metric, "mixing method"]).copy()
+        expanded["training condition"] = condition
+        condition_frames.append(expanded)
+
+    if len(condition_frames) != 2:
+        raise ValueError(
+            "Both regular_df and permuted_df must contain valid "
+            f"{metric} values for model={model}, "
+            f"fp_kernels={selected_fp_kernels}, and "
+            f"count_kernels={selected_count_kernels}."
+        )
+
+    comparison_df = pd.concat(condition_frames, ignore_index=True)
+    pair_columns = [
+        "dataset",
+        "target",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+    paired_methods = (
+        comparison_df.groupby(pair_columns, dropna=False)["training condition"]
+        .nunique()
+        .loc[lambda counts: counts == 2]
+        .index
+    )
+    paired_method_df = pd.DataFrame(
+        paired_methods.tolist(),
+        columns=pair_columns,
+    )
+    comparison_df = comparison_df.merge(
+        paired_method_df,
+        on=pair_columns,
+        how="inner",
+    )
+    if comparison_df.empty:
+        raise ValueError(
+            "No dataset-target and mixing-method combinations have valid "
+            "scores in both the regular and permuted master datasets."
+        )
+
+    comparison_df["hybridization method"] = comparison_df["mixing method"].map(
+        lambda method: _mixing_method_label(method)
+        .replace("ΣF", "F")
+        .replace("ΠF", "F")
+    )
+    summary_df = (
+        comparison_df.groupby(
+            [
+                "dataset",
+                "target",
+                "mixing method",
+                "hybridization method",
+                "training condition",
+            ],
+            dropna=False,
+        )[metric]
+        .agg(["mean", "std", "count"])
+        .reset_index()
+        .rename(
+            columns={
+                "mean": f"{metric}_mean",
+                "std": f"{metric}_std",
+                "count": f"{metric}_count",
+            }
+        )
+    )
+    summary_df[f"{metric}_std"] = summary_df[f"{metric}_std"].fillna(0.0)
+    summary_df["output path"] = None
+
+    method_rank = {
+        str(method).lower(): index
+        for index, method in enumerate(selected_methods)
+    }
+    condition_order = ["COUNT + FP", "COUNT + permuted FP"]
+    condition_palette = {
+        "COUNT + FP": "#4C78A8",
+        "COUNT + permuted FP": "#E45756",
+    }
+    target_counts = summary_df[["dataset", "target"]].drop_duplicates()[
+        "target"
+    ].value_counts()
+
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+
+    group_columns = ["dataset", "target"]
+    for (dataset, target), target_df in summary_df.groupby(
+        group_columns,
+        sort=False,
+    ):
+        target_df = target_df.copy()
+        target_df["_method_rank"] = target_df["mixing method"].map(
+            lambda method: method_rank.get(
+                str(method).lower(),
+                len(method_rank),
+            )
+        )
+        target_df = target_df.sort_values(
+            ["_method_rank", "mixing method", "training condition"],
+            kind="stable",
+        )
+        method_order = (
+            target_df[["hybridization method", "_method_rank"]]
+            .drop_duplicates()
+            .sort_values("_method_rank", kind="stable")["hybridization method"]
+            .tolist()
+        )
+
+        fig, ax = plt.subplots(figsize=figsize)
+        sns.barplot(
+            data=target_df,
+            x="hybridization method",
+            y=f"{metric}_mean",
+            hue="training condition",
+            order=method_order,
+            hue_order=condition_order,
+            palette=condition_palette,
+            errorbar=None,
+            ax=ax,
+        )
+
+        summary_lookup = target_df.set_index(
+            ["hybridization method", "training condition"]
+        )[[f"{metric}_mean", f"{metric}_std"]]
+        max_label_value = None
+        for condition_index, container in enumerate(
+            ax.containers[: len(condition_order)]
+        ):
+            condition = condition_order[condition_index]
+            for method_index, bar in enumerate(container.patches):
+                if method_index >= len(method_order):
+                    continue
+                method = method_order[method_index]
+                if (method, condition) not in summary_lookup.index:
+                    continue
+                values = summary_lookup.loc[(method, condition)]
+                mean_value = float(values[f"{metric}_mean"])
+                std_value = float(values[f"{metric}_std"])
+                x_position = bar.get_x() + bar.get_width() / 2
+                if std_value > 0:
+                    ax.errorbar(
+                        x_position,
+                        mean_value,
+                        yerr=std_value,
+                        fmt="none",
+                        ecolor="black",
+                        elinewidth=1.0,
+                        capsize=3,
+                        capthick=1.0,
+                        zorder=4,
+                    )
+                label_value = mean_value + max(std_value, 0) + 0.01
+                max_label_value = (
+                    label_value
+                    if max_label_value is None
+                    else max(max_label_value, label_value)
+                )
+                if show_values:
+                    ax.text(
+                        x_position,
+                        label_value,
+                        f"{mean_value:.2f}",
+                        ha="center",
+                        va="bottom",
+                        fontsize=max(fontsize - 3, 7),
+                    )
+
+        target_label = str(target).removeprefix("target_")
+        ax.set_title(target_label, fontsize=fontsize + 1)
+        ax.set_xlabel("Hybridization method", fontsize=fontsize)
+        ax.set_ylabel(y_label or f"Mean {metric}", fontsize=fontsize)
+        ax.tick_params(axis="both", labelsize=fontsize - 2)
+        ax.tick_params(axis="x", rotation=20)
+
+        if log_y:
+            values = pd.to_numeric(target_df[f"{metric}_mean"], errors="coerce")
+            if (values.dropna() <= 0).any():
+                plt.close(fig)
+                raise ValueError(
+                    "log_y=True requires all plotted values to be positive."
+                )
+            ax.set_yscale("log")
+        if y_lim is not None:
+            ax.set_ylim(*y_lim)
+        elif str(metric).strip().lower() in {"r2", "oof_r2"}:
+            ax.set_ylim(0, 1.05)
+        elif not _metric_higher_is_better(metric):
+            ax.set_ylim(bottom=0)
+        if max_label_value is not None and not log_y:
+            bottom, top = ax.get_ylim()
+            ax.set_ylim(bottom, max(top, max_label_value + 0.04))
+
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.set_title(None)
+            legend.set_frame_on(False)
+            for text in legend.get_texts():
+                text.set_fontsize(fontsize - 2)
+
+        plt.tight_layout()
+        if save_dir is not None:
+            filename_parts = [target_label]
+            if target_counts.get(target, 0) > 1:
+                filename_parts.insert(0, dataset)
+            filename_parts.extend(
+                [
+                    model,
+                    "-".join(map(str, selected_fp_kernels)),
+                    "-".join(map(str, selected_count_kernels)),
+                    metric,
+                    "regular_vs_permuted_fp",
+                ]
+            )
+            file_name = "_".join(
+                _compact_filename_component(part) for part in filename_parts
+            ) + ".png"
+            output_path = ensure_long_path(save_dir / file_name)
+            fig.savefig(
+                output_path,
+                bbox_inches="tight",
+                format="png",
+                dpi=900 if high_quality else 100,
+            )
+            summary_df.loc[
+                (summary_df["dataset"] == dataset)
+                & (summary_df["target"] == target),
+                "output path",
+            ] = str(output_path)
+
+        if show:
+            plt.show()
+        plt.close(fig)
+
+    return summary_df
+
+
 if __name__ == "__main__":
     master_device = "GPU"
-    count_and_fingerprint_result = pd.read_pickle( MASTER_DATA / f"Tree_and_GP_{master_device}_count_and_fingerprint.pkl")
+    count_and_fingerprint_result = pd.read_pickle(
+        MASTER_DATA / f"Tree_and_GP_{master_device}_count_and_fingerprint.pkl"
+    )
     count_results = pd.read_pickle(
         MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
     )
+    permuted_fp_result = pd.read_pickle(
+        MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
+    )
 
-    plot_hybridization_performance_vs_data_number(
-        df=count_and_fingerprint_result,
+    # plot_hybridization_performance_vs_data_number(
+    #     df=count_and_fingerprint_result,
+    #     metric="OOF_R2",
+    #     model="GPytorchMAP",
+    #     fp_kernels=[
+    #         "TanimotoMatern32",
+    #         "TanimotoMatern52",
+    #         "TanimotoRBF",
+    #         "Tanimoto",
+    #     ],
+    #     count_kernels=["Matern32", "Matern52", "RBF"],
+    #     show_all_targets=True,
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         # "(count:+)x(fp:x)",
+    #         "(count:+)x(fp:+)",  # train on this
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(11, 8),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "absolute_metric"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name="R2OOF_GPytorchMAP_all_config_vs_data_number_all_targets.png",
+    # )
+
+    plot_regular_vs_permuted_fp_performance_by_target(
+        regular_df=count_and_fingerprint_result,
+        permuted_df=permuted_fp_result,
         metric="OOF_R2",
         model="GPytorchMAP",
-        fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF", "Tanimoto"],
-        count_kernels=["Matern32", "Matern52", "RBF"],
-        show_all_targets=True,
+        fp_kernels=[
+            "TanimotoMatern32",
+        ],
+        count_kernels=["Matern32"],
         mixing_methods=[
             "sum",
             "product",
-            # "(count:+)x(fp:x)",
-            "(count:+)x(fp:+)", # train on this
+            "(count:+)x(fp:+)",
             "(count:x)+(fp:x)",
         ],
         y_label="R² (OOF)",
-        fontsize=17,
-        figsize=(11, 8),
-        show=True,
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "absolute_metric"
-            / "hybridization_comparison"
-        ),
-        file_name="R2OOF_GPytorchMAP_all_config_vs_data_number_all_targets.png",
+        fontsize=15,
+        figsize=(7, 5),
+        show=False,
+        save_dir=SEPARATE_DATASET_DIR,
     )
-
-
-#### add vis for sperate visuallization of each dataset for count + count/fp

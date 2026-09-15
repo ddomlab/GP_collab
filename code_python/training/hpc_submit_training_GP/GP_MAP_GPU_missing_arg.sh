@@ -1,10 +1,13 @@
 #!/bin/bash
 
-# No GPytorchMAP GPU configurations are currently missing from the non-test
-# research datasets. This file intentionally submits zero jobs.
+# Submit only the missing random-fingerprint-permutation GPytorchMAP runs.
+# Each selected dataset below has one configured target in filter_data.py, so
+# one submission produces exactly one missing target/mixing-method result.
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
+fp_kernel="TanimotoMatern32"
+count_kernel="Matern32"
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
 job_index=0
 
@@ -24,7 +27,7 @@ submit_job() {
 #BSUB -W 20:20
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
 #BSUB -J "gpmap_missing_${DATE}_${job_index}"
 #BSUB -o "${output_dir}/${model}_${dataset}_${fp_kernel}_${count_kernel}_${mixing_method}_GPU.out"
@@ -43,5 +46,34 @@ python ../train_structure_numerical.py --K_fp "$fp_kernel" \
                                         --regressor_type "$model"
 EOT
 }
+
+missing_jobs=(
+    # calculated PCE (%): sum
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|sum"
+
+    # log (Separation factor): sum, (count:x)+(fp:x)
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|sum"
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|(count:x)+(fp:x)"
+
+    # log (Total flux): sum, product
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|sum"
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|product"
+
+    # Approx Conv (%): (count:x)+(fp:x)
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|(count:x)+(fp:x)"
+
+    # log Rg (nm): sum
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed|sum"
+)
+
+for job in "${missing_jobs[@]}"; do
+    IFS='|' read -r paper dataset mixing_method <<< "$job"
+    submit_job \
+        "$paper" \
+        "$dataset" \
+        "$fp_kernel" \
+        "$count_kernel" \
+        "$mixing_method"
+done
 
 echo "Submitted ${job_index} GPytorchMAP GPU jobs."
