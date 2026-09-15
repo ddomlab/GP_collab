@@ -1,0 +1,24 @@
+name: GP_env
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scikit-optimize
+  - scikit-learn-extra
+  - scipy
+  - xgboost
+  - rdkit
+  - shap
+  - pytorch
+  - pyro-ppl
+  - pip
+  - seaborn
+  - ipython
+  - plotly
+  - pip:
+    - gpytorch
+    - ngboost
+
+
