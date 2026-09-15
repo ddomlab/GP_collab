@@ -28,3 +28,68 @@ Running seed: 13
 Running seed: 42
 Average scores:	 rmse: 16.81±8.92	 r2: 0.06±1.01
 Filename: (MG-COUNT)_(MGK_Graph-RBF_(count:+)x(graph:+))_hypOFF_Standard_Standard_GPU
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 17.57±12.69	 r2: -1.6±4.37
+Filename: (MG-COUNT)_(MGK_Graph-RBF_(count:+)x(graph:+))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu26>
+Subject: Job 285658: <mgk_all_20260914_43> in cluster <Hazel> Done
+
+Job <mgk_all_20260914_43> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Mon Sep 14 17:38:20 2026
+Job was executed on host(s) <gpu26>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Sep 14 21:40:02 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Sep 14 21:40:02 2026
+Terminated at Tue Sep 15 02:17:49 2026
+Results reported at Tue Sep 15 02:17:49 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 20:20
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "mgk_all_20260914_43"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260914/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_cleaned_dataset_Ultrafiltration_Membrane_imputed_(count:+)x(graph:+)_per_feature_RBF_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260914/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_cleaned_dataset_Ultrafiltration_Membrane_imputed_(count:+)x(graph:+)_per_feature_RBF_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp "Graph"                                         --K_count "RBF"                                         --Kernel_mixing_method "(count:+)x(graph:+)"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane_imputed"                                         --kernel_feature_mode "per_feature"                                         --regressor_type "MGK"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   16663.48 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             1.51 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              14
+    Max Threads :                                20
+    Run time :                                   16668 sec.
+    Turnaround time :                            31169 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260914/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/MGK_cleaned_dataset_Ultrafiltration_Membrane_imputed_(count:+)x(graph:+)_per_feature_RBF_GPU.err> for stderr output of this job.
+
