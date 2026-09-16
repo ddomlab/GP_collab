@@ -35,13 +35,17 @@ from filter_data import sanitize_dataset
 HERE: Path = Path(__file__).resolve().parent
 
 
-def set_globals(Test: bool=False, ood_eval: bool=False) -> None:
+
+def set_globals(Test: bool=False, ood_eval: bool=False, permute_features: bool=False) -> None:
     global SEEDS, N_FOLDS, BO_ITER
     if not Test:
         if ood_eval:
             SEEDS = [42]
         else:
-            SEEDS = [6, 13, 42, 69, 100]
+            if permute_features is True:
+                SEEDS = [6, 13, 42, 69, 100]
+            else:
+                SEEDS = [6, 13, 42]
         N_FOLDS = 5
         BO_ITER = 42
     else:
@@ -73,7 +77,7 @@ def train_regressor(
         you should change the name here for prepare
         """
             #seed scores and seed prediction
-        set_globals(Test, OOD_evaluation)
+        set_globals(Test, OOD_evaluation, permute_features=keyword.get("permute_features", False))
         start = time.time()
         scores, predictions = _prepare_data(
                                             dataset=dataset,
