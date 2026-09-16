@@ -29,13 +29,7 @@ from visualize_gp import (
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE.parent.parent / "results"
 MASTER_DATA = RESULTS / "master_performance_data"
-SEPARATE_DATASET_DIR = (
-    HERE
-    / "result_analysis"
-    / "absolute_metric"
-    / "hybridization_comparison"
-    / "separate_dataset"
-)
+
 
 
 def plot_hybridization_performance_vs_data_number(
@@ -563,7 +557,7 @@ def plot_regular_vs_permuted_fp_performance_by_target(
     show_values: bool = True,
     show: bool = False,
     high_quality: bool = True,
-    save_dir: Optional[Path] = SEPARATE_DATASET_DIR,
+    save_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
     """Compare regular and permuted-fingerprint performance for each target.
 
@@ -849,6 +843,15 @@ if __name__ == "__main__":
     permuted_fp_result = pd.read_pickle(
         MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
     )
+    
+    Separate_datasets_save = (
+        HERE
+        / "result_analysis"
+        / "absolute_metric"
+        / "hybridization_comparison"
+        / "separate_dataset"
+    )
+
 
     # plot_hybridization_performance_vs_data_number(
     #     df=count_and_fingerprint_result,
@@ -883,51 +886,51 @@ if __name__ == "__main__":
     # )
 
 
-    plot_hybridization_performance_vs_data_number(
-        df=count_and_fingerprint_result,
-        metric="OOF_R2",
-        model="MGK",
-        fp_kernels=["Graph"],
-        count_kernels=["Matern32", "Matern52", "RBF"],
-        show_all_targets=True,
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(Graph:x)",# train on this
-            "(count:x)+(Graph:x)",
-        ],
-        y_label="R² (OOF)",
-        fontsize=17,
-        figsize=(11, 8),
-        show=True,
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "absolute_metric"
-            / "hybridization_comparison"
-        ),
-        file_name="R2OOF_MGK_all_config_vs_data_number_all_targets.png",
-    )
-
-
-    # plot_regular_vs_permuted_fp_performance_by_target(
-    #     regular_df=count_and_fingerprint_result,
-    #     permuted_df=permuted_fp_result,
+    # plot_hybridization_performance_vs_data_number(
+    #     df=count_and_fingerprint_result,
     #     metric="OOF_R2",
-    #     model="GPytorchMAP",
-    #     fp_kernels=[
-    #         "TanimotoMatern32",
-    #     ],
-    #     count_kernels=["Matern32"],
+    #     model="MGK",
+    #     fp_kernels=["Graph"],
+    #     count_kernels=["Matern32", "Matern52", "RBF"],
+    #     show_all_targets=True,
     #     mixing_methods=[
     #         "sum",
     #         "product",
-    #         "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)",
+    #         "(count:+)x(Graph:x)",# train on this
+    #         "(count:x)+(Graph:x)",
     #     ],
     #     y_label="R² (OOF)",
-    #     fontsize=15,
-    #     figsize=(7, 5),
-    #     show=False,
-    #     save_dir=SEPARATE_DATASET_DIR,
+    #     fontsize=17,
+    #     figsize=(11, 8),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "absolute_metric"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name="R2OOF_MGK_all_config_vs_data_number_all_targets.png",
     # )
+
+
+    plot_regular_vs_permuted_fp_performance_by_target(
+        regular_df=count_and_fingerprint_result,
+        permuted_df=permuted_fp_result,
+        metric="OOF_R2",
+        model="GPytorchMAP",
+        fp_kernels=[
+            "TanimotoMatern32",
+        ],
+        count_kernels=["Matern32"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:+)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        fontsize=15,
+        figsize=(7, 5),
+        show=False,
+        save_dir=Separate_datasets_save,
+    )
