@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.patches import Patch
 
 from visualization_setting import ensure_long_path
 from visualize_gp import (
@@ -544,12 +545,14 @@ def _compact_filename_component(value: Any, max_length: int = 60) -> str:
 def plot_regular_vs_permuted_fp_performance_by_target(
     regular_df: pd.DataFrame,
     permuted_df: pd.DataFrame,
+    count_only_df: pd.DataFrame,
     metric: str = "OOF_R2",
     model: str = "GPytorchMAP",
     fp_kernels: Any = None,
     count_kernels: Any = None,
     mixing_methods: Any = None,
     figsize: tuple = (7, 5),
+    ncols: int = 3,
     fontsize: int = 13,
     y_label: Optional[str] = None,
     y_lim: Optional[tuple] = None,
@@ -559,12 +562,16 @@ def plot_regular_vs_permuted_fp_performance_by_target(
     high_quality: bool = True,
     save_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
-    """Compare regular and permuted-fingerprint performance for each target.
+    """Compare count-only, regular, and permuted-FP performance by target.
 
-    One grouped bar chart is created per dataset-target pair. Mixing methods
-    are shown on the x-axis and the two training conditions are placed next to
-    each other. A method/configuration is included only when both master
-    datasets contain a valid score for it.
+    One subplot is created per dataset-target pair, with all subplots combined
+    in a single figure. The number of datapoints is shown in each subplot
+    title. ``figsize`` specifies the size of one subplot and ``ncols`` controls
+    the number of subplot columns. Mixing methods are shown on the x-axis and
+    the training conditions are placed next to each other. Regular and
+    permuted-fingerprint configurations are included only when both master
+    datasets contain a valid score for them. Count-only bars are added for
+    ``sum`` and ``product`` when matching results are available.
 
     ``fp_kernels`` and ``count_kernels`` accept either one kernel or a list.
     When multiple matching kernel configurations are selected, their values
@@ -581,8 +588,8 @@ def plot_regular_vs_permuted_fp_performance_by_target(
     )
     condition_frames = []
     for condition, source_df in (
-        ("COUNT + FP", regular_df),
-        ("COUNT + permuted FP", permuted_df),
+        ("C + FP", regular_df),
+        ("C + Permuted FP", permuted_df),
     ):
         expanded = _expand_master_scores_for_profile(
             source_df,
@@ -606,7 +613,8 @@ def plot_regular_vs_permuted_fp_performance_by_target(
             f"count_kernels={selected_count_kernels}."
         )
 
-    comparison_df = pd.concat(condition_frames, ignore_index=True)
+    paired_comparison_df = pd.concat(condition_frames, ignore_index=True)
+    paired_comparison_df = _add_datapoint_counts(paired_comparison_df)
     pair_columns = [
         "dataset",
         "target",
@@ -615,7 +623,10 @@ def plot_regular_vs_permuted_fp_performance_by_target(
         "mixing method",
     ]
     paired_methods = (
-        comparison_df.groupby(pair_columns, dropna=False)["training condition"]
+        paired_comparison_df.groupby(
+            pair_columns,
+            dropna=False,
+        )["training condition"]
         .nunique()
         .loc[lambda counts: counts == 2]
         .index
@@ -624,16 +635,63 @@ def plot_regular_vs_permuted_fp_performance_by_target(
         paired_methods.tolist(),
         columns=pair_columns,
     )
-    comparison_df = comparison_df.merge(
+    paired_comparison_df = paired_comparison_df.merge(
         paired_method_df,
         on=pair_columns,
         how="inner",
     )
-    if comparison_df.empty:
+    if paired_comparison_df.empty:
         raise ValueError(
             "No dataset-target and mixing-method combinations have valid "
             "scores in both the regular and permuted master datasets."
         )
+
+    count_only_methods = [
+        method
+        for method in selected_methods
+        if str(method).lower() in {"sum", "product"}
+    ]
+    count_only_expanded = _expand_master_scores_for_profile(
+        count_only_df,
+        metric=metric,
+        model=model,
+        count_kernels=selected_count_kernels,
+        mixing_methods=count_only_methods,
+    )
+    count_only_expanded = count_only_expanded.dropna(
+        subset=[metric, "mixing method"]
+    ).copy()
+    if count_only_expanded.empty:
+        raise ValueError(
+            "count_only_df contains no valid sum or product values for "
+            f"metric={metric}, model={model}, and "
+            f"count_kernels={selected_count_kernels}."
+        )
+    count_only_expanded["training condition"] = "C only"
+    count_only_expanded = _add_datapoint_counts(count_only_expanded)
+    count_match_columns = [
+        "dataset",
+        "target",
+        "count kernel",
+        "mixing method",
+    ]
+    paired_count_keys = paired_comparison_df[
+        count_match_columns
+    ].drop_duplicates()
+    count_only_expanded = count_only_expanded.merge(
+        paired_count_keys,
+        on=count_match_columns,
+        how="inner",
+    )
+    if count_only_expanded.empty:
+        raise ValueError(
+            "No count-only sum or product results match the paired regular "
+            "and permuted dataset-target configurations."
+        )
+    comparison_df = pd.concat(
+        [paired_comparison_df, count_only_expanded],
+        ignore_index=True,
+    )
 
     comparison_df["hybridization method"] = comparison_df["mixing method"].map(
         lambda method: _mixing_method_label(method)
@@ -645,6 +703,7 @@ def plot_regular_vs_permuted_fp_performance_by_target(
             [
                 "dataset",
                 "target",
+                "n datapoints",
                 "mixing method",
                 "hybridization method",
                 "training condition",
@@ -668,24 +727,40 @@ def plot_regular_vs_permuted_fp_performance_by_target(
         str(method).lower(): index
         for index, method in enumerate(selected_methods)
     }
-    condition_order = ["COUNT + FP", "COUNT + permuted FP"]
+    condition_order = ["C only", "C + FP", "C + Permuted FP"]
     condition_palette = {
-        "COUNT + FP": "#4C78A8",
-        "COUNT + permuted FP": "#E45756",
+        "C only": "#d7191c",
+        "C + FP": "#fdae61",
+        "C + Permuted FP": "#2c7bb6",
     }
-    target_counts = summary_df[["dataset", "target"]].drop_duplicates()[
-        "target"
-    ].value_counts()
+    if ncols < 1:
+        raise ValueError("ncols must be at least 1.")
 
     if save_dir is not None:
         save_dir = ensure_long_path(Path(save_dir))
         os.makedirs(save_dir, exist_ok=True)
 
+    summary_df = summary_df.sort_values(
+        ["n datapoints", "dataset", "target"],
+        kind="stable",
+    ).reset_index(drop=True)
     group_columns = ["dataset", "target"]
-    for (dataset, target), target_df in summary_df.groupby(
-        group_columns,
-        sort=False,
-    ):
+    target_groups = list(summary_df.groupby(group_columns, sort=False))
+    nrows = int(np.ceil(len(target_groups) / ncols))
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(figsize[0] * ncols, figsize[1] * nrows),
+        sharey=False,
+        squeeze=False,
+    )
+    axes_flat = axes.ravel()
+    legend_handles = [
+        Patch(facecolor=condition_palette[condition], label=condition)
+        for condition in condition_order
+    ]
+
+    for ax, ((dataset, target), target_df) in zip(axes_flat, target_groups):
         target_df = target_df.copy()
         target_df["_method_rank"] = target_df["mixing method"].map(
             lambda method: method_rank.get(
@@ -704,7 +779,6 @@ def plot_regular_vs_permuted_fp_performance_by_target(
             .tolist()
         )
 
-        fig, ax = plt.subplots(figsize=figsize)
         sns.barplot(
             data=target_df,
             x="hybridization method",
@@ -725,12 +799,12 @@ def plot_regular_vs_permuted_fp_performance_by_target(
             ax.containers[: len(condition_order)]
         ):
             condition = condition_order[condition_index]
-            for method_index, bar in enumerate(container.patches):
-                if method_index >= len(method_order):
-                    continue
-                method = method_order[method_index]
-                if (method, condition) not in summary_lookup.index:
-                    continue
+            condition_methods = [
+                method
+                for method in method_order
+                if (method, condition) in summary_lookup.index
+            ]
+            for bar, method in zip(container.patches, condition_methods):
                 values = summary_lookup.loc[(method, condition)]
                 mean_value = float(values[f"{metric}_mean"])
                 std_value = float(values[f"{metric}_std"])
@@ -764,7 +838,16 @@ def plot_regular_vs_permuted_fp_performance_by_target(
                     )
 
         target_label = str(target).removeprefix("target_")
-        ax.set_title(target_label, fontsize=fontsize + 1)
+        n_datapoints = target_df["n datapoints"].iloc[0]
+        n_label = (
+            f"{int(n_datapoints)}"
+            if float(n_datapoints).is_integer()
+            else f"{n_datapoints:g}"
+        )
+        ax.set_title(
+            f"{target_label} (n={n_label})",
+            fontsize=fontsize + 1,
+        )
         ax.set_xlabel("Hybridization method", fontsize=fontsize)
         ax.set_ylabel(y_label or f"Mean {metric}", fontsize=fontsize)
         ax.tick_params(axis="both", labelsize=fontsize - 2)
@@ -790,44 +873,47 @@ def plot_regular_vs_permuted_fp_performance_by_target(
 
         legend = ax.get_legend()
         if legend is not None:
-            legend.set_title(None)
-            legend.set_frame_on(False)
-            for text in legend.get_texts():
-                text.set_fontsize(fontsize - 2)
+            legend.remove()
 
-        plt.tight_layout()
-        if save_dir is not None:
-            filename_parts = [target_label]
-            if target_counts.get(target, 0) > 1:
-                filename_parts.insert(0, dataset)
-            filename_parts.extend(
-                [
-                    model,
-                    "-".join(map(str, selected_fp_kernels)),
-                    "-".join(map(str, selected_count_kernels)),
-                    metric,
-                    "regular_vs_permuted_fp",
-                ]
-            )
-            file_name = "_".join(
-                _compact_filename_component(part) for part in filename_parts
-            ) + ".png"
-            output_path = ensure_long_path(save_dir / file_name)
-            fig.savefig(
-                output_path,
-                bbox_inches="tight",
-                format="png",
-                dpi=900 if high_quality else 100,
-            )
-            summary_df.loc[
-                (summary_df["dataset"] == dataset)
-                & (summary_df["target"] == target),
-                "output path",
-            ] = str(output_path)
+    for ax in axes_flat[len(target_groups):]:
+        ax.set_visible(False)
 
-        if show:
-            plt.show()
-        plt.close(fig)
+    fig.legend(
+        handles=legend_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.995),
+        ncol=len(condition_order),
+        frameon=False,
+        fontsize=fontsize + 5,
+        handlelength=2.5,
+        handleheight=1.5,
+        columnspacing=2.0,
+    )
+
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    if save_dir is not None:
+        filename_parts = [
+            model,
+            "-".join(map(str, selected_fp_kernels)),
+            "-".join(map(str, selected_count_kernels)),
+            metric,
+            "count_only_vs_regular_vs_permuted_fp_by_target",
+        ]
+        file_name = "_".join(
+            _compact_filename_component(part) for part in filename_parts
+        ) + ".png"
+        output_path = ensure_long_path(save_dir / file_name)
+        fig.savefig(
+            output_path,
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+        summary_df["output path"] = str(output_path)
+
+    if show:
+        plt.show()
+    plt.close(fig)
 
     return summary_df
 
@@ -916,6 +1002,7 @@ if __name__ == "__main__":
     plot_regular_vs_permuted_fp_performance_by_target(
         regular_df=count_and_fingerprint_result,
         permuted_df=permuted_fp_result,
+        count_only_df=count_results,
         metric="OOF_R2",
         model="GPytorchMAP",
         fp_kernels=[
@@ -930,7 +1017,7 @@ if __name__ == "__main__":
         ],
         y_label="R² (OOF)",
         fontsize=15,
-        figsize=(7, 5),
+        figsize=(6, 5),
         show=False,
         save_dir=Separate_datasets_save,
     )

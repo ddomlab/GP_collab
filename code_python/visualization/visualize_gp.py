@@ -4991,7 +4991,7 @@ def plot_model_average_performance_vs_data_number(
 if __name__ == "__main__":
     master_device = "GPU"
     COMBINED_RESULTS: Path = (
-        RESULTS / "master_performance_data" / f"Tree_and_GP_{master_device}.pkl"
+        RESULTS / "master_performance_data" / f"Tree_and_GP_{master_device}_count_and_fingerprint.pkl"
     )
     result_df = pd.read_pickle(COMBINED_RESULTS)
 
@@ -5062,36 +5062,40 @@ if __name__ == "__main__":
     #     df=result_df,
     #     metric="r2",
     #     model="GPytorchMAP",
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     fp_kernels=["Matern32", "Matern52", "RBF"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
     #     mixing_methods=[
     #         "sum",
     #         "product",
-    #         # "averageProduct",
-    #         "(count:+)x(fp:x)",
-    #         # "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)"
+    #         "(count:+)x(fp:+)",
+    #         "(count:x)+(fp:x)",
     #         ],
     #     figsize=(5, 5),
     #     fontsize=17,
     #     y_label="R²",
     #     show=True,
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_GPytorchMAP_SK_hybridization_comparison.png",
+    #     save_dir=HERE / "result_analysis"/"score_distribution"/"hybridization_comparison",
+    #     file_name="r2_GPytorchMAP_Bitwise.png",
     # )
     
-    # plot_hybridization_profile_comparison(
-    #     df=result_df,
-    #     model="GPytorchMAP",
-    #     metric="r2",
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     y_label="Profile AUC of R²",
-    #     fontsize=17,
-    #     figsize=(5, 5),
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
-    # )
+    plot_hybridization_profile_comparison(
+        df=result_df,
+        model="GPytorchMAP",
+        metric="OOF_R2",
+        fp_kernels=["Matern32", "Matern52", "RBF"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:+)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="Profile AUC of R² (OOF)",
+        fontsize=17,
+        figsize=(6, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+        file_name="R2OOF_GPytorchMAP_Bitwise_hybridization_profile_comparison_avg_over_config.png",
+    )
 
     # plot_hybridization_profile_comparison(
     # df=result_df,
@@ -5114,20 +5118,6 @@ if __name__ == "__main__":
     # file_name="r2_GPytorchMAP_SK_TanimotoMatern32_Matern32.png",
     # )
 
-    # plot_hybridization_topsis_comparison(
-    #     df=result_df,
-    #     metrics=["OOF_R2"],
-    #     criteria_weights=[1],
-    #     model="GPytorchMAP",
-    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     show=True,
-    #     fontsize=17,
-    #     figsize=(5, 6),
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="OOF_R2_TOPSIS_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
-    # )
-    
 
     # plot_model_profile_comparison(
     #     df=result_df,
@@ -5231,6 +5221,22 @@ if __name__ == "__main__":
 
 
     ##############TOPSIS #################
+
+    # plot_hybridization_topsis_comparison(
+    #     df=result_df,
+    #     metrics=["OOF_R2"],
+    #     criteria_weights=[1],
+    #     model="GPytorchMAP",
+    #     fp_kernels=["TanimotoRBF", "TanimotoMatern32", "TanimotoMatern52", "Tanimoto"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     show=True,
+    #     fontsize=17,
+    #     figsize=(5, 6),
+    #     save_dir=HERE / "result_analysis",
+    #     file_name="OOF_R2_TOPSIS_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
+    # )
+
+
     # plot_model_performance_TOPSIS(
     #     df=result_df,
     #     metrics=["OOF_cvpp_ama"],
