@@ -939,37 +939,36 @@ if __name__ == "__main__":
     )
 
 
-    # plot_hybridization_performance_vs_data_number(
-    #     df=count_and_fingerprint_result,
-    #     metric="OOF_R2",
-    #     model="GPytorchMAP",
-    #     fp_kernels=[
-    #         "TanimotoMatern32",
-    #         "TanimotoMatern52",
-    #         "TanimotoRBF",
-    #         "Tanimoto",
-    #     ],
-    #     count_kernels=["Matern32", "Matern52", "RBF"],
-    #     show_all_targets=True,
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         # "(count:+)x(fp:x)",
-    #         "(count:+)x(fp:+)",  # train on this
-    #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="R² (OOF)",
-    #     fontsize=17,
-    #     figsize=(11, 8),
-    #     show=True,
-    #     save_dir=(
-    #         HERE
-    #         / "result_analysis"
-    #         / "absolute_metric"
-    #         / "hybridization_comparison"
-    #     ),
-    #     file_name="R2OOF_GPytorchMAP_all_config_vs_data_number_all_targets.png",
-    # )
+    plot_hybridization_performance_vs_data_number(
+        df=count_and_fingerprint_result,
+        metric="OOF_R2",
+        model="GPytorchMAP",
+        fp_kernels=[
+            "RBF",
+            "Matern32",
+            "Matern52",
+        ],
+        count_kernels=["Matern32", "Matern52", "RBF"],
+        show_all_targets=True,
+        mixing_methods=[
+            "sum",
+            "product",
+            # "(count:+)x(fp:x)",
+            "(count:+)x(fp:+)",  # train on this
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        fontsize=17,
+        figsize=(11, 8),
+        show=True,
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "absolute_metric"
+            / "hybridization_comparison"
+        ),
+        file_name="R2OOF_GPytorchMAP_Bitwise_all_config_vs_data_number_all_targets.png",
+    )
 
 
     # plot_hybridization_performance_vs_data_number(
@@ -1006,7 +1005,7 @@ if __name__ == "__main__":
         metric="OOF_R2",
         model="GPytorchMAP",
         fp_kernels=[
-            "TanimotoMatern32",
+            "Matern32",
         ],
         count_kernels=["Matern32"],
         mixing_methods=[
