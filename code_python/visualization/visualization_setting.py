@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def set_plot_style(
-    font_family="sans-serif",
-    font_sans_serif="Arial",
+    # font_family="sans-serif",
+    # font_sans_serif="Arial",
     title_size=20,
     label_size=16,
     tick_size=14,
