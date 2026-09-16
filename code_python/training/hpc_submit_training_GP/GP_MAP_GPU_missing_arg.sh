@@ -48,19 +48,8 @@ EOT
 }
 
 missing_jobs=(
-    # calculated PCE (%): sum
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|sum"
-
-    # log (Separation factor): sum, (count:x)+(fp:x)
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|sum"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|(count:x)+(fp:x)"
-
-    # log (Total flux): sum, product
+    # log (Total flux): sum
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|sum"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|product"
-
-    # Approx Conv (%): (count:x)+(fp:x)
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|(count:x)+(fp:x)"
 
     # log Rg (nm): sum
     "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed|sum"
