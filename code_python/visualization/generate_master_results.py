@@ -83,23 +83,29 @@ TIME_COLUMNS = ["Running time (GPU)", "Running time (CPU)"]
 FeatureSet = Literal[
     "count_only",
     "count_and_fingerprint",
+    "random_count_permutation",
     "random_fp_permutation",
 ]
 COUNT_ONLY_MODELS = ["RF", "XGBR", "NGB", "GPytorchMAP"]
 COUNT_ONLY_MIXING_METHODS = ["sum", "product"]
-RANDOM_FP_PERMUTATION_MODELS = ["GPytorchMAP"]
-RANDOM_FP_PERMUTATION_CONFIGS = [
+RANDOM_PERMUTATION_MODELS = ["GPytorchMAP"]
+RANDOM_PERMUTATION_CONFIGS = [
     ("TanimotoMatern32", "Matern32", "sum"),
     ("TanimotoMatern32", "Matern32", "product"),
     ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
     ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
 ]
+RANDOM_PERMUTATION_FEATURE_SETS = {
+    "random_count_permutation",
+    "random_fp_permutation",
+}
 
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
     valid_feature_sets = {
         "count_only",
         "count_and_fingerprint",
+        "random_count_permutation",
         "random_fp_permutation",
     }
     if feature_set not in valid_feature_sets:
@@ -129,19 +135,19 @@ def _score_file_stems(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
 ) -> List[str]:
-    if feature_set == "random_fp_permutation":
+    if feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
         configuration = (fp_kernel, count_kernel, mixing_method)
         if (
             not use_gpu
-            or model not in RANDOM_FP_PERMUTATION_MODELS
-            or configuration not in RANDOM_FP_PERMUTATION_CONFIGS
+            or model not in RANDOM_PERMUTATION_MODELS
+            or configuration not in RANDOM_PERMUTATION_CONFIGS
         ):
             return []
         return [
             (
                 f"(ECFP3_count_512-COUNT)_"
                 f"({model}_{fp_kernel}-{count_kernel}_{mixing_method})"
-                "_hypOFF_Standard_Standard_random_fp_permutation_GPU_scores"
+                f"_hypOFF_Standard_Standard_{feature_set}_GPU_scores"
             )
         ]
 
@@ -601,6 +607,9 @@ def build_master_performance_data(
     results trained after randomly permuting fingerprint features. It uses the
     TanimotoMatern32 fingerprint kernel, Matern32 count kernel, and the four
     mixing methods present in those result files.
+    ``feature_set="random_count_permutation"`` uses the same GPU GPytorchMAP
+    configurations for results trained after randomly permuting COUNT
+    features.
 
     Tree-model results are included in both device datasets. GP rows use only
     the requested device, with no cross-device fallback. Only precomputed
@@ -608,8 +617,8 @@ def build_master_performance_data(
 
     When ``save_path`` is provided, standard modes write
     ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
-    fingerprint permutation results are GPU-only, so that mode writes only
-    ``<save_path>_GPU.{pkl,csv}``.
+    fingerprint and COUNT permutation results are GPU-only, so those modes
+    write only ``<save_path>_GPU.{pkl,csv}``.
     """
     feature_set = _validate_feature_set(feature_set)
     metrics = list(
@@ -620,13 +629,13 @@ def build_master_performance_data(
 
     devices = (
         ("GPU",)
-        if feature_set == "random_fp_permutation"
+        if feature_set in RANDOM_PERMUTATION_FEATURE_SETS
         else ("CPU", "GPU")
     )
     if feature_set == "count_only":
         models = COUNT_ONLY_MODELS
-    elif feature_set == "random_fp_permutation":
-        models = RANDOM_FP_PERMUTATION_MODELS
+    elif feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
+        models = RANDOM_PERMUTATION_MODELS
     else:
         models = MODELS
 
@@ -661,8 +670,8 @@ def build_master_performance_data(
                         )
                         continue
 
-                    if feature_set == "random_fp_permutation":
-                        configurations = RANDOM_FP_PERMUTATION_CONFIGS
+                    if feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
+                        configurations = RANDOM_PERMUTATION_CONFIGS
                     elif feature_set == "count_only":
                         configurations = (
                             (None, count_kernel, mixing_method)
@@ -717,10 +726,11 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "random_fp_permutation"
+    feature_set: FeatureSet = "random_count_permutation"
     output_name = {
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_only": "Tree_and_GP_COUNT_only",
+        "random_count_permutation": "GP_random_count_permutation",
         "random_fp_permutation": "GP_random_fp_permutation",
     }[feature_set]
     build_master_performance_data(

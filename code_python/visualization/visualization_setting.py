@@ -32,8 +32,8 @@ def set_plot_style(
     sns.set_style(seaborn_style)  # e.g., "white", "darkgrid", etc.
     sns.set_palette(seaborn_palette)
 
-    plt.rc("font", family=font_family)
-    plt.rc("font", **{"sans-serif": [font_sans_serif]})
+    # plt.rc("font", family=font_family)
+    # plt.rc("font", **{"sans-serif": [font_sans_serif]})
 
     plt.rc("axes", titlesize=title_size)
     plt.rc("axes", labelsize=label_size)

@@ -543,9 +543,10 @@ def _compact_filename_component(value: Any, max_length: int = 60) -> str:
 
 
 def plot_regular_vs_permuted_fp_performance_by_target(
-    regular_df: pd.DataFrame,
-    permuted_df: pd.DataFrame,
-    count_only_df: pd.DataFrame,
+    regular_df: Optional[pd.DataFrame] = None,
+    permuted_df: Optional[pd.DataFrame] = None,
+    count_only_df: Optional[pd.DataFrame] = None,
+    permuted_count_df: Optional[pd.DataFrame] = None,
     metric: str = "OOF_R2",
     model: str = "GPytorchMAP",
     fp_kernels: Any = None,
@@ -562,16 +563,18 @@ def plot_regular_vs_permuted_fp_performance_by_target(
     high_quality: bool = True,
     save_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
-    """Compare count-only, regular, and permuted-FP performance by target.
+    """Compare any available regular and permuted-feature results by target.
 
     One subplot is created per dataset-target pair, with all subplots combined
     in a single figure. The number of datapoints is shown in each subplot
     title. ``figsize`` specifies the size of one subplot and ``ncols`` controls
     the number of subplot columns. Mixing methods are shown on the x-axis and
-    the training conditions are placed next to each other. Regular and
-    permuted-fingerprint configurations are included only when both master
-    datasets contain a valid score for them. Count-only bars are added for
-    ``sum`` and ``product`` when matching results are available.
+    the training conditions are placed next to each other. Every input
+    DataFrame is optional, but at least one must contain plottable values. When
+    multiple hybrid DataFrames are supplied, only configurations shared by
+    those DataFrames are compared. Count-only bars are added for ``sum`` and
+    ``product`` when matching hybrid results are available, or plotted on
+    their own when no hybrid DataFrame is supplied.
 
     ``fp_kernels`` and ``count_kernels`` accept either one kernel or a list.
     When multiple matching kernel configurations are selected, their values
@@ -586,11 +589,25 @@ def plot_regular_vs_permuted_fp_performance_by_target(
     selected_methods = _selection_values(mixing_methods) or list(
         DEFAULT_MIXING_METHODS
     )
+    if all(
+        source_df is None
+        for source_df in (
+            regular_df,
+            permuted_df,
+            count_only_df,
+            permuted_count_df,
+        )
+    ):
+        raise ValueError("At least one performance DataFrame must be provided.")
+
     condition_frames = []
     for condition, source_df in (
         ("C + FP", regular_df),
         ("C + Permuted FP", permuted_df),
+        ("Permuted C + FP", permuted_count_df),
     ):
+        if source_df is None:
+            continue
         expanded = _expand_master_scores_for_profile(
             source_df,
             metric=metric,
@@ -602,96 +619,98 @@ def plot_regular_vs_permuted_fp_performance_by_target(
         if expanded.empty:
             continue
         expanded = expanded.dropna(subset=[metric, "mixing method"]).copy()
+        if expanded.empty:
+            continue
         expanded["training condition"] = condition
         condition_frames.append(expanded)
 
-    if len(condition_frames) != 2:
-        raise ValueError(
-            "Both regular_df and permuted_df must contain valid "
-            f"{metric} values for model={model}, "
-            f"fp_kernels={selected_fp_kernels}, and "
-            f"count_kernels={selected_count_kernels}."
-        )
+    comparison_frames = []
+    paired_comparison_df = None
+    if condition_frames:
+        paired_comparison_df = pd.concat(condition_frames, ignore_index=True)
+        paired_comparison_df = _add_datapoint_counts(paired_comparison_df)
 
-    paired_comparison_df = pd.concat(condition_frames, ignore_index=True)
-    paired_comparison_df = _add_datapoint_counts(paired_comparison_df)
-    pair_columns = [
-        "dataset",
-        "target",
-        "fp kernel",
-        "count kernel",
-        "mixing method",
-    ]
-    paired_methods = (
-        paired_comparison_df.groupby(
-            pair_columns,
-            dropna=False,
-        )["training condition"]
-        .nunique()
-        .loc[lambda counts: counts == 2]
-        .index
-    )
-    paired_method_df = pd.DataFrame(
-        paired_methods.tolist(),
-        columns=pair_columns,
-    )
-    paired_comparison_df = paired_comparison_df.merge(
-        paired_method_df,
-        on=pair_columns,
-        how="inner",
-    )
-    if paired_comparison_df.empty:
-        raise ValueError(
-            "No dataset-target and mixing-method combinations have valid "
-            "scores in both the regular and permuted master datasets."
-        )
+        if len(condition_frames) > 1:
+            pair_columns = [
+                "dataset",
+                "target",
+                "fp kernel",
+                "count kernel",
+                "mixing method",
+            ]
+            paired_methods = (
+                paired_comparison_df.groupby(
+                    pair_columns,
+                    dropna=False,
+                )["training condition"]
+                .nunique()
+                .loc[lambda counts: counts == len(condition_frames)]
+                .index
+            )
+            paired_method_df = pd.DataFrame(
+                paired_methods.tolist(),
+                columns=pair_columns,
+            )
+            paired_comparison_df = paired_comparison_df.merge(
+                paired_method_df,
+                on=pair_columns,
+                how="inner",
+            )
+
+        if not paired_comparison_df.empty:
+            comparison_frames.append(paired_comparison_df)
 
     count_only_methods = [
         method
         for method in selected_methods
         if str(method).lower() in {"sum", "product"}
     ]
-    count_only_expanded = _expand_master_scores_for_profile(
-        count_only_df,
-        metric=metric,
-        model=model,
-        count_kernels=selected_count_kernels,
-        mixing_methods=count_only_methods,
-    )
-    count_only_expanded = count_only_expanded.dropna(
-        subset=[metric, "mixing method"]
-    ).copy()
-    if count_only_expanded.empty:
-        raise ValueError(
-            "count_only_df contains no valid sum or product values for "
-            f"metric={metric}, model={model}, and "
-            f"count_kernels={selected_count_kernels}."
+    if count_only_df is not None and count_only_methods:
+        count_only_expanded = _expand_master_scores_for_profile(
+            count_only_df,
+            metric=metric,
+            model=model,
+            count_kernels=selected_count_kernels,
+            mixing_methods=count_only_methods,
         )
-    count_only_expanded["training condition"] = "C only"
-    count_only_expanded = _add_datapoint_counts(count_only_expanded)
-    count_match_columns = [
-        "dataset",
-        "target",
-        "count kernel",
-        "mixing method",
-    ]
-    paired_count_keys = paired_comparison_df[
-        count_match_columns
-    ].drop_duplicates()
-    count_only_expanded = count_only_expanded.merge(
-        paired_count_keys,
-        on=count_match_columns,
-        how="inner",
-    )
-    if count_only_expanded.empty:
+        if not count_only_expanded.empty:
+            count_only_expanded = count_only_expanded.dropna(
+                subset=[metric, "mixing method"]
+            ).copy()
+        if not count_only_expanded.empty:
+            count_only_expanded["training condition"] = "C only"
+            count_only_expanded = _add_datapoint_counts(count_only_expanded)
+            if (
+                paired_comparison_df is not None
+                and not paired_comparison_df.empty
+            ):
+                count_match_columns = [
+                    "dataset",
+                    "target",
+                    "count kernel",
+                    "mixing method",
+                ]
+                paired_count_keys = paired_comparison_df[
+                    count_match_columns
+                ].drop_duplicates()
+                count_only_expanded = count_only_expanded.merge(
+                    paired_count_keys,
+                    on=count_match_columns,
+                    how="inner",
+                )
+            if not count_only_expanded.empty:
+                comparison_frames.append(count_only_expanded)
+
+    if not comparison_frames:
         raise ValueError(
-            "No count-only sum or product results match the paired regular "
-            "and permuted dataset-target configurations."
+            "None of the provided DataFrames contain mutually plottable "
+            f"{metric} values for model={model}, "
+            f"fp_kernels={selected_fp_kernels}, "
+            f"count_kernels={selected_count_kernels}, and "
+            f"mixing_methods={selected_methods}."
         )
-    comparison_df = pd.concat(
-        [paired_comparison_df, count_only_expanded],
-        ignore_index=True,
-    )
+
+    comparison_df = pd.concat(comparison_frames, ignore_index=True)
 
     comparison_df["hybridization method"] = comparison_df["mixing method"].map(
         lambda method: _mixing_method_label(method)
@@ -727,11 +746,22 @@ def plot_regular_vs_permuted_fp_performance_by_target(
         str(method).lower(): index
         for index, method in enumerate(selected_methods)
     }
-    condition_order = ["C only", "C + FP", "C + Permuted FP"]
+    available_conditions = set(summary_df["training condition"])
+    condition_order = [
+        condition
+        for condition in (
+            "C only",
+            "C + FP",
+            "C + Permuted FP",
+            "Permuted C + FP",
+        )
+        if condition in available_conditions
+    ]
     condition_palette = {
         "C only": "#d7191c",
         "C + FP": "#fdae61",
         "C + Permuted FP": "#2c7bb6",
+        "Permuted C + FP": "#646464",
     }
     if ncols < 1:
         raise ValueError("ncols must be at least 1.")
@@ -892,12 +922,16 @@ def plot_regular_vs_permuted_fp_performance_by_target(
 
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     if save_dir is not None:
+        condition_filename = "_vs_".join(
+            _safe_filename_component(condition).lower()
+            for condition in condition_order
+        )
         filename_parts = [
             model,
             "-".join(map(str, selected_fp_kernels)),
             "-".join(map(str, selected_count_kernels)),
             metric,
-            "count_only_vs_regular_vs_permuted_fp_by_target",
+            f"{condition_filename}_by_target",
         ]
         file_name = "_".join(
             _compact_filename_component(part) for part in filename_parts
@@ -929,7 +963,10 @@ if __name__ == "__main__":
     permuted_fp_result = pd.read_pickle(
         MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
     )
-    
+    permuted_count_result = pd.read_pickle(
+        MASTER_DATA / f"GP_random_count_permutation_{master_device}.pkl"
+    )
+
     Separate_datasets_save = (
         HERE
         / "result_analysis"
@@ -939,36 +976,36 @@ if __name__ == "__main__":
     )
 
 
-    plot_hybridization_performance_vs_data_number(
-        df=count_and_fingerprint_result,
-        metric="OOF_R2",
-        model="GPytorchMAP",
-        fp_kernels=[
-            "RBF",
-            "Matern32",
-            "Matern52",
-        ],
-        count_kernels=["Matern32", "Matern52", "RBF"],
-        show_all_targets=True,
-        mixing_methods=[
-            "sum",
-            "product",
-            # "(count:+)x(fp:x)",
-            "(count:+)x(fp:+)",  # train on this
-            "(count:x)+(fp:x)",
-        ],
-        y_label="R² (OOF)",
-        fontsize=17,
-        figsize=(11, 8),
-        show=True,
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "absolute_metric"
-            / "hybridization_comparison"
-        ),
-        file_name="R2OOF_GPytorchMAP_Bitwise_all_config_vs_data_number_all_targets.png",
-    )
+    # plot_hybridization_performance_vs_data_number(
+    #     df=count_and_fingerprint_result,
+    #     metric="OOF_R2",
+    #     model="GPytorchMAP",
+    #     fp_kernels=[
+    #         "RBF",
+    #         "Matern32",
+    #         "Matern52",
+    #     ],
+    #     count_kernels=["Matern32", "Matern52", "RBF"],
+    #     show_all_targets=True,
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         # "(count:+)x(fp:x)",
+    #         "(count:+)x(fp:+)",  # train on this
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(11, 8),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "absolute_metric"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name="R2OOF_GPytorchMAP_Bitwise_all_config_vs_data_number_all_targets.png",
+    # )
 
 
     # plot_hybridization_performance_vs_data_number(
@@ -1002,10 +1039,11 @@ if __name__ == "__main__":
         regular_df=count_and_fingerprint_result,
         permuted_df=permuted_fp_result,
         count_only_df=count_results,
+        permuted_count_df=permuted_count_result,
         metric="OOF_R2",
         model="GPytorchMAP",
         fp_kernels=[
-            "Matern32",
+            "TanimotoMatern32",
         ],
         count_kernels=["Matern32"],
         mixing_methods=[
