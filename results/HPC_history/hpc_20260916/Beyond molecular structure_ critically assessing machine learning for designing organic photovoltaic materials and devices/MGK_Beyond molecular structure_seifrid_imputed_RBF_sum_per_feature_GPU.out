@@ -1,0 +1,60 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 288575: <mgk_missing_20260916_3> in cluster <Hazel> Exited
+
+Job <mgk_missing_20260916_3> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Sep 16 00:50:19 2026
+Job was executed on host(s) <2*gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed Sep 16 00:50:20 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Sep 16 00:50:20 2026
+Terminated at Fri Sep 18 09:05:50 2026
+Results reported at Fri Sep 18 09:05:50 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 2
+#BSUB -W 55:55
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "mgk_missing_20260916_3"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260916/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_RBF_sum_per_feature_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260916/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_RBF_sum_per_feature_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "Graph"                                       --K_count "RBF"                                       --Kernel_mixing_method "sum"                                       --paper "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"                                       --dataset "Beyond molecular structure_seifrid_imputed"                                       --kernel_feature_mode "per_feature"                                       --regressor_type "MGK"
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with signal termination: 3, and core dumped.
+
+Resource usage summary:
+
+    CPU time :                                   1.04 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              1
+    Max Threads :                                1
+    Run time :                                   0 sec.
+    Turnaround time :                            202531 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260916/Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices/MGK_Beyond molecular structure_seifrid_imputed_RBF_sum_per_feature_GPU.err> for stderr output of this job.
+
