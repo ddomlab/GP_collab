@@ -124,6 +124,11 @@ DATASET_CONFIG = {
         "target": ["Approx Conv (%)"],
     },
 
+    "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery":{
+       "features":["molality", "Log(mw)", "temperature (K)"],
+        "polymer_unit":["polymer", "salt"], 
+        "target": ["conductivity"],
+    }
 }
 
 
