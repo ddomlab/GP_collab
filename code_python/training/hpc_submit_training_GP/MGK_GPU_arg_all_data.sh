@@ -9,7 +9,7 @@ model="MGK"
 k_mixing_methods=("(count:+)x(graph:x)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
-k_counts=("RBF" "Matern52")
+k_counts=("Matern32")
 
 selected_training_sets=(
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
@@ -59,7 +59,8 @@ python ../train_structure_numerical.py  --K_fp "$fp_kernel" \
                                         --paper "$paper" \
                                         --dataset "$dataset" \
                                         --kernel_feature_mode "$feature_mode" \
-                                        --regressor_type "$model"
+                                        --regressor_type "$model" \
+                                        --clustering_method "structure_cluster"
 EOT
                 done
             done
