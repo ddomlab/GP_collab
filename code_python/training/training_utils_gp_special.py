@@ -69,7 +69,6 @@ def train_regressor(
     hyperparameter_optimization: bool=True,
     cutoff:Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     imputer: Optional[str] = None,
-    OOD_evaluation:bool=False,
     Test:bool=False,
     **keyword,
     ) -> None:
@@ -77,7 +76,7 @@ def train_regressor(
         you should change the name here for prepare
         """
             #seed scores and seed prediction
-        set_globals(Test, OOD_evaluation, permute_features=keyword.get("permute_features", False))
+        set_globals(Test, ood_eval=keyword.get("clustering_method", None), permute_features=keyword.get("permute_features", False))
         start = time.time()
         scores, predictions = _prepare_data(
                                             dataset=dataset,
@@ -92,11 +91,10 @@ def train_regressor(
                                             imputer=imputer,
                                             cutoff=cutoff,
                                             hyperparameter_optimization=hyperparameter_optimization,
-                                            OOD_evaluation=OOD_evaluation,
                                             **keyword
                                             )
         
-        if OOD_evaluation is False:
+        if keyword.get("clustering_method", None) is None:
             scores = process_scores(scores)
             end = time.time()
             scores["run_time_sec"] = np.round((end - start)/len(SEEDS), 3)
@@ -189,7 +187,6 @@ def _prepare_data(
     cutoff: Dict[str, Tuple[Optional[float], Optional[float]]]=None,
     kernel_type: Optional[Dict]=None,
     kernel_mixing_method: Optional[str]=None,
-    OOD_evaluation: bool=False,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 
@@ -260,7 +257,6 @@ def _prepare_data(
                             kernel_parameters=mgk_kernel_config,
                             target_transformer=target_transformer,
                             cluster_group=cluster_group,
-                            OOD_evaluation=OOD_evaluation,
                             **kwargs
                             )
         y = mgk_dataset.y
@@ -302,14 +298,13 @@ def _prepare_data(
                                 kernel_type=kernel_type,
                                 kernel_mixing_method=kernel_mixing_method,
                                 cluster_group=cluster_group,
-                                OOD_evaluation=OOD_evaluation,
                                 **kwargs,
                                 )
     
     y_frame = pd.DataFrame(y.flatten(),columns=target_features)
     combined_prediction_ground_truth = (
         predication
-        if OOD_evaluation is True
+        if cluster_group is not None
         else pd.concat([predication, y_frame], axis=1)
     )
     return score, combined_prediction_ground_truth
@@ -386,7 +381,6 @@ def run(
     kernel_type: Optional[str]=None,
     kernel_mixing_method: Optional[str]=None,
     cluster_group: Optional[pd.Series]=None,
-    OOD_evaluation: bool=False,
     **kwargs,
     ) -> tuple[dict[int, dict[str, float]], pd.DataFrame]:
 

@@ -76,7 +76,7 @@ def main_structural_numerical(
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='random_count_permutation' if kwargs.get("permute_features", False) else None,
+                # special_file_name='random_count_permutation' if kwargs.get("permute_features", False) else None,
                 **kwargs,
                 )
 
@@ -140,7 +140,8 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 output_dir_name=PAPER,
-                permute_features=True,
+                permute_features=False,
+                clustering_method=args.clustering_method,
                 **representation_options,
                 **model_options,
                 
@@ -178,6 +179,6 @@ if __name__ == "__main__":
                 # kernel_mixing_method="product",
                 # use_cuda=False, #True for GPU, False for CPU
                 # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
-                clustering_method="substructure cluster",
+                clustering_method="substructure cluster", #continuous_cluster  #structure_cluster
                 )
             
