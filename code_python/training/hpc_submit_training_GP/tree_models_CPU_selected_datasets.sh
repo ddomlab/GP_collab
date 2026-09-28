@@ -19,8 +19,8 @@ models=("RF" "XGBR" "NGB")
 #   ultrafiltration targets
 selected_training_sets=(
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
+    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
+    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
     "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
     "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
     "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
@@ -41,7 +41,7 @@ for training_set in "${selected_training_sets[@]}"; do
 
         bsub <<EOT
 #BSUB -n 6
-#BSUB -W 45:00
+#BSUB -W 5:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "tree_selected_${DATE}_${job_index}"
@@ -53,7 +53,8 @@ conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
 python ../train_structure_numerical.py --regressor_type "$model" \
                                         --dataset "$dataset" \
-                                        --paper "$paper"
+                                        --paper "$paper" \
+                                        --clustering_method "structure_cluster"
 EOT
     done
 done
