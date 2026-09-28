@@ -435,8 +435,12 @@ def run(
                                 ("preprocessor", preprocessor),
                                 ("regressor", model),
                                 ])
-                scores, predictions = cross_validate_regressor(regressor, regressor_type,X, y, n_jobs=n_jobs,
-                                                                cv=cv_outer, UQ=True, return_ls=True, cluster_group=cluster_group)
+                scores, predictions = cross_validate_regressor(regressor, regressor_type,X, y, 
+                                                               n_jobs=n_jobs,
+                                                            cv=cv_outer, UQ=True, 
+                                                            return_ls=True, 
+                                                            ood_validation_mode="both",
+                                                            cluster_group=cluster_group)
             else:
                 model = optimized_models(regressor_type, 
                                          graph_kernel_config=kernel_parameters,
@@ -452,6 +456,7 @@ def run(
                                                                 regressor_type, X, y, 
                                                                 n_jobs=n_jobs,
                                                                 cv=cv_outer, 
+                                                                ood_validation_mode="both",
                                                                 cluster_group=cluster_group,
                                                                 return_ls=True, 
                                                                 UQ=True, 
@@ -525,6 +530,7 @@ def run(
                                             X, y,
                                             cv_outer,
                                             cluster_group=cluster_group,
+                                            ood_validation_mode="both",
                                             n_jobs=n_jobs,
                                             return_ls=True,
                                             UQ=True
