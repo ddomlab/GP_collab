@@ -349,9 +349,9 @@ def permute_feature_group(
     df: pd.DataFrame,
     features_to_permute: Union[str, list[str]],
     random_state: int = 42,
+    unique_shuffle: bool = False,
 ) -> pd.DataFrame:
-    """Jointly shuffle a group of feature columns across rows.
-    """
+    """Jointly shuffle feature rows, or remap each unique feature row."""
     if not isinstance(df, pd.DataFrame):
         raise TypeError("df must be a pandas DataFrame.")
 
@@ -362,7 +362,22 @@ def permute_feature_group(
     )
     result = df.copy()
 
-    row_order = np.random.default_rng(random_state).permutation(len(df))
+    rng = np.random.default_rng(random_state)
+    if unique_shuffle:
+        fingerprint_ids, unique_fingerprints = pd.factorize(
+            pd.MultiIndex.from_frame(df[features]),
+            sort=False,
+        )
+        shuffled_fingerprints = unique_fingerprints.to_frame(index=False).iloc[
+            rng.permutation(len(unique_fingerprints))
+        ]
+        for column_position, feature in enumerate(features):
+            result[feature] = shuffled_fingerprints.iloc[
+                fingerprint_ids, column_position
+            ].array
+        return result
+
+    row_order = rng.permutation(len(df))
     for feature in features:
         result[feature] = df[feature].array.take(row_order)
 
@@ -496,14 +511,19 @@ def run(
                 scores["best_params"] = regressor_params
             else:
                 if kwargs.get("permute_features", False):
-                    # fp_features = [
-                    #         column
-                    #         for group_name, columns in features_group.items()
-                    #         if group_name.startswith("fp_")
-                    #         for column in columns
-                    #     ]
-                    count_features = features_group.get("count", [])
-                    X = permute_feature_group(X_original, features_to_permute=count_features, random_state=seed)
+                    fp_features = [
+                            column
+                            for group_name, columns in features_group.items()
+                            if group_name.startswith("fp_")
+                            for column in columns
+                        ]
+                    # count_features = features_group.get("count", [])
+                    X = permute_feature_group(
+                        X_original,
+                        features_to_permute=fp_features,
+                        random_state=seed,
+                        unique_shuffle=False,
+                    )
                 model = optimized_models(
                                         regressor_type,
                                         feat_group=features_group,
