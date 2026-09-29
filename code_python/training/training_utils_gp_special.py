@@ -522,7 +522,7 @@ def run(
                         X_original,
                         features_to_permute=fp_features,
                         random_state=seed,
-                        unique_shuffle=True,
+                        unique_shuffle=False,
                     )
                 model = optimized_models(
                                         regressor_type,

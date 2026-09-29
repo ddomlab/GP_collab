@@ -76,7 +76,7 @@ def main_structural_numerical(
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='hp_RF_differences',
-                special_file_name='unique_fp_permutation' if kwargs.get("permute_features", False) else None,
+                special_file_name='random_fp_permutation' if kwargs.get("permute_features", False) else None,
                 **kwargs,
                 )
 
