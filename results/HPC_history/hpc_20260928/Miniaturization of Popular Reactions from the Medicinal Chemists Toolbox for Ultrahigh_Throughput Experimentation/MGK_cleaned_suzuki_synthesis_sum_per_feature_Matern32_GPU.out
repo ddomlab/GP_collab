@@ -1,0 +1,60 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu33>
+Subject: Job 321784: <mgk_all_20260928_20> in cluster <Hazel> Exited
+
+Job <mgk_all_20260928_20> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Mon Sep 28 13:28:41 2026
+Job was executed on host(s) <gpu33>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Sep 28 14:39:13 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Sep 28 14:39:13 2026
+Terminated at Mon Sep 28 16:41:18 2026
+Results reported at Mon Sep 28 16:41:18 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 1:59
+#BSUB -q short_gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "mgk_all_20260928_20"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_cleaned_suzuki_synthesis_sum_per_feature_Matern32_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_cleaned_suzuki_synthesis_sum_per_feature_Matern32_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp "Graph"                                         --K_count "Matern32"                                         --Kernel_mixing_method "sum"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --dataset "cleaned_suzuki_synthesis"                                         --kernel_feature_mode "per_feature"                                         --regressor_type "MGK"                                         --clustering_method "structure_cluster"
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   6698.00 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.17 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              10
+    Max Threads :                                16
+    Run time :                                   7800 sec.
+    Turnaround time :                            11557 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation/MGK_cleaned_suzuki_synthesis_sum_per_feature_Matern32_GPU.err> for stderr output of this job.
+

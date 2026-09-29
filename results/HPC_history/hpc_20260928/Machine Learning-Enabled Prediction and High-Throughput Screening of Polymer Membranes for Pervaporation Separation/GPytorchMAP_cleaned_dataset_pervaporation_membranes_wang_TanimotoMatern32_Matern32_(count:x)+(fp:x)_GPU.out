@@ -1,0 +1,126 @@
+Data filtering and preprocessing took 0.05 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern32-Matern32_(count:x)+(fp:x))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.04 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern32-Matern32_(count:x)+(fp:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 321415: <gpmap_all_20260928_15> in cluster <Hazel> Done
+
+Job <gpmap_all_20260928_15> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Mon Sep 28 11:45:31 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Sep 28 11:54:26 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Sep 28 11:54:26 2026
+Terminated at Mon Sep 28 12:07:22 2026
+Results reported at Mon Sep 28 12:07:22 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 10:00
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "gpmap_all_20260928_15"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "TanimotoMatern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "(count:x)+(fp:x)"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "structure_cluster"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   745.00 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               31.00 GB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                9
+    Run time :                                   972 sec.
+    Turnaround time :                            1311 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.err> for stderr output of this job.
+
+Data filtering and preprocessing took 0.05 seconds.
+Running seed: 42
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu15>
+Subject: Job 322295: <gpmap_all_20260928_15> in cluster <Hazel> Exited
+
+Job <gpmap_all_20260928_15> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Mon Sep 28 18:23:12 2026
+Job was executed on host(s) <gpu15>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Mon Sep 28 21:15:27 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Mon Sep 28 21:15:27 2026
+Terminated at Mon Sep 28 21:16:11 2026
+Results reported at Mon Sep 28 21:16:11 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 10:00
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "gpmap_all_20260928_15"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "TanimotoMatern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "(count:x)+(fp:x)"                                         --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                         --dataset "cleaned_dataset_pervaporation_membranes_wang"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "continuous_cluster"
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   18.41 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              6
+    Max Threads :                                7
+    Run time :                                   41 sec.
+    Turnaround time :                            10379 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260928/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GPytorchMAP_cleaned_dataset_pervaporation_membranes_wang_TanimotoMatern32_Matern32_(count:x)+(fp:x)_GPU.err> for stderr output of this job.
+
