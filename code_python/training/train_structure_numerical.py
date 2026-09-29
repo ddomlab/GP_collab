@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 numerical_feats=feats,
                 hyperparameter_optimization=False,
                 output_dir_name=PAPER,
-                permute_features=True,
+                permute_features=False,
                 clustering_method=args.clustering_method,
                 **representation_options,
                 **model_options,

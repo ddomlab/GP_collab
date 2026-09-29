@@ -35,6 +35,7 @@ for training_set in "${selected_training_sets[@]}"; do
                 job_index=$((job_index + 1))
 
                 bsub <<EOT
+                
 #BSUB -n 1
 #BSUB -W 25:25
 #BSUB -q gpu
