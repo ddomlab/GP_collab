@@ -36,7 +36,7 @@ for training_set in "${selected_training_sets[@]}"; do
 
                 bsub <<EOT
 #BSUB -n 1
-#BSUB -W 30:00
+#BSUB -W 25:25
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
