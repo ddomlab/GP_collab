@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Submit only the missing random-count-permutation GPytorchMAP runs.
-# Each selected dataset below has one configured target in filter_data.py, so
-# one submission produces exactly one missing target/mixing-method result.
+# Submit only the missing unique-fingerprint-permutation GPytorchMAP runs.
+# Each submission trains every target configured for its paper/dataset pair
+# in filter_data.py.
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
@@ -48,8 +48,17 @@ EOT
 }
 
 missing_jobs=(
-    # Approx Conv (%): (count:x)+(fp:x)
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|(count:x)+(fp:x)"
+    # log (Separation factor): sum
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|sum"
+
+    # log (Separation factor): (count:x)+(fp:x)
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|(count:x)+(fp:x)"
+
+    # log (Total flux): product
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|product"
+
+    # All six ultrafiltration targets: (count:+)x(fp:+)
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|(count:+)x(fp:+)"
 )
 
 for job in "${missing_jobs[@]}"; do

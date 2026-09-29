@@ -85,6 +85,7 @@ FeatureSet = Literal[
     "count_and_fingerprint",
     "random_count_permutation",
     "random_fp_permutation",
+    "unique_fp_permutation",
 ]
 COUNT_ONLY_MODELS = ["RF", "XGBR", "NGB", "GPytorchMAP"]
 COUNT_ONLY_MIXING_METHODS = ["sum", "product"]
@@ -98,8 +99,8 @@ RANDOM_PERMUTATION_CONFIGS = [
 RANDOM_PERMUTATION_FEATURE_SETS = {
     "random_count_permutation",
     "random_fp_permutation",
+    "unique_fp_permutation",
 }
-
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
     valid_feature_sets = {
@@ -107,6 +108,7 @@ def _validate_feature_set(feature_set: str) -> FeatureSet:
         "count_and_fingerprint",
         "random_count_permutation",
         "random_fp_permutation",
+        "unique_fp_permutation",
     }
     if feature_set not in valid_feature_sets:
         choices = ", ".join(sorted(valid_feature_sets))
@@ -610,6 +612,9 @@ def build_master_performance_data(
     ``feature_set="random_count_permutation"`` uses the same GPU GPytorchMAP
     configurations for results trained after randomly permuting COUNT
     features.
+    ``feature_set="unique_fp_permutation"`` uses the same GPU GPytorchMAP
+    configurations for results trained after permuting unique fingerprint
+    feature vectors.
 
     Tree-model results are included in both device datasets. GP rows use only
     the requested device, with no cross-device fallback. Only precomputed
@@ -726,13 +731,15 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "random_count_permutation"
+    feature_set: FeatureSet = "unique_fp_permutation"
     output_name = {
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_only": "Tree_and_GP_COUNT_only",
         "random_count_permutation": "GP_random_count_permutation",
         "random_fp_permutation": "GP_random_fp_permutation",
+        "unique_fp_permutation": "GP_unique_fp_permutation",
     }[feature_set]
+
     build_master_performance_data(
         save_path=RESULTS / "master_performance_data" / output_name,
         score_metrics=DEFAULT_SCORE_METRICS,
