@@ -18,13 +18,14 @@ models=("RF" "XGBR" "NGB")
 # - cleaned_dataset_Ultrafiltration Membrane_imputed: all six configured
 #   ultrafiltration targets
 selected_training_sets=(
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
+    # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
+    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
+    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
+    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
+    # "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
     # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
+    # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
+    "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery|cleaned_poly_Electrolyte_conductivity"
 )
 
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
@@ -38,8 +39,8 @@ for training_set in "${selected_training_sets[@]}"; do
 
     for model in "${models[@]}"; do
         job_index=$((job_index + 1))
-
         bsub <<EOT
+
 #BSUB -n 6
 #BSUB -W 5:00
 #BSUB -R span[hosts=1]
@@ -53,8 +54,8 @@ conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
 python ../train_structure_numerical.py --regressor_type "$model" \
                                         --dataset "$dataset" \
-                                        --paper "$paper" \
-                                        --clustering_method "continuous_cluster"
+                                        --paper "$paper" 
+
 EOT
     done
 done
