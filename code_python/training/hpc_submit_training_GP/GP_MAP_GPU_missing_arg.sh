@@ -48,12 +48,6 @@ EOT
 }
 
 missing_jobs=(
-    # log Rg (nm): product
-    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed|product"
-
-    # log (Separation factor): sum
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|sum"
-
     # Approx Conv (%): (count:x)+(fp:x)
     "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|(count:x)+(fp:x)"
 )
