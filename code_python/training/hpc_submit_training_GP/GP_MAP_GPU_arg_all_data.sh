@@ -17,7 +17,7 @@ selected_training_sets=(
     "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
     "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
     "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
-    # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
 )
 
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
@@ -36,7 +36,7 @@ for training_set in "${selected_training_sets[@]}"; do
 
                 bsub <<EOT
 #BSUB -n 1
-#BSUB -W 10:00
+#BSUB -W 30:00
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -55,8 +55,8 @@ python ../train_structure_numerical.py --K_fp "$fp_kernel" \
                                         --Kernel_mixing_method "$mixing_method" \
                                         --paper "$paper" \
                                         --dataset "$dataset" \
-                                        --regressor_type "$model" \
-                                        --clustering_method "continuous_cluster"
+                                        --regressor_type "$model"
+
 EOT
             done
         done
