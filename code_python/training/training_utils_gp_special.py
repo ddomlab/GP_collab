@@ -511,16 +511,16 @@ def run(
                 scores["best_params"] = regressor_params
             else:
                 if kwargs.get("permute_features", False):
-                    fp_features = [
-                            column
-                            for group_name, columns in features_group.items()
-                            if group_name.startswith("fp_")
-                            for column in columns
-                        ]
-                    # count_features = features_group.get("count", [])
+                    # p_features = [
+                    #         column
+                    #         for group_name, columns in features_group.items()
+                    #         if group_name.startswith("fp_")
+                    #         for column in columns
+                    #     ]
+                    p_features = features_group.get("count", [])
                     X = permute_feature_group(
                         X_original,
-                        features_to_permute=fp_features,
+                        features_to_permute=p_features,
                         random_state=seed,
                         unique_shuffle=False,
                     )
