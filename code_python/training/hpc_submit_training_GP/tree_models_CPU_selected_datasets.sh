@@ -5,7 +5,7 @@
 # train_structure_numerical.py trains its target(s) configured in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("RF" "XGBR" "NGB")
+models=("RF")
 
 # Selected datasets and their configured targets:
 # - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
