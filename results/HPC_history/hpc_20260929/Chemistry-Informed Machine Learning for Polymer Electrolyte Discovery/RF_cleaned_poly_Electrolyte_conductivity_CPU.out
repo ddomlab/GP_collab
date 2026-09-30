@@ -1,3 +1,124 @@
 Data filtering and preprocessing took 1.57 seconds.
 Running seed: 6
 Running seed: 13
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c016n04>
+Subject: Job 324915: <tree_selected_20260929_1> in cluster <Hazel> Exited
+
+Job <tree_selected_20260929_1> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Tue Sep 29 16:55:20 2026
+Job was executed on host(s) <6*c016n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Sep 29 16:55:20 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Sep 29 16:55:20 2026
+Terminated at Tue Sep 29 21:55:45 2026
+Results reported at Tue Sep 29 21:55:45 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_selected_20260929_1"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "RF"                                         --dataset "cleaned_poly_Electrolyte_conductivity"                                         --paper "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery" 
+
+
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   83884.00 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             5.66 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                60
+    Run time :                                   18033 sec.
+    Turnaround time :                            18025 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.err> for stderr output of this job.
+
+Data filtering and preprocessing took 1.43 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.41±0.01	 r2: 0.95±0.0
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c010n02>
+Subject: Job 325341: <tree_selected_20260929_1> in cluster <Hazel> Done
+
+Job <tree_selected_20260929_1> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Tue Sep 29 22:06:35 2026
+Job was executed on host(s) <6*c010n02>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Sep 29 22:18:06 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Sep 29 22:18:06 2026
+Terminated at Wed Sep 30 08:01:46 2026
+Results reported at Wed Sep 30 08:01:46 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_selected_20260929_1"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "RF"                                         --dataset "cleaned_poly_Electrolyte_conductivity"                                         --paper "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery" 
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   169728.05 sec.
+    Max Memory :                                 6 GB
+    Average Memory :                             5.96 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               26.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                60
+    Run time :                                   35030 sec.
+    Turnaround time :                            35711 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260929/Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery/RF_cleaned_poly_Electrolyte_conductivity_CPU.err> for stderr output of this job.
+
