@@ -38,7 +38,7 @@ module load cuda/12.1
 module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_structure_numerical.py --K_fp "$fp_kernel" \
+python ../train_structure_numerical_v2.py --K_fp "$fp_kernel" \
                                         --K_count "$count_kernel" \
                                         --Kernel_mixing_method "$mixing_method" \
                                         --paper "$paper" \
