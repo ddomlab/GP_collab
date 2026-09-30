@@ -1,8 +1,9 @@
-"""Build the consolidated CPU and GPU performance-result datasets.
+"""Build consolidated regular and structure-cluster OOD result datasets.
 
 Importing this module does not build datasets. Running it executes the
 selection in the ``__main__`` block; call ``build_master_performance_data``
-directly when using it from another module.
+or ``build_master_ood_performance_data`` directly when using it from another
+module.
 """
 
 import json
@@ -57,6 +58,20 @@ DEFAULT_SCORE_METRICS = [
     "Cv",
     "RUSC",
 ]
+DEFAULT_OOD_SCORE_METRICS = [
+    "rmse",
+    "r2",
+    "mae",
+    "cvpp_ama",
+    "cdf_ama",
+    "nll",
+    "ece",
+    "Cv",
+    "RUSC",
+    "sharpness",
+    "run_time_sec",
+]
+OOD_DATA_SPLITS = ("ood", "iid")
 BASE_MASTER_RESULT_COLUMNS = [
     "paper",
     "target",
@@ -87,6 +102,10 @@ FeatureSet = Literal[
     "random_fp_permutation",
     "unique_fp_permutation",
 ]
+OODType = Literal[
+    "structure_cluster_OOD",
+    "continuous_cluster_OOD",
+]
 COUNT_ONLY_MODELS = ["RF", "XGBR", "NGB", "GPytorchMAP"]
 COUNT_ONLY_MIXING_METHODS = ["sum", "product"]
 RANDOM_PERMUTATION_MODELS = ["GPytorchMAP"]
@@ -114,6 +133,14 @@ def _validate_feature_set(feature_set: str) -> FeatureSet:
         choices = ", ".join(sorted(valid_feature_sets))
         raise ValueError(f"feature_set must be one of: {choices}.")
     return cast(FeatureSet, feature_set)
+
+
+def _validate_ood_type(ood_type: str) -> OODType:
+    valid_ood_types = {"structure_cluster_OOD", "continuous_cluster_OOD"}
+    if ood_type not in valid_ood_types:
+        choices = ", ".join(sorted(valid_ood_types))
+        raise ValueError(f"ood_type must be one of: {choices}.")
+    return cast(OODType, ood_type)
 
 
 def _is_tree_model(model: str) -> bool:
@@ -591,6 +618,149 @@ def _master_row(
     }
 
 
+def _ood_score_row_values(
+    data: Optional[Dict[str, Any]],
+    score_metrics: List[str],
+) -> Dict[str, Any]:
+    """Return the raw cluster dictionaries for each OOD/IID metric.
+
+    Current structure-cluster files contain one top-level training seed. If a
+    future file contains multiple seeds, the original cluster dictionaries are
+    retained below an additional seed-keyed dictionary rather than discarded.
+    """
+    values = {
+        f"{split}_test_{metric}": None
+        for split in OOD_DATA_SPLITS
+        for metric in score_metrics
+    }
+
+    for split in OOD_DATA_SPLITS:
+        for metric in score_metrics:
+            seed_values = []
+            for seed, seed_data in _seed_items(data):
+                split_data = seed_data.get(split)
+                if not isinstance(split_data, dict):
+                    continue
+                metric_key = f"test_{metric}"
+                if metric_key in split_data:
+                    seed_values.append((seed, split_data[metric_key]))
+
+            output_column = f"{split}_test_{metric}"
+            if len(seed_values) == 1:
+                values[output_column] = seed_values[0][1]
+            elif seed_values:
+                values[output_column] = dict(seed_values)
+
+    return values
+
+
+def _ood_master_result_columns(score_metrics: List[str]) -> List[str]:
+    return BASE_MASTER_RESULT_COLUMNS + [
+        f"{split}_test_{metric}"
+        for split in OOD_DATA_SPLITS
+        for metric in score_metrics
+    ]
+
+
+def _ood_model_configurations(
+    model: str,
+) -> List[tuple[Optional[str], Optional[str], Optional[str]]]:
+    if _is_tree_model(model):
+        return [(None, None, None)]
+    if model == "MGK":
+        return [
+            ("Graph", count_kernel, mixing_method)
+            for count_kernel in count_kernels
+            for mixing_method in MGK_MIXING_METHODS
+        ]
+    return _count_and_fingerprint_kernel_configs()
+
+
+def build_master_ood_performance_data(
+    save_path: Optional[Path] = (
+        RESULTS
+        / "master_ood_performance_data"
+        / "Tree_and_GP_structure_cluster_OOD"
+    ),
+    score_metrics: Optional[List[str]] = None,
+    ood_type: OODType = "structure_cluster_OOD",
+) -> pd.DataFrame:
+    """Build pickle and CSV master datasets for the selected OOD split type.
+
+    Each metric cell retains the JSON representation for that validation
+    split: OOD cells map cluster IDs to scalar scores, while IID cells map
+    cluster IDs to lists of scores. Lengthscales and feature importances are
+    intentionally excluded. Missing result configurations are represented by
+    rows whose metric cells are ``None``, matching the regular master builder.
+    """
+    ood_type = _validate_ood_type(ood_type)
+
+    metrics = list(
+        dict.fromkeys(
+            metric.removeprefix("test_")
+            for metric in (
+                DEFAULT_OOD_SCORE_METRICS
+                if score_metrics is None
+                else score_metrics
+            )
+        )
+    )
+    rows = []
+
+    for paper_name, paper_info in PAPER.items():
+        for target in paper_info["target"]:
+            ood_dir = RESULTS / paper_name / target / ood_type
+
+            for model in MODELS:
+                for fp_kernel, count_kernel, mixing_method in (
+                    _ood_model_configurations(model)
+                ):
+                    data, _ = _load_score_file(
+                        ood_dir,
+                        model,
+                        "count_and_fingerprint",
+                        fp_kernel,
+                        count_kernel,
+                        mixing_method,
+                        use_gpu=not _is_tree_model(model),
+                    )
+                    rows.append(
+                        {
+                            "paper": paper_name,
+                            "target": target,
+                            "model": model,
+                            "fp kernel": fp_kernel,
+                            "count kernel": count_kernel,
+                            "mixing method": mixing_method,
+                            **_ood_score_row_values(data, metrics),
+                        }
+                    )
+
+    dataframe = pd.DataFrame(
+        rows,
+        columns=_ood_master_result_columns(metrics),
+        dtype=object,
+    )
+    if save_path is not None:
+        output_path = Path(save_path)
+        ensure_long_path(output_path.parent).mkdir(parents=True, exist_ok=True)
+        dataframe.to_pickle(ensure_long_path(Path(f"{output_path}.pkl")))
+
+        csv_data = dataframe.copy()
+        for column in _ood_master_result_columns(metrics)[
+            len(BASE_MASTER_RESULT_COLUMNS):
+        ]:
+            csv_data[column] = csv_data[column].apply(
+                lambda value: json.dumps(value) if value is not None else None
+            )
+        csv_data.to_csv(
+            ensure_long_path(Path(f"{output_path}.csv")),
+            index=False,
+        )
+
+    return dataframe
+
+
 def build_master_performance_data(
     save_path: Optional[Path] = (
         RESULTS / "master_performance_data" / "Tree_and_GP"
@@ -731,17 +901,29 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "unique_fp_permutation"
-    output_name = {
-        "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-        "count_only": "Tree_and_GP_COUNT_only",
-        "random_count_permutation": "GP_random_count_permutation",
-        "random_fp_permutation": "GP_random_fp_permutation",
-        "unique_fp_permutation": "GP_unique_fp_permutation",
-    }[feature_set]
+    # feature_set: FeatureSet = "unique_fp_permutation"
+    # output_name = {
+    #     "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
+    #     "count_only": "Tree_and_GP_COUNT_only",
+    #     "random_count_permutation": "GP_random_count_permutation",
+    #     "random_fp_permutation": "GP_random_fp_permutation",
+    #     "unique_fp_permutation": "GP_unique_fp_permutation",
+    # }[feature_set]
 
-    build_master_performance_data(
-        save_path=RESULTS / "master_performance_data" / output_name,
-        score_metrics=DEFAULT_SCORE_METRICS,
-        feature_set=feature_set,
+    # build_master_performance_data(
+    #     save_path=RESULTS / "master_performance_data" / output_name,
+    #     score_metrics=DEFAULT_SCORE_METRICS,
+    #     feature_set=feature_set,
+    # )
+
+    ood_type: OODType = "continuous_cluster_OOD"
+    output_name = {
+        "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
+        "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
+    }[ood_type]
+
+    build_master_ood_performance_data(
+        save_path=RESULTS / "master_ood_performance_data" / output_name,
+        score_metrics=DEFAULT_OOD_SCORE_METRICS,
+        ood_type=ood_type,
     )
