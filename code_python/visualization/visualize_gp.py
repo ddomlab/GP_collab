@@ -677,11 +677,11 @@ mixing_labels = {
     "product": "ΠC × ΠF",
     "averageProduct": "Av(C) × F",
     "(count:+)x(fp:x)": "ΣC × ΠF",
-    "(count:+)x(graph:x)": "(count:+)×(graph:×)",
+    "(count:+)x(graph:x)": "ΣC × G",
     "(count:+)x(fp:+)": "ΣC × ΣF",
-    "(count:+)x(graph:+)": "(count:+)×(graph:+)",
+    "(count:+)x(graph:+)": "ΣC × ΣG",
     "(count:x)+(fp:x)": "ΠC + ΠF",
-    "(count:x)+(graph:x)": "(count:×)+(graph:×)",
+    "(count:x)+(graph:x)": "ΠC + G",
 }
 INDIVIDUAL_MODEL_COLORS = {
     "RF": "#174C85",
@@ -831,7 +831,7 @@ def run_topsis(
 
 def _mixing_method_label(value: Any) -> str:
     value = str(value)
-    return mixing_labels.get(value, value)
+    return mixing_labels.get(value, mixing_labels.get(value.lower(), value))
 
 
 def _expand_master_scores_for_profile(
