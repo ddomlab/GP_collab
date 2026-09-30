@@ -901,29 +901,29 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    # feature_set: FeatureSet = "unique_fp_permutation"
-    # output_name = {
-    #     "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-    #     "count_only": "Tree_and_GP_COUNT_only",
-    #     "random_count_permutation": "GP_random_count_permutation",
-    #     "random_fp_permutation": "GP_random_fp_permutation",
-    #     "unique_fp_permutation": "GP_unique_fp_permutation",
-    # }[feature_set]
-
-    # build_master_performance_data(
-    #     save_path=RESULTS / "master_performance_data" / output_name,
-    #     score_metrics=DEFAULT_SCORE_METRICS,
-    #     feature_set=feature_set,
-    # )
-
-    ood_type: OODType = "continuous_cluster_OOD"
+    feature_set: FeatureSet = "count_and_fingerprint"
     output_name = {
-        "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
-        "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
-    }[ood_type]
+        "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
+        "count_only": "Tree_and_GP_COUNT_only",
+        "random_count_permutation": "GP_random_count_permutation",
+        "random_fp_permutation": "GP_random_fp_permutation",
+        "unique_fp_permutation": "GP_unique_fp_permutation",
+    }[feature_set]
 
-    build_master_ood_performance_data(
-        save_path=RESULTS / "master_ood_performance_data" / output_name,
-        score_metrics=DEFAULT_OOD_SCORE_METRICS,
-        ood_type=ood_type,
+    build_master_performance_data(
+        save_path=RESULTS / "master_performance_data" / output_name,
+        score_metrics=DEFAULT_SCORE_METRICS,
+        feature_set=feature_set,
     )
+
+    # ood_type: OODType = "continuous_cluster_OOD"
+    # output_name = {
+    #     "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
+    #     "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
+    # }[ood_type]
+
+    # build_master_ood_performance_data(
+    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
+    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
+    #     ood_type=ood_type,
+    # )

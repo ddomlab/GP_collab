@@ -30,7 +30,25 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 # internal imports
-from visualization_setting import set_plot_style, save_img_path, ensure_long_path
+from visualization_setting import (
+    FEATURE_STABILITY_COLUMNS,
+    GNN_MODELS,
+    MODEL_DISPLAY_NAMES,
+    MODEL_TYPE_COLORS,
+    TREE_MODELS,
+    display_model_name as _display_model_name,
+    filter_selection as _filter_selection,
+    is_feature_stability_metric as _is_feature_stability_metric,
+    is_tree_model as _is_tree_model,
+    metric_higher_is_better as _metric_higher_is_better,
+    model_config_label as _model_config_label,
+    model_config_sort_key as _model_config_sort_key,
+    model_type_color as _model_type_color,
+    selection_values as _selection_values,
+    ensure_long_path,
+    save_img_path,
+    set_plot_style,
+)
 
 set_plot_style()
 
@@ -665,15 +683,6 @@ mixing_labels = {
     "(count:x)+(fp:x)": "ΠC + ΠF",
     "(count:x)+(graph:x)": "(count:×)+(graph:×)",
 }
-TREE_MODELS = {"RF", "XGBR", "NGB"}
-GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
-MODEL_TYPE_COLORS = {
-    "tree": "#7093B9",
-    "gp": "#E45756",
-    "mgk": "#9C1E1E",
-    "gnn": "#72B7B2",
-}
-
 INDIVIDUAL_MODEL_COLORS = {
     "RF": "#174C85",
     "XGBR": "#5482B3",
@@ -684,18 +693,7 @@ INDIVIDUAL_MODEL_COLORS = {
     "MGK": "#CB6D01",
 }
 
-MODEL_DISPLAY_NAMES = {
-    "XGBR": "XGB",
-    "GPytorchMAP": "GP-MAP",
-    "GpyroHMC": "GP-HMC",
-}
-
 MODELS = ["RF", "XGBR", "NGB", "GpyroHMC", "GPytorchMAP", "MGK"]
-FEATURE_STABILITY_COLUMNS = [
-    "lengthscale_kendalls_w",
-    "feature_importance_MDI_kendalls_w",
-    "feature_importance_SHAP_kendalls_w",
-]
 
 label_conversion_source = {
     "r2": "R²",
@@ -717,11 +715,6 @@ label_conversion_source = {
     "sharpness": "Sharpness",
     "OOF_sharpness": "Sharpness",
 }
-
-
-def _display_model_name(model: Any) -> str:
-    model = str(model)
-    return MODEL_DISPLAY_NAMES.get(model, model)
 
 
 def _feature_kendalls_w(
@@ -798,32 +791,6 @@ def _coerce_score_list(value: Any) -> Optional[List[Any]]:
     return None
 
 
-def _selection_values(values: Any) -> Optional[List[Any]]:
-    if values is None:
-        return None
-    if isinstance(values, str):
-        return [values]
-    return list(values)
-
-
-def _filter_selection(
-    df: pd.DataFrame,
-    column: str,
-    values: Any,
-    keep_missing: bool = False,
-) -> pd.DataFrame:
-    selected = _selection_values(values)
-    if selected is None:
-        return df
-
-    selected_lower = {str(value).lower() for value in selected}
-    column_values = df[column].astype(str).str.lower()
-    mask = column_values.isin(selected_lower)
-    if keep_missing:
-        mask = mask | df[column].isna()
-    return df[mask].copy()
-
-
 def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
     model = _display_model_name(row["model"])
     if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
@@ -831,16 +798,6 @@ def _kernel_label(row: pd.Series, include_model: bool = False) -> str:
 
     label = f"{row['fp kernel']}-{row['count kernel']}_{row['mixing method']}"
     return f"{model}: {label}" if include_model else label
-
-
-def _metric_higher_is_better(metric: str) -> bool:
-    # AMA is an absolute calibration error, so lower values are better.
-    return (
-        str(metric).strip().lower()
-        in {"r2", "oof_r2", "rusc", "oof_rusc"}
-        or metric in FEATURE_STABILITY_COLUMNS
-        or _is_feature_stability_metric(metric)
-    )
 
 
 def run_topsis(
@@ -1030,46 +987,6 @@ def _expand_master_scores_for_profile(
 
 
 
-def _model_config_label(row: pd.Series, include_kernel_config: bool = True) -> str:
-    raw_model = str(row["model"])
-    model = _display_model_name(raw_model)
-    if not include_kernel_config:
-        return model
-    if raw_model == "MGK":
-        return model
-    if pd.isna(row["fp kernel"]) and pd.isna(row["count kernel"]):
-        return model
-
-    # mix = mixing_labels.get(str(row["mixing method"]))
-    suffix = "SK" if "tanimoto" in row["fp kernel"].lower() else "Bitwise"
-    return f"{model} ({suffix})"
-
-
-def _model_config_sort_key(row: pd.Series, model_order: Optional[Dict[str, int]] = None) -> tuple:
-    model = str(row["model"])
-    model_rank = len(model_order) if model_order is not None else 0
-    if model_order is not None:
-        model_rank = model_order.get(model.lower(), model_rank)
-
-    fp_kernel = row["fp kernel"]
-    if _is_tree_model(model):
-        family_rank = 0
-    elif model == "MGK":
-        family_rank = 3
-    elif pd.notna(fp_kernel) and "tanimoto" not in str(fp_kernel).lower():
-        family_rank = 1
-    elif pd.notna(fp_kernel) and "tanimoto" in str(fp_kernel).lower():
-        family_rank = 2
-    else:
-        family_rank = 4
-
-    return (family_rank, model_rank, model)
-
-
-def _is_tree_model(model: Any) -> bool:
-    return str(model).upper() in TREE_MODELS
-
-
 def _is_sk_gp_row(row: pd.Series) -> bool:
     """Return whether a results row is a similarity-kernel GP."""
     return (
@@ -1113,20 +1030,6 @@ def _model_order_sort_key(model: Any, model_order: Optional[Dict[str, int]] = No
     return (_model_group_sort_rank(model_name), model_rank, model_name)
 
 
-def _model_type_color(model: Any) -> str:
-    model_name = str(model)
-    model_upper = model_name.upper()
-    if _is_tree_model(model_name):
-        return MODEL_TYPE_COLORS["tree"]
-    if model_name == "MGK":
-        return MODEL_TYPE_COLORS["mgk"]
-    if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
-        return MODEL_TYPE_COLORS["gnn"]
-    if "GP" in model_upper:
-        return MODEL_TYPE_COLORS["gp"]
-    return "#808080"
-
-
 def _tree_feature_stability_column(tree_feature_importance: str) -> str:
     aliases = {
         "mdi": "feature_importance_MDI_kendalls_w",
@@ -1151,17 +1054,6 @@ def _feature_stability_source_label(column: str) -> str:
         "feature_importance_SHAP_kendalls_w": "SHAP",
     }
     return labels.get(column, column)
-
-
-def _is_feature_stability_metric(metric: Any) -> bool:
-    metric_key = re.sub(r"[\s\-]+", "_", str(metric).strip().lower())
-    return metric_key in {
-        "feature_stability",
-        "feature_importance_stability",
-        "feature_importance_kendalls_w",
-        "feature_importance_stability_kendalls_w",
-        "tree_feature_importance_stability",
-    }
 
 
 def _feature_stability_column_for_model(
@@ -5078,24 +4970,24 @@ if __name__ == "__main__":
     #     file_name="r2_GPytorchMAP_Bitwise.png",
     # )
     
-    plot_hybridization_profile_comparison(
-        df=result_df,
-        model="GPytorchMAP",
-        metric="OOF_R2",
-        fp_kernels=["Matern32", "Matern52", "RBF"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:+)",
-            "(count:x)+(fp:x)",
-        ],
-        y_label="Profile AUC of R² (OOF)",
-        fontsize=17,
-        figsize=(6, 5),
-        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-        file_name="R2OOF_GPytorchMAP_Bitwise_hybridization_profile_comparison_avg_over_config.png",
-    )
+    # plot_hybridization_profile_comparison(
+    #     df=result_df,
+    #     model="GPytorchMAP",
+    #     metric="OOF_R2",
+    #     fp_kernels=["Matern32", "Matern52", "RBF"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:+)",
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="Profile AUC of R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(6, 5),
+    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+    #     file_name="R2OOF_GPytorchMAP_Bitwise_hybridization_profile_comparison_avg_over_config.png",
+    # )
 
     # plot_hybridization_profile_comparison(
     # df=result_df,
@@ -5119,22 +5011,22 @@ if __name__ == "__main__":
     # )
 
 
-    # plot_model_profile_comparison(
-    #     df=result_df,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #         # ("Graph", "Matern32", "product"),
-    #     ],
-    #     metric="OOF_cvpp_ama",
-    #     # tree_feature_importance=tree_fi,
-    #     y_label="Profile AUC: OOF AMA",
-    #     fontsize=17,
-    #     figsize=(5, 5),
-    #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-    #     file_name=f"AMA_OOF_model_profile_comparison.png",
-    # )
+    plot_model_profile_comparison(
+        df=result_df,
+        model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC", "MGK"],
+        kernel_triples=[
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+            ("Graph", "Matern32", "(count:x)+(Graph:x)"),
+        ],
+        metric="cvpp_ama",
+        # tree_feature_importance=tree_fi,
+        y_label="Profile AUC: AMA",
+        fontsize=17,
+        figsize=(7, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
+        file_name=f"AMA_model_profile_comparison.png",
+    )
 
     # plot_model_profile_comparison(
     #     df=result_df,

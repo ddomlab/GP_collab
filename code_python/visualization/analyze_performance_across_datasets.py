@@ -356,17 +356,15 @@ def plot_hybridization_performance_vs_data_number(
                     else max(max_label_value, label_value)
                 )
                 if show_values:
-                    left, right = ax.get_xlim()
-                    value_x = left + 0.02 * (right - left)
                     ax.text(
-                        value_x,
+                        label_value,
                         target_position,
                         f"{mean_value:.2f}",
                         ha="left",
                         va="center",
                         fontsize=max(fontsize - 6, 6),
                         fontweight="bold",
-                        color="black" if mean_value < 0.1 else "white",
+                        color="black",
                     )
             else:
                 data_position = bar.get_x() + bar.get_width() / 2
@@ -391,18 +389,15 @@ def plot_hybridization_performance_vs_data_number(
                     else max(max_label_value, label_value)
                 )
                 if show_values:
-                    bottom, top = ax.get_ylim()
-                    value_y = bottom + 0.02 * (top - bottom)
                     ax.text(
                         data_position,
-                        value_y,
+                        label_value,
                         f"{mean_value:.2f}",
                         ha="center",
                         va="bottom",
                         fontsize=max(fontsize - 6, 6),
                         fontweight="bold",
-                        color="black" if mean_value < 0.1 else "white",
-                        rotation=90,
+                        color="black",
                     )
 
     if show_all_targets:
@@ -976,36 +971,36 @@ if __name__ == "__main__":
     )
 
 
-    # plot_hybridization_performance_vs_data_number(
-    #     df=count_and_fingerprint_result,
-    #     metric="OOF_R2",
-    #     model="GPytorchMAP",
-    #     fp_kernels=[
-    #         "RBF",
-    #         "Matern32",
-    #         "Matern52",
-    #     ],
-    #     count_kernels=["Matern32", "Matern52", "RBF"],
-    #     show_all_targets=True,
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         # "(count:+)x(fp:x)",
-    #         "(count:+)x(fp:+)",  # train on this
-    #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="R² (OOF)",
-    #     fontsize=17,
-    #     figsize=(11, 8),
-    #     show=True,
-    #     save_dir=(
-    #         HERE
-    #         / "result_analysis"
-    #         / "absolute_metric"
-    #         / "hybridization_comparison"
-    #     ),
-    #     file_name="R2OOF_GPytorchMAP_Bitwise_all_config_vs_data_number_all_targets.png",
-    # )
+    plot_hybridization_performance_vs_data_number(
+        df=permuted_fp_result,
+        metric="OOF_R2",
+        model="GPytorchMAP",
+        fp_kernels=[
+            # "RBF",
+            "TanimotoMatern32",
+            # "Matern52",
+        ],
+        count_kernels=["Matern32"],
+        show_all_targets=True,
+        mixing_methods=[
+            "sum",
+            "product",
+            # "(count:+)x(fp:x)",
+            "(count:+)x(fp:+)",  # train on this
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        fontsize=17,
+        figsize=(11, 8),
+        show=True,
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "absolute_metric"
+            / "hybridization_comparison"
+        ),
+        file_name="R2OOF_GPytorchMAP_SK_all_config_vs_data_number_all_targets_random_permuted_fp.png",
+    )
 
 
     # plot_hybridization_performance_vs_data_number(
@@ -1035,26 +1030,26 @@ if __name__ == "__main__":
     # )
 
 
-    plot_regular_vs_permuted_fp_performance_by_target(
-        regular_df=count_and_fingerprint_result,
-        permuted_df=permuted_fp_result,
-        count_only_df=count_results,
-        permuted_count_df=permuted_count_result,
-        metric="OOF_R2",
-        model="GPytorchMAP",
-        fp_kernels=[
-            "TanimotoMatern32",
-        ],
-        count_kernels=["Matern32"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:+)",
-            "(count:x)+(fp:x)",
-        ],
-        y_label="R² (OOF)",
-        fontsize=15,
-        figsize=(6, 5),
-        show=False,
-        save_dir=Separate_datasets_save,
-    )
+    # plot_regular_vs_permuted_fp_performance_by_target(
+    #     regular_df=count_and_fingerprint_result,
+    #     permuted_df=permuted_fp_result,
+    #     count_only_df=count_results,
+    #     permuted_count_df=permuted_count_result,
+    #     metric="OOF_R2",
+    #     model="GPytorchMAP",
+    #     fp_kernels=[
+    #         "TanimotoMatern32",
+    #     ],
+    #     count_kernels=["Matern32"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:+)",
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=15,
+    #     figsize=(6, 5),
+    #     show=False,
+    #     save_dir=Separate_datasets_save,
+    # )
