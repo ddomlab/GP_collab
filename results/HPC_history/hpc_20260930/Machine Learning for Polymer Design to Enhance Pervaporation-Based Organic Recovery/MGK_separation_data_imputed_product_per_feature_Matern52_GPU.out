@@ -1,0 +1,65 @@
+MGK regressor, only scaling numerical features
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.35±0.03	 r2: 0.85±0.02
+Filename: (MG-COUNT)_(MGK_Graph-Matern52_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 327428: <mgk_all_20260930_21> in cluster <Hazel> Done
+
+Job <mgk_all_20260930_21> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Sep 30 23:58:09 2026
+Job was executed on host(s) <gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 05:30:08 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Oct  1 05:30:08 2026
+Terminated at Thu Oct  1 09:46:57 2026
+Results reported at Thu Oct  1 09:46:57 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 50:50
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "mgk_all_20260930_21"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260930/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_separation_data_imputed_product_per_feature_Matern52_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260930/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_separation_data_imputed_product_per_feature_Matern52_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py  --K_fp "Graph"                                         --K_count "Matern52"                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "separation_data_imputed"                                         --kernel_feature_mode "per_feature"                                         --regressor_type "MGK" 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   15346.50 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             1.29 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                18
+    Run time :                                   15421 sec.
+    Turnaround time :                            35328 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20260930/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/MGK_separation_data_imputed_product_per_feature_Matern52_GPU.err> for stderr output of this job.
+
