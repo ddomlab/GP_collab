@@ -9,16 +9,16 @@ model="MGK"
 k_mixing_methods=("(count:+)x(graph:x)" "(count:x)+(graph:x)" "product" "sum")
 k_feature_modes=("per_feature")
 k_fps=("Graph")
-k_counts=("Matern32")
+k_counts=("Matern52" "RBF")
 
 selected_training_sets=(
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
-    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
-    # "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
-    # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
-    # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
 
 )
 
@@ -60,7 +60,7 @@ python ../train_structure_numerical.py  --K_fp "$fp_kernel" \
                                         --dataset "$dataset" \
                                         --kernel_feature_mode "$feature_mode" \
                                         --regressor_type "$model" \
-                                        --clustering_method "structure_cluster"
+
 EOT
                 done
             done
