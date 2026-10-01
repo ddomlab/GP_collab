@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Submit only the missing unique-fingerprint-permutation GPytorchMAP runs.
-# Each submission trains every target configured for its paper/dataset pair
-# in filter_data.py.
+# Submit the remaining missing unique-fingerprint-permutation GPytorchMAP run.
+# This dataset trains all six ultrafiltration targets configured in filter_data.py.
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
@@ -48,15 +47,6 @@ EOT
 }
 
 missing_jobs=(
-    # log (Separation factor): sum
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|sum"
-
-    # log (Separation factor): (count:x)+(fp:x)
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|(count:x)+(fp:x)"
-
-    # log (Total flux): product
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|product"
-
     # All six ultrafiltration targets: (count:+)x(fp:+)
     "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|(count:+)x(fp:+)"
 )

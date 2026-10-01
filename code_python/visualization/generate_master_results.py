@@ -901,7 +901,7 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "count_and_fingerprint"
+    feature_set: FeatureSet = "unique_fp_permutation"
     output_name = {
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_only": "Tree_and_GP_COUNT_only",
