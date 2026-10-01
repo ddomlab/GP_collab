@@ -57,7 +57,7 @@ python ../train_structure_numerical.py --K_fp "$fp_kernel" \
                                         --paper "$paper" \
                                         --dataset "$dataset" \
                                         --regressor_type "$model" \
-                                        --clustering_method "continuous_cluster"
+                                        --clustering_method "structure_cluster"
 
 EOT
             done
