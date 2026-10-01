@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Submit the 28 MGK GPU jobs currently missing from the configuration matrix in
-# MGK_GPU_arg_all_data.sh.
+# Submit only the MGK GPU runs whose results are missing from
+# Tree_and_GP_count_and_fingerprint_GPU.pkl. There are 12 missing result rows,
+# represented by 10 jobs because the Wang pervaporation dataset trains both
+# targets in each invocation.
 
 DATE=$(date +%Y%m%d)
 model="MGK"
@@ -50,11 +52,7 @@ EOT
 paper="Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices"
 dataset="Beyond molecular structure_seifrid_imputed"
 
-submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
-submit_job "$paper" "$dataset" "RBF"      "product"
 submit_job "$paper" "$dataset" "RBF"      "sum"
-submit_job "$paper" "$dataset" "Matern52" "(count:+)x(graph:x)"
-submit_job "$paper" "$dataset" "Matern52" "(count:x)+(graph:x)"
 submit_job "$paper" "$dataset" "Matern52" "product"
 submit_job "$paper" "$dataset" "Matern52" "sum"
 
@@ -69,39 +67,20 @@ submit_job "$paper" "$dataset" "Matern52" "sum"
 paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
 dataset="separation_data_imputed"
 
-submit_job "$paper" "$dataset" "RBF"      "(count:+)x(graph:x)"
-submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
 submit_job "$paper" "$dataset" "RBF"      "sum"
-submit_job "$paper" "$dataset" "Matern52" "(count:+)x(graph:x)"
-submit_job "$paper" "$dataset" "Matern52" "sum"
 
 # Both pervaporation targets are trained by each invocation.
 paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
 dataset="cleaned_dataset_pervaporation_membranes_wang"
 
 submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
-submit_job "$paper" "$dataset" "RBF"      "product"
-submit_job "$paper" "$dataset" "RBF"      "sum"
 submit_job "$paper" "$dataset" "Matern52" "(count:x)+(graph:x)"
-submit_job "$paper" "$dataset" "Matern52" "product"
 
 # Approx Conv (%) -- 768 datapoints
 paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
 dataset="cleaned_suzuki_synthesis"
 
 submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
-submit_job "$paper" "$dataset" "RBF"      "product"
-submit_job "$paper" "$dataset" "RBF"      "sum"
 submit_job "$paper" "$dataset" "Matern52" "(count:+)x(graph:x)"
-submit_job "$paper" "$dataset" "Matern52" "(count:x)+(graph:x)"
-submit_job "$paper" "$dataset" "Matern52" "product"
-submit_job "$paper" "$dataset" "Matern52" "sum"
-
-# log Rg (nm) -- 256 datapoints
-paper="Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
-dataset="Rg data with clusters aging imputed"
-
-submit_job "$paper" "$dataset" "Matern52" "product"
-submit_job "$paper" "$dataset" "Matern52" "sum"
 
 echo "Submitted ${job_index} MGK GPU jobs."
