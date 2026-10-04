@@ -1,15 +1,33 @@
+Data filtering and preprocessing took 0.04 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_(count:+)x(fp:+))_hypOFF_Standard_Standard_GPU
 
 ------------------------------------------------------------
-Sender: LSF System <lsfadmin@gpu33>
-Subject: Job 328111: <gpmap_all_20261001_24> in cluster <Hazel> Exited
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 328551: <gpmap_all_20261001_24> in cluster <Hazel> Done
 
-Job <gpmap_all_20261001_24> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 11:52:36 2026
-Job was executed on host(s) <gpu33>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 12:08:30 2026
+Job <gpmap_all_20261001_24> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 16:45:29 2026
+Job was executed on host(s) <gpu16>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 17:26:11 2026
 </home/sdehgha2> was used as the home directory.
 </share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
-Started at Thu Oct  1 12:08:30 2026
-Terminated at Thu Oct  1 14:04:11 2026
-Results reported at Thu Oct  1 14:04:11 2026
+Started at Thu Oct  1 17:26:11 2026
+Terminated at Thu Oct  1 17:33:13 2026
+Results reported at Thu Oct  1 17:33:13 2026
 
 Your job looked like:
 
@@ -31,26 +49,25 @@ module load cuda/12.1
 module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "(count:+)x(fp:+)"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane_imputed"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "continuous_cluster"
+python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "(count:+)x(fp:+)"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane_imputed"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "structure_cluster"
 
 
 ------------------------------------------------------------
 
-TERM_RUNLIMIT: job killed after reaching LSF run time limit.
-Exited with exit code 140.
+Successfully completed.
 
 Resource usage summary:
 
-    CPU time :                                   6909.00 sec.
+    CPU time :                                   396.94 sec.
     Max Memory :                                 1 GB
-    Average Memory :                             1.00 GB
+    Average Memory :                             0.94 GB
     Total Requested Memory :                     32.00 GB
     Delta Memory :                               31.00 GB
     Max Swap :                                   -
-    Max Processes :                              4
+    Max Processes :                              5
     Max Threads :                                9
-    Run time :                                   7258 sec.
-    Turnaround time :                            7895 sec.
+    Run time :                                   419 sec.
+    Turnaround time :                            2864 sec.
 
 The output (if any) is above this job summary.
 

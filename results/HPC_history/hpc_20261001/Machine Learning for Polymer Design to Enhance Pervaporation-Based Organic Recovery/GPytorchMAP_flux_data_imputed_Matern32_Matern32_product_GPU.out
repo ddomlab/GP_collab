@@ -1,15 +1,18 @@
+Data filtering and preprocessing took 0.21 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_product)_hypOFF_Standard_Standard_GPU
 
 ------------------------------------------------------------
-Sender: LSF System <lsfadmin@gpu15>
-Subject: Job 328093: <gpmap_all_20261001_6> in cluster <Hazel> Exited
+Sender: LSF System <lsfadmin@gpu33>
+Subject: Job 328532: <gpmap_all_20261001_6> in cluster <Hazel> Done
 
-Job <gpmap_all_20261001_6> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 11:52:30 2026
-Job was executed on host(s) <gpu15>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 11:57:54 2026
+Job <gpmap_all_20261001_6> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 16:45:22 2026
+Job was executed on host(s) <gpu33>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 17:04:12 2026
 </home/sdehgha2> was used as the home directory.
 </share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
-Started at Thu Oct  1 11:57:54 2026
-Terminated at Thu Oct  1 14:54:02 2026
-Results reported at Thu Oct  1 14:54:02 2026
+Started at Thu Oct  1 17:04:12 2026
+Terminated at Thu Oct  1 17:11:49 2026
+Results reported at Thu Oct  1 17:11:49 2026
 
 Your job looked like:
 
@@ -31,26 +34,25 @@ module load cuda/12.1
 module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "continuous_cluster"
+python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "product"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "structure_cluster"
 
 
 ------------------------------------------------------------
 
-TERM_RUNLIMIT: job killed after reaching LSF run time limit.
-Exited with signal termination: 3, and core dumped.
+Successfully completed.
 
 Resource usage summary:
 
-    CPU time :                                   0.18 sec.
-    Max Memory :                                 -
-    Average Memory :                             -
+    CPU time :                                   438.99 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.75 GB
     Total Requested Memory :                     32.00 GB
-    Delta Memory :                               -
+    Delta Memory :                               31.00 GB
     Max Swap :                                   -
-    Max Processes :                              1
-    Max Threads :                                1
-    Run time :                                   0 sec.
-    Turnaround time :                            10892 sec.
+    Max Processes :                              4
+    Max Threads :                                9
+    Run time :                                   457 sec.
+    Turnaround time :                            1587 sec.
 
 The output (if any) is above this job summary.
 

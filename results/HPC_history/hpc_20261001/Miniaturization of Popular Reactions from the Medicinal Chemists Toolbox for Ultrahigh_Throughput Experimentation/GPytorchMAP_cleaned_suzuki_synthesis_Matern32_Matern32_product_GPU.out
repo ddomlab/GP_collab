@@ -1,15 +1,18 @@
+Data filtering and preprocessing took 0.05 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_Matern32-Matern32_product)_hypOFF_Standard_Standard_GPU
 
 ------------------------------------------------------------
-Sender: LSF System <lsfadmin@gpu15>
-Subject: Job 328105: <gpmap_all_20261001_18> in cluster <Hazel> Exited
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 328545: <gpmap_all_20261001_18> in cluster <Hazel> Done
 
-Job <gpmap_all_20261001_18> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 11:52:34 2026
-Job was executed on host(s) <gpu15>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 12:03:30 2026
+Job <gpmap_all_20261001_18> was submitted from host <login03.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct  1 16:45:27 2026
+Job was executed on host(s) <gpu16>, in queue <short_gpu>, as user <sdehgha2> in cluster <Hazel> at Thu Oct  1 17:24:08 2026
 </home/sdehgha2> was used as the home directory.
 </share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
-Started at Thu Oct  1 12:03:30 2026
-Terminated at Thu Oct  1 14:54:02 2026
-Results reported at Thu Oct  1 14:54:02 2026
+Started at Thu Oct  1 17:24:08 2026
+Terminated at Thu Oct  1 17:26:11 2026
+Results reported at Thu Oct  1 17:26:11 2026
 
 Your job looked like:
 
@@ -31,26 +34,25 @@ module load cuda/12.1
 module load gcc/9.3.0
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
-python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "product"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --dataset "cleaned_suzuki_synthesis"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "continuous_cluster"
+python ../train_structure_numerical.py --K_fp "Matern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "product"                                         --paper "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"                                         --dataset "cleaned_suzuki_synthesis"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "structure_cluster"
 
 
 ------------------------------------------------------------
 
-TERM_RUNLIMIT: job killed after reaching LSF run time limit.
-Exited with signal termination: 3, and core dumped.
+Successfully completed.
 
 Resource usage summary:
 
-    CPU time :                                   0.16 sec.
-    Max Memory :                                 -
-    Average Memory :                             -
+    CPU time :                                   97.62 sec.
+    Max Memory :                                 1 GB
+    Average Memory :                             0.83 GB
     Total Requested Memory :                     32.00 GB
-    Delta Memory :                               -
+    Delta Memory :                               31.00 GB
     Max Swap :                                   -
-    Max Processes :                              1
-    Max Threads :                                1
-    Run time :                                   0 sec.
-    Turnaround time :                            10888 sec.
+    Max Processes :                              5
+    Max Threads :                                9
+    Run time :                                   123 sec.
+    Turnaround time :                            2444 sec.
 
 The output (if any) is above this job summary.
 
