@@ -144,7 +144,6 @@ if __name__ == "__main__":
                 clustering_method=args.clustering_method,
                 **representation_options,
                 **model_options,
-                
                 )
 
 

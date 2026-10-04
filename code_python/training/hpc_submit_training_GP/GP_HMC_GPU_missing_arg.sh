@@ -5,8 +5,8 @@
 #   - TanimotoMatern32 / Matern32
 #   - Matern32 / Matern32
 #
-# The 24 missing dataset-target results below require 14 jobs: the Wang
-# pervaporation and ultrafiltration datasets train multiple targets per run.
+# The 10 missing dataset-target results below require 6 jobs because the Wang
+# pervaporation dataset trains both targets in each invocation.
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
@@ -26,7 +26,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 1
-#BSUB -W 65:10
+#BSUB -W 71:59
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -51,12 +51,8 @@ EOT
 
 missing_jobs=(
     # TanimotoMatern32 / Matern32
-    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed|TanimotoMatern32|Matern32|sum"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|sum"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|sum"
     # Both Wang pervaporation targets are trained by each invocation.
     "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|TanimotoMatern32|Matern32|sum"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|TanimotoMatern32|Matern32|(count:+)x(fp:x)"
 
     # Matern32 / Matern32
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|sum"
@@ -64,11 +60,6 @@ missing_jobs=(
     "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|product"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|(count:+)x(fp:x)"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:+)x(fp:x)"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|(count:+)x(fp:x)"
-    # This invocation trains all six ultrafiltration targets.
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|Matern32|Matern32|(count:+)x(fp:x)"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:x)+(fp:x)"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|(count:x)+(fp:x)"
 )
 
 for job in "${missing_jobs[@]}"; do
