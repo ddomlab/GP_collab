@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Submit RF, XGBR, and NGB only for the explicitly selected datasets below.
-# No datasets are discovered automatically. For each selected dataset,
-# train_structure_numerical.py trains its target(s) configured in filter_data.py.
+# Submit the remaining missing NGB structure-cluster OOD result.
+# train_structure_numerical.py trains the target configured for this dataset
+# in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("RF")
+models=("NGB")
 
 # Selected datasets and their configured targets:
 # - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
@@ -20,12 +20,12 @@ models=("RF")
 selected_training_sets=(
     # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
     # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
-    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
     # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
     # "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
     # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
     # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
-    "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery|cleaned_poly_Electrolyte_conductivity"
+    # "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery|cleaned_poly_Electrolyte_conductivity"
 )
 
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
@@ -54,7 +54,8 @@ conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
 python ../train_structure_numerical.py --regressor_type "$model" \
                                         --dataset "$dataset" \
-                                        --paper "$paper" 
+                                        --paper "$paper" \
+                                        --clustering_method "structure_cluster"
 
 EOT
     done
