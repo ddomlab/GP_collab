@@ -1,0 +1,60 @@
+Data filtering and preprocessing took 0.02 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_RF_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c016n04>
+Subject: Job 340745: <tree_ood_missing_20261004_2> in cluster <Hazel> Done
+
+Job <tree_ood_missing_20261004_2> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Oct  4 18:54:23 2026
+Job was executed on host(s) <6*c016n04>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Sun Oct  4 18:54:24 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Oct  4 18:54:24 2026
+Terminated at Sun Oct  4 18:55:40 2026
+Results reported at Sun Oct  4 18:55:40 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_ood_missing_20261004_2"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/RF_Rg_data_with_clusters_aging_imputed_continuous_cluster_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/RF_Rg_data_with_clusters_aging_imputed_continuous_cluster_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "RF"                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"                                         --clustering_method "continuous_cluster"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   73.13 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.00 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   77 sec.
+    Turnaround time :                            77 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/RF_Rg_data_with_clusters_aging_imputed_continuous_cluster_CPU.err> for stderr output of this job.
+

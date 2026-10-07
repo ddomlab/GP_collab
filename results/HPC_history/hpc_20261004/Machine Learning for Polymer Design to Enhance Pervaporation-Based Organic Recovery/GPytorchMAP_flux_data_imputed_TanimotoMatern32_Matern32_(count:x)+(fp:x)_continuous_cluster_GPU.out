@@ -1,0 +1,62 @@
+Data filtering and preprocessing took 0.24 seconds.
+Running seed: 42
+Filename: (ECFP3_count_512-COUNT)_(GPytorchMAP_TanimotoMatern32-Matern32_(count:x)+(fp:x))_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 340768: <gpmap_ood_missing_20261004_21> in cluster <Hazel> Done
+
+Job <gpmap_ood_missing_20261004_21> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Oct  4 19:01:00 2026
+Job was executed on host(s) <gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Wed Oct  7 01:38:41 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Wed Oct  7 01:38:41 2026
+Terminated at Wed Oct  7 03:24:13 2026
+Results reported at Wed Oct  7 03:24:13 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 30:20
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "gpmap_ood_missing_20261004_21"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_flux_data_imputed_TanimotoMatern32_Matern32_(count:x)+(fp:x)_continuous_cluster_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_flux_data_imputed_TanimotoMatern32_Matern32_(count:x)+(fp:x)_continuous_cluster_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "TanimotoMatern32"                                         --K_count "Matern32"                                         --Kernel_mixing_method "(count:x)+(fp:x)"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"                                         --dataset "flux_data_imputed"                                         --regressor_type "GPytorchMAP"                                         --clustering_method "continuous_cluster"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   6294.69 sec.
+    Max Memory :                                 2 GB
+    Average Memory :                             1.14 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               30.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                9
+    Run time :                                   6359 sec.
+    Turnaround time :                            202993 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/GPytorchMAP_flux_data_imputed_TanimotoMatern32_Matern32_(count:x)+(fp:x)_continuous_cluster_GPU.err> for stderr output of this job.
+

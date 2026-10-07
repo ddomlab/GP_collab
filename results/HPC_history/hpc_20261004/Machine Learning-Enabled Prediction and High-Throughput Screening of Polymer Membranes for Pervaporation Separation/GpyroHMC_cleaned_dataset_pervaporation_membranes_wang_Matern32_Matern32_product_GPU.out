@@ -1,0 +1,71 @@
+Data filtering and preprocessing took 0.05 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.2±0.04	 r2: 0.9±0.04
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_Matern32-Matern32_product)_hypOFF_Standard_Standard_GPU
+Data filtering and preprocessing took 0.04 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.25±0.06	 r2: 0.98±0.01
+Filename: (ECFP3_count_512-COUNT)_(GpyroHMC_Matern32-Matern32_product)_hypOFF_Standard_Standard_GPU
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@gpu16>
+Subject: Job 340709: <gpyrohmc_missing_20261004_4> in cluster <Hazel> Done
+
+Job <gpyrohmc_missing_20261004_4> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Sun Oct  4 18:05:37 2026
+Job was executed on host(s) <gpu16>, in queue <gpu>, as user <sdehgha2> in cluster <Hazel> at Sun Oct  4 19:28:55 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Sun Oct  4 19:28:55 2026
+Terminated at Sun Oct  4 21:43:21 2026
+Results reported at Sun Oct  4 21:43:21 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -n 1
+#BSUB -W 71:59
+#BSUB -q gpu
+#BSUB -gpu "num=1:mode=shared:mps=no"
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
+#BSUB -J "gpyrohmc_missing_20261004_4"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_cleaned_dataset_pervaporation_membranes_wang_Matern32_Matern32_product_GPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_cleaned_dataset_pervaporation_membranes_wang_Matern32_Matern32_product_GPU.err"
+
+source ~/.bashrc
+module load cuda/12.1
+module load gcc/9.3.0
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --K_fp "Matern32"                                       --K_count "Matern32"                                       --Kernel_mixing_method "product"                                       --paper "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"                                       --dataset "cleaned_dataset_pervaporation_membranes_wang"                                       --regressor_type "GpyroHMC"
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   8010.59 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             2.73 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                10
+    Run time :                                   8091 sec.
+    Turnaround time :                            13064 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261004/Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation/GpyroHMC_cleaned_dataset_pervaporation_membranes_wang_Matern32_Matern32_product_GPU.err> for stderr output of this job.
+
