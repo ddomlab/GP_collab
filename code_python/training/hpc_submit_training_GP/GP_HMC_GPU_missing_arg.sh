@@ -1,12 +1,8 @@
 #!/bin/bash
 
 # Submit only GpyroHMC GPU runs missing from
-# Tree_and_GP_GPU_count_and_fingerprint.pkl for these FP/count pairs:
-#   - TanimotoMatern32 / Matern32
-#   - Matern32 / Matern32
-#
-# The 10 missing dataset-target results below require 6 jobs because the Wang
-# pervaporation dataset trains both targets in each invocation.
+# Tree_and_GP_GPU_count_and_fingerprint.pkl. The remaining missing result is
+# Matern32 / Matern32 with the count:+ × fp:x hybridization for Total flux.
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
@@ -50,16 +46,8 @@ EOT
 }
 
 missing_jobs=(
-    # TanimotoMatern32 / Matern32
-    # Both Wang pervaporation targets are trained by each invocation.
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|TanimotoMatern32|Matern32|sum"
-
-    # Matern32 / Matern32
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|sum"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|sum"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|product"
+    # target_log (Total flux)
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|(count:+)x(fp:x)"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:+)x(fp:x)"
 )
 
 for job in "${missing_jobs[@]}"; do

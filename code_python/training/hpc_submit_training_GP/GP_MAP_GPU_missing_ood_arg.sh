@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# Submit missing GPytorchMAP structure- and continuous-cluster OOD runs for
-# Matern32/TanimotoMatern32 FP kernels, the Matern32 count kernel, and the four
-# selected mixing methods. Multi-target datasets are submitted once per
-# configuration even when only one target result is missing.
+# Submit the five remaining GPytorchMAP continuous-cluster OOD runs.
 
 DATE=$(date +%Y%m%d)
 model="GPytorchMAP"
@@ -25,7 +22,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 1
-#BSUB -W 30:20
+#BSUB -W 60:20
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -50,52 +47,14 @@ EOT
 }
 
 missing_jobs=(
-    # structure_cluster: 13 missing target rows represented by 7 jobs.
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|Matern32|Matern32|(count:+)x(fp:+)|structure_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:+)x(fp:+)|structure_cluster"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|(count:+)x(fp:+)|structure_cluster"
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|Matern32|Matern32|(count:+)x(fp:+)|structure_cluster"
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|Matern32|Matern32|(count:x)+(fp:x)|structure_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|product|structure_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|(count:+)x(fp:+)|structure_cluster"
-
-    # continuous_cluster: 31 missing target rows represented by 24 jobs.
     # Calculated PCE (%).
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|TanimotoMatern32|Matern32|sum|continuous_cluster"
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|TanimotoMatern32|Matern32|product|continuous_cluster"
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|TanimotoMatern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|TanimotoMatern32|Matern32|(count:+)x(fp:+)|continuous_cluster"
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|TanimotoMatern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
     "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|Matern32|Matern32|sum|continuous_cluster"
 
     # Organic-recovery separation factor.
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|sum|continuous_cluster"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|product|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|TanimotoMatern32|Matern32|(count:+)x(fp:+)|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|sum|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-
-    # Organic-recovery total flux.
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|sum|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|product|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|TanimotoMatern32|Matern32|(count:+)x(fp:+)|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|product|continuous_cluster"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-
-    # Both Wang pervaporation targets are trained by each invocation.
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|sum|continuous_cluster"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-
-    # Ultrafiltration: the first job supplies all six missing targets; the
-    # remaining three rerun the dataset to supply irreversible fouling.
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|TanimotoMatern32|Matern32|product|continuous_cluster"
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|Matern32|Matern32|product|continuous_cluster"
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|Matern32|Matern32|(count:x)+(fp:x)|continuous_cluster"
-    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|Matern32|Matern32|(count:+)x(fp:+)|continuous_cluster"
-
-    # Approx Conv (%).
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|Matern32|Matern32|product|continuous_cluster"
 )
 
 for job in "${missing_jobs[@]}"; do

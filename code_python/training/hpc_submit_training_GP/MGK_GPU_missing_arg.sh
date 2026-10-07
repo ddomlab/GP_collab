@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Submit only the MGK GPU runs whose results are missing from
-# Tree_and_GP_count_and_fingerprint_GPU.pkl. There are 6 missing result rows,
-# represented by 5 jobs because the Wang pervaporation dataset trains both
-# targets in each invocation.
+# Tree_and_GP_count_and_fingerprint_GPU.pkl. There are 2 missing result rows,
+# represented by 2 jobs.
 
 DATE=$(date +%Y%m%d)
 model="MGK"
@@ -24,7 +23,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 2
-#BSUB -W 71:50
+#BSUB -W 80:50
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
@@ -54,28 +53,5 @@ dataset="Beyond molecular structure_seifrid_imputed"
 
 submit_job "$paper" "$dataset" "RBF"      "sum"
 submit_job "$paper" "$dataset" "Matern52" "sum"
-
-# log (Total flux)
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="flux_data_imputed"
-
-submit_job "$paper" "$dataset" "Matern52" "sum"
-
-# log (Separation factor)
-paper="Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
-dataset="separation_data_imputed"
-
-
-# Both pervaporation targets are trained by each invocation.
-paper="Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation"
-dataset="cleaned_dataset_pervaporation_membranes_wang"
-
-submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
-
-# Approx Conv (%) -- 768 datapoints
-paper="Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation"
-dataset="cleaned_suzuki_synthesis"
-
-submit_job "$paper" "$dataset" "RBF"      "(count:x)+(graph:x)"
 
 echo "Submitted ${job_index} MGK GPU jobs."
