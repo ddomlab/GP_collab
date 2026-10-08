@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Submit only GpyroHMC GPU runs missing from
-# Tree_and_GP_GPU_count_and_fingerprint.pkl. The remaining missing result is
-# Matern32 / Matern32 with the count:+ × fp:x hybridization for Total flux.
+# Tree_and_GP_count_and_fingerprint_GPU.pkl. Four result rows remain missing:
+# Matern32 / Matern32 with the count:+ × fp:+ hybridization. They require
+# three jobs because the Wang pervaporation run produces both targets.
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
@@ -46,8 +47,11 @@ EOT
 }
 
 missing_jobs=(
-    # target_log (Total flux)
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|(count:+)x(fp:x)"
+    # Polymer Design: one target per dataset.
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|Matern32|Matern32|(count:+)x(fp:+)"
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|Matern32|Matern32|(count:+)x(fp:+)"
+    # This run produces both Wang pervaporation targets.
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|Matern32|Matern32|(count:+)x(fp:+)"
 )
 
 for job in "${missing_jobs[@]}"; do
