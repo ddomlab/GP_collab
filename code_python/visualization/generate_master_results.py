@@ -98,6 +98,7 @@ TIME_COLUMNS = ["Running time (GPU)", "Running time (CPU)"]
 FeatureSet = Literal[
     "count_only",
     "count_and_fingerprint",
+    "count_and_graph",
     "random_count_permutation",
     "random_fp_permutation",
     "unique_fp_permutation",
@@ -120,11 +121,18 @@ RANDOM_PERMUTATION_FEATURE_SETS = {
     "random_fp_permutation",
     "unique_fp_permutation",
 }
+COUNT_AND_GRAPH_MODELS = {
+    "GNN-GP": "(GRAPH)_GNN-GP",
+    "GNN-MLP": "(GRAPH)_GNN-MLP",
+    "MLP-GP": "(TABULAR)_MLP-GP",
+}
+
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
     valid_feature_sets = {
         "count_only",
         "count_and_fingerprint",
+        "count_and_graph",
         "random_count_permutation",
         "random_fp_permutation",
         "unique_fp_permutation",
@@ -164,6 +172,13 @@ def _score_file_stems(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
 ) -> List[str]:
+    if feature_set == "count_and_graph":
+        if use_gpu or model not in COUNT_AND_GRAPH_MODELS:
+            return []
+        return [
+            f"{COUNT_AND_GRAPH_MODELS[model]}_hypOFF_Standard_Standard_scores"
+        ]
+
     if feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
         configuration = (fp_kernel, count_kernel, mixing_method)
         if (
@@ -325,6 +340,12 @@ def _prediction_seed_pairs(columns: List[str]) -> List[tuple[str, Optional[str]]
                 if standard_deviation_column in column_set
                 else None,
             )
+        )
+    if not pairs:
+        pairs.extend(
+            (str(column), None)
+            for column in columns
+            if str(column).isdigit()
         )
     return pairs
 
@@ -555,9 +576,21 @@ def _score_row_values(
             target,
         )
     )
-    scores["Running time (GPU)" if use_gpu else "Running time (CPU)"] = (
-        None if data is None else data.get("run_time_sec")
-    )
+    running_time = None if data is None else data.get("run_time_sec")
+    if running_time is None:
+        seed_running_times = []
+        for _, seed_data in _seed_items(data):
+            fit_times = seed_data.get("fit_time")
+            score_times = seed_data.get("score_time")
+            if isinstance(fit_times, list):
+                seed_running_times.append(
+                    sum(fit_times)
+                    + (sum(score_times) if isinstance(score_times, list) else 0)
+                )
+        if seed_running_times:
+            running_time = float(np.mean(seed_running_times))
+
+    scores["Running time (GPU)" if use_gpu else "Running time (CPU)"] = running_time
     scores["Running time (CPU)" if use_gpu else "Running time (GPU)"] = None
     return scores
 
@@ -775,6 +808,9 @@ def build_master_performance_data(
     ``feature_set="count_only"`` includes COUNT-only tree results and
     GPytorchMAP results for the Matern32, Matern52, and RBF count kernels with
     the ``sum`` and ``product`` mixing methods.
+    ``feature_set="count_and_graph"`` includes the CPU-only GNN-GP, GNN-MLP,
+    and MLP-GP results. These files have no feature-importance or kernel
+    configuration metadata, so those master-data columns are left empty.
     ``feature_set="random_fp_permutation"`` includes the GPU GPytorchMAP
     results trained after randomly permuting fingerprint features. It uses the
     TanimotoMatern32 fingerprint kernel, Matern32 count kernel, and the four
@@ -787,13 +823,15 @@ def build_master_performance_data(
     feature vectors.
 
     Tree-model results are included in both device datasets. GP rows use only
-    the requested device, with no cross-device fallback. Only precomputed
-    Kendall's W values are retained for feature stability.
+    the requested device, with no cross-device fallback. Count-and-graph
+    results are CPU-only. Only precomputed Kendall's W values are retained for
+    feature stability.
 
     When ``save_path`` is provided, standard modes write
     ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
     fingerprint and COUNT permutation results are GPU-only, so those modes
-    write only ``<save_path>_GPU.{pkl,csv}``.
+    write only ``<save_path>_GPU.{pkl,csv}``. Count-and-graph results write
+    only ``<save_path>_CPU.{pkl,csv}``.
     """
     feature_set = _validate_feature_set(feature_set)
     metrics = list(
@@ -805,10 +843,13 @@ def build_master_performance_data(
     devices = (
         ("GPU",)
         if feature_set in RANDOM_PERMUTATION_FEATURE_SETS
+        else ("CPU",) if feature_set == "count_and_graph"
         else ("CPU", "GPU")
     )
     if feature_set == "count_only":
         models = COUNT_ONLY_MODELS
+    elif feature_set == "count_and_graph":
+        models = list(COUNT_AND_GRAPH_MODELS)
     elif feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
         models = RANDOM_PERMUTATION_MODELS
     else:
@@ -823,6 +864,28 @@ def build_master_performance_data(
                 paper_dir = RESULTS / paper_name / target
 
                 for model in models:
+                    if feature_set == "count_and_graph":
+                        data, score_path = _load_score_file(
+                            paper_dir,
+                            model,
+                            feature_set,
+                        )
+                        rows.append(
+                            _master_row(
+                                paper_name,
+                                target,
+                                model,
+                                None,
+                                None,
+                                None,
+                                metrics,
+                                data,
+                                score_path,
+                                use_gpu=False,
+                            )
+                        )
+                        continue
+
                     if _is_tree_model(model):
                         data, score_path = _load_score_file(
                             paper_dir,
@@ -901,29 +964,30 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "count_and_fingerprint"
-    output_name = {
-        "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-        "count_only": "Tree_and_GP_COUNT_only",
-        "random_count_permutation": "GP_random_count_permutation",
-        "random_fp_permutation": "GP_random_fp_permutation",
-        "unique_fp_permutation": "GP_unique_fp_permutation",
-    }[feature_set]
-
-    build_master_performance_data(
-        save_path=RESULTS / "master_performance_data" / output_name,
-        score_metrics=DEFAULT_SCORE_METRICS,
-        feature_set=feature_set,
-    )
-
-    # ood_type: OODType = "continuous_cluster_OOD"
+    # feature_set: FeatureSet = "count_and_graph"
     # output_name = {
-    #     "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
-    #     "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
-    # }[ood_type]
+    #     "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
+    #     "count_and_graph": "MLP_GNN_GP_count_and_graph",
+    #     "count_only": "Tree_and_GP_COUNT_only",
+    #     "random_count_permutation": "GP_random_count_permutation",
+    #     "random_fp_permutation": "GP_random_fp_permutation",
+    #     "unique_fp_permutation": "GP_unique_fp_permutation",
+    # }[feature_set]
 
-    # build_master_ood_performance_data(
-    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
-    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
-    #     ood_type=ood_type,
+    # build_master_performance_data(
+    #     save_path=RESULTS / "master_performance_data" / output_name,
+    #     score_metrics=DEFAULT_SCORE_METRICS,
+    #     feature_set=feature_set,
     # )
+
+    ood_type: OODType = "structure_cluster_OOD"
+    output_name = {
+        "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
+        "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
+    }[ood_type]
+
+    build_master_ood_performance_data(
+        save_path=RESULTS / "master_ood_performance_data" / output_name,
+        score_metrics=DEFAULT_OOD_SCORE_METRICS,
+        ood_type=ood_type,
+    )
