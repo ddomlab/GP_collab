@@ -23,7 +23,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 2
-#BSUB -W 80:50
+#BSUB -W 71:50
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
