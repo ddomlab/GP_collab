@@ -9,7 +9,7 @@ DATE=$(date +%Y%m%d)
 model="GpyroHMC"
 k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("sum" "product" "(count:+)x(fp:+)" "(count:x)+(fp:x)")
+k_mixing_methods=("(count:x)+(fp:x)")
 clustering_methods=("continuous_cluster" "structure_cluster")
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
 job_index=0
@@ -39,7 +39,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 1
-#BSUB -W 55:10
+#BSUB -W 30:10
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
