@@ -4,7 +4,7 @@ import pandas as pd
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from all_factories import transforms
+from all_factories import representation_scaling_factory, transforms
 import numbers
 
 
@@ -62,6 +62,7 @@ def calculate_mw(df: pd.DataFrame,  # df containing Mw, Mn & PDI columns only
 
 def preprocessing_workflow(
         regressor_type: Optional[str]=None,
+        representation: Optional[str] = None,
         numerical_feat: Optional[list] = None,
         structural_feat: Optional[list] = None,
         scaler: str = None,
@@ -97,20 +98,29 @@ def preprocessing_workflow(
             print("MGK regressor, only scaling numerical features")
               
     else:
-        if scaler:
+        representation_scaler = representation_scaling_factory.get(
+            representation, {}
+        ).get("callable")
+        if scaler or representation_scaler is not None:
             transformers = []
             if structural_feat:
                 transformers.append(
-                ("structural_scaling", "passthrough", structural_feat)
+                    (
+                        "structural_scaling",
+                        (
+                            representation_scaler
+                            if representation_scaler is not None
+                            else "passthrough"
+                        ),
+                        structural_feat,
+                    )
                 )
                 
             if numerical_feat:
                 transformers.append(
                     ("numerical_scaling", transforms[scaler], numerical_feat)
                 )
-            # elif representation_scaling_factory[representation]['callable']:
 
-                
             scaling = ("scaling features",
                     ColumnTransformer(transformers=[*transformers],
                                     remainder="passthrough",

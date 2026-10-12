@@ -277,8 +277,14 @@ def _prepare_data(
         print(f"Data filtering and preprocessing took {final_time:.2f} seconds.")
 
         # Pipline workflow here and preprocessor
+        representation = (
+            unroll.get("representation")
+            if isinstance(unroll, dict)
+            else None
+        )
         preprocessor: Pipeline = preprocessing_workflow(
                                     regressor_type=regressor_type,
+                                    representation=representation,
                                     numerical_feat=numerical_feats,
                                     structural_feat=unrolled_feats,
                                     scaler=transform_type

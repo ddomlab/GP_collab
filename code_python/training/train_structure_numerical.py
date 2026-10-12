@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-DEBUGGING = False
+DEBUGGING = True
 
 
 def main_structural_numerical(
@@ -96,11 +96,21 @@ if __name__ == "__main__":
         is_mgk = model_name == "MGK"
         is_kernel_mix_gp = model_name in {"GPytorchMAP", "GpyroHMC"}
 
-        representation_options = {
-            "representation": "MG" if is_mgk else "ECFP",
-            "radius": None if is_mgk else 3,
-            "vector": None if is_mgk else "count",
-        }
+        if is_mgk:
+            representation_options = {
+                "representation": "MG",
+                "radius": None,
+                "vector": None,
+            }
+        else:
+            selected_representation = args.representation or "ECFP"
+            representation_options = {
+                "representation": selected_representation,
+                "radius": (args.radius or 3)
+                if selected_representation == "ECFP" else None,
+                "vector": args.vector
+                if selected_representation == "ECFP" else None,
+            }
 
         model_options = {}
         if is_mgk:
@@ -157,9 +167,9 @@ if __name__ == "__main__":
             # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
             main_structural_numerical(
                 dataset=w_data,
-                representation="ECFP", #"ECFP" # MG #SSK
-                radius=3,
-                vector="count",
+                representation="LE", #"ECFP" # MG #SSK
+                # radius=3,
+                # vector="count",
                 regressor_type="RF", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"
                 polymer_unit=polymer_unit,
                 target_features=[targ],  
@@ -178,6 +188,6 @@ if __name__ == "__main__":
                 # kernel_mixing_method="product",
                 # use_cuda=False, #True for GPU, False for CPU
                 # kernel_feature_mode = args.kernel_feature_mode, #joint, #per_feature for MGK
-                clustering_method="substructure cluster", #continuous_cluster  #structure_cluster
+                # clustering_method="substructure cluster", #continuous_cluster  #structure_cluster
                 )
             

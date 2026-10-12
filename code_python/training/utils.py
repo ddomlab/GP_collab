@@ -132,7 +132,7 @@ def parse_arguments():
     parser.add_argument(
         '--representation', 
         type=str, 
-        choices=['ECFP', 'MACCS', 'Mordred'], 
+        choices=['ECFP', 'MACCS', 'Mordred', 'LE'],
         required=None, 
         help="Fingerprint required"
     )

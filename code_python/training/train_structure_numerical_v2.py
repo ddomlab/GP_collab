@@ -96,11 +96,21 @@ if __name__ == "__main__":
         is_mgk = model_name == "MGK"
         is_kernel_mix_gp = model_name in {"GPytorchMAP", "GpyroHMC"}
 
-        representation_options = {
-            "representation": "MG" if is_mgk else "ECFP",
-            "radius": None if is_mgk else 3,
-            "vector": None if is_mgk else "count",
-        }
+        if is_mgk:
+            representation_options = {
+                "representation": "MG",
+                "radius": None,
+                "vector": None,
+            }
+        else:
+            selected_representation = args.representation or "ECFP"
+            representation_options = {
+                "representation": selected_representation,
+                "radius": (args.radius or 3)
+                if selected_representation == "ECFP" else None,
+                "vector": args.vector
+                if selected_representation == "ECFP" else None,
+            }
 
         model_options = {}
         if is_mgk:

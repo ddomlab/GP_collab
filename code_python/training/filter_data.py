@@ -158,7 +158,13 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
 
 
 def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:
-       
+        if fp == "LE":
+            fp_features = [f"{unit}_LE" for unit in poly_unit_name]
+            unrolling_featurs = {"representation": fp,
+                                "unit_name": poly_unit_name,
+                                "col_names": fp_features}
+            return fp_features, unrolling_featurs
+
         if fp == "Mordred" or fp == "MACCS":
             fp_features = [f"{unit}_{fp}" for unit in poly_unit_name]
             unrolling_featurs = {"representation": fp,
@@ -342,6 +348,31 @@ def filter_dataset(
         if isinstance(config.get("unit_name"), str):
             config["unit_name"] = [config["unit_name"]]
         representation = config.get("representation")
+
+        if representation == "LE":
+            source_columns = config.get("col_names")
+            config_units = config.get("unit_name")
+            if not source_columns or not config_units:
+                raise ValueError(
+                    "unit_name and col_names are required for LE."
+                )
+            if len(config_units) != len(source_columns):
+                raise ValueError(
+                    "unit_name and col_names must contain the same number "
+                    "of entries for LE."
+                )
+            missing_columns = [
+                column for column in source_columns
+                if column not in dataset.columns
+            ]
+            if missing_columns:
+                raise ValueError(
+                    f"LE column(s) missing from the dataset: {missing_columns}."
+                )
+            structural_frames.append(_aligned_frame(
+                dataset.loc[:, source_columns].copy()
+            ))
+            continue
 
         if representation in {"Mordred", "MACCS", "ECFP", "HDF"}:
             if not structure_feats:

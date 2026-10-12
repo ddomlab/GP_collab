@@ -55,6 +55,8 @@ radius_to_bits: dict[int, int] = {3: 512, 4: 1024, 5: 2048, 6: 4096}
 representation_scaling_factory: dict[str, dict[str, Union[Callable, str]]] = {
     "ECFP":                {"callable": None, "type": None},
     "MACCS":                {"callable": None, "type": None},
+    "LE":                  {"callable": StandardScaler(),
+                            "type":     "Standard"},
     "Mordred":             {"callable": StandardScaler(),
                             "type":     "Standard"},
 }
