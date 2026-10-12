@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Submit the remaining missing NGB structure-cluster OOD result.
-# train_structure_numerical.py trains the target configured for this dataset
-# in filter_data.py.
+# Submit RF, XGBR, and NGB training jobs for the Mordred and LE molecular
+# representations. train_structure_numerical.py trains every target configured
+# for each dataset in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("NGB")
-
+models=("RF" "XGBR" "NGB")
+representations=("Mordred" "LE")
 # Selected datasets and their configured targets:
 # - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
 # - flux_data_imputed: log (Total flux)
@@ -18,13 +18,13 @@ models=("NGB")
 # - cleaned_dataset_Ultrafiltration Membrane_imputed: all six configured
 #   ultrafiltration targets
 selected_training_sets=(
-    # "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
-    # "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
+    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
-    # "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
-    # "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
-    # "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
-    # "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
     # "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery|cleaned_poly_Electrolyte_conductivity"
 )
 
@@ -37,26 +37,34 @@ for training_set in "${selected_training_sets[@]}"; do
     dataset_tag=${dataset// /_}
     mkdir -p "$output_dir"
 
-    for model in "${models[@]}"; do
-        job_index=$((job_index + 1))
-        bsub <<EOT
+    for representation in "${representations[@]}"; do
+        # This dataset was prepared for LE-only training in this workflow.
+        if [[ "$dataset" == "Rg data with clusters aging imputed" && \
+              "$representation" == "Mordred" ]]; then
+            continue
+        fi
+
+        for model in "${models[@]}"; do
+            job_index=$((job_index + 1))
+            bsub <<EOT
 
 #BSUB -n 6
 #BSUB -W 5:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
-#BSUB -J "tree_selected_${DATE}_${job_index}"
-#BSUB -o "${output_dir}/${model}_${dataset_tag}_CPU.out"
-#BSUB -e "${output_dir}/${model}_${dataset_tag}_CPU.err"
+#BSUB -J "tree_${representation}_${DATE}_${job_index}"
+#BSUB -o "${output_dir}/${model}_${representation}_${dataset_tag}_CPU.out"
+#BSUB -e "${output_dir}/${model}_${representation}_${dataset_tag}_CPU.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
 python ../train_structure_numerical.py --regressor_type "$model" \
+                                        --representation "$representation" \
                                         --dataset "$dataset" \
-                                        --paper "$paper" \
-                                        --clustering_method "structure_cluster"
+                                        --paper "$paper"
 
 EOT
+        done
     done
 done
