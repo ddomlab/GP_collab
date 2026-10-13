@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP/../train_structure_numerical.py", line 90, in <module>
+    w_data, feats, all_targets, polymer_unit = _get_dataset_features(
+                                               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/filter_data.py", line 139, in _get_dataset_features
+    raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {dataset_basket}")
+FileNotFoundError: Dataset 'Beyond molecular structure_seifrid_imputed' not found in /gpfs_common/share03/ddomlab/sdehgha2/working_space/GP_collab/datasets/Validation datasets

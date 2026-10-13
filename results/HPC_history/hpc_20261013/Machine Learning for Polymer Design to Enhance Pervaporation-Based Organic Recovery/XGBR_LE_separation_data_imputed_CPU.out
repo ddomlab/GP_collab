@@ -1,0 +1,63 @@
+Data filtering and preprocessing took 0.00 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.3±0.02	 r2: 0.89±0.01
+Filename: (LE-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c018n01>
+Subject: Job 373204: <tree_LE_20261013_17> in cluster <Hazel> Done
+
+Job <tree_LE_20261013_17> was submitted from host <login04> by user <sdehgha2> in cluster <Hazel> at Tue Oct 13 09:20:34 2026
+Job was executed on host(s) <6*c018n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Tue Oct 13 11:52:48 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Tue Oct 13 11:52:48 2026
+Terminated at Tue Oct 13 11:55:00 2026
+Results reported at Tue Oct 13 11:55:00 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:00
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_LE_20261013_17"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261013/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_LE_separation_data_imputed_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261013/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_LE_separation_data_imputed_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "XGBR"                                         --representation "LE"                                         --dataset "separation_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   468.39 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.71 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                15
+    Run time :                                   133 sec.
+    Turnaround time :                            9266 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261013/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_LE_separation_data_imputed_CPU.err> for stderr output of this job.
+
