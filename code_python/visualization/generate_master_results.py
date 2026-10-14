@@ -98,6 +98,7 @@ TIME_COLUMNS = ["Running time (GPU)", "Running time (CPU)"]
 FeatureSet = Literal[
     "count_only",
     "count_and_fingerprint",
+    "structure_and_count",
     "count_and_graph",
     "random_count_permutation",
     "random_fp_permutation",
@@ -126,12 +127,15 @@ COUNT_AND_GRAPH_MODELS = {
     "GNN-MLP": "(GRAPH)_GNN-MLP",
     "MLP-GP": "(TABULAR)_MLP-GP",
 }
+StructureRepresentation = Literal["ECFP", "Graph", "LE", "Mordred"]
+STRUCTURE_REPRESENTATIONS = ("ECFP", "Graph", "LE", "Mordred")
 
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
     valid_feature_sets = {
         "count_only",
         "count_and_fingerprint",
+        "structure_and_count",
         "count_and_graph",
         "random_count_permutation",
         "random_fp_permutation",
@@ -164,6 +168,35 @@ def _count_and_fingerprint_kernel_configs() -> List[tuple[str, str, str]]:
     ]
 
 
+def _structure_and_count_configurations(
+    model: str,
+) -> List[
+    tuple[
+        StructureRepresentation,
+        Optional[str],
+        Optional[str],
+        Optional[str],
+    ]
+]:
+    """Return valid structure/count configurations for one model family."""
+    if _is_tree_model(model):
+        return [
+            (representation, None, None, None)
+            for representation in ("ECFP", "LE", "Mordred")
+        ]
+    if model == "MGK":
+        return [
+            ("Graph", "Graph", count_kernel, mixing_method)
+            for count_kernel in count_kernels
+            for mixing_method in MGK_MIXING_METHODS
+        ]
+    return [
+        ("ECFP", fp_kernel, count_kernel, mixing_method)
+        for fp_kernel, count_kernel, mixing_method
+        in _count_and_fingerprint_kernel_configs()
+    ]
+
+
 def _score_file_stems(
     model: str,
     feature_set: FeatureSet,
@@ -171,7 +204,25 @@ def _score_file_stems(
     count_kernel: Optional[str] = None,
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
+    structure_representation: Optional[StructureRepresentation] = None,
 ) -> List[str]:
+    if feature_set == "structure_and_count":
+        if structure_representation not in STRUCTURE_REPRESENTATIONS:
+            return []
+        if structure_representation in {"LE", "Mordred"}:
+            if not _is_tree_model(model) or use_gpu:
+                return []
+            return [
+                f"({structure_representation}-COUNT)_{model}"
+                "_hypOFF_Standard_Standard_scores"
+            ]
+        if structure_representation == "Graph":
+            if model != "MGK":
+                return []
+        elif model == "MGK":
+            return []
+        feature_set = "count_and_fingerprint"
+
     if feature_set == "count_and_graph":
         if use_gpu or model not in COUNT_AND_GRAPH_MODELS:
             return []
@@ -254,6 +305,7 @@ def _find_score_path(
     count_kernel: Optional[str] = None,
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
+    structure_representation: Optional[StructureRepresentation] = None,
 ) -> Optional[Path]:
     for stem in _score_file_stems(
         model,
@@ -262,6 +314,7 @@ def _find_score_path(
         count_kernel,
         mixing_method,
         use_gpu,
+        structure_representation,
     ):
         path = ensure_long_path(paper_dir / f"{stem}.json")
         if path.exists():
@@ -277,6 +330,7 @@ def _load_score_file(
     count_kernel: Optional[str] = None,
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
+    structure_representation: Optional[StructureRepresentation] = None,
 ) -> tuple[Optional[Dict[str, Any]], Optional[Path]]:
     score_path = _find_score_path(
         paper_dir,
@@ -286,6 +340,7 @@ def _load_score_file(
         count_kernel,
         mixing_method,
         use_gpu,
+        structure_representation,
     )
     if score_path is None:
         return None, None
@@ -595,7 +650,10 @@ def _score_row_values(
     return scores
 
 
-def _master_result_columns(score_metrics: List[str]) -> List[str]:
+def _master_result_columns(
+    score_metrics: List[str],
+    include_structure_representation: bool = False,
+) -> List[str]:
     metric_columns = [
         column
         for metric in score_metrics
@@ -605,8 +663,11 @@ def _master_result_columns(score_metrics: List[str]) -> List[str]:
             f"{metric}_seed_fold_scores",
         )
     ]
+    identifying_columns = BASE_MASTER_RESULT_COLUMNS.copy()
+    if include_structure_representation:
+        identifying_columns.insert(3, "structure_representation")
     return (
-        BASE_MASTER_RESULT_COLUMNS
+        identifying_columns
         + FEATURE_STABILITY_COLUMNS
         + metric_columns
         + OOF_SCORE_COLUMNS
@@ -638,11 +699,13 @@ def _master_row(
     data: Optional[Dict[str, Any]],
     score_path: Optional[Path],
     use_gpu: bool,
+    structure_representation: Optional[StructureRepresentation] = None,
 ) -> Dict[str, Any]:
     return {
         "paper": paper,
         "target": target,
         "model": model,
+        "structure_representation": structure_representation,
         "fp kernel": fp_kernel,
         "count kernel": count_kernel,
         "mixing method": mixing_method,
@@ -805,6 +868,9 @@ def build_master_performance_data(
 
     ``feature_set="count_and_fingerprint"`` includes tree, GPytorchMAP,
     GpyroHMC, and MGK results trained on COUNT plus fingerprints.
+    ``feature_set="structure_and_count"`` extends that comparison with LE and
+    Mordred tree-model results. Its ``structure_representation`` column marks
+    ECFP, Graph (MGK), LE, or Mordred for every row.
     ``feature_set="count_only"`` includes COUNT-only tree results and
     GPytorchMAP results for the Matern32, Matern52, and RBF count kernels with
     the ``sum`` and ``product`` mixing methods.
@@ -864,6 +930,41 @@ def build_master_performance_data(
                 paper_dir = RESULTS / paper_name / target
 
                 for model in models:
+                    if feature_set == "structure_and_count":
+                        for (
+                            structure_representation,
+                            fp_kernel,
+                            count_kernel,
+                            mixing_method,
+                        ) in _structure_and_count_configurations(model):
+                            row_uses_gpu = use_gpu and not _is_tree_model(model)
+                            data, score_path = _load_score_file(
+                                paper_dir,
+                                model,
+                                feature_set,
+                                fp_kernel,
+                                count_kernel,
+                                mixing_method,
+                                row_uses_gpu,
+                                structure_representation,
+                            )
+                            rows.append(
+                                _master_row(
+                                    paper_name,
+                                    target,
+                                    model,
+                                    fp_kernel,
+                                    count_kernel,
+                                    mixing_method,
+                                    metrics,
+                                    data,
+                                    score_path,
+                                    row_uses_gpu,
+                                    structure_representation,
+                                )
+                            )
+                        continue
+
                     if feature_set == "count_and_graph":
                         data, score_path = _load_score_file(
                             paper_dir,
@@ -952,7 +1053,12 @@ def build_master_performance_data(
 
         dataframe = pd.DataFrame(
             rows,
-            columns=_master_result_columns(metrics),
+            columns=_master_result_columns(
+                metrics,
+                include_structure_representation=(
+                    feature_set == "structure_and_count"
+                ),
+            ),
             dtype=object,
         )
         if save_path is not None:
@@ -964,8 +1070,10 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "count_and_fingerprint"
+    feature_set: FeatureSet = "structure_and_count"
+
     output_name = {
+        "structure_and_count": "Tree_and_GP_structure_and_count",
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_and_graph": "MLP_GNN_GP_count_and_graph",
         "count_only": "Tree_and_GP_COUNT_only",

@@ -38,12 +38,6 @@ for training_set in "${selected_training_sets[@]}"; do
     mkdir -p "$output_dir"
 
     for representation in "${representations[@]}"; do
-        # This dataset was prepared for LE-only training in this workflow.
-        if [[ "$dataset" == "Rg data with clusters aging imputed" && \
-              "$representation" == "Mordred" ]]; then
-            continue
-        fi
-
         for model in "${models[@]}"; do
             job_index=$((job_index + 1))
             bsub <<EOT
