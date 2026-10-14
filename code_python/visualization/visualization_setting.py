@@ -4,7 +4,8 @@ import re
 from typing import Any, Mapping, Optional, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import to_hex, to_rgb
+from matplotlib.axes import Axes
+from matplotlib.colors import is_color_like, to_hex, to_rgb, to_rgba
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -208,3 +209,114 @@ def lighten_color(color: str, amount: float = 0.45) -> str:
         raise ValueError("amount must be between 0 and 1.")
     rgb = np.asarray(to_rgb(color), dtype=float)
     return to_hex(rgb + (1.0 - rgb) * amount)
+
+
+def apply_vertical_bar_gradients(
+    ax: Axes,
+    bars: Optional[Any] = None,
+    colors: Optional[Any] = None,
+    light_mix: float = 0.78,
+    edge_linewidth: float = 0.5,
+    interpolation: str = "bicubic",
+) -> list[Any]:
+    """Fill Matplotlib or Seaborn bars with pale-to-full vertical gradients.
+
+    The gradient starts with a white-tinted version of each bar color at the
+    zero baseline and reaches the full color at the outer end of the bar.
+    Positive and negative vertical bars are both supported.
+
+    Parameters
+    ----------
+    ax:
+        Axes containing the bars.
+    bars:
+        Bar patches to style. When omitted, all patches in ``ax.patches`` are
+        used. A Matplotlib ``BarContainer`` can be passed directly.
+    colors:
+        Optional single color or sequence with one color per bar. When omitted,
+        each bar's existing face color is used.
+    light_mix:
+        Amount of white mixed into the baseline color, between 0 and 1.
+    edge_linewidth:
+        Width of the outline drawn in the full bar color.
+    interpolation:
+        Matplotlib image interpolation used to render the gradient.
+
+    Returns
+    -------
+    list
+        The gradient image artists added to ``ax``.
+
+    Examples
+    --------
+    ``bars = ax.bar(labels, values, color=palette)``
+    ``apply_vertical_bar_gradients(ax, bars)``
+
+    After a Seaborn barplot, use
+    ``apply_vertical_bar_gradients(ax, colors=palette)``.
+    """
+    if not 0 <= light_mix <= 1:
+        raise ValueError("light_mix must be between 0 and 1.")
+    if edge_linewidth < 0:
+        raise ValueError("edge_linewidth must be non-negative.")
+
+    bar_patches = list(ax.patches if bars is None else bars)
+    if not bar_patches:
+        return []
+
+    if colors is None:
+        bar_colors = [bar.get_facecolor() for bar in bar_patches]
+    elif is_color_like(colors):
+        bar_colors = [colors] * len(bar_patches)
+    else:
+        bar_colors = list(colors)
+        if len(bar_colors) != len(bar_patches):
+            raise ValueError(
+                "colors must be one color or contain exactly one color per bar."
+            )
+
+    x_limits = ax.get_xlim()
+    y_limits = ax.get_ylim()
+    gradient_artists = []
+
+    for bar, color in zip(bar_patches, bar_colors):
+        height = float(bar.get_height())
+        if not np.isfinite(height) or height == 0:
+            continue
+
+        full_color = np.asarray(to_rgba(color), dtype=float)
+        pale_color = full_color.copy()
+        pale_color[:3] = (
+            (1 - light_mix) * full_color[:3]
+            + light_mix * np.ones(3)
+        )
+        gradient = np.linspace(pale_color, full_color, 256).reshape(
+            256,
+            1,
+            4,
+        )
+
+        x_start = bar.get_x()
+        x_end = x_start + bar.get_width()
+        y_start = bar.get_y()
+        y_end = y_start + height
+        gradient_image = ax.imshow(
+            gradient,
+            extent=[x_start, x_end, min(y_start, y_end), max(y_start, y_end)],
+            origin="lower" if height > 0 else "upper",
+            aspect="auto",
+            interpolation=interpolation,
+            zorder=bar.get_zorder() - 0.1,
+        )
+        gradient_image.set_clip_path(bar)
+        gradient_artists.append(gradient_image)
+
+        bar.set_facecolor("none")
+        bar.set_edgecolor(full_color)
+        bar.set_linewidth(edge_linewidth)
+
+    # ``imshow`` updates the axes limits and aspect; retain the barplot layout.
+    ax.set_xlim(x_limits)
+    ax.set_ylim(y_limits)
+    ax.set_aspect("auto")
+    return gradient_artists

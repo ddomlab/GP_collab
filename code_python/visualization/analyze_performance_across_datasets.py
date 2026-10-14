@@ -961,6 +961,11 @@ if __name__ == "__main__":
     count_and_fingerprint_result = pd.read_pickle(
         MASTER_DATA / f"Tree_and_GP_count_and_fingerprint_{master_device}.pkl"
     )
+
+    structure_and_count_results = pd.read_pickle(
+        MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
+    )
+    
     count_results = pd.read_pickle(
         MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
     )
@@ -974,6 +979,8 @@ if __name__ == "__main__":
     permuted_count_result = pd.read_pickle(
         MASTER_DATA / f"GP_random_count_permutation_{master_device}.pkl"
     )
+
+
 
     Separate_datasets_save = (
         HERE

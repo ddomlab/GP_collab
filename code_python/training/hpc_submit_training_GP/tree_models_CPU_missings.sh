@@ -11,9 +11,6 @@ missing_jobs=(
     "XGBR|Mordred|Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
     "NGB|LE|Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
     "NGB|Mordred|Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
-    "RF|Mordred|Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
-    "XGBR|Mordred|Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
-    "NGB|Mordred|Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
 )
 
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
@@ -29,7 +26,7 @@ for job in "${missing_jobs[@]}"; do
     bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 30:00
+#BSUB -W 5:00
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "tree_missing_${representation}_${DATE}_${job_index}"
