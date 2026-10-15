@@ -132,7 +132,7 @@ def parse_arguments():
     parser.add_argument(
         '--representation', 
         type=str, 
-        choices=['ECFP', 'MACCS', 'Mordred', 'LE'],
+        choices=['ECFP', 'MACCS', 'Mordred', 'LE', 'HDF'],
         required=None, 
         help="Fingerprint required"
     )
@@ -148,10 +148,17 @@ def parse_arguments():
     parser.add_argument(
         '--radius',
         type=int,
-        choices=[3, 4, 5, 6],
+        choices=[2, 3, 4, 5, 6, 8, 10, 12],
         nargs='?',  # This allows the argument to be optional
         default=None,  # Set the default value to None
-        help='Radius for ECFP'
+        help='Radius for ECFP or message-passing depth for HDF'
+    )
+
+    parser.add_argument(
+        '--n_bits',
+        type=int,
+        default=None,
+        help='HDF hypervector dimension (default: 64)'
     )
 
     parser.add_argument(

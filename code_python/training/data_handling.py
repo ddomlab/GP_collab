@@ -118,6 +118,7 @@ def _save(
         representation: str,
         radius: Optional[int],
         vector: Optional[str],
+        n_bits: Optional[int],
         numerical_feats: Optional[list[str]],
         hypop: bool=True,
         transform_type:Optional[str]=None,
@@ -142,29 +143,30 @@ def _save(
                                     has_fp=bool(representation),
                                     has_count=bool(numerical_feats),
                                     )
+    if representation == "HDF":
+        hdf_depth = 3 if radius is None else radius
+        hdf_n_bits = 64 if n_bits is None else n_bits
+        representation_name = f"HDF{hdf_depth}_{hdf_n_bits}bit"
+    elif representation == "ECFP" and radius:
+        representation_name = (
+            f"{representation}{radius}_{vector}_{radius_to_bits[radius]}"
+        )
+    else:
+        representation_name = representation
+
     if numerical_feats and representation is None:
         fname_root = f"({short_num_feats})_{regressor_type}"
 
     # === Case 2: mixed (numerical + structural) features ===
     elif numerical_feats and representation:
-        if radius:
-            fname_root = (
-                f"({representation}{radius}_{vector}_"
-                f"{radius_to_bits[radius]}-{short_num_feats})_{regressor_type}"
-            )
-        else:
-            fname_root = f"({representation}-{short_num_feats})_{regressor_type}"
+        fname_root = (
+            f"({representation_name}-{short_num_feats})_{regressor_type}"
+        )
 
 
     # === Case 3: structural-only features ===
     elif not numerical_feats:
-        if radius:
-            fname_root = (
-                f"({representation}{radius}_{vector}_"
-                f"{radius_to_bits[radius]})_{regressor_type}"
-            )
-        else:
-            fname_root = f"({representation})_{regressor_type}"
+        fname_root = f"({representation_name})_{regressor_type}"
 
     else:
         raise ValueError("Invalid feature combination for filename generation.")
@@ -212,6 +214,7 @@ def save_results(
                 representation: str=None,
                 radius : Optional[int]=None,
                 vector : Optional[str]=None,
+                n_bits: Optional[int]=None,
                 numerical_feats: Optional[list[str]]=None,
                 imputer: Optional[str] = None,
                 output_dir_name: str = "PLS",
@@ -252,6 +255,7 @@ def save_results(
         representation=representation,
         radius=radius,
         vector=vector,
+        n_bits=n_bits,
         numerical_feats=numerical_feats,
         hypop=hypop,
         transform_type=transform_type,

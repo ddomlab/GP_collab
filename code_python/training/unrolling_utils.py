@@ -91,33 +91,66 @@ def unroll_HDF(
         df: pd.DataFrame,
         SMILES_columns: list[str],
         unit_name: list[str],
-        radius: int,
+        depth: int,
         n_bits: int,
         **kwargs,
         ) -> pd.DataFrame:
-    
+    """Encode SMILES columns with one dataset-derived HDF atom vocabulary."""
     from hyper_fingerprints import Encoder
+    from rdkit import Chem
 
     if len(SMILES_columns) != len(unit_name):
         raise ValueError("SMILES_columns and unit_name must have the same length.")
 
+    missing_columns = [
+        column for column in SMILES_columns if column not in df.columns
+    ]
+    if missing_columns:
+        raise ValueError(
+            f"SMILES column(s) missing from the dataset: {missing_columns}."
+        )
+
+    # Parse each distinct molecule only once. All molecular-unit columns share
+    # one atom vocabulary so their HDF feature blocks use the same codebook.
+    unique_smiles = pd.unique(
+        df.loc[:, SMILES_columns].to_numpy().reshape(-1)
+    )
+    converted_smiles: dict[str, str] = {}
+    atom_type_set: set[str] = set()
+    for value in unique_smiles:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"Missing or invalid SMILES value: {value!r}")
+        converted = replace_dummy_atoms_with_carbon(value)
+        mol = Chem.MolFromSmiles(converted)
+        if mol is None:
+            raise ValueError(f"Invalid SMILES value: {value!r}")
+        converted_smiles[value] = converted
+        atom_type_set.update(atom.GetSymbol() for atom in mol.GetAtoms())
+
+    if not atom_type_set:
+        raise ValueError(
+            "No atom types were found in the configured SMILES columns."
+        )
+    atom_types = sorted(atom_type_set)
+
     enc = Encoder(
                 dimension=n_bits,      # hypervector size
-                depth=radius,            # message-passing layers (structural context radius)
+                depth=depth,            # message-passing layers (structural context radius)
                 seed=42,          # random seed for reproducible codebook generation
-                normalize=False,   
+                normalize=True,   
                 backend="auto",     # "auto" | "rust" | "numpy"
-                atom_types=["Br", "C", "Cl", "F", "I", "N", "O", "P", "S", "Si", "Se", "Li"],  # "atomic_number" | "atom_symbol"
+                atom_types=atom_types,
                 )
 
     encoded_units: list[pd.DataFrame] = []
     for unit, smiles_col in zip(unit_name, SMILES_columns):
-        smiles = [
-            replace_dummy_atoms_with_carbon(smiles)
-            for smiles in df[smiles_col].astype(str)
-        ]
+        smiles = df[smiles_col].map(converted_smiles).tolist()
         encoded_smiles = enc.encode(smiles)
-        column_names = [f"{unit}_HDF_{2 * radius}_{n_bit}" for n_bit in range(n_bits)]
+        # Create column names for the encoded features
+        column_names = [
+            f"{unit}_HDF_depth{depth}_{n_bit}bit"
+            for n_bit in range(n_bits)
+        ]
         encoded_units.append(
             pd.DataFrame(encoded_smiles, index=df.index, columns=column_names)
         )

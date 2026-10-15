@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Submit RF, XGBR, and NGB training jobs for the Mordred and LE molecular
-# representations. train_structure_numerical.py trains every target configured
-# for each dataset in filter_data.py.
+# Submit RF, XGBR, and NGB training jobs for HDF molecular representations.
+# train_structure_numerical.py trains every target configured for each dataset
+# in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("RF" "XGBR" "NGB")
-representations=("Mordred" "LE")
+models=("RF" "XGBR")
+hdf_depths=(2 4 6)
+hdf_bits=(128 256 512 1024)
 # Selected datasets and their configured targets:
 # - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
 # - flux_data_imputed: log (Total flux)
@@ -37,28 +38,32 @@ for training_set in "${selected_training_sets[@]}"; do
     dataset_tag=${dataset// /_}
     mkdir -p "$output_dir"
 
-    for representation in "${representations[@]}"; do
-        for model in "${models[@]}"; do
-            job_index=$((job_index + 1))
-            bsub <<EOT
+    for depth in "${hdf_depths[@]}"; do
+        for n_bits in "${hdf_bits[@]}"; do
+            for model in "${models[@]}"; do
+                job_index=$((job_index + 1))
+                bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 5:00
+#BSUB -W 5:59
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
-#BSUB -J "tree_${representation}_${DATE}_${job_index}"
-#BSUB -o "${output_dir}/${model}_${representation}_${dataset_tag}_CPU.out"
-#BSUB -e "${output_dir}/${model}_${representation}_${dataset_tag}_CPU.err"
+#BSUB -J "tree_HDF_d${depth}_b${n_bits}_${DATE}_${job_index}"
+#BSUB -o "${output_dir}/${model}_HDF_depth${depth}_${n_bits}bit_${dataset_tag}_CPU.out"
+#BSUB -e "${output_dir}/${model}_HDF_depth${depth}_${n_bits}bit_${dataset_tag}_CPU.err"
 
 source ~/.bashrc
 conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
 
 python ../train_structure_numerical.py --regressor_type "$model" \
-                                        --representation "$representation" \
+                                        --representation "HDF" \
+                                        --radius "$depth" \
+                                        --n_bits "$n_bits" \
                                         --dataset "$dataset" \
                                         --paper "$paper"
 
 EOT
+            done
         done
     done
 done

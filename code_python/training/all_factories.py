@@ -59,6 +59,8 @@ representation_scaling_factory: dict[str, dict[str, Union[Callable, str]]] = {
                             "type":     "Standard"},
     "Mordred":             {"callable": StandardScaler(),
                             "type":     "Standard"},
+    "HDF":                 {"callable": StandardScaler(),
+                            "type":     "Standard"},
 }
 
 

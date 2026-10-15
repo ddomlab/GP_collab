@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
 
-DEBUGGING = False
+DEBUGGING = True
 
 
 def main_structural_numerical(
@@ -39,11 +39,18 @@ def main_structural_numerical(
     special_impute: Optional[str]=None,
     radius:int=None,
     vector:str=None,
+    n_bits:int=None,
     imputer:Optional[str]=None,
     **kwargs,
 ) -> None:
     
-    structural_features, unroll_single_feat = get_structural_info(representation, polymer_unit, radius, vector)
+    structural_features, unroll_single_feat = get_structural_info(
+        representation,
+        polymer_unit,
+        radius,
+        vector,
+        n_bits,
+    )
     scores, predictions  =   train_regressor(
                                             dataset=dataset,
                                             features_impute=columns_to_impute,
@@ -69,13 +76,14 @@ def main_structural_numerical(
                 numerical_feats=numerical_feats,
                 radius= radius,
                 vector =vector,
+                n_bits=n_bits,
                 hypop=hyperparameter_optimization,
                 transform_type=feat_transformer,
                 target_transformer=target_transformer,
                 imputer=imputer,
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
-                # special_folder_name='hp_RF_differences',
+                special_folder_name='HDF',
                 special_file_name='random_count_permutation' if kwargs.get("permute_features", False) else None,
                 **kwargs,
                 )
@@ -107,9 +115,12 @@ if __name__ == "__main__":
             representation_options = {
                 "representation": selected_representation,
                 "radius": (args.radius or 3)
-                if selected_representation == "ECFP" else None,
+                if selected_representation in {"ECFP", "HDF"} else None,
                 "vector": args.vector
                 if selected_representation == "ECFP" else None,
+                "n_bits": (
+                    64 if args.n_bits is None else args.n_bits
+                ) if selected_representation == "HDF" else None,
             }
 
         model_options = {}
@@ -167,7 +178,9 @@ if __name__ == "__main__":
             # optuna_save_dir = RESULTS/PAPER/f"target_{targ}"/ "MGK_hyperprameters"/f"Graph_Matern32_{args.kernel_feature_mode}"
             main_structural_numerical(
                 dataset=w_data,
-                representation="LE", #"ECFP" # MG #SSK
+                representation="HDF", #"ECFP" # MG #SSK
+                n_bits=128,
+                radius=3,
                 # radius=3,
                 # vector="count",
                 regressor_type="RF", #"GPytorchMAP", #MGK-sklearn "GpyroHMC"

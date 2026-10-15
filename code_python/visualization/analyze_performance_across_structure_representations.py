@@ -101,8 +101,9 @@ def _calculate_structure_profile_auc(
     kernel_triples: Any,
     tree_feature_importance: str,
     dataset_as_experiment_points: bool,
+    compare_models_as_methods: bool,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    """Calculate representation AUCs with model included in each task."""
+    """Calculate representation AUCs within models or across model methods."""
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     filtered_df, representation_order = _filter_structure_representations(
         df,
@@ -145,35 +146,45 @@ def _calculate_structure_profile_auc(
         axis=1,
     )
 
-    task_columns = [
-        "dataset",
-        "target",
-        "model",
-        "configuration task",
-    ]
+    task_columns = ["dataset", "target"]
+    if not compare_models_as_methods:
+        task_columns.extend(["model", "configuration task"])
     if not dataset_as_experiment_points:
         task_columns.append("repeat")
 
-    # A task can contain several raw rows when repeat/fold scores or duplicate
-    # result records are present. Reduce it to one score per representation.
+    # In cross-model mode, every model/configuration/representation combination
+    # is one competing method. Otherwise, models and configurations define the
+    # task and only representations compete within that task.
+    method_columns = ["structure representation"]
+    if compare_models_as_methods:
+        method_columns = [
+            "model",
+            "configuration task",
+            "structure representation",
+        ]
+
+    # Reduce repeat/fold scores or duplicate records to one score per method.
     profile_rank_df = (
         profile_df.groupby(
-            task_columns + ["structure representation"],
+            task_columns + method_columns,
             dropna=False,
             as_index=False,
         )[metric]
         .mean()
     )
 
-    # A within-task rank is meaningful only when at least two representations
-    # are available for the same model and configuration. This intentionally
-    # leaves unsupported model/representation cells blank in the heatmap.
+    if compare_models_as_methods:
+        comparable_counts = profile_rank_df.groupby(
+            task_columns,
+            dropna=False,
+        ).size()
+    else:
+        comparable_counts = profile_rank_df.groupby(
+            task_columns,
+            dropna=False,
+        )["structure representation"].nunique()
     comparable_tasks = (
-        profile_rank_df.groupby(task_columns, dropna=False)[
-            "structure representation"
-        ]
-        .nunique()
-        .loc[lambda counts: counts >= 2]
+        comparable_counts.loc[lambda counts: counts >= 2]
         .reset_index()[task_columns]
     )
     profile_rank_df = profile_rank_df.merge(
@@ -183,8 +194,7 @@ def _calculate_structure_profile_auc(
     )
     if profile_rank_df.empty:
         raise ValueError(
-            "No comparable tasks contain at least two structure "
-            "representations for the same model and kernel configuration."
+            "No comparable tasks contain at least two selected methods."
         )
 
     higher_is_better = _metric_higher_is_better(metric)
@@ -372,6 +382,7 @@ def plot_structure_representation_profile_comparison(
     auc_column: str = "auc",
     tree_feature_importance: str = "MDI",
     dataset_as_experiment_points: bool = False,
+    compare_models_as_methods: bool = False,
     plot_profile: bool = False,
     profile_options: Optional[dict[str, Any]] = None,
     figsize: tuple[float, float] = (7, 5),
@@ -390,11 +401,11 @@ def plot_structure_representation_profile_comparison(
 ) -> pd.DataFrame:
     """Compare representations using generalized performance-profile AUC.
 
-    Models are part of the task definition together with dataset, target,
-    kernel configuration, and (by default) repeat/fold. Representations are
-    therefore ranked within the same model rather than treating different
-    models as competing alternatives. The resulting bar for each
-    representation summarizes all comparable model tasks.
+    By default, models are part of the task definition and representations are
+    ranked within the same model. Set ``compare_models_as_methods=True`` to
+    treat every selected model/kernel/representation combination as a distinct
+    competing method on the same dataset-target-repeat tasks. This allows a
+    selected MGK Graph configuration to compete with tree-model methods.
 
     Only tasks containing at least two selected representations contribute to
     the profile. Set ``dataset_as_experiment_points=True`` to average
@@ -412,6 +423,7 @@ def plot_structure_representation_profile_comparison(
         kernel_triples=kernel_triples,
         tree_feature_importance=tree_feature_importance,
         dataset_as_experiment_points=dataset_as_experiment_points,
+        compare_models_as_methods=compare_models_as_methods,
     )
     calculated_auc_df[auc_column] = calculated_auc_df["auc"]
     representation_order = [
@@ -541,6 +553,182 @@ def plot_structure_representation_profile_comparison(
     return calculated_auc_df
 
 
+def plot_structure_representation_mean_std_comparison(
+    df: pd.DataFrame,
+    model: Any = None,
+    structure_representations: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "OOF_R2",
+    figsize: tuple[float, float] = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Structure representation",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 0,
+    y_lim: Optional[tuple[float, float]] = None,
+    show_values: bool = True,
+    gradient_bars: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot each representation's task-level metric mean and standard deviation.
+
+    A task is one dataset, target, model, kernel configuration, and repeat/fold.
+    Thus, a selected MGK kernel triple contributes as one model method, while
+    each selected tree model contributes separately for every representation it
+    supports. Error bars show the sample standard deviation across those tasks.
+    """
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    filtered_df, representation_order = _filter_structure_representations(
+        df,
+        structure_representations,
+    )
+
+    task_frames = []
+    for representation in representation_order:
+        representation_df = filtered_df.loc[
+            filtered_df["structure_representation"].astype(str).str.lower()
+            == representation.lower()
+        ]
+        expanded = _expand_master_scores_for_profile(
+            representation_df,
+            metric=metric,
+            model=model,
+            fp_kernels=fp_kernels,
+            count_kernels=count_kernels,
+            mixing_methods=mixing_methods,
+        )
+        if expanded.empty:
+            continue
+        expanded["structure representation"] = representation
+        expanded["configuration task"] = expanded.apply(
+            _configuration_task_label,
+            axis=1,
+        )
+        task_frames.append(expanded)
+
+    if not task_frames:
+        raise ValueError(
+            f"No {metric} values were found for the requested models, "
+            "representations, and kernel configurations."
+        )
+
+    task_values = pd.concat(task_frames, ignore_index=True)
+    task_columns = [
+        "dataset",
+        "target",
+        "model",
+        "configuration task",
+        "repeat",
+        "structure representation",
+    ]
+    task_values = (
+        task_values.groupby(task_columns, dropna=False, as_index=False)[metric]
+        .mean()
+    )
+    summary = (
+        task_values.groupby("structure representation", as_index=False)[metric]
+        .agg(mean="mean", std="std", n_tasks="count")
+    )
+    summary["std"] = summary["std"].fillna(0.0)
+    order_lookup = {
+        representation: position
+        for position, representation in enumerate(representation_order)
+    }
+    summary["_plot_order"] = summary["structure representation"].map(
+        order_lookup
+    )
+    summary = (
+        summary.sort_values("_plot_order", kind="stable")
+        .drop(columns="_plot_order")
+        .reset_index(drop=True)
+    )
+
+    plotted_representations = summary["structure representation"].tolist()
+    colors = [
+        STRUCTURE_REPRESENTATION_COLORS.get(
+            representation,
+            sns.color_palette("Set2", n_colors=len(summary))[position],
+        )
+        for position, representation in enumerate(plotted_representations)
+    ]
+    x_positions = np.arange(len(summary))
+    fig, ax = plt.subplots(figsize=figsize)
+    bars = ax.bar(
+        x_positions,
+        summary["mean"].to_numpy(dtype=float),
+        yerr=summary["std"].to_numpy(dtype=float),
+        capsize=5,
+        color=colors,
+        edgecolor="black",
+        linewidth=0.6,
+        error_kw={"elinewidth": 1.2, "capthick": 1.2},
+    )
+    if gradient_bars:
+        apply_vertical_bar_gradients(ax, list(bars), colors)
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(
+        plotted_representations,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(
+        y_label or f"Mean {metric}",
+        fontsize=fontsize,
+        fontweight="bold",
+    )
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+
+    if show_values:
+        lower, upper = ax.get_ylim()
+        label_offset = 0.02 * (upper - lower)
+        for bar, row in zip(bars, summary.itertuples(index=False)):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                row.mean + row.std + label_offset,
+                f"{row.mean:.2f} ± {row.std:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=fontsize - 2,
+            )
+        _, updated_upper = ax.get_ylim()
+        required_upper = max(
+            summary["mean"] + summary["std"] + 3 * label_offset
+        )
+        ax.set_ylim(lower, max(updated_upper, required_upper))
+
+    fig.tight_layout()
+    if save_dir is not None:
+        save_path = ensure_long_path(Path(save_dir))
+        os.makedirs(save_path, exist_ok=True)
+        if file_name is None:
+            file_name = (
+                f"{metric}_structure_representation_mean_std_barplot.png"
+            )
+        fig.savefig(
+            ensure_long_path(save_path / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+    return summary
+
+
 def plot_structure_representation_profile_heatmap(
     df: pd.DataFrame,
     model: Any = None,
@@ -552,6 +740,7 @@ def plot_structure_representation_profile_heatmap(
     metric: str = "OOF_R2",
     tree_feature_importance: str = "MDI",
     dataset_as_experiment_points: bool = False,
+    compare_models_as_methods: bool = False,
     figsize: tuple[float, float] = (7, 5),
     fontsize: int = 12,
     title: Optional[str] = None,
@@ -570,11 +759,12 @@ def plot_structure_representation_profile_heatmap(
 ) -> pd.DataFrame:
     """Plot model-by-representation performance-profile AUCs as a heatmap.
 
-    Each cell uses the percentile ranks obtained by comparing representations
-    within the same dataset, target, model, kernel configuration, and
-    repeat/fold. Missing or non-comparable model/representation combinations
-    are left blank. Set ``plot_heatmap=False`` to return the matrix without
-    creating a figure.
+    By default, each cell uses percentile ranks obtained by comparing
+    representations within the same model and kernel configuration. Set
+    ``compare_models_as_methods=True`` to rank selected model/configuration/
+    representation methods against one another on each dataset task. Missing
+    combinations are left blank. Set ``plot_heatmap=False`` to return the
+    matrix without creating a figure.
     """
     _, model_auc_df, profile_results = _calculate_structure_profile_auc(
         df=df,
@@ -587,6 +777,7 @@ def plot_structure_representation_profile_heatmap(
         kernel_triples=kernel_triples,
         tree_feature_importance=tree_feature_importance,
         dataset_as_experiment_points=dataset_as_experiment_points,
+        compare_models_as_methods=compare_models_as_methods,
     )
 
     heatmap_matrix = model_auc_df.pivot_table(
@@ -702,18 +893,35 @@ if __name__ == "__main__":
         / "result_analysis"
     )
 
-    STRUCTURE_REPRESENTATION_ORDER = ["LE", "ECFP", "Mordred", "Graph"]
-    plot_structure_representation_profile_comparison(
-        structure_results,
-        metric="OOF_R2",
-        model=["RF", "XGBR", "NGB"],
-        structure_representations=STRUCTURE_REPRESENTATION_ORDER,
-        y_label="Profile AUC of R² (OOF)",
-        fontsize=16,
-        figsize=(6, 5),
-        save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
-        file_name=f"R2OOF.png",
-    )
+    STRUCTURE_REPRESENTATION_ORDER = ["LE", "ECFP", "Mordred"]
+    # plot_structure_representation_profile_comparison(
+    #     structure_results,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR", "NGB"],
+    #     # kernel_triples=("Graph", "Matern32", "(count:+)x(graph:x)"),
+    #     compare_models_as_methods=True,
+    #     structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+    #     y_label="Profile AUC of R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
+    #     file_name=f"R2OOF.png",
+    # )
+    # plot_structure_representation_mean_std_comparison(
+    #     structure_results,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR", "NGB"],
+    #     structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+    #     y_label="R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=(
+    #         RESULTS
+    #         / "average_performance"
+    #         / "strcuture_representation_comparison"
+    #     ),
+    #     file_name="R2OOF.png",
+    # )
 
     # plot_structure_representation_profile_heatmap(
     #     structure_results,

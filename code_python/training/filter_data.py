@@ -157,7 +157,13 @@ def _get_dataset_features(dataset_basket: Path, paper: str, dataset_name: str):
 
 
 
-def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:str=None)->Tuple:
+def get_structural_info(
+        fp: str,
+        poly_unit_name: list[str],
+        radius: int = None,
+        vector: str = None,
+        n_bits: int = None,
+        ) -> Tuple:
         if fp == "LE":
             fp_features = [f"{unit}_LE" for unit in poly_unit_name]
             unrolling_featurs = {"representation": fp,
@@ -173,27 +179,30 @@ def get_structural_info(fp:str,poly_unit_name:list[str],radius:int=None,vector:s
             return fp_features, unrolling_featurs
         
         if fp == "ECFP":
-            n_bits = radius_to_bits[radius]
+            ecfp_n_bits = radius_to_bits[radius]
             fp_features = [
-                        f"{unit}_{fp}{2 * radius}_{vector}_{n_bits}bits"
+                        f"{unit}_{fp}{2 * radius}_{vector}_{ecfp_n_bits}bits"
                         for unit in poly_unit_name
                         ]
             unrolling_featurs = {
                                 "representation": fp,
                                 "radius": radius,
-                                "n_bits": n_bits,
+                                "n_bits": ecfp_n_bits,
                                 "vector_type": vector,
                                 "unit_name": poly_unit_name,
                                 "col_names": fp_features,
                                 }
             return fp_features, unrolling_featurs
         if fp == "HDF":
-            n_bits = 64
+            hdf_depth = 3 if radius is None else radius
+            hdf_n_bits = 64 if n_bits is None else n_bits
+            if hdf_n_bits <= 0:
+                raise ValueError("HDF n_bits must be a positive integer.")
             fp_features = [f"{unit} SMILES" for unit in poly_unit_name]
             unrolling_featurs = {
                                 "representation": fp,
-                                "radius": radius,
-                                "n_bits": n_bits,
+                                "depth": hdf_depth,
+                                "n_bits": hdf_n_bits,
                                 "unit_name": poly_unit_name,
                                 "SMILES_columns": fp_features,
                                 }
