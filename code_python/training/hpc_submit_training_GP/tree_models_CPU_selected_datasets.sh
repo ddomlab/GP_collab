@@ -1,32 +1,16 @@
 #!/bin/bash
 
-# Submit RF, XGBR, and NGB training jobs for HDF molecular representations.
+# Submit the missing HDF tree-model result identified in the master-data check.
 # train_structure_numerical.py trains every target configured for each dataset
 # in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("NGB")
-hdf_depths=(2 4 6)
-hdf_bits=(128 256 512 1024)
-# Selected datasets and their configured targets:
-# - Beyond molecular structure_seifrid_imputed: calculated PCE (%)
-# - flux_data_imputed: log (Total flux)
-# - separation_data_imputed: log (Separation factor)
-# - cleaned_dataset_pervaporation_membranes_wang: log (Total flux),
-#   log (Separation factor)
-# - cleaned_suzuki_synthesis: Approx Conv (%)
-# - Rg data with clusters aging imputed: log Rg (nm)
-# - cleaned_dataset_Ultrafiltration Membrane_imputed: all six configured
-#   ultrafiltration targets
+models=("XGBR")
+hdf_depths=(2)
+hdf_bits=(512)
+# This dataset produces all six missing ultrafiltration target results.
 selected_training_sets=(
-    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed"
-    "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed"
-    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang"
-    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis"
-    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed"
     "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed"
-    # "Chemistry-Informed Machine Learning for Polymer Electrolyte Discovery|cleaned_poly_Electrolyte_conductivity"
 )
 
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
@@ -45,7 +29,7 @@ for training_set in "${selected_training_sets[@]}"; do
                 bsub <<EOT
 
 #BSUB -n 6
-#BSUB -W 5:59
+#BSUB -W 10:59
 #BSUB -R span[hosts=1]
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -J "tree_HDF_d${depth}_b${n_bits}_${DATE}_${job_index}"

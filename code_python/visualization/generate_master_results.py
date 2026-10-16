@@ -96,6 +96,7 @@ OOF_SCORE_COLUMNS = [
 ]
 TIME_COLUMNS = ["Running time (GPU)", "Running time (CPU)"]
 FeatureSet = Literal[
+    "HDF",
     "count_only",
     "count_and_fingerprint",
     "structure_and_count",
@@ -122,6 +123,9 @@ RANDOM_PERMUTATION_FEATURE_SETS = {
     "random_fp_permutation",
     "unique_fp_permutation",
 }
+HDF_MODELS = ("RF", "XGBR", "NGB")
+HDF_DEPTHS = (2, 4, 6)
+HDF_BITS = (128, 256, 512, 1024)
 COUNT_AND_GRAPH_MODELS = {
     "GNN-GP": "(GRAPH)_GNN-GP",
     "GNN-MLP": "(GRAPH)_GNN-MLP",
@@ -133,6 +137,7 @@ STRUCTURE_REPRESENTATIONS = ("ECFP", "Graph", "LE", "Mordred")
 
 def _validate_feature_set(feature_set: str) -> FeatureSet:
     valid_feature_sets = {
+        "HDF",
         "count_only",
         "count_and_fingerprint",
         "structure_and_count",
@@ -205,7 +210,22 @@ def _score_file_stems(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
     structure_representation: Optional[StructureRepresentation] = None,
+    hdf_depth: Optional[int] = None,
+    hdf_bits: Optional[int] = None,
 ) -> List[str]:
+    if feature_set == "HDF":
+        if (
+            use_gpu
+            or model not in HDF_MODELS
+            or hdf_depth not in HDF_DEPTHS
+            or hdf_bits not in HDF_BITS
+        ):
+            return []
+        return [
+            f"(HDF{hdf_depth}_{hdf_bits}bit-COUNT)_{model}"
+            "_hypOFF_Standard_Standard_scores"
+        ]
+
     if feature_set == "structure_and_count":
         if structure_representation not in STRUCTURE_REPRESENTATIONS:
             return []
@@ -306,6 +326,8 @@ def _find_score_path(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
     structure_representation: Optional[StructureRepresentation] = None,
+    hdf_depth: Optional[int] = None,
+    hdf_bits: Optional[int] = None,
 ) -> Optional[Path]:
     for stem in _score_file_stems(
         model,
@@ -315,6 +337,8 @@ def _find_score_path(
         mixing_method,
         use_gpu,
         structure_representation,
+        hdf_depth,
+        hdf_bits,
     ):
         path = ensure_long_path(paper_dir / f"{stem}.json")
         if path.exists():
@@ -331,6 +355,8 @@ def _load_score_file(
     mixing_method: Optional[str] = None,
     use_gpu: bool = False,
     structure_representation: Optional[StructureRepresentation] = None,
+    hdf_depth: Optional[int] = None,
+    hdf_bits: Optional[int] = None,
 ) -> tuple[Optional[Dict[str, Any]], Optional[Path]]:
     score_path = _find_score_path(
         paper_dir,
@@ -341,6 +367,8 @@ def _load_score_file(
         mixing_method,
         use_gpu,
         structure_representation,
+        hdf_depth,
+        hdf_bits,
     )
     if score_path is None:
         return None, None
@@ -653,6 +681,7 @@ def _score_row_values(
 def _master_result_columns(
     score_metrics: List[str],
     include_structure_representation: bool = False,
+    include_hdf_parameters: bool = False,
 ) -> List[str]:
     metric_columns = [
         column
@@ -666,6 +695,8 @@ def _master_result_columns(
     identifying_columns = BASE_MASTER_RESULT_COLUMNS.copy()
     if include_structure_representation:
         identifying_columns.insert(3, "structure_representation")
+    if include_hdf_parameters:
+        identifying_columns[3:3] = ["HDF depth", "HDF bits"]
     return (
         identifying_columns
         + FEATURE_STABILITY_COLUMNS
@@ -700,11 +731,15 @@ def _master_row(
     score_path: Optional[Path],
     use_gpu: bool,
     structure_representation: Optional[StructureRepresentation] = None,
+    hdf_depth: Optional[int] = None,
+    hdf_bits: Optional[int] = None,
 ) -> Dict[str, Any]:
     return {
         "paper": paper,
         "target": target,
         "model": model,
+        "HDF depth": hdf_depth,
+        "HDF bits": hdf_bits,
         "structure_representation": structure_representation,
         "fp kernel": fp_kernel,
         "count kernel": count_kernel,
@@ -877,6 +912,9 @@ def build_master_performance_data(
     ``feature_set="count_and_graph"`` includes the CPU-only GNN-GP, GNN-MLP,
     and MLP-GP results. These files have no feature-importance or kernel
     configuration metadata, so those master-data columns are left empty.
+    ``feature_set="HDF"`` includes CPU tree-model results for every HDF depth
+    and bit count listed in ``HDF_DEPTHS`` and ``HDF_BITS``. Those parameters
+    are retained in the ``HDF depth`` and ``HDF bits`` columns.
     ``feature_set="random_fp_permutation"`` includes the GPU GPytorchMAP
     results trained after randomly permuting fingerprint features. It uses the
     TanimotoMatern32 fingerprint kernel, Matern32 count kernel, and the four
@@ -890,14 +928,15 @@ def build_master_performance_data(
 
     Tree-model results are included in both device datasets. GP rows use only
     the requested device, with no cross-device fallback. Count-and-graph
-    results are CPU-only. Only precomputed Kendall's W values are retained for
-    feature stability.
+    and HDF results are CPU-only. Only precomputed Kendall's W values are
+    retained for feature stability.
 
     When ``save_path`` is provided, standard modes write
     ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
     fingerprint and COUNT permutation results are GPU-only, so those modes
     write only ``<save_path>_GPU.{pkl,csv}``. Count-and-graph results write
-    only ``<save_path>_CPU.{pkl,csv}``.
+    only ``<save_path>_CPU.{pkl,csv}``. HDF results are also written only to
+    the CPU output.
     """
     feature_set = _validate_feature_set(feature_set)
     metrics = list(
@@ -909,13 +948,15 @@ def build_master_performance_data(
     devices = (
         ("GPU",)
         if feature_set in RANDOM_PERMUTATION_FEATURE_SETS
-        else ("CPU",) if feature_set == "count_and_graph"
+        else ("CPU",) if feature_set in {"count_and_graph", "HDF"}
         else ("CPU", "GPU")
     )
     if feature_set == "count_only":
         models = COUNT_ONLY_MODELS
     elif feature_set == "count_and_graph":
         models = list(COUNT_AND_GRAPH_MODELS)
+    elif feature_set == "HDF":
+        models = list(HDF_MODELS)
     elif feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
         models = RANDOM_PERMUTATION_MODELS
     else:
@@ -927,9 +968,39 @@ def build_master_performance_data(
 
         for paper_name, paper_info in PAPER.items():
             for target in paper_info["target"]:
-                paper_dir = RESULTS / paper_name / target
+                paper_dir = RESULTS / paper_name / (
+                    f"{target}_HDF" if feature_set == "HDF" else target
+                )
 
                 for model in models:
+                    if feature_set == "HDF":
+                        for hdf_depth in HDF_DEPTHS:
+                            for hdf_bits in HDF_BITS:
+                                data, score_path = _load_score_file(
+                                    paper_dir,
+                                    model,
+                                    feature_set,
+                                    hdf_depth=hdf_depth,
+                                    hdf_bits=hdf_bits,
+                                )
+                                rows.append(
+                                    _master_row(
+                                        paper_name,
+                                        target,
+                                        model,
+                                        None,
+                                        None,
+                                        None,
+                                        metrics,
+                                        data,
+                                        score_path,
+                                        use_gpu=False,
+                                        hdf_depth=hdf_depth,
+                                        hdf_bits=hdf_bits,
+                                    )
+                                )
+                        continue
+
                     if feature_set == "structure_and_count":
                         for (
                             structure_representation,
@@ -1058,6 +1129,7 @@ def build_master_performance_data(
                 include_structure_representation=(
                     feature_set == "structure_and_count"
                 ),
+                include_hdf_parameters=(feature_set == "HDF"),
             ),
             dtype=object,
         )
@@ -1070,9 +1142,10 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "structure_and_count"
+    feature_set: FeatureSet = "HDF"
 
     output_name = {
+        "HDF": "Tree_HDF",
         "structure_and_count": "Tree_and_GP_structure_and_count",
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
         "count_and_graph": "MLP_GNN_GP_count_and_graph",
