@@ -60,7 +60,6 @@ CASE_COLUMNS = ["paper", "target", "cluster"]
 OOD_MODEL_TYPE_COLORS = {
     "tree": "#468FC6",
     "gp": "#FF5757",
-    "mgk": "#FF5757",
     "gnn": "#72B7B2",
 }
 

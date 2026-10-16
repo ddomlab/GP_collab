@@ -962,25 +962,26 @@ if __name__ == "__main__":
         MASTER_DATA / f"Tree_and_GP_count_and_fingerprint_{master_device}.pkl"
     )
 
-    structure_and_count_results = pd.read_pickle(
-        MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
-    )
+    # structure_and_count_results = pd.read_pickle(
+    #     MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
+    # )
     
-    count_results = pd.read_pickle(
-        MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
-    )
-    permuted_fp_result = pd.read_pickle(
-        MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
-    )
+    # count_results = pd.read_pickle(
+    #     MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
+    # )
+    # permuted_fp_result = pd.read_pickle(
+    #     MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
+    # )
 
-    unique_permuted_fp_result = pd.read_pickle(
-        MASTER_DATA / f"GP_unique_fp_permutation_{master_device}.pkl"
-    )
-    permuted_count_result = pd.read_pickle(
-        MASTER_DATA / f"GP_random_count_permutation_{master_device}.pkl"
-    )
+    # unique_permuted_fp_result = pd.read_pickle(
+    #     MASTER_DATA / f"GP_unique_fp_permutation_{master_device}.pkl"
+    # )
+    # permuted_count_result = pd.read_pickle(
+    #     MASTER_DATA / f"GP_random_count_permutation_{master_device}.pkl"
+    # )
 
-
+    deep_kernel_result = pd.read_pickle(MASTER_DATA / f"MLP_GNN_GP_SNGP_count_and_graph_CPU.pkl")
+    ## Deep krenel results and count_and_fingerprint_result should be combine for overall illustration
 
     Separate_datasets_save = (
         HERE
@@ -1023,31 +1024,31 @@ if __name__ == "__main__":
     # )
 
 
-    # plot_hybridization_performance_vs_data_number(
-    #     df=count_and_fingerprint_result,
-    #     metric="OOF_R2",
-    #     model="MGK",
-    #     fp_kernels=["Graph"],
-    #     count_kernels=["Matern32", "Matern52", "RBF"],
-    #     show_all_targets=True,
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         "(count:+)x(Graph:x)",# train on this
-    #         "(count:x)+(Graph:x)",
-    #     ],
-    #     y_label="R² (OOF)",
-    #     fontsize=17,
-    #     figsize=(11, 8),
-    #     show=True,
-    #     save_dir=(
-    #         HERE
-    #         / "result_analysis"
-    #         / "absolute_metric"
-    #         / "hybridization_comparison"
-    #     ),
-    #     file_name="R2OOF_MGK_all_config_vs_data_number_all_targets.png",
-    # )
+    plot_hybridization_performance_vs_data_number(
+        df=count_and_fingerprint_result,
+        metric="OOF_R2",
+        model="MGK",
+        fp_kernels=["Graph"],
+        count_kernels=["Matern32", "Matern52", "RBF"],
+        show_all_targets=True,
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(Graph:x)",# train on this
+            "(count:x)+(Graph:x)",
+        ],
+        y_label="R² (OOF)",
+        fontsize=17,
+        figsize=(11, 8),
+        show=True,
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "absolute_metric"
+            / "hybridization_comparison"
+        ),
+        file_name="R2OOF_MGK_all_config_vs_data_number_all_targets.png",
+    )
 
 
     # plot_regular_vs_permuted_fp_performance_by_target(

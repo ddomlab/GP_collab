@@ -36,6 +36,7 @@ from visualization_setting import (
     MODEL_DISPLAY_NAMES,
     MODEL_TYPE_COLORS,
     TREE_MODELS,
+    apply_vertical_bar_gradients,
     display_model_name as _display_model_name,
     filter_selection as _filter_selection,
     is_feature_stability_metric as _is_feature_stability_metric,
@@ -53,8 +54,10 @@ from visualization_setting import (
 set_plot_style()
 
 HERE = Path(__file__).resolve().parent
+
 # DATASETS = HERE.parent.parent / "datasets" / "Validation datasets"
 RESULTS = HERE.parent.parent / "results"
+MASTER_DATA = RESULTS / "master_performance_data"
 TRAINING = HERE.parent / "training"
 if str(TRAINING) not in sys.path:
     sys.path.insert(0, str(TRAINING))
@@ -834,6 +837,25 @@ def _mixing_method_label(value: Any) -> str:
     return mixing_labels.get(value, mixing_labels.get(value.lower(), value))
 
 
+def _hybridization_comparison_label(
+    mixing_method: Any,
+    fp_kernel: Any,
+) -> str:
+    """Return an FP- or Graph-specific hybridization display label."""
+    label = _mixing_method_label(mixing_method)
+    if str(fp_kernel).strip().lower() == "graph":
+        return (
+            label.replace("Av(C) × F", "ΣC × G")
+            .replace("ΣF", "G")
+            .replace("ΠF", "G")
+        )
+    return (
+        label.replace("Av(C) × F", "ΣC × FP")
+        .replace("ΣF", "FP")
+        .replace("ΠF", "FP")
+    )
+
+
 def _expand_master_scores_for_profile(
     df: pd.DataFrame,
     metric: str,
@@ -1013,13 +1035,11 @@ def _model_group_sort_rank(model: Any) -> int:
     model_upper = model_name.upper()
     if _is_tree_model(model_name):
         return 0
-    if "GP" in model_upper and model_name != "MGK":
+    if model_name == "MGK" or "GP" in model_upper:
         return 1
-    if model_name == "MGK":
-        return 2
     if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
-        return 3
-    return 4
+        return 2
+    return 3
 
 
 def _model_order_sort_key(model: Any, model_order: Optional[Dict[str, int]] = None) -> tuple:
@@ -2413,11 +2433,16 @@ def plot_model_profile_comparison(
         order=order,
         hue_order=order,
         palette=bar_palette,
+        saturation=1,
         width=0.67,
         dodge=False,
         legend=False,
         errorbar=None,
         ax=ax,
+    )
+    apply_vertical_bar_gradients(
+        ax,
+        edge_linewidth=0,
     )
 
     if show_values:
@@ -2467,6 +2492,200 @@ def plot_model_profile_comparison(
         plt.close(fig)
 
     return plot_df
+
+
+def plot_model_mean_std_comparison(
+    df: pd.DataFrame,
+    model: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "OOF_R2",
+    include_kernel_config: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 35,
+    y_lim: Optional[tuple] = None,
+    show_values: bool = True,
+    gradient_bars: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare model configurations using task-level mean +/- std.
+
+    Stored repeats are first averaged within each dataset-target and model
+    configuration. The bars and error bars are then calculated as the mean
+    and sample standard deviation across those equally weighted tasks.
+
+    Pass ``kernel_triples`` as one triple or a list of
+    ``(fp_kernel, count_kernel, mixing_method)`` triples. Models without
+    kernel settings, such as tree and deep-learning models, are retained.
+    """
+    filtered_df = _filter_kernel_triples(
+        df,
+        kernel_triples,
+        keep_missing=True,
+    )
+    score_df = _expand_master_scores_for_profile(
+        filtered_df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+    )
+    if score_df.empty:
+        raise ValueError(
+            f"No {metric} values found for model={model} with "
+            f"fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+            f"mixing_methods={mixing_methods}, and "
+            f"kernel_triples={kernel_triples}."
+        )
+
+    x_col = "model configuration"
+    score_df[x_col] = score_df.apply(
+        lambda row: _model_config_label(row, include_kernel_config),
+        axis=1,
+    )
+    configuration_columns = [
+        x_col,
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+    task_values = (
+        score_df.groupby(
+            ["dataset", "target", *configuration_columns],
+            dropna=False,
+            as_index=False,
+        )[metric]
+        .mean()
+    )
+    summary_df = (
+        task_values.groupby(
+            configuration_columns,
+            dropna=False,
+            as_index=False,
+        )[metric]
+        .agg(mean="mean", std="std", n_tasks="count")
+    )
+    summary_df["std"] = summary_df["std"].fillna(0.0)
+
+    selected_models = (
+        _selection_values(model)
+        or summary_df["model"].drop_duplicates().tolist()
+    )
+    model_order = {
+        str(model_name).lower(): index
+        for index, model_name in enumerate(selected_models)
+    }
+    summary_df["sort_key"] = summary_df.apply(
+        lambda row: _model_config_sort_key(row, model_order),
+        axis=1,
+    )
+    summary_df = (
+        summary_df.sort_values("sort_key", kind="mergesort")
+        .drop(columns="sort_key")
+        .reset_index(drop=True)
+    )
+
+    x_positions = np.arange(len(summary_df))
+    colors = [
+        _model_type_color(model_name)
+        for model_name in summary_df["model"]
+    ]
+    fig, ax = plt.subplots(figsize=figsize)
+    bars = ax.bar(
+        x_positions,
+        summary_df["mean"].to_numpy(dtype=float),
+        width=0.67,
+        yerr=summary_df["std"].to_numpy(dtype=float),
+        capsize=5,
+        color=colors,
+        edgecolor="none",
+        linewidth=0,
+        error_kw={"elinewidth": 1.2, "capthick": 1.2},
+    )
+    if gradient_bars:
+        apply_vertical_bar_gradients(
+            ax,
+            list(bars),
+            colors,
+            edge_linewidth=0,
+        )
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(
+        summary_df[x_col],
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(
+        y_label or f"Mean {metric}",
+        fontsize=fontsize,
+        fontweight="bold",
+    )
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+
+    if show_values:
+        lower, upper = ax.get_ylim()
+        label_start_offset = 0.02 * (upper - lower)
+        error_bar_label_gap = 0.015 * (upper - lower)
+        higher_is_better = _metric_higher_is_better(metric)
+        for bar, row in zip(bars, summary_df.itertuples(index=False)):
+            label_start = (
+                bar.get_y() + label_start_offset
+                if higher_is_better
+                else row.mean + row.std + error_bar_label_gap
+            )
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                label_start,
+                f"{row.mean:.2f} ± {row.std:.2f}",
+                ha="left",
+                va="center",
+                color="black",
+                fontsize=max(fontsize - 3, 7),
+                fontweight="bold",
+                rotation=90,
+                rotation_mode="anchor",
+            )
+
+    plt.tight_layout()
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(
+                str(value)
+                for value in (_selection_values(model) or ["all"])
+            )
+            file_name = f"{model_name}_{metric}_mean_std_comparison.png"
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return summary_df
 
 
 def plot_hybridization_profile_comparison(
@@ -2553,11 +2772,12 @@ def plot_hybridization_profile_comparison(
             f"mixing_methods={mixing_methods}, and kernel_triples={kernel_triples}."
         )
 
-    plot_df["hybridization method"] = plot_df["mixing method"].map(
-        lambda method: _mixing_method_label(method)
-        .replace("Av(C) × F", "ΣC × FP")
-        .replace("ΣF", "FP")
-        .replace("ΠF", "FP")
+    plot_df["hybridization method"] = plot_df.apply(
+        lambda row: _hybridization_comparison_label(
+            row["mixing method"],
+            row["fp kernel"],
+        ),
+        axis=1,
     )
     selected_models = _selection_values(model)
     include_model = selected_models is None or len(selected_models) > 1
@@ -2742,6 +2962,252 @@ def plot_hybridization_profile_comparison(
         plt.close(fig)
 
     return plot_df
+
+
+def plot_hybridization_mean_std_comparison(
+    df: pd.DataFrame,
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "OOF_R2",
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple = (5, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Hybridization method",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 30,
+    y_lim: Optional[tuple] = None,
+    show_values: bool = True,
+    gradient_bars: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare hybridization methods using task-level mean +/- std.
+
+    Every selected dataset, target, model, fingerprint kernel, and count
+    kernel configuration contributes a task value to its hybridization method.
+    OOF metrics provide one pooled value per task. Non-OOF metrics use every
+    stored seed/fold value as a task by default. Set
+    ``dataset_as_experiment_points=True`` to first average those repeats within
+    each dataset-target-model-kernel configuration.
+    """
+    filtered_df = _filter_kernel_triples(
+        df,
+        kernel_triples,
+        keep_missing=False,
+    )
+    task_df = _expand_master_scores_for_profile(
+        filtered_df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+    )
+    task_df = task_df.dropna(subset=["mixing method"]).copy()
+    if task_df.empty:
+        raise ValueError(
+            f"No {metric} values found for model={model} with "
+            f"fp_kernels={fp_kernels}, count_kernels={count_kernels}, "
+            f"mixing_methods={mixing_methods}, and "
+            f"kernel_triples={kernel_triples}."
+        )
+
+    task_df["hybridization method"] = task_df.apply(
+        lambda row: _hybridization_comparison_label(
+            row["mixing method"],
+            row["fp kernel"],
+        ),
+        axis=1,
+    )
+    selected_models = _selection_values(model)
+    include_model = selected_models is None or len(selected_models) > 1
+    x_col = (
+        "model hybridization method"
+        if include_model
+        else "hybridization method"
+    )
+    if include_model:
+        task_df[x_col] = (
+            task_df["model"].map(_display_model_name)
+            + "\n"
+            + task_df["hybridization method"].astype(str)
+        )
+
+    task_columns = [
+        "dataset",
+        "target",
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+        x_col,
+        "hybridization method",
+    ]
+    task_columns = list(dict.fromkeys(task_columns))
+    if not dataset_as_experiment_points:
+        task_columns.append("repeat")
+    task_values = (
+        task_df.groupby(task_columns, dropna=False, as_index=False)[metric]
+        .mean()
+    )
+
+    summary_group_columns = list(
+        dict.fromkeys(
+            [
+                x_col,
+                "hybridization method",
+                "model",
+                "mixing method",
+            ]
+        )
+    )
+    summary_df = (
+        task_values.groupby(
+            summary_group_columns,
+            dropna=False,
+            as_index=False,
+        )[metric]
+        .agg(mean="mean", std="std", n_tasks="count")
+    )
+    summary_df["std"] = summary_df["std"].fillna(0.0)
+
+    selected_mixes = (
+        _selection_values(mixing_methods) or globals()["mixing_methods"]
+    )
+    selected_models = (
+        selected_models or task_df["model"].drop_duplicates().tolist()
+    )
+    method_order = {
+        str(method).lower(): index
+        for index, method in enumerate(selected_mixes)
+    }
+    model_order = {
+        str(model_name).lower(): index
+        for index, model_name in enumerate(selected_models)
+    }
+    config_order = summary_df[
+        [x_col, "model", "mixing method"]
+    ].drop_duplicates(subset=[x_col])
+    config_order["sort_key"] = config_order.apply(
+        lambda row: (
+            *_model_order_sort_key(row["model"], model_order),
+            method_order.get(
+                str(row["mixing method"]).lower(),
+                len(method_order),
+            ),
+            str(row["mixing method"]),
+        ),
+        axis=1,
+    )
+    config_order = config_order.sort_values("sort_key", kind="mergesort")
+    order = config_order[x_col].tolist()
+    order_lookup = {label: index for index, label in enumerate(order)}
+    summary_df["_plot_order"] = summary_df[x_col].map(order_lookup)
+    summary_df = (
+        summary_df.sort_values("_plot_order", kind="stable")
+        .drop(columns="_plot_order")
+        .reset_index(drop=True)
+    )
+
+    fallback_colors = sns.color_palette("Set2", n_colors=max(len(order), 1))
+    bar_palette = {}
+    for index, (_, row) in enumerate(config_order.iterrows()):
+        method = str(row["mixing method"])
+        bar_palette[row[x_col]] = HYBRIDIZATION_METHOD_COLORS.get(
+            method,
+            fallback_colors[index % len(fallback_colors)],
+        )
+
+    x_positions = np.arange(len(summary_df))
+    colors = [bar_palette[label] for label in summary_df[x_col]]
+    fig, ax = plt.subplots(figsize=figsize)
+    bars = ax.bar(
+        x_positions,
+        summary_df["mean"].to_numpy(dtype=float),
+        width=0.67,
+        yerr=summary_df["std"].to_numpy(dtype=float),
+        capsize=5,
+        color=colors,
+        edgecolor="none",
+        linewidth=0,
+        error_kw={"elinewidth": 1.2, "capthick": 1.2},
+    )
+    if gradient_bars:
+        apply_vertical_bar_gradients(
+            ax,
+            list(bars),
+            colors,
+            gradient_fraction=0.35,
+            edge_linewidth=0,
+        )
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(
+        summary_df[x_col],
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(
+        y_label or f"Mean {metric}",
+        fontsize=fontsize,
+        fontweight="bold",
+    )
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+
+    if show_values:
+        lower, upper = ax.get_ylim()
+        label_offset = 0.02 * (upper - lower)
+        for bar, row in zip(bars, summary_df.itertuples(index=False)):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                row.mean + row.std + label_offset,
+                f"{row.mean:.2f} ± {row.std:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=fontsize - 2,
+            )
+        _, current_upper = ax.get_ylim()
+        required_upper = max(
+            summary_df["mean"] + summary_df["std"] + 3 * label_offset
+        )
+        ax.set_ylim(lower, max(current_upper, required_upper))
+
+    plt.tight_layout()
+    if save_dir is not None:
+        save_dir = ensure_long_path(Path(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        if file_name is None:
+            model_name = "_".join(
+                str(value)
+                for value in (_selection_values(model) or ["all"])
+            )
+            file_name = (
+                f"{model_name}_{metric}_hybridization_mean_std_comparison.png"
+            )
+        fig.savefig(
+            ensure_long_path(save_dir / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return summary_df
 
 
 def plot_model_performance_TOPSIS(
@@ -4880,13 +5346,41 @@ def plot_model_average_performance_vs_data_number(
     return summary_df
 
 
+def load_overall_model_results(master_device: str = "GPU") -> pd.DataFrame:
+    """Load compatible kernel and deep-model master tables for comparison."""
+    if master_device not in {"CPU", "GPU"}:
+        raise ValueError("master_device must be either 'CPU' or 'GPU'.")
+
+    count_and_fingerprint_result = pd.read_pickle(
+        MASTER_DATA / f"Tree_and_GP_count_and_fingerprint_{master_device}.pkl"
+    )
+    deep_kernel_result = pd.read_pickle(
+        MASTER_DATA / "MLP_GNN_GP_SNGP_count_and_graph_CPU.pkl"
+    )
+
+    if set(count_and_fingerprint_result.columns) != set(
+        deep_kernel_result.columns
+    ):
+        raise ValueError(
+            "The count-and-fingerprint and count-and-graph master tables "
+            "must have matching columns. Regenerate both master datasets."
+        )
+
+    return pd.concat(
+        [
+            count_and_fingerprint_result,
+            deep_kernel_result.reindex(
+                columns=count_and_fingerprint_result.columns
+            ),
+        ],
+        ignore_index=True,
+        sort=False,
+    )
+
+
 if __name__ == "__main__":
     master_device = "GPU"
-    COMBINED_RESULTS: Path = (
-        RESULTS / "master_performance_data" / f"Tree_and_GP_count_and_fingerprint_{master_device}.pkl"
-    )
-    result_df = pd.read_pickle(COMBINED_RESULTS)
-
+    result_df = load_overall_model_results(master_device)
 
     #"r2", "nll", "cvpp_ama", "ece"
     # for metric in ["feature_stability"]:
@@ -4931,24 +5425,41 @@ if __name__ == "__main__":
     # )
 
     
-    # plot_model_comparison(
-    #     df=result_df,
-    #     metric="r2",
-    #     model=["RF", "XGBR","NGB","GPytorchMAP"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "product"),
-    #         ("TanimotoMatern32", "Matern32", "product"),
-    #         # ("Graph", "Matern32", "product"),
-    #         ],
-    #     y_label="R²",
-    #     fontsize=17,
-    #     show=True,
-    #     y_lim=(0,1.05),
-    #     figsize=(6, 5),
-    #     # log_y=True,
-    #     save_dir=HERE / "result_analysis",
-    #     file_name="r2_distributional_model_comparison.png",
-    # )
+    plot_model_comparison(
+        df=result_df,
+        metric="cvpp_ama",
+        model=[
+            "RF",
+            "XGBR",
+            "NGB",
+            "GPytorchMAP",
+            "GpyroHMC",
+            "MGK",
+            "GNN-GP",
+            "GNN-GP-SN",
+            "GNN-MLP-Ens",
+            "MLP-GP",
+            "MLP-GP-SN",
+        ],
+        kernel_triples=[
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+            ("Graph", "Matern32", "(count:+)x(graph:x)"),
+        ],
+        y_label="AMA",
+        fontsize=17,
+        show=True,
+        y_lim=(0, .5),
+        figsize=(8, 5),
+        # log_y=True,
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "score_distribution"
+            / "model_comparison"
+        ),
+        file_name="AMA.png",
+    )
 
     # plot_hybridization_method_comparison(
     #     df=result_df,
@@ -5009,6 +5520,32 @@ if __name__ == "__main__":
     #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
+    # plot_hybridization_mean_std_comparison(
+    #     df=result_df,
+    #     model="GPytorchMAP",
+    #     metric="OOF_R2",
+    #     fp_kernels=["RBF", "Matern32", "Matern52"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:+)",
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     y_lim=(0, 1.05),
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name=(
+    #         "R2OOF_GPytorchMAP_Bitwise_hybridization.png" ),
+    # )
+
 
     # plot_hybridization_profile_comparison(
     #     df=result_df,
@@ -5029,22 +5566,48 @@ if __name__ == "__main__":
     #     file_name="R2OOF_MGK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-    plot_profile_auc_heatmap(
-        df=result_df,
-        metric="Running time (GPU)",
-        model="MGK",
-        fp_kernels=["Graph"],
-        count_kernels=["Matern32", "Matern52", "RBF"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(graph:x)",
-            "(count:x)+(graph:x)",
-        ],
-        figsize=(12, 4),
-        save_dir=HERE / "result_analysis" /"performance_profile"/ "hybridization_configuration_comparison",
-        file_name="MGK_Running_time_heatmap.png",
-    )
+    # plot_hybridization_mean_std_comparison(
+    #     df=result_df,
+    #     model="MGK",
+    #     metric="OOF_R2",
+    #     fp_kernels=["Graph"],
+    #     count_kernels=["Matern32", "Matern52", "RBF"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(Graph:x)",
+    #         "(count:x)+(Graph:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     y_lim=(0, 1.05),
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name="R2OOF_MGK_hybridization.png",
+    # )
+
+
+    # plot_profile_auc_heatmap(
+    #     df=result_df,
+    #     metric="Running time (GPU)",
+    #     model="MGK",
+    #     fp_kernels=["Graph"],
+    #     count_kernels=["Matern32", "Matern52", "RBF"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(graph:x)",
+    #         "(count:x)+(graph:x)",
+    #     ],
+    #     figsize=(12, 4),
+    #     save_dir=HERE / "result_analysis" /"performance_profile"/ "hybridization_configuration_comparison",
+    #     file_name="MGK_Running_time_heatmap.png",
+    # )
 
     # plot_profile_auc_heatmap(
     #     df=result_df,
@@ -5082,22 +5645,70 @@ if __name__ == "__main__":
 
     # plot_model_profile_comparison(
     #     df=result_df,
-    #     model=["RF", "XGBR", "NGB", "GPytorchMAP", "GpyroHMC"],
-    #     kernel_triples=[
-    #         ("Matern32", "Matern32", "averageProduct"),
-    #         ("TanimotoMatern32", "Matern32", "averageProduct"),
-    #         # ("Graph", "Matern32", "product"),
+    #     model=[
+    #         "RF",
+    #         "XGBR",
+    #         "NGB",
+    #         "GPytorchMAP",
+    #         "GpyroHMC",
+    #         "MGK",
+    #         "GNN-GP",
+    #         "GNN-GP-SN",
+    #         "GNN-MLP-Ens",
+    #         "MLP-GP",
+    #         "MLP-GP-SN",
     #     ],
-    #     metric="r2",
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+    #         ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+    #         ("Graph", "Matern32", "(count:+)x(graph:x)"),
+    #     ],
+    #     metric="cvpp_ama",
+    #     profile_options={"dataset_as_experiment_points": True},
     #     # tolerance=0.01,
     #     # tree_feature_importance="MDI",
-    #     y_label="Profile AUC: R²",
+    #     y_label="Profile AUC: AMA",
     #     fontsize=17,
-    #     figsize=(5, 5),
+    #     figsize=(8, 5),
     #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-    #     file_name="R2_model_profile_comparison.png",
+    #     file_name="AMA.png",
     # )
 
+
+    ## mean + std comparison
+    # plot_model_mean_std_comparison(
+    #     df=result_df,
+    #     model=[
+    #         "RF",
+    #         "XGBR",
+    #         "NGB",
+    #         "GPytorchMAP",
+    #         "GpyroHMC",
+    #         "MGK",
+    #         "GNN-GP",
+    #         "GNN-GP-SN",
+    #         "GNN-MLP-Ens",
+    #         "MLP-GP",
+    #         "MLP-GP-SN",
+    #     ],
+    #     kernel_triples=[
+    #         ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+    #         ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+    #         ("Graph", "Matern32", "(count:+)x(graph:x)"),
+    #     ],
+    #     metric="OOF_cvpp_ama",
+    #     y_label="AMA (OOF)",
+    #     y_lim=(0, 1.05),
+    #     fontsize=17,
+    #     figsize=(8, 5),
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="AMAOOF.png",
+    # )
 
     # plot_feature_importance_difference_distribution(
     #     df=result_df,

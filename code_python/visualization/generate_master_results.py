@@ -128,8 +128,11 @@ HDF_DEPTHS = (2, 4, 6)
 HDF_BITS = (128, 256, 512, 1024)
 COUNT_AND_GRAPH_MODELS = {
     "GNN-GP": "(GRAPH)_GNN-GP",
+    "GNN-GP-SN": "(GRAPH)_GNN-GP-SN",
     "GNN-MLP": "(GRAPH)_GNN-MLP",
+    "GNN-MLP-Ens": "(GRAPH)_GNN-MLP-Ens",
     "MLP-GP": "(TABULAR)_MLP-GP",
+    "MLP-GP-SN": "(TABULAR)_MLP-GP-SN",
 }
 StructureRepresentation = Literal["ECFP", "Graph", "LE", "Mordred"]
 STRUCTURE_REPRESENTATIONS = ("ECFP", "Graph", "LE", "Mordred")
@@ -909,8 +912,13 @@ def build_master_performance_data(
     ``feature_set="count_only"`` includes COUNT-only tree results and
     GPytorchMAP results for the Matern32, Matern52, and RBF count kernels with
     the ``sum`` and ``product`` mixing methods.
-    ``feature_set="count_and_graph"`` includes the CPU-only GNN-GP, GNN-MLP,
-    and MLP-GP results. These files have no feature-importance or kernel
+    ``feature_set="count_and_graph"`` includes the CPU-only GNN-GP,
+    GNN-GP-SN, GNN-MLP, GNN-MLP-Ens, MLP-GP, and MLP-GP-SN results. The
+    ``*-GP-SN`` models are the spectrally normalized SNGP variants, and
+    GNN-MLP-Ens is the uncertainty-aware GNN-MLP ensemble. The point-prediction
+    GNN-MLP is also retained; its uncertainty and calibration fields are left
+    empty because its score and prediction files do not contain predictive
+    standard deviations. These files have no feature-importance or kernel
     configuration metadata, so those master-data columns are left empty.
     ``feature_set="HDF"`` includes CPU tree-model results for every HDF depth
     and bit count listed in ``HDF_DEPTHS`` and ``HDF_BITS``. Those parameters
@@ -1142,13 +1150,13 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "HDF"
+    feature_set: FeatureSet = "count_and_graph"
 
     output_name = {
         "HDF": "Tree_HDF",
         "structure_and_count": "Tree_and_GP_structure_and_count",
         "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-        "count_and_graph": "MLP_GNN_GP_count_and_graph",
+        "count_and_graph": "MLP_GNN_GP_SNGP_count_and_graph",
         "count_only": "Tree_and_GP_COUNT_only",
         "random_count_permutation": "GP_random_count_permutation",
         "random_fp_permutation": "GP_random_fp_permutation",

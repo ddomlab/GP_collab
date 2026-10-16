@@ -23,13 +23,64 @@ from visualize_gp import (
 HERE = Path(__file__).resolve().parent
 MASTER_DATA = HERE.parent.parent / "results" / "master_performance_data"
 
-DEFAULT_STRUCTURE_REPRESENTATION_ORDER = ["ECFP", "Graph", "LE", "Mordred"]
+DEFAULT_STRUCTURE_REPRESENTATION_ORDER = [
+    "ECFP",
+    "Graph",
+    "LE",
+    "Mordred",
+    "HDF2_256bit",
+]
 STRUCTURE_REPRESENTATION_COLORS = {
-    "ECFP": "#900101",
-    "Graph": "#F58518",
-    "LE": "#298C8C",
-    "Mordred": "#716F6F",
+    "LE": "#59a89c",           # teal
+    "ECFP": "#f0c571",         # gold
+    "Mordred": "#e02b35",      # red
+    "HDF2_256bit": "#082a54",  # dark blue
 }
+
+
+def add_hdf_configuration_to_structure_results(
+    structure_df: pd.DataFrame,
+    hdf_df: pd.DataFrame,
+    depth: int,
+    bits: int,
+    representation_label: Optional[str] = None,
+) -> pd.DataFrame:
+    """Append one HDF configuration as a structure representation."""
+    required_hdf_columns = {"HDF depth", "HDF bits"}
+    missing_columns = required_hdf_columns.difference(hdf_df.columns)
+    if missing_columns:
+        raise ValueError(
+            "hdf_df is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+    if "structure_representation" not in structure_df.columns:
+        raise ValueError(
+            "structure_df is missing required column: structure_representation"
+        )
+
+    label = representation_label or f"HDF{int(depth)}_{int(bits)}bit"
+    hdf_depth = pd.to_numeric(hdf_df["HDF depth"], errors="coerce")
+    hdf_bits = pd.to_numeric(hdf_df["HDF bits"], errors="coerce")
+    selected_hdf = hdf_df.loc[
+        hdf_depth.eq(int(depth)) & hdf_bits.eq(int(bits))
+    ].copy()
+    if selected_hdf.empty:
+        raise ValueError(
+            f"No HDF results were found for depth={depth}, bits={bits}."
+        )
+    selected_hdf["structure_representation"] = label
+
+    # Replacing an existing row set with the same label keeps this helper
+    # idempotent when it is used repeatedly in an interactive session.
+    existing_labels = structure_df["structure_representation"].astype(str)
+    structure_without_selected_hdf = structure_df.loc[
+        ~existing_labels.str.casefold().eq(label.casefold())
+    ]
+    return pd.concat(
+        [structure_without_selected_hdf, selected_hdf],
+        ignore_index=True,
+        sort=False,
+    )
 
 
 def _filter_structure_representations(
@@ -487,6 +538,8 @@ def plot_structure_representation_profile_comparison(
             ax,
             list(ax.patches[: len(representation_order)]),
             [bar_palette[value] for value in representation_order],
+            gradient_fraction=0.35,
+            edge_linewidth=0,
         )
 
     auc_by_representation = calculated_auc_df.set_index(
@@ -665,12 +718,18 @@ def plot_structure_representation_mean_std_comparison(
         yerr=summary["std"].to_numpy(dtype=float),
         capsize=5,
         color=colors,
-        edgecolor="black",
-        linewidth=0.6,
+        edgecolor="none",
+        linewidth=0,
         error_kw={"elinewidth": 1.2, "capthick": 1.2},
     )
     if gradient_bars:
-        apply_vertical_bar_gradients(ax, list(bars), colors)
+        apply_vertical_bar_gradients(
+            ax,
+            list(bars),
+            colors,
+            gradient_fraction=0.35,
+            edge_linewidth=0,
+        )
 
     ax.set_xticks(x_positions)
     ax.set_xticklabels(
@@ -883,45 +942,511 @@ def plot_structure_representation_profile_heatmap(
     return heatmap_matrix
 
 
+def _expand_hdf_depth_bits_scores(
+    df: pd.DataFrame,
+    metric: str,
+    model: Any,
+    hdf_depths: Any,
+    hdf_bits: Any,
+    tree_feature_importance: str,
+) -> tuple[pd.DataFrame, list[int], list[int]]:
+    """Expand selected HDF results to task-level metric values."""
+    required_columns = {"HDF depth", "HDF bits"}
+    missing_columns = required_columns.difference(df.columns)
+    if missing_columns:
+        raise ValueError(
+            "df is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    hdf_df = df.copy()
+    hdf_df["HDF depth"] = pd.to_numeric(
+        hdf_df["HDF depth"], errors="coerce"
+    )
+    hdf_df["HDF bits"] = pd.to_numeric(
+        hdf_df["HDF bits"], errors="coerce"
+    )
+
+    available_depths = sorted(
+        int(value) for value in hdf_df["HDF depth"].dropna().unique()
+    )
+    available_bits = sorted(
+        int(value) for value in hdf_df["HDF bits"].dropna().unique()
+    )
+    selected_depths = _selection_values(hdf_depths)
+    selected_bits = _selection_values(hdf_bits)
+    depth_order = (
+        available_depths
+        if selected_depths is None
+        else [
+            int(value)
+            for value in selected_depths
+            if int(value) in available_depths
+        ]
+    )
+    bit_order = (
+        available_bits
+        if selected_bits is None
+        else [
+            int(value)
+            for value in selected_bits
+            if int(value) in available_bits
+        ]
+    )
+    depth_order = list(dict.fromkeys(depth_order))
+    bit_order = list(dict.fromkeys(bit_order))
+    if not depth_order or not bit_order:
+        raise ValueError(
+            "None of the requested HDF depths/bits are available. "
+            f"Available depths: {available_depths}; "
+            f"available bits: {available_bits}."
+        )
+
+    profile_frames = []
+    for depth in depth_order:
+        for bits in bit_order:
+            combination_df = hdf_df.loc[
+                hdf_df["HDF depth"].eq(depth)
+                & hdf_df["HDF bits"].eq(bits)
+            ]
+            expanded = _expand_master_scores_for_profile(
+                combination_df,
+                metric=metric,
+                model=model,
+                tree_feature_importance=tree_feature_importance,
+            )
+            if expanded.empty:
+                continue
+            expanded["HDF depth"] = depth
+            expanded["HDF bits"] = bits
+            profile_frames.append(expanded)
+
+    if not profile_frames:
+        raise ValueError(
+            f"No {metric} values were found for model={model}, "
+            f"HDF depths={hdf_depths}, and HDF bits={hdf_bits}."
+        )
+
+    return pd.concat(profile_frames, ignore_index=True), depth_order, bit_order
+
+
+def _hdf_task_metric_values(
+    profile_df: pd.DataFrame,
+    metric: str,
+    dataset_as_experiment_points: bool,
+) -> tuple[pd.DataFrame, list[str], list[str]]:
+    """Reduce duplicate records to one metric value per HDF task/method."""
+    task_columns = ["dataset", "target", "model"]
+    if not dataset_as_experiment_points:
+        task_columns.append("repeat")
+    method_columns = ["HDF depth", "HDF bits"]
+
+    # OOF metrics contribute one value per dataset-target-model task. For
+    # seed/fold metrics, repeat remains part of the task unless explicitly
+    # averaged with dataset_as_experiment_points=True.
+    task_values = (
+        profile_df.groupby(
+            task_columns + method_columns,
+            dropna=False,
+            as_index=False,
+        )[metric]
+        .mean()
+    )
+    return task_values, task_columns, method_columns
+
+
+def _calculate_hdf_depth_bits_profile_auc(
+    df: pd.DataFrame,
+    metric: str,
+    model: Any,
+    hdf_depths: Any,
+    hdf_bits: Any,
+    tree_feature_importance: str,
+    dataset_as_experiment_points: bool,
+) -> tuple[pd.DataFrame, list[int], list[int]]:
+    """Calculate profile AUC for each HDF depth/bit combination."""
+    profile_df, depth_order, bit_order = _expand_hdf_depth_bits_scores(
+        df=df,
+        metric=metric,
+        model=model,
+        hdf_depths=hdf_depths,
+        hdf_bits=hdf_bits,
+        tree_feature_importance=tree_feature_importance,
+    )
+    profile_rank_df, task_columns, method_columns = _hdf_task_metric_values(
+        profile_df,
+        metric,
+        dataset_as_experiment_points,
+    )
+    comparable_counts = profile_rank_df.groupby(
+        task_columns,
+        dropna=False,
+    ).size()
+    comparable_tasks = (
+        comparable_counts.loc[lambda counts: counts >= 2]
+        .reset_index()[task_columns]
+    )
+    profile_rank_df = profile_rank_df.merge(
+        comparable_tasks,
+        on=task_columns,
+        how="inner",
+    )
+    if profile_rank_df.empty:
+        raise ValueError(
+            "No comparable tasks contain at least two HDF configurations."
+        )
+
+    higher_is_better = _metric_higher_is_better(metric)
+    profile_rank_df["rank"] = profile_rank_df.groupby(
+        task_columns,
+        dropna=False,
+    )[metric].rank(
+        ascending=not higher_is_better,
+        method="min",
+    )
+    maximum_rank = profile_rank_df.groupby(
+        task_columns,
+        dropna=False,
+    )["rank"].transform("max")
+    profile_rank_df["percentile rank"] = profile_rank_df["rank"].div(
+        maximum_rank.replace(0, np.nan)
+    )
+
+    n_tasks = profile_rank_df[task_columns].drop_duplicates().shape[0]
+    tau_grid = np.linspace(0, 1, max(n_tasks, 2))
+    auc_rows = []
+    for (depth, bits), group in profile_rank_df.groupby(
+        method_columns,
+        sort=False,
+    ):
+        percentiles = group["percentile rank"].dropna().to_numpy(dtype=float)
+        curve = np.array(
+            [(percentiles <= tau).mean() for tau in tau_grid],
+            dtype=float,
+        )
+        auc_rows.append(
+            {
+                "metric": metric,
+                "HDF depth": int(depth),
+                "HDF bits": int(bits),
+                "auc": auc(tau_grid, curve),
+                "n_profile_points": len(percentiles),
+                "n_models": group["model"].nunique(),
+            }
+        )
+
+    return pd.DataFrame(auc_rows), depth_order, bit_order
+
+
+def plot_hdf_depth_bits_profile_heatmap(
+    df: pd.DataFrame,
+    model: Any = None,
+    hdf_depths: Any = None,
+    hdf_bits: Any = None,
+    metric: str = "OOF_R2",
+    tree_feature_importance: str = "MDI",
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple[float, float] = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "HDF bits",
+    y_label: str = "HDF depth",
+    cbar_label: str = "Performance profile AUC",
+    cmap: str = "viridis",
+    vmin: float = 0,
+    vmax: float = 1,
+    annotate: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    plot_heatmap: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot HDF depth-by-bits performance-profile AUCs as a heatmap.
+
+    HDF depth/bit combinations are the competing methods. By default, each
+    dataset-target-model-repeat is a task, so configurations are compared
+    within the same tree model. OOF metrics contain one pooled value per
+    dataset-target-model and therefore effectively have no repeated folds.
+    Non-OOF metrics use each stored seed/fold score as a separate task. Set
+    ``dataset_as_experiment_points=True`` to average those repeated scores
+    before ranking the HDF configurations.
+
+    Missing depth/bit combinations are left blank. Set ``plot_heatmap=False``
+    to calculate and return the matrix without creating a figure.
+    """
+    auc_df, depth_order, bit_order = _calculate_hdf_depth_bits_profile_auc(
+        df=df,
+        metric=metric,
+        model=model,
+        hdf_depths=hdf_depths,
+        hdf_bits=hdf_bits,
+        tree_feature_importance=tree_feature_importance,
+        dataset_as_experiment_points=dataset_as_experiment_points,
+    )
+    heatmap_matrix = auc_df.pivot_table(
+        index="HDF depth",
+        columns="HDF bits",
+        values="auc",
+        aggfunc="mean",
+    ).reindex(index=depth_order, columns=bit_order)
+
+    if not plot_heatmap:
+        return heatmap_matrix
+
+    annotations = heatmap_matrix.copy().astype(object)
+    for depth in heatmap_matrix.index:
+        for bits in heatmap_matrix.columns:
+            value = heatmap_matrix.loc[depth, bits]
+            annotations.loc[depth, bits] = (
+                "" if pd.isna(value) else f"{value:.2f}"
+            )
+    custom_cmap = sns.color_palette(cmap, as_cmap=True)
+    if hasattr(custom_cmap, "copy"):
+        custom_cmap = custom_cmap.copy()
+    custom_cmap.set_bad(color="lightgray")
+
+    fig, ax = plt.subplots(figsize=figsize)
+    heatmap = sns.heatmap(
+        heatmap_matrix,
+        annot=annotations if annotate else False,
+        fmt="",
+        cmap=custom_cmap,
+        cbar=True,
+        vmin=vmin,
+        vmax=vmax,
+        mask=heatmap_matrix.isna(),
+        linewidths=0.5,
+        linecolor="white",
+        annot_kws={"fontsize": fontsize},
+        ax=ax,
+    )
+    colorbar = heatmap.collections[0].colorbar
+    if colorbar is not None:
+        colorbar.set_label(
+            cbar_label,
+            fontsize=fontsize,
+            fontweight="bold",
+        )
+        colorbar.ax.tick_params(labelsize=fontsize - 1)
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.set_xticklabels(heatmap_matrix.columns, rotation=0, fontsize=fontsize)
+    ax.set_yticklabels(heatmap_matrix.index, rotation=0, fontsize=fontsize)
+    fig.tight_layout()
+
+    if save_dir is not None:
+        save_path = ensure_long_path(Path(save_dir))
+        os.makedirs(save_path, exist_ok=True)
+        if file_name is None:
+            file_name = f"{metric}_HDF_depth_bits_profile_auc_heatmap.png"
+        fig.savefig(
+            ensure_long_path(save_path / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return heatmap_matrix
+
+
+def plot_hdf_depth_bits_mean_std_heatmap(
+    df: pd.DataFrame,
+    model: Any = None,
+    hdf_depths: Any = None,
+    hdf_bits: Any = None,
+    metric: str = "OOF_R2",
+    tree_feature_importance: str = "MDI",
+    dataset_as_experiment_points: bool = False,
+    figsize: tuple[float, float] = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "HDF bits",
+    y_label: str = "HDF depth",
+    cbar_label: Optional[str] = None,
+    cmap: str = "viridis",
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    annotate: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    plot_heatmap: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot mean ± standard deviation across HDF evaluation tasks.
+
+    For an OOF metric, each dataset-target-model contributes one task value.
+    For a non-OOF metric, every stored seed/fold value is a separate task by
+    default. Set ``dataset_as_experiment_points=True`` to first average the
+    seed/fold values within each dataset-target-model and HDF configuration.
+
+    Cell colors represent the mean and annotations show ``mean ± std``. The
+    returned long-form dataframe also includes the number of task values used
+    for each depth/bit combination.
+    """
+    expanded, depth_order, bit_order = _expand_hdf_depth_bits_scores(
+        df=df,
+        metric=metric,
+        model=model,
+        hdf_depths=hdf_depths,
+        hdf_bits=hdf_bits,
+        tree_feature_importance=tree_feature_importance,
+    )
+    task_values, _, method_columns = _hdf_task_metric_values(
+        expanded,
+        metric,
+        dataset_as_experiment_points,
+    )
+    summary = (
+        task_values.groupby(method_columns, as_index=False)[metric]
+        .agg(mean="mean", std="std", n_tasks="count")
+    )
+    summary["std"] = summary["std"].fillna(0.0)
+    mean_matrix = summary.pivot_table(
+        index="HDF depth",
+        columns="HDF bits",
+        values="mean",
+        aggfunc="mean",
+    ).reindex(index=depth_order, columns=bit_order)
+    std_matrix = summary.pivot_table(
+        index="HDF depth",
+        columns="HDF bits",
+        values="std",
+        aggfunc="mean",
+    ).reindex(index=depth_order, columns=bit_order)
+
+    if not plot_heatmap:
+        return summary
+
+    annotations = mean_matrix.copy().astype(object)
+    for depth in mean_matrix.index:
+        for bits in mean_matrix.columns:
+            mean_value = mean_matrix.loc[depth, bits]
+            std_value = std_matrix.loc[depth, bits]
+            annotations.loc[depth, bits] = (
+                ""
+                if pd.isna(mean_value)
+                else f"{mean_value:.2f} ± {std_value:.2f}"
+            )
+
+    custom_cmap = sns.color_palette(cmap, as_cmap=True)
+    if hasattr(custom_cmap, "copy"):
+        custom_cmap = custom_cmap.copy()
+    custom_cmap.set_bad(color="lightgray")
+
+    fig, ax = plt.subplots(figsize=figsize)
+    heatmap = sns.heatmap(
+        mean_matrix,
+        annot=annotations if annotate else False,
+        fmt="",
+        cmap=custom_cmap,
+        cbar=True,
+        vmin=vmin,
+        vmax=vmax,
+        mask=mean_matrix.isna(),
+        linewidths=0.5,
+        linecolor="white",
+        annot_kws={"fontsize": fontsize - 1},
+        ax=ax,
+    )
+    colorbar = heatmap.collections[0].colorbar
+    if colorbar is not None:
+        colorbar.set_label(
+            cbar_label or f"Mean {metric}",
+            fontsize=fontsize,
+            fontweight="bold",
+        )
+        colorbar.ax.tick_params(labelsize=fontsize - 1)
+
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label, fontsize=fontsize, fontweight="bold")
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.set_xticklabels(mean_matrix.columns, rotation=0, fontsize=fontsize)
+    ax.set_yticklabels(mean_matrix.index, rotation=0, fontsize=fontsize)
+    fig.tight_layout()
+
+    if save_dir is not None:
+        save_path = ensure_long_path(Path(save_dir))
+        os.makedirs(save_path, exist_ok=True)
+        if file_name is None:
+            file_name = f"{metric}_HDF_depth_bits_mean_std_heatmap.png"
+        fig.savefig(
+            ensure_long_path(save_path / file_name),
+            bbox_inches="tight",
+            format="png",
+            dpi=900 if high_quality else 100,
+        )
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return summary
+
+
 if __name__ == "__main__":
     master_device = "GPU"
     structure_results = pd.read_pickle(
         MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
+    )
+
+    HDF_results = pd.read_pickle(MASTER_DATA / "Tree_HDF_CPU.pkl")
+    structure_results = add_hdf_configuration_to_structure_results(
+        structure_results,
+        HDF_results,
+        depth=2,
+        bits=256,
     )
     RESULTS = (
         HERE
         / "result_analysis"
     )
 
-    STRUCTURE_REPRESENTATION_ORDER = ["LE", "ECFP", "Mordred"]
-    # plot_structure_representation_profile_comparison(
-    #     structure_results,
-    #     metric="OOF_R2",
-    #     model=["RF", "XGBR", "NGB"],
-    #     # kernel_triples=("Graph", "Matern32", "(count:+)x(graph:x)"),
-    #     compare_models_as_methods=True,
-    #     structure_representations=STRUCTURE_REPRESENTATION_ORDER,
-    #     y_label="Profile AUC of R² (OOF)",
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
-    #     file_name=f"R2OOF.png",
-    # )
-    # plot_structure_representation_mean_std_comparison(
-    #     structure_results,
-    #     metric="OOF_R2",
-    #     model=["RF", "XGBR", "NGB"],
-    #     structure_representations=STRUCTURE_REPRESENTATION_ORDER,
-    #     y_label="R² (OOF)",
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=(
-    #         RESULTS
-    #         / "average_performance"
-    #         / "strcuture_representation_comparison"
-    #     ),
-    #     file_name="R2OOF.png",
-    # )
+    STRUCTURE_REPRESENTATION_ORDER = [
+        "LE",
+        "ECFP",
+        "Mordred",
+        "HDF2_256bit",
+    ]
+    plot_structure_representation_profile_comparison(
+        structure_results,
+        metric="OOF_R2",
+        model=["RF", "XGBR", "NGB"],
+        # kernel_triples=("Graph", "Matern32", "(count:+)x(graph:x)"),
+        compare_models_as_methods=True,
+        structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+        y_label="Profile AUC of R² (OOF)",
+        fontsize=16,
+        figsize=(7, 5),
+        save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
+        file_name=f"R2OOF.png",
+    )
+
+    plot_structure_representation_mean_std_comparison(
+        structure_results,
+        metric="OOF_R2",
+        model=["RF", "XGBR", "NGB"],
+        structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+        y_label="R² (OOF)",
+        y_lim=(0, 1),
+        fontsize=16,
+        figsize=(7, 5),
+        save_dir=(
+            RESULTS
+            / "average_performance"
+            / "strcuture_representation_comparison"
+        ),
+        file_name="R2OOF.png",
+    )
 
     # plot_structure_representation_profile_heatmap(
     #     structure_results,
@@ -934,4 +1459,32 @@ if __name__ == "__main__":
     #         / "strcuture_representation_comparison"
     #     ),
     #     file_name="R2OOF_heatmap.png",
+    # )
+
+
+    # Compare HDFs with different depths and bit counts.
+    # plot_hdf_depth_bits_profile_heatmap(
+    #     HDF_results,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR", "NGB"],
+    #     hdf_depths=[2, 4, 6],
+    #     hdf_bits=[128, 256, 512, 1024],
+    #     cbar_label="Profile AUC of R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(7, 5),
+    #     save_dir=RESULTS / "performance_profile" / "HDF_depth_bits_comparison",
+    #     file_name="R2OOF_heatmap.png",
+    # )
+
+    # plot_hdf_depth_bits_mean_std_heatmap(
+    #     HDF_results,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR", "NGB"],
+    #     hdf_depths=[2, 4, 6],
+    #     hdf_bits=[128, 256, 512, 1024],
+    #     cbar_label="Mean R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(8, 5),
+    #     save_dir=RESULTS / "average_performance" / "HDF_depth_bits_comparison",
+    #     file_name="R2OOF_mean_std_heatmap.png",
     # )

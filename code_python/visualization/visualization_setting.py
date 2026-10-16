@@ -14,10 +14,16 @@ import seaborn as sns
 TREE_MODELS = {"RF", "XGBR", "NGB"}
 GNN_MODELS = {"GNN", "GCN", "GAT", "GIN", "MPNN", "DMPNN"}
 MODEL_TYPE_COLORS = {
-    "tree": "#7093B9",
-    "gp": "#E45756",
-    "mgk": "#9C1E1E",
-    "gnn": "#72B7B2",
+    "tree": "#40838B",
+    "gp": "#942727",
+    "gnn": "#4D4E4E",
+}
+MODEL_COLORS = {
+    "GNN-GP": "#5e4c5f",
+    "GNN-GP-SN": "#5e4c5f",
+    "GNN-MLP-Ens": "#999999",
+    "MLP-GP": "#ffbb6f",
+    "MLP-GP-SN": "#ffbb6f",
 }
 MODEL_DISPLAY_NAMES = {
     "XGBR": "XGB",
@@ -174,14 +180,14 @@ def model_config_sort_key(
     fp_kernel = row["fp kernel"]
     if is_tree_model(model):
         family_rank = 0
-    elif model == "MGK":
-        family_rank = 3
     elif pd.notna(fp_kernel) and "tanimoto" not in str(fp_kernel).lower():
         family_rank = 1
     elif pd.notna(fp_kernel) and "tanimoto" in str(fp_kernel).lower():
         family_rank = 2
     else:
         family_rank = 4
+    if model_order is not None:
+        return (model_rank, family_rank, model)
     return (family_rank, model_rank, model)
 
 
@@ -192,10 +198,14 @@ def model_type_color(
     colors = MODEL_TYPE_COLORS if palette is None else palette
     model_name = str(model)
     model_upper = model_name.upper()
+    if palette is not None and model_name in palette:
+        return palette[model_name]
+    if palette is None and model_name in MODEL_COLORS:
+        return MODEL_COLORS[model_name]
     if is_tree_model(model_name):
         return colors["tree"]
     if model_name == "MGK":
-        return colors["mgk"]
+        return colors["gp"]
     if model_name in GNN_MODELS or any(token in model_upper for token in GNN_MODELS):
         return colors["gnn"]
     if "GP" in model_upper:
@@ -216,14 +226,17 @@ def apply_vertical_bar_gradients(
     bars: Optional[Any] = None,
     colors: Optional[Any] = None,
     light_mix: float = 0.78,
+    gradient_fraction: float = 1.0,
     edge_linewidth: float = 0.5,
     interpolation: str = "bicubic",
+    reverse: bool = False,
 ) -> list[Any]:
-    """Fill Matplotlib or Seaborn bars with pale-to-full vertical gradients.
+    """Fill Matplotlib or Seaborn bars with vertical color gradients.
 
     The gradient starts with a white-tinted version of each bar color at the
-    zero baseline and reaches the full color at the outer end of the bar.
-    Positive and negative vertical bars are both supported.
+    zero baseline and reaches the full color at the outer end of the bar. Set
+    ``reverse=True`` to use the full color at zero and the pale tint at the
+    outer end. Positive and negative vertical bars are both supported.
 
     Parameters
     ----------
@@ -236,11 +249,17 @@ def apply_vertical_bar_gradients(
         Optional single color or sequence with one color per bar. When omitted,
         each bar's existing face color is used.
     light_mix:
-        Amount of white mixed into the baseline color, between 0 and 1.
+        Amount of white mixed into the pale endpoint, between 0 and 1.
+    gradient_fraction:
+        Fraction of the bar height used for the color transition. Values below
+        1 reach the ending color before the outer end of the bar.
     edge_linewidth:
         Width of the outline drawn in the full bar color.
     interpolation:
         Matplotlib image interpolation used to render the gradient.
+    reverse:
+        Reverse the default direction so full color is at the zero baseline
+        and the pale tint is at the outer end.
 
     Returns
     -------
@@ -257,6 +276,8 @@ def apply_vertical_bar_gradients(
     """
     if not 0 <= light_mix <= 1:
         raise ValueError("light_mix must be between 0 and 1.")
+    if not 0 < gradient_fraction <= 1:
+        raise ValueError("gradient_fraction must be greater than 0 and at most 1.")
     if edge_linewidth < 0:
         raise ValueError("edge_linewidth must be non-negative.")
 
@@ -290,7 +311,18 @@ def apply_vertical_bar_gradients(
             (1 - light_mix) * full_color[:3]
             + light_mix * np.ones(3)
         )
-        gradient = np.linspace(pale_color, full_color, 256).reshape(
+        transition = np.minimum(
+            np.linspace(0.0, 1.0, 256) / gradient_fraction,
+            1.0,
+        )[:, np.newaxis]
+        start_color, end_color = (
+            (full_color, pale_color)
+            if reverse
+            else (pale_color, full_color)
+        )
+        gradient = (
+            start_color + transition * (end_color - start_color)
+        ).reshape(
             256,
             1,
             4,
@@ -320,3 +352,25 @@ def apply_vertical_bar_gradients(
     ax.set_ylim(y_limits)
     ax.set_aspect("auto")
     return gradient_artists
+
+
+def apply_reverse_vertical_bar_gradients(
+    ax: Axes,
+    bars: Optional[Any] = None,
+    colors: Optional[Any] = None,
+    light_mix: float = 0.78,
+    gradient_fraction: float = 1.0,
+    edge_linewidth: float = 0.5,
+    interpolation: str = "bicubic",
+) -> list[Any]:
+    """Fill bars from full color at zero to a pale tint at the outer end."""
+    return apply_vertical_bar_gradients(
+        ax=ax,
+        bars=bars,
+        colors=colors,
+        light_mix=light_mix,
+        gradient_fraction=gradient_fraction,
+        edge_linewidth=edge_linewidth,
+        interpolation=interpolation,
+        reverse=True,
+    )
