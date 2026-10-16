@@ -1,0 +1,93 @@
+Data filtering and preprocessing took 0.73 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 78.9±12.25	 r2: 0.74±0.07
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+Data filtering and preprocessing took 0.13 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 7.93±0.75	 r2: 0.75±0.1
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+Data filtering and preprocessing took 0.13 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 10.89±1.26	 r2: 0.67±0.06
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+Data filtering and preprocessing took 0.13 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.32±1.04	 r2: 0.46±0.08
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+Data filtering and preprocessing took 0.13 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 11.38±1.16	 r2: 0.66±0.06
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+Data filtering and preprocessing took 0.13 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 9.31±1.03	 r2: 0.46±0.08
+Filename: (HDF6_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c012n01>
+Subject: Job 385758: <tree_HDF_d6_b256_20261015_82> in cluster <Hazel> Done
+
+Job <tree_HDF_d6_b256_20261015_82> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct 15 14:47:50 2026
+Job was executed on host(s) <6*c012n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Thu Oct 15 18:59:25 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Oct 15 18:59:25 2026
+Terminated at Thu Oct 15 19:02:32 2026
+Results reported at Thu Oct 15 19:02:32 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:59
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_HDF_d6_b256_20261015_82"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/NGB_HDF_depth6_256bit_cleaned_dataset_Ultrafiltration_Membrane_imputed_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/NGB_HDF_depth6_256bit_cleaned_dataset_Ultrafiltration_Membrane_imputed_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "NGB"                                         --representation "HDF"                                         --radius "6"                                         --n_bits "256"                                         --dataset "cleaned_dataset_Ultrafiltration Membrane_imputed"                                         --paper "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   754.16 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.88 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                21
+    Run time :                                   187 sec.
+    Turnaround time :                            15282 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning/NGB_HDF_depth6_256bit_cleaned_dataset_Ultrafiltration_Membrane_imputed_CPU.err> for stderr output of this job.
+

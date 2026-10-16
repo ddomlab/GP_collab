@@ -1,0 +1,63 @@
+Data filtering and preprocessing took 0.70 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.26±0.03	 r2: 0.88±0.03
+Filename: (HDF4_128bit-COUNT)_XGBR_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c002n03>
+Subject: Job 383766: <tree_HDF_d4_b128_20261014_34> in cluster <Hazel> Done
+
+Job <tree_HDF_d4_b128_20261014_34> was submitted from host <login01.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Wed Oct 14 23:57:55 2026
+Job was executed on host(s) <6*c002n03>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Thu Oct 15 00:16:25 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Oct 15 00:16:25 2026
+Terminated at Thu Oct 15 00:18:34 2026
+Results reported at Thu Oct 15 00:18:34 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:59
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_HDF_d4_b128_20261014_34"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261014/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_HDF_depth4_128bit_flux_data_imputed_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261014/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_HDF_depth4_128bit_flux_data_imputed_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "XGBR"                                         --representation "HDF"                                         --radius "4"                                         --n_bits "128"                                         --dataset "flux_data_imputed"                                         --paper "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   438.02 sec.
+    Max Memory :                                 4 GB
+    Average Memory :                             1.67 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               28.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                21
+    Run time :                                   130 sec.
+    Turnaround time :                            1239 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261014/Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery/XGBR_HDF_depth4_128bit_flux_data_imputed_CPU.err> for stderr output of this job.
+

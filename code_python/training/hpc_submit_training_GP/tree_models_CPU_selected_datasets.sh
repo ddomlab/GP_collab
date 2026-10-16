@@ -5,7 +5,7 @@
 # in filter_data.py.
 
 DATE=$(date +%Y%m%d)
-models=("RF" "XGBR")
+models=("NGB")
 hdf_depths=(2 4 6)
 hdf_bits=(128 256 512 1024)
 # Selected datasets and their configured targets:

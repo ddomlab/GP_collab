@@ -1,0 +1,63 @@
+Data filtering and preprocessing took 0.49 seconds.
+Running seed: 6
+Running seed: 13
+Running seed: 42
+Average scores:	 rmse: 0.19±0.03	 r2: 0.89±0.03
+Filename: (HDF2_256bit-COUNT)_NGB_hypOFF_Standard_Standard
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c012n01>
+Subject: Job 385738: <tree_HDF_d2_b256_20261015_62> in cluster <Hazel> Done
+
+Job <tree_HDF_d2_b256_20261015_62> was submitted from host <login02.hpc.ncsu.edu> by user <sdehgha2> in cluster <Hazel> at Thu Oct 15 14:47:41 2026
+Job was executed on host(s) <6*c012n01>, in queue <single_chassis>, as user <sdehgha2> in cluster <Hazel> at Thu Oct 15 18:34:52 2026
+</home/sdehgha2> was used as the home directory.
+</share/ddomlab/sdehgha2/working_space/GP_collab/code_python/training/hpc_submit_training_GP> was used as the working directory.
+Started at Thu Oct 15 18:34:52 2026
+Terminated at Thu Oct 15 18:36:02 2026
+Results reported at Thu Oct 15 18:36:02 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+
+#BSUB -n 6
+#BSUB -W 5:59
+#BSUB -R span[hosts=1]
+#BSUB -R "rusage[mem=32GB]"
+#BSUB -J "tree_HDF_d2_b256_20261015_62"
+#BSUB -o "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/NGB_HDF_depth2_256bit_Rg_data_with_clusters_aging_imputed_CPU.out"
+#BSUB -e "/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/NGB_HDF_depth2_256bit_Rg_data_with_clusters_aging_imputed_CPU.err"
+
+source ~/.bashrc
+conda activate /usr/local/usrapps/ddomlab/sdehgha2/env12
+
+python ../train_structure_numerical.py --regressor_type "NGB"                                         --representation "HDF"                                         --radius "2"                                         --n_bits "256"                                         --dataset "Rg data with clusters aging imputed"                                         --paper "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation"
+
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   170.10 sec.
+    Max Memory :                                 3 GB
+    Average Memory :                             1.20 GB
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               29.00 GB
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                21
+    Run time :                                   70 sec.
+    Turnaround time :                            13701 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_20261015/Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation/NGB_HDF_depth2_256bit_Rg_data_with_clusters_aging_imputed_CPU.err> for stderr output of this job.
+
