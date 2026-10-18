@@ -1,4 +1,4 @@
-"""Build consolidated regular and structure-cluster OOD result datasets.
+"""Build consolidated regular and cluster-OOD result datasets.
 
 Importing this module does not build datasets. Running it executes the
 selection in the ``__main__`` block; call ``build_master_performance_data``
@@ -134,6 +134,7 @@ COUNT_AND_GRAPH_MODELS = {
     "MLP-GP": "(TABULAR)_MLP-GP",
     "MLP-GP-SN": "(TABULAR)_MLP-GP-SN",
 }
+OOD_MODELS = [*MODELS, *COUNT_AND_GRAPH_MODELS]
 StructureRepresentation = Literal["ECFP", "Graph", "LE", "Mordred"]
 STRUCTURE_REPRESENTATIONS = ("ECFP", "Graph", "LE", "Mordred")
 
@@ -799,7 +800,7 @@ def _ood_master_result_columns(score_metrics: List[str]) -> List[str]:
 def _ood_model_configurations(
     model: str,
 ) -> List[tuple[Optional[str], Optional[str], Optional[str]]]:
-    if _is_tree_model(model):
+    if _is_tree_model(model) or model in COUNT_AND_GRAPH_MODELS:
         return [(None, None, None)]
     if model == "MGK":
         return [
@@ -814,7 +815,7 @@ def build_master_ood_performance_data(
     save_path: Optional[Path] = (
         RESULTS
         / "master_ood_performance_data"
-        / "Tree_and_GP_structure_cluster_OOD"
+        / "Tree_GP_MLP_structure_cluster_OOD"
     ),
     score_metrics: Optional[List[str]] = None,
     ood_type: OODType = "structure_cluster_OOD",
@@ -823,9 +824,13 @@ def build_master_ood_performance_data(
 
     Each metric cell retains the JSON representation for that validation
     split: OOD cells map cluster IDs to scalar scores, while IID cells map
-    cluster IDs to lists of scores. Lengthscales and feature importances are
-    intentionally excluded. Missing result configurations are represented by
-    rows whose metric cells are ``None``, matching the regular master builder.
+    cluster IDs to lists of scores. In addition to the tree, GP, and MGK
+    configurations, the CPU count-and-graph GNN/MLP models contribute one row
+    per task with empty kernel metadata. Point-prediction GNN-MLP rows retain
+    their available prediction metrics while uncertainty/calibration cells are
+    left empty. Lengthscales and feature importances are intentionally
+    excluded. Missing result configurations are represented by rows whose
+    metric cells are ``None``, matching the regular master builder.
     """
     ood_type = _validate_ood_type(ood_type)
 
@@ -845,18 +850,26 @@ def build_master_ood_performance_data(
         for target in paper_info["target"]:
             ood_dir = RESULTS / paper_name / target / ood_type
 
-            for model in MODELS:
+            for model in OOD_MODELS:
                 for fp_kernel, count_kernel, mixing_method in (
                     _ood_model_configurations(model)
                 ):
+                    is_count_and_graph = model in COUNT_AND_GRAPH_MODELS
                     data, _ = _load_score_file(
                         ood_dir,
                         model,
-                        "count_and_fingerprint",
+                        (
+                            "count_and_graph"
+                            if is_count_and_graph
+                            else "count_and_fingerprint"
+                        ),
                         fp_kernel,
                         count_kernel,
                         mixing_method,
-                        use_gpu=not _is_tree_model(model),
+                        use_gpu=(
+                            not _is_tree_model(model)
+                            and not is_count_and_graph
+                        ),
                     )
                     rows.append(
                         {
@@ -1150,33 +1163,33 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Choose one feature set and a distinct output name:
-    feature_set: FeatureSet = "count_and_graph"
+    # feature_set: FeatureSet = "HDF"
 
-    output_name = {
-        "HDF": "Tree_HDF",
-        "structure_and_count": "Tree_and_GP_structure_and_count",
-        "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-        "count_and_graph": "MLP_GNN_GP_SNGP_count_and_graph",
-        "count_only": "Tree_and_GP_COUNT_only",
-        "random_count_permutation": "GP_random_count_permutation",
-        "random_fp_permutation": "GP_random_fp_permutation",
-        "unique_fp_permutation": "GP_unique_fp_permutation",
-    }[feature_set]
-
-    build_master_performance_data(
-        save_path=RESULTS / "master_performance_data" / output_name,
-        score_metrics=DEFAULT_SCORE_METRICS,
-        feature_set=feature_set,
-    )
-
-    # ood_type: OODType = "structure_cluster_OOD"
     # output_name = {
-    #     "structure_cluster_OOD": "Tree_and_GP_structure_cluster_OOD",
-    #     "continuous_cluster_OOD": "Tree_and_GP_continuous_cluster_OOD",
-    # }[ood_type]
+    #     "HDF": "Tree_HDF",
+    #     "structure_and_count": "Tree_and_GP_structure_and_count",
+    #     "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
+    #     "count_and_graph": "MLP_GNN_GP_SNGP_count_and_graph",
+    #     "count_only": "Tree_and_GP_COUNT_only",
+    #     "random_count_permutation": "GP_random_count_permutation",
+    #     "random_fp_permutation": "GP_random_fp_permutation",
+    #     "unique_fp_permutation": "GP_unique_fp_permutation",
+    # }[feature_set]
 
-    # build_master_ood_performance_data(
-    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
-    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
-    #     ood_type=ood_type,
+    # build_master_performance_data(
+    #     save_path=RESULTS / "master_performance_data" / output_name,
+    #     score_metrics=DEFAULT_SCORE_METRICS,
+    #     feature_set=feature_set,
     # )
+
+    ood_type: OODType = "structure_cluster_OOD"
+    output_name = {
+        "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
+        "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
+    }[ood_type]
+
+    build_master_ood_performance_data(
+        save_path=RESULTS / "master_ood_performance_data" / output_name,
+        score_metrics=DEFAULT_OOD_SCORE_METRICS,
+        ood_type=ood_type,
+    )
