@@ -1006,7 +1006,6 @@ if __name__ == "__main__":
     #     mixing_methods=[
     #         "sum",
     #         "product",
-    #         # "(count:+)x(fp:x)",
     #         "(count:+)x(fp:+)",  # train on this
     #         "(count:x)+(fp:x)",
     #     ],

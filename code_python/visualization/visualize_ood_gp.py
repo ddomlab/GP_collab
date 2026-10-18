@@ -20,6 +20,7 @@ import pandas as pd
 
 try:  # Support both direct execution and package-style imports.
     from .visualization_setting import (
+        apply_vertical_bar_gradients,
         ensure_long_path,
         filter_selection as _filter_selection,
         lighten_color as _lighten_color,
@@ -32,6 +33,7 @@ try:  # Support both direct execution and package-style imports.
     )
 except ImportError:
     from visualization_setting import (
+        apply_vertical_bar_gradients,
         ensure_long_path,
         filter_selection as _filter_selection,
         lighten_color as _lighten_color,
@@ -51,16 +53,34 @@ RESULTS = HERE.parent.parent / "results"
 DEFAULT_RESULTS_FILE = (
     RESULTS
     / "master_ood_performance_data"
-    / "Tree_and_GP_structure_cluster_OOD.pkl"
 )
 DEFAULT_SAVE_DIR = HERE / "ood_result_analysis"
 
 ID_COLUMNS = ["paper", "target", "model", "fp kernel", "count kernel", "mixing method"]
 CASE_COLUMNS = ["paper", "target", "cluster"]
-OOD_MODEL_TYPE_COLORS = {
-    "tree": "#468FC6",
-    "gp": "#FF5757",
-    "gnn": "#72B7B2",
+EVALUATIONS = ("OOD", "IID")
+# Match the hybridization palette and notation used by visualize_gp.py.
+HYBRIDIZATION_METHOD_COLORS = {
+    "sum": "#2A9C9D",
+    "product": "#C77B7B",
+    "averageProduct": "#EDC525",
+    "(count:+)x(fp:x)": "#5B8FF9",
+    "(count:+)x(graph:x)": "#5B8FF9",
+    "(count:+)x(fp:+)": "#5B8FF9",
+    "(count:+)x(graph:+)": "#61DDAA",
+    "(count:x)+(fp:x)": "#F6BD16",
+    "(count:x)+(graph:x)": "#F6BD16",
+}
+HYBRIDIZATION_METHOD_LABELS = {
+    "sum": "ΣC + ΣF",
+    "product": "ΠC × ΠF",
+    "averageProduct": "Av(C) × F",
+    "(count:+)x(fp:x)": "ΣC × ΠF",
+    "(count:+)x(graph:x)": "ΣC × G",
+    "(count:+)x(fp:+)": "ΣC × ΣF",
+    "(count:+)x(graph:+)": "ΣC × ΣG",
+    "(count:x)+(fp:x)": "ΠC + ΠF",
+    "(count:x)+(graph:x)": "ΠC + G",
 }
 
 
@@ -70,7 +90,7 @@ def _is_missing(value: Any) -> bool:
     )
 
 
-def _tree_configuration_mask(df: pd.DataFrame) -> pd.Series:
+def _kernel_free_configuration_mask(df: pd.DataFrame) -> pd.Series:
     return df[["fp kernel", "count kernel", "mixing method"]].isna().all(axis=1)
 
 
@@ -101,9 +121,9 @@ def _filter_configurations(
     mixing_methods: Any = None,
     kernel_triples: Any = None,
 ) -> pd.DataFrame:
-    """Apply model/kernel filters while retaining kernel-free tree models."""
+    """Apply kernel filters while retaining all kernel-free model families."""
     filtered = _filter_selection(df, "model", model)
-    tree_mask = _tree_configuration_mask(filtered)
+    kernel_free_mask = _kernel_free_configuration_mask(filtered)
 
     triples = _normalize_kernel_triples(kernel_triples)
     if triples is not None:
@@ -114,7 +134,7 @@ def _filter_configurations(
                 & filtered["count kernel"].eq(count_kernel)
                 & filtered["mixing method"].eq(mixing_method)
             )
-        filtered = filtered[tree_mask | triple_mask].copy()
+        filtered = filtered[kernel_free_mask | triple_mask].copy()
 
     for column, selection in [
         ("fp kernel", fp_kernels),
@@ -124,10 +144,10 @@ def _filter_configurations(
         selected = _selection_values(selection)
         if selected is None:
             continue
-        tree_mask = _tree_configuration_mask(filtered)
+        kernel_free_mask = _kernel_free_configuration_mask(filtered)
         selected_lower = {str(value).lower() for value in selected}
         matches = filtered[column].astype(str).str.lower().isin(selected_lower)
-        filtered = filtered[tree_mask | matches].copy()
+        filtered = filtered[kernel_free_mask | matches].copy()
 
     return filtered
 
@@ -156,6 +176,16 @@ def _metric_columns(df: pd.DataFrame, metric: str) -> tuple[str, str, str]:
             f"Metric {metric!r} is unavailable. Available metrics: {available}"
         ) from exc
     return metric, ood_column, iid_column
+
+
+def _normalize_evaluations(ood_and_iid: Optional[str]) -> tuple[str, ...]:
+    """Normalize a requested evaluation split; ``None`` selects both splits."""
+    if ood_and_iid is None:
+        return EVALUATIONS
+    evaluation = str(ood_and_iid).strip().upper()
+    if evaluation not in EVALUATIONS:
+        raise ValueError("ood_and_iid must be either 'OOD' or 'IID'.")
+    return (evaluation,)
 
 
 def _as_mapping(value: Any) -> Optional[Mapping[Any, Any]]:
@@ -199,6 +229,7 @@ def _expand_scores(
     df: pd.DataFrame,
     metric: str,
     include_kernel_config: bool,
+    evaluations: tuple[str, ...] = EVALUATIONS,
 ) -> pd.DataFrame:
     """Expand nested OOD cluster scalars and IID seed lists to long form."""
     metric, ood_column, iid_column = _metric_columns(df, metric)
@@ -216,7 +247,9 @@ def _expand_scores(
             "mixing method": row["mixing method"],
         }
 
-        for evaluation, score_column in [("OOD", ood_column), ("IID", iid_column)]:
+        score_columns = {"OOD": ood_column, "IID": iid_column}
+        for evaluation in evaluations:
+            score_column = score_columns[evaluation]
             cluster_scores = _as_mapping(row[score_column])
             if cluster_scores is None:
                 continue
@@ -242,8 +275,11 @@ def _expand_scores(
     return pd.DataFrame.from_records(records, columns=columns)
 
 
-def _keep_common_complete_clusters(scores: pd.DataFrame) -> pd.DataFrame:
-    """Keep base cluster cases present for every configuration in both splits."""
+def _keep_common_complete_clusters(
+    scores: pd.DataFrame,
+    evaluations: tuple[str, ...] = EVALUATIONS,
+) -> pd.DataFrame:
+    """Keep cluster cases present for every configuration in selected splits."""
     number_of_configurations = scores["configuration key"].nunique()
     availability = (
         scores.groupby(["evaluation", *CASE_COLUMNS], dropna=False)["configuration key"]
@@ -251,11 +287,11 @@ def _keep_common_complete_clusters(scores: pd.DataFrame) -> pd.DataFrame:
         .eq(number_of_configurations)
         .unstack("evaluation", fill_value=False)
     )
-    for evaluation in ("OOD", "IID"):
+    for evaluation in evaluations:
         if evaluation not in availability:
             availability[evaluation] = False
 
-    common_index = availability.index[availability["OOD"] & availability["IID"]]
+    common_index = availability.index[availability[list(evaluations)].all(axis=1)]
     score_index = pd.MultiIndex.from_frame(scores[CASE_COLUMNS])
     return scores[score_index.isin(common_index)].copy()
 
@@ -270,12 +306,14 @@ def _select_scores(
     kernel_triples: Any,
     include_kernel_config: bool,
     complete_cases: bool,
+    ood_and_iid: Optional[str] = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Filter, expand, and validate OOD/IID scores for the selected models.
+    """Filter, expand, and validate scores for the selected evaluation splits.
 
     Returns the long-form scores and one metadata row per configuration. Only
-    configurations with both OOD and IID scores are kept.
+    configurations with scores for every requested evaluation are kept.
     """
+    evaluations = _normalize_evaluations(ood_and_iid)
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f"df must be a pandas DataFrame, got {type(df).__name__}.")
     missing = set(ID_COLUMNS).difference(df.columns)
@@ -291,7 +329,12 @@ def _select_scores(
     )
     if filtered.empty:
         raise ValueError("No rows match the requested model and kernel filters.")
-    scores = _expand_scores(filtered, metric, include_kernel_config)
+    scores = _expand_scores(
+        filtered,
+        metric,
+        include_kernel_config,
+        evaluations=evaluations,
+    )
     if scores.empty:
         raise ValueError("No OOD/IID scores match the requested model and kernel filters.")
 
@@ -316,13 +359,12 @@ def _select_scores(
         .size()
         .unstack("evaluation", fill_value=0)
     )
-    for evaluation in ("OOD", "IID"):
+    for evaluation in evaluations:
         if evaluation not in evaluation_coverage:
             evaluation_coverage[evaluation] = 0
     eligible_configurations = set(
         evaluation_coverage.index[
-            evaluation_coverage["OOD"].gt(0)
-            & evaluation_coverage["IID"].gt(0)
+            evaluation_coverage[list(evaluations)].gt(0).all(axis=1)
         ]
     )
     unavailable = [
@@ -332,7 +374,7 @@ def _select_scores(
     ]
     if unavailable:
         warnings.warn(
-            f"Skipping configurations without both OOD and IID "
+            f"Skipping configurations without {' and '.join(evaluations)} "
             f"{_metric_name(metric)!r} scores: {unavailable}",
             RuntimeWarning,
             stacklevel=3,
@@ -344,7 +386,7 @@ def _select_scores(
     ].copy()
     if scores.empty:
         raise ValueError(
-            f"No selected configuration has both OOD and IID "
+            f"No selected configuration has {' and '.join(evaluations)} "
             f"{_metric_name(metric)!r} scores."
         )
 
@@ -368,11 +410,12 @@ def _select_scores(
         )
 
     if complete_cases:
-        scores = _keep_common_complete_clusters(scores)
+        scores = _keep_common_complete_clusters(scores, evaluations=evaluations)
         if scores.empty:
             raise ValueError(
-                "No cluster cases are complete for every selected configuration in both "
-                "OOD and IID. Select fewer models/configurations or use complete_cases=False."
+                "No cluster cases are complete for every selected configuration in "
+                f"{' and '.join(evaluations)}. Select fewer models/configurations or "
+                "use complete_cases=False."
             )
     return scores, metadata.reset_index(drop=True)
 
@@ -407,12 +450,9 @@ def _ordered_metadata(metadata: pd.DataFrame, model: Any) -> pd.DataFrame:
 
 
 def _evaluation_colors(metadata: pd.DataFrame) -> dict[str, dict[str, str]]:
-    """Return ``{evaluation: {configuration: color}}``; IID is the lighter shade."""
+    """Return model-aware OOD colors and lighter matching IID colors."""
     ood_colors = {
-        row["configuration"]: _model_type_color(
-            row["model"],
-            palette=OOD_MODEL_TYPE_COLORS,
-        )
+        row["configuration"]: _model_type_color(row["model"])
         for _, row in metadata.iterrows()
     }
     return {
@@ -467,7 +507,9 @@ def _performance_profile_results(
     include_kernel_config: bool = True,
     higher_is_better: Optional[bool] = None,
     complete_cases: bool = True,
+    ood_and_iid: Optional[str] = None,
 ) -> dict[str, Any]:
+    evaluations = _normalize_evaluations(ood_and_iid)
     scores, metadata = _select_scores(
         df,
         metric=metric,
@@ -478,6 +520,7 @@ def _performance_profile_results(
         kernel_triples=kernel_triples,
         include_kernel_config=include_kernel_config,
         complete_cases=complete_cases,
+        ood_and_iid=ood_and_iid,
     )
     if len(metadata) < 2:
         raise ValueError("A performance profile requires at least two model configurations.")
@@ -487,7 +530,7 @@ def _performance_profile_results(
         higher_is_better = _higher_is_better(metric)
     auc_rows: list[dict[str, Any]] = []
 
-    for evaluation in ("OOD", "IID"):
+    for evaluation in evaluations:
         evaluation_scores = scores[scores["evaluation"].eq(evaluation)]
         matrix = evaluation_scores.pivot(
             index=[*CASE_COLUMNS, "repeat"],
@@ -557,13 +600,15 @@ def calculate_performance_profile_auc(
     include_kernel_config: bool = True,
     higher_is_better: Optional[bool] = None,
     complete_cases: bool = True,
+    ood_and_iid: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Return OOD and IID performance-profile AUCs for every configuration.
+    """Return performance-profile AUCs for each requested evaluation split.
 
     OOD cases are ``paper x target x cluster``. IID cases additionally include
     the random-seed position in each cluster's score list. By default, only
-    cluster cases available for every selected configuration in both OOD and
-    IID are used.
+    cluster cases available for every selected configuration are used. Pass
+    ``ood_and_iid="OOD"`` or ``"IID"`` to calculate only one split; the default
+    of ``None`` retains both splits for callers that need the numerical table.
     """
     return _performance_profile_results(
         df=df,
@@ -576,6 +621,7 @@ def calculate_performance_profile_auc(
         include_kernel_config=include_kernel_config,
         higher_is_better=higher_is_better,
         complete_cases=complete_cases,
+        ood_and_iid=ood_and_iid,
     )["auc_df"].copy()
 
 
@@ -587,6 +633,7 @@ def plot_model_profile_comparison(
     mixing_methods: Any = None,
     kernel_triples: Any = None,
     metric: str = "r2",
+    ood_and_iid: str = "OOD",
     include_kernel_config: bool = True,
     higher_is_better: Optional[bool] = None,
     complete_cases: bool = True,
@@ -603,12 +650,15 @@ def plot_model_profile_comparison(
     save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
     file_name: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Plot OOD and matched-IID AUC beside one another for each model.
+    """Plot model profile AUC for either the OOD or matched-IID evaluation.
 
     Exact GP configurations can be selected with ``kernel_triples``. Kernel-free
-    tree models are retained automatically. The returned long-form DataFrame
-    contains the plotted AUC, rank, and number of contributing cases.
+    tree, GNN, and MLP models are retained automatically. ``ood_and_iid`` is
+    case-insensitive and must be either ``"OOD"`` or ``"IID"``. The returned
+    DataFrame contains only the plotted split, including its AUC, rank, and
+    number of contributing cases.
     """
+    evaluation = _normalize_evaluations(ood_and_iid)[0]
     results = _performance_profile_results(
         df=df,
         metric=metric,
@@ -620,33 +670,34 @@ def plot_model_profile_comparison(
         include_kernel_config=include_kernel_config,
         higher_is_better=higher_is_better,
         complete_cases=complete_cases,
+        ood_and_iid=evaluation,
     )
     auc_df = results["auc_df"]
     metadata = _ordered_metadata(results["metadata"], model)
     order = metadata["configuration"].tolist()
-    values = auc_df.pivot(index="configuration", columns="evaluation", values="auc")
-    values = values.reindex(order)
-    colors = _evaluation_colors(metadata)
+    values = auc_df.set_index("configuration")["auc"].reindex(order)
+    bar_colors = {
+        row["configuration"]: _model_type_color(row["model"])
+        for _, row in metadata.iterrows()
+    }
 
     fig, ax = plt.subplots(figsize=figsize)
     x_positions = np.arange(len(order), dtype=float)
-    width = 0.33
-    offsets = {"OOD": -width / 2, "IID": width / 2}
-    for evaluation in ("OOD", "IID"):
-        heights = values[evaluation].to_numpy(dtype=float)
-        bars = ax.bar(
-            x_positions + offsets[evaluation],
-            heights,
-            width=width,
-            color=[colors[evaluation][label] for label in order],
+    heights = values.to_numpy(dtype=float)
+    bars = ax.bar(
+        x_positions,
+        heights,
+        width=0.67,
+        color=[bar_colors[label] for label in order],
+    )
+    apply_vertical_bar_gradients(ax, bars=bars, edge_linewidth=0)
+    if show_values:
+        ax.bar_label(
+            bars,
+            labels=["" if np.isnan(value) else f"{value:.2f}" for value in heights],
+            padding=3,
+            fontsize=fontsize - 2,
         )
-        if show_values:
-            ax.bar_label(
-                bars,
-                labels=["" if np.isnan(value) else f"{value:.2f}" for value in heights],
-                padding=3,
-                fontsize=fontsize - 2,
-            )
 
     ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
     ax.set_ylabel(y_label, fontsize=fontsize - 2, fontweight="bold")
@@ -660,12 +711,14 @@ def plot_model_profile_comparison(
     )
     ax.set_ylim(*y_lim)
     ax.tick_params(axis="both", labelsize=fontsize - 2)
-    _evaluation_legend(ax)
 
     _finalize_figure(
         fig,
         save_dir=save_dir,
-        file_name=file_name or f"{_metric_name(metric)}_ood_vs_iid_model_profile_auc.png",
+        file_name=(
+            file_name
+            or f"{_metric_name(metric)}_{evaluation.lower()}_model_profile_auc.png"
+        ),
         high_quality=high_quality,
         show=show,
     )
@@ -770,15 +823,17 @@ def plot_model_comparison(
     Each OOD point is one ``paper x target x cluster`` score. Each IID point is
     one random-seed score of the size-matched IID split for that cluster; set
     ``average_iid_repeats=True`` to average the seeds so both halves contain
-    one point per cluster. OOD halves use the model-type color and IID halves
-    a lighter shade of it. Set ``log_y=True`` for a log-scaled y-axis (all
+    one point per cluster. OOD halves use the shared model-aware color and IID
+    halves a lighter shade of it. Set ``log_y=True`` for a log-scaled y-axis (all
     scores must be positive). Returns the long-form scores that were plotted.
     """
     if not 0 < violin_width <= 1:
         raise ValueError("violin_width must be in the interval (0, 1].")
     if y_lim is not None:
         if len(y_lim) != 2 or not y_lim[0] < y_lim[1]:
-            raise ValueError("y_lim must be a (lower, upper) pair with lower < upper.")
+            raise ValueError(
+                "y_lim must be a (lower, upper) pair with lower < upper."
+            )
 
     scores, metadata = _select_scores(
         df,
@@ -876,34 +931,596 @@ def plot_model_comparison(
     return scores.drop(columns="configuration key").reset_index(drop=True)
 
 
-if __name__ == "__main__":
-    result_df = pd.read_pickle(DEFAULT_RESULTS_FILE)
-    models = ["RF", "XGBR", "NGB", "GPytorchMAP", "MGK"]
-    kernel_triples = [
-        ("TanimotoMatern32", "Matern32", "product"),
-        ("Graph", "Matern32", "product"),
-    ]
-    # profile_scores = plot_model_profile_comparison(
-    #     df=result_df,
-    #     model=models,
-    #     kernel_triples=kernel_triples,
-    #     metric="rmse",
-    #     fontsize=15,
-    #     y_label= "Performance profile AUC (RMSE)",
-    #     figsize=(7.5, 5),
-    #     save_dir=DEFAULT_SAVE_DIR/"performance_profile"/"model_comparison",
-    #     file_name="RMSE_ood_vs_iid.png",
-    # )
-    score_distribution = plot_model_comparison(
-        df=result_df,
-        model=models,
+def plot_model_mean_std_comparison(
+    df: pd.DataFrame,
+    model: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "r2",
+    include_kernel_config: bool = True,
+    complete_cases: bool = True,
+    figsize: tuple[float, float] = (9, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 35,
+    y_lim: Optional[tuple[float, float]] = None,
+    gradient_bars: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot paired OOD/IID task-level means and standard deviations.
+
+    Scores are aggregated in two stages for each model configuration and
+    evaluation split. Repeats are first averaged within each cluster, then the
+    cluster means are averaged within each ``paper x target`` task. Bar heights
+    are the mean of those equally weighted task means, and error bars are their
+    sample standard deviation. Thus IID repeats and datasets with more clusters
+    do not receive extra weight relative to their matched OOD cases.
+
+    Kernel filters retain kernel-free tree, GNN, and MLP models. The returned
+    DataFrame contains one OOD row and one IID row per plotted configuration.
+    """
+    if y_lim is not None:
+        if len(y_lim) != 2 or not y_lim[0] < y_lim[1]:
+            raise ValueError("y_lim must be a (lower, upper) pair with lower < upper.")
+
+    scores, metadata = _select_scores(
+        df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
         kernel_triples=kernel_triples,
-        metric="nll",
-        y_label= "NLL",
-        y_lim=(-2, 50),
-        fontsize=15,
-        figsize=(7.5, 5),
-        save_dir=DEFAULT_SAVE_DIR/"score_distribution"/"model_comparison",
-        file_name="NLL_ood_vs_iid.png",
+        include_kernel_config=include_kernel_config,
+        complete_cases=complete_cases,
     )
-    # print(profile_scores.to_string(index=False))
+    metric = _metric_name(metric)
+    metadata = _ordered_metadata(metadata, model)
+    configuration_columns = [
+        "configuration",
+        "model",
+        "fp kernel",
+        "count kernel",
+        "mixing method",
+    ]
+
+    case_values = (
+        scores.groupby(
+            ["evaluation", *CASE_COLUMNS, *configuration_columns],
+            dropna=False,
+            as_index=False,
+        )["score"]
+        .mean()
+    )
+    task_values = (
+        case_values.groupby(
+            ["evaluation", "paper", "target", *configuration_columns],
+            dropna=False,
+            as_index=False,
+        )["score"]
+        .mean()
+    )
+    summary_df = (
+        task_values.groupby(
+            ["evaluation", *configuration_columns],
+            dropna=False,
+            as_index=False,
+        )["score"]
+        .agg(mean="mean", std="std", n_tasks="count")
+    )
+    summary_df["std"] = summary_df["std"].fillna(0.0)
+
+    case_counts = (
+        case_values.groupby(
+            ["evaluation", *configuration_columns],
+            dropna=False,
+        )
+        .size()
+        .rename("n_cases")
+        .reset_index()
+    )
+    score_counts = (
+        scores.groupby(
+            ["evaluation", *configuration_columns],
+            dropna=False,
+        )
+        .size()
+        .rename("n_scores")
+        .reset_index()
+    )
+    summary_df = summary_df.merge(
+        case_counts,
+        on=["evaluation", *configuration_columns],
+        how="left",
+        validate="one_to_one",
+    ).merge(
+        score_counts,
+        on=["evaluation", *configuration_columns],
+        how="left",
+        validate="one_to_one",
+    )
+
+    order = metadata["configuration"].tolist()
+    order_lookup = {label: index for index, label in enumerate(order)}
+    evaluation_lookup = {
+        evaluation: index
+        for index, evaluation in enumerate(EVALUATIONS)
+    }
+    summary_df = (
+        summary_df.assign(
+            _configuration_order=summary_df["configuration"].map(order_lookup),
+            _evaluation_order=summary_df["evaluation"].map(evaluation_lookup),
+        )
+        .sort_values(
+            ["_configuration_order", "_evaluation_order"],
+            kind="stable",
+        )
+        .drop(columns=["_configuration_order", "_evaluation_order"])
+        .reset_index(drop=True)
+    )
+
+    colors = _evaluation_colors(metadata)
+    fig, ax = plt.subplots(figsize=figsize)
+    x_positions = np.arange(len(order), dtype=float)
+    width = 0.33
+    offsets = {"OOD": -width / 2, "IID": width / 2}
+
+    for evaluation in EVALUATIONS:
+        evaluation_df = (
+            summary_df[summary_df["evaluation"].eq(evaluation)]
+            .set_index("configuration")
+            .reindex(order)
+        )
+        if evaluation_df["mean"].isna().any():
+            missing = evaluation_df.index[evaluation_df["mean"].isna()].tolist()
+            raise ValueError(f"No {evaluation} summary values remain for: {missing}")
+
+        bar_colors = [colors[evaluation][label] for label in order]
+        bars = ax.bar(
+            x_positions + offsets[evaluation],
+            evaluation_df["mean"].to_numpy(dtype=float),
+            width=width,
+            yerr=evaluation_df["std"].to_numpy(dtype=float),
+            capsize=4,
+            color=bar_colors,
+            edgecolor="none",
+            linewidth=0,
+            error_kw={"elinewidth": 1.2, "capthick": 1.2},
+        )
+        if gradient_bars:
+            apply_vertical_bar_gradients(
+                ax,
+                bars=list(bars),
+                colors=bar_colors,
+                edge_linewidth=0,
+            )
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(
+        order,
+        rotation=x_tick_rotation,
+        ha="right" if x_tick_rotation else "center",
+    )
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(
+        y_label or f"Mean {metric.upper()}",
+        fontsize=fontsize,
+        fontweight="bold",
+    )
+    if title:
+        ax.set_title(title, fontsize=fontsize + 2)
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    _evaluation_legend(ax)
+
+    _finalize_figure(
+        fig,
+        save_dir=save_dir,
+        file_name=(
+            file_name
+            or f"{metric}_ood_vs_iid_model_mean_std_comparison.png"
+        ),
+        high_quality=high_quality,
+        show=show,
+    )
+    return summary_df
+
+
+def _hybridization_metadata(
+    metadata: pd.DataFrame,
+    model: Any,
+    mixing_methods: Any,
+) -> pd.DataFrame:
+    """Label configurations without collapsing their calculation identities."""
+    metadata = metadata.copy()
+    include_model = metadata["model"].nunique() > 1
+
+    def label(row: pd.Series) -> str:
+        method = str(row["mixing method"])
+        value = HYBRIDIZATION_METHOD_LABELS.get(method, method)
+        structure = "G" if str(row["fp kernel"]).lower() == "graph" else "FP"
+        value = (
+            value.replace("Av(C) × F", f"ΣC × {structure}")
+            .replace("ΣF", structure)
+            .replace("ΠF", structure)
+        )
+        if include_model:
+            value = f"{_configuration_label(row, False)}\n{value}"
+        return value
+
+    metadata["hybridization method"] = metadata.apply(label, axis=1)
+    # Legacy averageProduct and newer methods can share the same math label.
+    # Keep their bars separate even when the compact notation is identical.
+    collisions = metadata.groupby("hybridization method")["mixing method"].nunique()
+    ambiguous = metadata["hybridization method"].isin(collisions.index[collisions.gt(1)])
+    metadata.loc[ambiguous, "hybridization method"] += (
+        "\n[" + metadata.loc[ambiguous, "mixing method"].astype(str) + "]"
+    )
+    selected_models = _selection_values(model) or metadata["model"].tolist()
+    selected_methods = _selection_values(mixing_methods) or list(HYBRIDIZATION_METHOD_COLORS)
+    model_order = {str(value).lower(): i for i, value in enumerate(selected_models)}
+    method_order = {str(value).lower(): i for i, value in enumerate(selected_methods)}
+    metadata["_sort_key"] = metadata.apply(
+        lambda row: (
+            model_order.get(str(row["model"]).lower(), len(model_order)),
+            method_order.get(str(row["mixing method"]).lower(), len(method_order)),
+            str(row["mixing method"]),
+        ),
+        axis=1,
+    )
+    return metadata.sort_values("_sort_key", kind="stable").drop(columns="_sort_key")
+
+
+def _hybridization_input(df: pd.DataFrame) -> pd.DataFrame:
+    """Exclude models with no hybridization method from the comparison."""
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("df must be a pandas DataFrame.")
+    missing = set(ID_COLUMNS).difference(df.columns)
+    if missing:
+        raise ValueError(f"Input data is missing columns: {sorted(missing)}")
+    return df[df["mixing method"].notna()].copy()
+
+
+def _draw_hybridization_summary(
+    summary: pd.DataFrame,
+    metadata: pd.DataFrame,
+    metric: str,
+    profile: bool,
+    figsize: tuple[float, float],
+    fontsize: int,
+    title: Optional[str],
+    x_label: str,
+    y_label: Optional[str],
+    x_tick_rotation: int,
+    y_lim: Optional[tuple[float, float]],
+    gradient_bars: bool,
+    show: bool,
+    high_quality: bool,
+    save_dir: Optional[Path],
+    file_name: str,
+) -> pd.DataFrame:
+    """Draw one split's profile or paired raw-score summaries, without annotations."""
+    if y_lim is not None and (len(y_lim) != 2 or not y_lim[0] < y_lim[1]):
+        raise ValueError("y_lim must be a (lower, upper) pair with lower < upper.")
+    order = metadata["hybridization method"].drop_duplicates().tolist()
+    order_lookup = {label: i for i, label in enumerate(order)}
+    summary = summary.assign(
+        _order=summary["hybridization method"].map(order_lookup),
+        _evaluation=summary["evaluation"].map({"OOD": 0, "IID": 1}),
+    ).sort_values(["_order", "_evaluation"], kind="stable").drop(
+        columns=["_order", "_evaluation"]
+    ).reset_index(drop=True)
+    palette = {
+        row["hybridization method"]: HYBRIDIZATION_METHOD_COLORS.get(
+            str(row["mixing method"]), "#808080"
+        )
+        for _, row in metadata.iterrows()
+    }
+    fig, ax = plt.subplots(figsize=figsize)
+    positions = np.arange(len(order), dtype=float)
+    evaluations = summary["evaluation"].drop_duplicates().tolist()
+    for evaluation in evaluations:
+        values = summary[summary["evaluation"].eq(evaluation)].set_index(
+            "hybridization method"
+        ).reindex(order)
+        if values["mean"].isna().any():
+            missing = values.index[values["mean"].isna()].tolist()
+            raise ValueError(f"No usable {evaluation} summary values for: {missing}")
+        colors = [palette[label] for label in order]
+        if not profile and evaluation == "IID":
+            colors = [_lighten_color(color) for color in colors]
+        offset = 0 if profile else (-0.165 if evaluation == "OOD" else 0.165)
+        bars = ax.bar(
+            positions + offset,
+            values["mean"].to_numpy(dtype=float),
+            width=0.67 if profile else 0.33,
+            yerr=values["std"].to_numpy(dtype=float),
+            capsize=4,
+            color=colors,
+            edgecolor="none",
+            error_kw={"elinewidth": 1.2, "capthick": 1.2},
+        )
+        if gradient_bars:
+            apply_vertical_bar_gradients(ax, bars=list(bars), colors=colors, edge_linewidth=0)
+    ax.set_xticks(positions)
+    ax.set_xticklabels(order, rotation=x_tick_rotation,
+                       ha="right" if x_tick_rotation else "center")
+    ax.set_xlabel(x_label, fontsize=fontsize, fontweight="bold")
+    ax.set_ylabel(y_label or ("Performance profile AUC" if profile else f"Mean {metric.upper()}"),
+                  fontsize=fontsize, fontweight="bold")
+    ax.tick_params(axis="both", labelsize=fontsize - 2)
+    if title:
+        ax.set_title(title, fontsize=fontsize + 2)
+    if y_lim is not None:
+        ax.set_ylim(*y_lim)
+    if not profile:
+        _evaluation_legend(ax)
+    _finalize_figure(fig, save_dir, file_name, high_quality, show)
+    return summary
+
+
+def plot_hybridization_profile_comparison(
+    df: pd.DataFrame,
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "r2",
+    ood_and_iid: str = "OOD",
+    higher_is_better: Optional[bool] = None,
+    complete_cases: bool = True,
+    figsize: tuple[float, float] = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Hybridization method",
+    y_label: str = "Performance profile AUC",
+    x_tick_rotation: int = 30,
+    y_lim: Optional[tuple[float, float]] = (0, 1.05),
+    gradient_bars: bool = False,
+    show: bool = True,
+    high_quality: bool = False,
+    save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare hybridization profile AUCs for one evaluation split.
+
+    Pass ``ood_and_iid='OOD'`` or ``'IID'``. Each selected model/kernel/method
+    configuration competes on the same cases in that split by default. AUCs
+    are then summarized by model and hybridization label. Selecting one FP/count
+    pair gives one AUC per method; selecting several pairs gives mean and sample
+    std across their configuration AUCs. ``n_configurations`` records that count.
+    Kernel-free models are excluded. Value annotations are omitted.
+    """
+    if ood_and_iid is None:
+        raise ValueError("ood_and_iid must be either 'OOD' or 'IID'.")
+    evaluation = _normalize_evaluations(ood_and_iid)[0]
+    results = _performance_profile_results(
+        _hybridization_input(df), metric=metric, model=model,
+        fp_kernels=fp_kernels, count_kernels=count_kernels,
+        mixing_methods=mixing_methods, kernel_triples=kernel_triples,
+        higher_is_better=higher_is_better, complete_cases=complete_cases,
+        ood_and_iid=evaluation,
+    )
+    metadata = _hybridization_metadata(results["metadata"], model, mixing_methods)
+    auc_df = results["auc_df"].merge(
+        metadata[["model", "fp kernel", "count kernel", "mixing method", "hybridization method"]],
+        on=["model", "fp kernel", "count kernel", "mixing method"],
+        validate="one_to_one",
+    )
+    summary = auc_df.groupby(
+        ["evaluation", "model", "mixing method", "hybridization method"],
+        as_index=False, dropna=False,
+    )["auc"].agg(mean="mean", std="std", n_configurations="count")
+    summary["std"] = summary["std"].fillna(0.0)
+    summary["metric"] = _metric_name(metric)
+    return _draw_hybridization_summary(
+        summary, metadata, _metric_name(metric), True, figsize, fontsize, title,
+        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, show, high_quality,
+        save_dir, file_name or f"{_metric_name(metric)}_{evaluation.lower()}_hybridization_profile_auc.png",
+    )
+
+
+def plot_hybridization_mean_std_comparison(
+    df: pd.DataFrame,
+    model: Any = "GPytorchMAP",
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "r2",
+    complete_cases: bool = True,
+    figsize: tuple[float, float] = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Hybridization method",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 30,
+    y_lim: Optional[tuple[float, float]] = None,
+    gradient_bars: bool = False,
+    show: bool = True,
+    high_quality: bool = False,
+    save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare hybridizations with paired OOD/IID mean and sample std bars.
+
+    Average repeats within clusters, then clusters within each paper/target and
+    kernel pair. Average selected kernel pairs within each paper/target and
+    hybridization before computing mean/std across equally weighted tasks.
+    By default only clusters complete in both splits for every selected
+    configuration are retained. Kernel-free models and annotations are omitted.
+    """
+    scores, metadata = _select_scores(
+        _hybridization_input(df), metric=metric, model=model,
+        fp_kernels=fp_kernels, count_kernels=count_kernels,
+        mixing_methods=mixing_methods, kernel_triples=kernel_triples,
+        include_kernel_config=True, complete_cases=complete_cases,
+    )
+    metadata = _hybridization_metadata(metadata, model, mixing_methods)
+    scores = scores.merge(
+        metadata[["configuration key", "hybridization method"]],
+        on="configuration key", validate="many_to_one",
+    )
+    groups = ["evaluation", "model", "mixing method", "hybridization method"]
+    cases = scores.groupby(
+        [*groups, "paper", "target", "fp kernel", "count kernel", "cluster"],
+        as_index=False, dropna=False,
+    )["score"].mean()
+    kernel_tasks = cases.groupby(
+        [*groups, "paper", "target", "fp kernel", "count kernel"],
+        as_index=False, dropna=False,
+    )["score"].mean()
+    tasks = kernel_tasks.groupby(
+        [*groups, "paper", "target"], as_index=False, dropna=False,
+    )["score"].mean()
+    summary = tasks.groupby(groups, as_index=False, dropna=False)["score"].agg(
+        mean="mean", std="std", n_tasks="count",
+    )
+    summary["std"] = summary["std"].fillna(0.0)
+    summary["metric"] = _metric_name(metric)
+    return _draw_hybridization_summary(
+        summary, metadata, _metric_name(metric), False, figsize, fontsize, title,
+        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, show, high_quality,
+        save_dir, file_name or f"{_metric_name(metric)}_ood_vs_iid_hybridization_mean_std.png",
+    )
+
+
+if __name__ == "__main__":
+    structure_ood_results = pd.read_pickle(
+        DEFAULT_RESULTS_FILE / "Tree_GP_MLP_structure_cluster_OOD.pkl"
+    )
+    continuous_ood_results = pd.read_pickle(
+        DEFAULT_RESULTS_FILE / "Tree_GP_MLP_continuous_cluster_OOD.pkl"
+    )
+
+    models = [
+        "RF",
+        "XGBR",
+        "NGB",
+        "GPytorchMAP",
+        "GNN-GP",
+        "GNN-GP-SN",
+        "GNN-MLP",
+        "GNN-MLP-Ens",
+        "MLP-GP",
+        "MLP-GP-SN",
+    ]
+    kernel_triples = [
+        ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+        ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+    ]
+    ood_results = {
+        "structure": structure_ood_results,
+        "continuous": continuous_ood_results,
+    }
+    # for ood_type, result_df in ood_results.items():
+    #     for ood_and_iid in ["OOD", "IID"]:
+    #         plot_model_profile_comparison(
+    #             df=result_df,
+    #             model=models,
+    #             kernel_triples=kernel_triples,
+    #             metric="NLL",
+    #             ood_and_iid=ood_and_iid,
+    #             fontsize=15,
+    #             y_label="Profile AUC: NLL",
+    #             figsize=(7.5, 5),
+    #             save_dir=(
+    #                 DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
+    #             ),
+    #             show=False,
+    #             file_name=f"NLL_{ood_type}_{ood_and_iid.lower()}.png",
+    #         )
+
+    # nll_models = [
+    #     "RF",
+    #     "XGBR",
+    #     "NGB",
+    #     "GPytorchMAP",
+    #     "GNN-GP",
+    #     "GNN-GP-SN",
+    #     "GNN-MLP",
+    #     "GNN-MLP-Ens",
+    #     "MLP-GP",
+    #     "MLP-GP-SN",
+    # ]
+    # for ood_type, result_df in ood_results.items():
+        # plot_model_comparison(
+        #     df=result_df,
+        #     model=nll_models,
+        #     kernel_triples=kernel_triples,
+        #     metric="r2",
+        #     y_label="R²",
+        #     y_lim=(-2, 1),
+        #     fontsize=15,
+        #     # log_y=False,
+        #     figsize=(7.5, 5),
+        #     save_dir=(DEFAULT_SAVE_DIR / "score_distribution" / "model_comparison"),
+        #     file_name=f"R2_{ood_type}_ood_vs_iid.png",
+        # )
+
+        # plot_model_mean_std_comparison(
+        #     df=result_df,
+        #     model=models,
+        #     kernel_triples=kernel_triples,
+        #     metric="RMSE",
+        #     y_label="RMSE",
+        #     # y_lim=(-1, 1),
+        #     high_quality=False,
+        #     gradient_bars=False,
+        #     fontsize=15,
+        #     figsize=(9, 5),
+        #     show=False,
+        #     save_dir=(DEFAULT_SAVE_DIR / "average_performance" / "model_comparison"),
+        #     file_name=f"RMSE_{ood_type}_ood_vs_iid.png",
+        # )
+
+    # Hybridization comparisons: select kernel pairs rather than the model
+    # comparison's kernel_triples, and compare the four requested methods.
+    for ood_type, result_df in ood_results.items():
+        for evaluation in EVALUATIONS:
+            plot_hybridization_profile_comparison(
+                df=result_df,
+                model="GPytorchMAP",
+                fp_kernels="TanimotoMatern32",
+                count_kernels="Matern32",
+                mixing_methods=[
+                    "sum",
+                    "product",
+                    "(count:+)x(fp:+)",
+                    "(count:x)+(fp:x)",
+                ],
+                metric="r2",
+                ood_and_iid=evaluation,
+                fontsize=15,
+                show=False,
+                save_dir=DEFAULT_SAVE_DIR / "performance_profile" / "hybridization_comparison",
+                file_name=f"R2_{ood_type}_{evaluation.lower()}.png",
+            )
+        plot_hybridization_mean_std_comparison(
+            df=result_df,
+            model="GPytorchMAP",
+            fp_kernels="TanimotoMatern32",
+            count_kernels="Matern32",
+            mixing_methods=[
+                # "sum",
+                "product",
+                "(count:+)x(fp:+)",
+                "(count:x)+(fp:x)",
+            ],
+            metric="r2",
+            y_label="Mean R²",
+            # y_lim=(-2, 1),
+            fontsize=15,
+            show=False,
+            save_dir=DEFAULT_SAVE_DIR / "average_performance" / "hybridization_comparison",
+            file_name=f"R2_{ood_type}_ood_vs_iid.png",
+        )
