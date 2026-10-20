@@ -1,8 +1,9 @@
 """Build consolidated regular and cluster-OOD result datasets.
 
 Importing this module does not build datasets. Running it executes the
-selection in the ``__main__`` block; call ``build_master_performance_data``
-or ``build_master_ood_performance_data`` directly when using it from another
+selection in the ``__main__`` block; call ``build_master_performance_data``,
+``build_master_ood_performance_data``, or
+``extract_feature_importance_stability`` directly when using it from another
 module.
 """
 
@@ -134,6 +135,33 @@ COUNT_AND_GRAPH_MODELS = {
     "MLP-GP": "(TABULAR)_MLP-GP",
     "MLP-GP-SN": "(TABULAR)_MLP-GP-SN",
 }
+ATTRIBUTION_MODEL_NAMES = {
+    "gnn_gp": "GNN-GP",
+    "gnn_gpsn": "GNN-GP-SN",
+    "gnn_mlp": "GNN-MLP",
+    "mlp_gp": "MLP-GP",
+    "mlp_gpsn": "MLP-GP-SN",
+}
+ATTRIBUTION_METHOD_COLUMNS = {
+    "SHAP": "feature_importance_SHAP_kendalls_w",
+    "GP-SHAP": "feature_importance_GP_SHAP_kendalls_w",
+    "IG": "feature_importance_IG_kendalls_w",
+}
+FEATURE_IMPORTANCE_STABILITY_COLUMNS = [
+    *FEATURE_STABILITY_COLUMNS,
+    "feature_importance_GP_SHAP_kendalls_w",
+    "feature_importance_IG_kendalls_w",
+]
+FEATURE_IMPORTANCE_STABILITY_RESULT_COLUMNS = [
+    "paper",
+    "target",
+    "model",
+    "device",
+    "fp kernel",
+    "count kernel",
+    "mixing method",
+    *FEATURE_IMPORTANCE_STABILITY_COLUMNS,
+]
 OOD_MODELS = [*MODELS, *COUNT_AND_GRAPH_MODELS]
 StructureRepresentation = Literal["ECFP", "Graph", "LE", "Mordred"]
 STRUCTURE_REPRESENTATIONS = ("ECFP", "Graph", "LE", "Mordred")
@@ -378,6 +406,35 @@ def _load_score_file(
         return None, None
 
     with score_path.open("r", encoding="utf-8") as file:
+        return json.load(file), score_path
+
+
+def _load_feature_stability_score_file(
+    paper_dir: Path,
+    model: str,
+    fp_kernel: Optional[str] = None,
+    count_kernel: Optional[str] = None,
+    mixing_method: Optional[str] = None,
+    use_gpu: bool = False,
+) -> tuple[Optional[Dict[str, Any]], Optional[Path]]:
+    """Load a COUNT-plus-fingerprint score file unless it is an LFS pointer."""
+    score_path = _find_score_path(
+        paper_dir,
+        model,
+        "count_and_fingerprint",
+        fp_kernel,
+        count_kernel,
+        mixing_method,
+        use_gpu,
+    )
+    if score_path is None:
+        return None, None
+
+    with score_path.open("r", encoding="utf-8") as file:
+        first_line = file.readline()
+        if first_line.startswith("version https://git-lfs.github.com/spec/"):
+            return None, score_path
+        file.seek(0)
         return json.load(file), score_path
 
 
@@ -638,6 +695,199 @@ def _feature_row_values(data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _has_feature_importance_stability(values: Dict[str, Any]) -> bool:
+    return any(
+        value is not None and not pd.isna(value)
+        for value in values.values()
+    )
+
+
+def _feature_importance_stability_row(
+    paper: str,
+    target: str,
+    model: str,
+    device: str,
+    fp_kernel: Optional[str],
+    count_kernel: Optional[str],
+    mixing_method: Optional[str],
+    values: Dict[str, Any],
+) -> Dict[str, Any]:
+    return {
+        "paper": paper,
+        "target": target,
+        "model": model,
+        "device": device,
+        "fp kernel": fp_kernel,
+        "count kernel": count_kernel,
+        "mixing method": mixing_method,
+        **dict.fromkeys(FEATURE_IMPORTANCE_STABILITY_COLUMNS),
+        **values,
+    }
+
+
+def _attribution_feature_importance_stability_rows(
+    paper: str,
+    target: str,
+    paper_dir: Path,
+) -> List[Dict[str, Any]]:
+    consistency_path = ensure_long_path(
+        paper_dir / "attribution" / "summary" / "seed_consistency.csv"
+    )
+    if not consistency_path.exists():
+        return []
+
+    consistency = pd.read_csv(consistency_path)
+    required_columns = {"method", "model", "kendall_w"}
+    missing_columns = required_columns.difference(consistency.columns)
+    if missing_columns:
+        raise ValueError(
+            f"{consistency_path} is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    consistency = consistency[
+        consistency["model"].isin(ATTRIBUTION_MODEL_NAMES)
+        & consistency["method"].isin(ATTRIBUTION_METHOD_COLUMNS)
+    ].copy()
+    duplicate_rows = consistency.duplicated(["model", "method"], keep=False)
+    if duplicate_rows.any():
+        duplicates = consistency.loc[
+            duplicate_rows,
+            ["model", "method"],
+        ].drop_duplicates()
+        duplicate_names = ", ".join(
+            f"{row.model}/{row.method}"
+            for row in duplicates.itertuples(index=False)
+        )
+        raise ValueError(
+            f"{consistency_path} contains duplicate model/method rows: "
+            f"{duplicate_names}"
+        )
+
+    rows = []
+    for source_model, tidy_model in ATTRIBUTION_MODEL_NAMES.items():
+        model_data = consistency[consistency["model"] == source_model]
+        values = {}
+        for record in model_data.itertuples(index=False):
+            value = pd.to_numeric(record.kendall_w, errors="coerce")
+            values[ATTRIBUTION_METHOD_COLUMNS[record.method]] = (
+                None if pd.isna(value) else float(value)
+            )
+        if values:
+            rows.append(
+                _feature_importance_stability_row(
+                    paper,
+                    target,
+                    tidy_model,
+                    "CPU",
+                    None,
+                    None,
+                    None,
+                    values,
+                )
+            )
+    return rows
+
+
+def extract_feature_importance_stability(
+    save_path: Optional[Path] = (
+        RESULTS
+        / "master_performance_data"
+        / "feature_importance_stability"
+    ),
+) -> pd.DataFrame:
+    """Extract Kendall's W feature-stability results into a separate table.
+
+    Tree-model MDI and SHAP stability is calculated from CPU score files.
+    GpyroHMC and GPytorchMAP lengthscale stability is calculated only from GPU
+    COUNT-plus-fingerprint score files. Neural and deep-kernel model SHAP,
+    GP-SHAP, and integrated-gradients stability is read from each task's
+    ``attribution/summary/seed_consistency.csv`` file. The attribution model
+    aliases are converted to their tidy display names.
+
+    MGK is intentionally excluded because it has no corresponding feature
+    importance. Only configurations with at least one stability value are
+    returned. If ``save_path`` is provided, matching ``.pkl`` and ``.csv``
+    files are written.
+    """
+    rows = []
+
+    for paper_name, paper_info in PAPER.items():
+        for target in paper_info["target"]:
+            paper_dir = RESULTS / paper_name / target
+
+            for model in (model for model in MODELS if _is_tree_model(model)):
+                data, _ = _load_feature_stability_score_file(
+                    paper_dir,
+                    model,
+                )
+                values = _feature_row_values(data)
+                if _has_feature_importance_stability(values):
+                    rows.append(
+                        _feature_importance_stability_row(
+                            paper_name,
+                            target,
+                            model,
+                            "CPU",
+                            None,
+                            None,
+                            None,
+                            values,
+                        )
+                    )
+
+            gp_models = [
+                model
+                for model in MODELS
+                if not _is_tree_model(model) and model != "MGK"
+            ]
+            for model in gp_models:
+                for (
+                    fp_kernel,
+                    count_kernel,
+                    mixing_method,
+                ) in _count_and_fingerprint_kernel_configs():
+                    data, _ = _load_feature_stability_score_file(
+                        paper_dir,
+                        model,
+                        fp_kernel,
+                        count_kernel,
+                        mixing_method,
+                        use_gpu=True,
+                    )
+                    values = _feature_row_values(data)
+                    if _has_feature_importance_stability(values):
+                        rows.append(
+                            _feature_importance_stability_row(
+                                paper_name,
+                                target,
+                                model,
+                                "GPU",
+                                fp_kernel,
+                                count_kernel,
+                                mixing_method,
+                                values,
+                            )
+                        )
+
+            rows.extend(
+                _attribution_feature_importance_stability_rows(
+                    paper_name,
+                    target,
+                    paper_dir,
+                )
+            )
+
+    dataframe = pd.DataFrame(
+        rows,
+        columns=FEATURE_IMPORTANCE_STABILITY_RESULT_COLUMNS,
+        dtype=object,
+    )
+    if save_path is not None:
+        _save_master_performance_data(dataframe, Path(save_path))
+    return dataframe
+
+
 def _score_row_values(
     data: Optional[Dict[str, Any]],
     score_metrics: List[str],
@@ -703,7 +953,6 @@ def _master_result_columns(
         identifying_columns[3:3] = ["HDF depth", "HDF bits"]
     return (
         identifying_columns
-        + FEATURE_STABILITY_COLUMNS
         + metric_columns
         + OOF_SCORE_COLUMNS
         + TIME_COLUMNS
@@ -748,7 +997,6 @@ def _master_row(
         "fp kernel": fp_kernel,
         "count kernel": count_kernel,
         "mixing method": mixing_method,
-        **_feature_row_values(data),
         **_score_row_values(data, score_metrics, target, score_path, use_gpu),
     }
 
@@ -931,8 +1179,8 @@ def build_master_performance_data(
     GNN-MLP-Ens is the uncertainty-aware GNN-MLP ensemble. The point-prediction
     GNN-MLP is also retained; its uncertainty and calibration fields are left
     empty because its score and prediction files do not contain predictive
-    standard deviations. These files have no feature-importance or kernel
-    configuration metadata, so those master-data columns are left empty.
+    standard deviations. These files have no kernel configuration metadata,
+    so those master-data columns are left empty.
     ``feature_set="HDF"`` includes CPU tree-model results for every HDF depth
     and bit count listed in ``HDF_DEPTHS`` and ``HDF_BITS``. Those parameters
     are retained in the ``HDF depth`` and ``HDF bits`` columns.
@@ -949,8 +1197,8 @@ def build_master_performance_data(
 
     Tree-model results are included in both device datasets. GP rows use only
     the requested device, with no cross-device fallback. Count-and-graph
-    and HDF results are CPU-only. Only precomputed Kendall's W values are
-    retained for feature stability.
+    and HDF results are CPU-only. Feature-importance stability is excluded;
+    use ``extract_feature_importance_stability`` to build its separate table.
 
     When ``save_path`` is provided, standard modes write
     ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
@@ -1162,6 +1410,9 @@ def build_master_performance_data(
 
 
 if __name__ == "__main__":
+    # Extract feature stability separately from the performance tables:
+    extract_feature_importance_stability()
+
     # Choose one feature set and a distinct output name:
     # feature_set: FeatureSet = "HDF"
 
@@ -1182,14 +1433,14 @@ if __name__ == "__main__":
     #     feature_set=feature_set,
     # )
 
-    ood_type: OODType = "structure_cluster_OOD"
-    output_name = {
-        "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
-        "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
-    }[ood_type]
+    # ood_type: OODType = "structure_cluster_OOD"
+    # output_name = {
+    #     "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
+    #     "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
+    # }[ood_type]
 
-    build_master_ood_performance_data(
-        save_path=RESULTS / "master_ood_performance_data" / output_name,
-        score_metrics=DEFAULT_OOD_SCORE_METRICS,
-        ood_type=ood_type,
-    )
+    # build_master_ood_performance_data(
+    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
+    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
+    #     ood_type=ood_type,
+    # )
