@@ -33,12 +33,11 @@ for training_set in "${selected_training_sets[@]}"; do
         for fp_kernel in "${k_fps[@]}"; do
             for count_kernel in "${k_counts[@]}"; do
                 job_index=$((job_index + 1))
-
                 bsub <<EOT
                 
 #BSUB -n 1
-#BSUB -W 1:59
-#BSUB -q short_gpu
+#BSUB -W 20:29
+#BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
