@@ -357,7 +357,12 @@ def permute_feature_group(
     random_state: int = 42,
     unique_shuffle: bool = False,
 ) -> pd.DataFrame:
-    """Jointly shuffle feature rows, or remap each unique feature row."""
+    """Jointly shuffle feature rows.
+
+    With ``unique_shuffle=True``, derange the unique feature vectors and map
+    every repeated occurrence consistently. For example, ``A, B, A, B``
+    becomes ``B, A, B, A``. No unique vector can map to itself.
+    """
     if not isinstance(df, pd.DataFrame):
         raise TypeError("df must be a pandas DataFrame.")
 
@@ -366,16 +371,38 @@ def permute_feature_group(
         if isinstance(features_to_permute, str)
         else list(features_to_permute)
     )
+    if not features:
+        raise ValueError("features_to_permute must contain at least one column.")
+    missing_features = [feature for feature in features if feature not in df]
+    if missing_features:
+        raise KeyError(f"Columns not found in df: {missing_features}")
+
     result = df.copy()
 
     rng = np.random.default_rng(random_state)
     if unique_shuffle:
         fingerprint_ids, unique_fingerprints = pd.factorize(
-            pd.MultiIndex.from_frame(df[features]),
-            sort=False,
+            pd.MultiIndex.from_frame(df[features]), sort=False
         )
+        number_of_unique_fingerprints = len(unique_fingerprints)
+        if number_of_unique_fingerprints < 2:
+            raise ValueError(
+                "Unique fingerprint shuffling requires at least two "
+                "different fingerprint rows."
+            )
+
+        # Sattolo's algorithm creates one cycle, guaranteeing a derangement:
+        # every unique fingerprint is replaced by a different fingerprint.
+        replacement_ids = np.arange(number_of_unique_fingerprints)
+        for position in range(number_of_unique_fingerprints - 1, 0, -1):
+            swap_position = rng.integers(0, position)
+            replacement_ids[position], replacement_ids[swap_position] = (
+                replacement_ids[swap_position],
+                replacement_ids[position],
+            )
+
         shuffled_fingerprints = unique_fingerprints.to_frame(index=False).iloc[
-            rng.permutation(len(unique_fingerprints))
+            replacement_ids
         ]
         for column_position, feature in enumerate(features):
             result[feature] = shuffled_fingerprints.iloc[

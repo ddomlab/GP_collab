@@ -1202,12 +1202,13 @@ def _draw_hybridization_summary(
     x_tick_rotation: int,
     y_lim: Optional[tuple[float, float]],
     gradient_bars: bool,
+    show_values: bool,
     show: bool,
     high_quality: bool,
     save_dir: Optional[Path],
     file_name: str,
 ) -> pd.DataFrame:
-    """Draw one split's profile or paired raw-score summaries, without annotations."""
+    """Draw one split's profile or paired raw-score summaries."""
     if y_lim is not None and (len(y_lim) != 2 or not y_lim[0] < y_lim[1]):
         raise ValueError("y_lim must be a (lower, upper) pair with lower < upper.")
     order = metadata["hybridization method"].drop_duplicates().tolist()
@@ -1250,6 +1251,17 @@ def _draw_hybridization_summary(
         )
         if gradient_bars:
             apply_vertical_bar_gradients(ax, bars=list(bars), colors=colors, edge_linewidth=0)
+        if show_values:
+            heights = values["mean"].to_numpy(dtype=float)
+            ax.bar_label(
+                bars,
+                labels=[
+                    "" if np.isnan(value) else f"{value:.2f}"
+                    for value in heights
+                ],
+                padding=3,
+                fontsize=max(fontsize - 2, 6),
+            )
     ax.set_xticks(positions)
     ax.set_xticklabels(order, rotation=x_tick_rotation,
                        ha="right" if x_tick_rotation else "center")
@@ -1286,6 +1298,7 @@ def plot_hybridization_profile_comparison(
     x_tick_rotation: int = 30,
     y_lim: Optional[tuple[float, float]] = (0, 1.05),
     gradient_bars: bool = False,
+    show_values: bool = True,
     show: bool = True,
     high_quality: bool = False,
     save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
@@ -1298,7 +1311,8 @@ def plot_hybridization_profile_comparison(
     are then summarized by model and hybridization label. Selecting one FP/count
     pair gives one AUC per method; selecting several pairs gives mean and sample
     std across their configuration AUCs. ``n_configurations`` records that count.
-    Kernel-free models are excluded. Value annotations are omitted.
+    Kernel-free models are excluded. Set ``show_values=False`` to omit the AUC
+    annotation above each bar.
     """
     if ood_and_iid is None:
         raise ValueError("ood_and_iid must be either 'OOD' or 'IID'.")
@@ -1324,8 +1338,9 @@ def plot_hybridization_profile_comparison(
     summary["metric"] = _metric_name(metric)
     return _draw_hybridization_summary(
         summary, metadata, _metric_name(metric), True, figsize, fontsize, title,
-        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, show, high_quality,
-        save_dir, file_name or f"{_metric_name(metric)}_{evaluation.lower()}_hybridization_profile_auc.png",
+        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, show_values,
+        show, high_quality, save_dir,
+        file_name or f"{_metric_name(metric)}_{evaluation.lower()}_hybridization_profile_auc.png",
     )
 
 
@@ -1389,8 +1404,9 @@ def plot_hybridization_mean_std_comparison(
     summary["metric"] = _metric_name(metric)
     return _draw_hybridization_summary(
         summary, metadata, _metric_name(metric), False, figsize, fontsize, title,
-        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, show, high_quality,
-        save_dir, file_name or f"{_metric_name(metric)}_ood_vs_iid_hybridization_mean_std.png",
+        x_label, y_label, x_tick_rotation, y_lim, gradient_bars, False,
+        show, high_quality, save_dir,
+        file_name or f"{_metric_name(metric)}_ood_vs_iid_hybridization_mean_std.png",
     )
 
 
@@ -1501,26 +1517,27 @@ if __name__ == "__main__":
                 metric="r2",
                 ood_and_iid=evaluation,
                 fontsize=15,
+                show_values=True,
                 show=False,
                 save_dir=DEFAULT_SAVE_DIR / "performance_profile" / "hybridization_comparison",
                 file_name=f"R2_{ood_type}_{evaluation.lower()}.png",
             )
-        plot_hybridization_mean_std_comparison(
-            df=result_df,
-            model="GPytorchMAP",
-            fp_kernels="TanimotoMatern32",
-            count_kernels="Matern32",
-            mixing_methods=[
-                # "sum",
-                "product",
-                "(count:+)x(fp:+)",
-                "(count:x)+(fp:x)",
-            ],
-            metric="r2",
-            y_label="Mean R²",
-            # y_lim=(-2, 1),
-            fontsize=15,
-            show=False,
-            save_dir=DEFAULT_SAVE_DIR / "average_performance" / "hybridization_comparison",
-            file_name=f"R2_{ood_type}_ood_vs_iid.png",
-        )
+    #     plot_hybridization_mean_std_comparison(
+    #         df=result_df,
+    #         model="GPytorchMAP",
+    #         fp_kernels="TanimotoMatern32",
+    #         count_kernels="Matern32",
+    #         mixing_methods=[
+    #             # "sum",
+    #             "product",
+    #             "(count:+)x(fp:+)",
+    #             "(count:x)+(fp:x)",
+    #         ],
+    #         metric="r2",
+    #         y_label="Mean R²",
+    #         # y_lim=(-2, 1),
+    #         fontsize=15,
+    #         show=False,
+    #         save_dir=DEFAULT_SAVE_DIR / "average_performance" / "hybridization_comparison",
+    #         file_name=f"R2_{ood_type}_ood_vs_iid.png",
+    #     )

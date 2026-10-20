@@ -1210,6 +1210,105 @@ def _infer_top_n_by_task(
     }
 
 
+def _select_runtime_metric_by_model(
+    df: pd.DataFrame,
+    metric: str,
+    model: Any,
+    runtime_devices: Any,
+    runtime_folds: int = 1,
+) -> tuple[pd.DataFrame, str, Optional[Dict[str, str]]]:
+    """Build one runtime column using a CPU/GPU choice for each model."""
+    if not isinstance(runtime_folds, int) or runtime_folds < 1:
+        raise ValueError("runtime_folds must be a positive integer.")
+
+    if runtime_devices is None:
+        if runtime_folds == 1:
+            return df, metric, None
+        if str(metric).strip().lower() not in {
+            "running time",
+            "running time (cpu)",
+            "running time (gpu)",
+        }:
+            raise ValueError(
+                "runtime_folds can only be used with a running-time metric."
+            )
+        if metric not in df.columns:
+            raise ValueError(f"Missing required column: {metric}")
+        runtime_df = df.copy()
+        runtime_df[metric] = (
+            pd.to_numeric(runtime_df[metric], errors="coerce") / runtime_folds
+        )
+        return runtime_df, metric, None
+
+    selected_models = _selection_values(model)
+    if selected_models is None:
+        raise ValueError(
+            "model must be specified when runtime_devices is provided."
+        )
+
+    if isinstance(runtime_devices, str):
+        selected_devices = [runtime_devices] * len(selected_models)
+    else:
+        selected_devices = list(runtime_devices)
+    if len(selected_devices) != len(selected_models):
+        raise ValueError(
+            "runtime_devices must contain one CPU/GPU entry for each model "
+            f"({len(selected_models)} expected, {len(selected_devices)} received)."
+        )
+
+    runtime_device_map = {}
+    for model_name, device in zip(selected_models, selected_devices):
+        normalized_device = str(device).strip().upper()
+        if normalized_device not in {"CPU", "GPU"}:
+            raise ValueError(
+                "runtime_devices entries must be either 'CPU' or 'GPU'."
+            )
+        model_key = str(model_name).lower()
+        if (
+            model_key in runtime_device_map
+            and runtime_device_map[model_key] != normalized_device
+        ):
+            raise ValueError(
+                f"Model {model_name!r} has conflicting runtime device selections."
+            )
+        runtime_device_map[model_key] = normalized_device
+
+    runtime_metric_names = {
+        "running time",
+        "running time (cpu)",
+        "running time (gpu)",
+    }
+    if str(metric).strip().lower() not in runtime_metric_names:
+        raise ValueError(
+            "runtime_devices can only be used with a running-time metric."
+        )
+
+    required_runtime_columns = {
+        f"Running time ({device})" for device in runtime_device_map.values()
+    }
+    missing_columns = required_runtime_columns.difference(df.columns)
+    if missing_columns:
+        raise ValueError(
+            "df is missing required runtime columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    runtime_df = df.copy()
+    device_by_row = (
+        runtime_df["model"].astype(str).str.lower().map(runtime_device_map)
+    )
+    metric = "Running time"
+    runtime_df[metric] = np.nan
+    for device in sorted(set(runtime_device_map.values())):
+        device_mask = device_by_row.eq(device)
+        runtime_df.loc[device_mask, metric] = pd.to_numeric(
+            runtime_df.loc[device_mask, f"Running time ({device})"],
+            errors="coerce",
+        ) / runtime_folds
+
+    return runtime_df, metric, runtime_device_map
+
+
 def plot_model_comparison(
     df: pd.DataFrame,
     metric: str = "r2",
@@ -1231,6 +1330,7 @@ def plot_model_comparison(
     file_name: Optional[str] = None,
     runtime_devices: Any = None,
     average_over_tasks: bool = False,
+    runtime_folds: int = 1,
 ) -> pd.DataFrame:
     """
     Make a box plot of a metric score for selected models/kernels.
@@ -1242,6 +1342,8 @@ def plot_model_comparison(
     selects the runtime column independently for each model. In that case,
     ``metric`` may be ``"Running time"``, ``"Running time (CPU)```, or
     ``"Running time (GPU)``; the per-model selection takes precedence.
+    Set ``runtime_folds`` to the number of cross-validation folds represented
+    by each stored runtime to plot average runtime per fold.
     For GP models, pass ``kernel_triples`` as one triple or a list of
     ``(fp_kernel, count_kernel, mixing_method)`` triples.
     Set ``average_over_tasks=True`` to give every dataset/target task equal
@@ -1249,71 +1351,13 @@ def plot_model_comparison(
     configuration. This does not change the distributional plot.
     Set ``log_y=True`` to show the y-axis on a log scale.
     """
-    runtime_device_map = None
-    if runtime_devices is not None:
-        selected_models = _selection_values(model)
-        if selected_models is None:
-            raise ValueError(
-                "model must be specified when runtime_devices is provided."
-            )
-
-        if isinstance(runtime_devices, str):
-            selected_devices = [runtime_devices] * len(selected_models)
-        else:
-            selected_devices = list(runtime_devices)
-        if len(selected_devices) != len(selected_models):
-            raise ValueError(
-                "runtime_devices must contain one CPU/GPU entry for each model "
-                f"({len(selected_models)} expected, {len(selected_devices)} received)."
-            )
-
-        runtime_device_map = {}
-        for model_name, device in zip(selected_models, selected_devices):
-            normalized_device = str(device).strip().upper()
-            if normalized_device not in {"CPU", "GPU"}:
-                raise ValueError(
-                    "runtime_devices entries must be either 'CPU' or 'GPU'."
-                )
-            model_key = str(model_name).lower()
-            if (
-                model_key in runtime_device_map
-                and runtime_device_map[model_key] != normalized_device
-            ):
-                raise ValueError(
-                    f"Model {model_name!r} has conflicting runtime device selections."
-                )
-            runtime_device_map[model_key] = normalized_device
-
-        runtime_metric_names = {
-            "running time",
-            "running time (cpu)",
-            "running time (gpu)",
-        }
-        if str(metric).strip().lower() not in runtime_metric_names:
-            raise ValueError(
-                "runtime_devices can only be used with a running-time metric."
-            )
-
-        required_runtime_columns = {
-            f"Running time ({device})" for device in runtime_device_map.values()
-        }
-        missing_columns = required_runtime_columns.difference(df.columns)
-        if missing_columns:
-            raise ValueError(
-                "df is missing required runtime columns: "
-                + ", ".join(sorted(missing_columns))
-            )
-
-        df = df.copy()
-        device_by_row = df["model"].astype(str).str.lower().map(runtime_device_map)
-        metric = "Running time"
-        df[metric] = np.nan
-        for device in sorted(set(runtime_device_map.values())):
-            device_mask = device_by_row.eq(device)
-            df.loc[device_mask, metric] = pd.to_numeric(
-                df.loc[device_mask, f"Running time ({device})"],
-                errors="coerce",
-            )
+    df, metric, runtime_device_map = _select_runtime_metric_by_model(
+        df,
+        metric,
+        model,
+        runtime_devices,
+        runtime_folds,
+    )
 
     df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
     is_scalar_metric = metric in df.columns and f"{metric}_seed_fold_scores" not in df.columns
@@ -2290,6 +2334,7 @@ def plot_model_profile_comparison(
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = None,
     tolerance: Any = None,
+    runtime_devices: Any = None,
 ) -> pd.DataFrame:
     """
     Calculate profile AUCs from master results and draw a model barplot.
@@ -2303,6 +2348,9 @@ def plot_model_profile_comparison(
     ``profile_options`` is forwarded to ``performance_plot_with_ranks`` and
     can customize that optional profile plot.
 
+    For a mixed CPU/GPU running-time comparison, pass one ``runtime_devices``
+    entry for every selected model.
+
     For ``metric="feature_stability"``, pass ``tolerance`` as a percentage to
     recalculate stability with practical ties. For example, ``tolerance=1``
     means a maximum difference of 0.01 after normalizing each run's feature
@@ -2315,6 +2363,13 @@ def plot_model_profile_comparison(
     The SK GP value stays unchanged. If omitted, the existing exact-tie
     stability values are used unchanged.
     """
+    df, metric, _ = _select_runtime_metric_by_model(
+        df,
+        metric,
+        model,
+        runtime_devices,
+    )
+
     p_statistics = False
     top_n = False
     if isinstance(tolerance, str):
@@ -2516,6 +2571,9 @@ def plot_model_mean_std_comparison(
     high_quality: bool = True,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = None,
+    runtime_devices: Any = None,
+    log_y: bool = False,
+    runtime_folds: int = 1,
 ) -> pd.DataFrame:
     """Compare model configurations using task-level mean +/- std.
 
@@ -2526,7 +2584,19 @@ def plot_model_mean_std_comparison(
     Pass ``kernel_triples`` as one triple or a list of
     ``(fp_kernel, count_kernel, mixing_method)`` triples. Models without
     kernel settings, such as tree and deep-learning models, are retained.
+    For a mixed CPU/GPU running-time comparison, pass one ``runtime_devices``
+    entry for every selected model.
+    Set ``runtime_folds`` to the number of cross-validation folds represented
+    by each stored runtime to plot average runtime per fold.
+    Set ``log_y=True`` when values span multiple orders of magnitude.
     """
+    df, metric, _ = _select_runtime_metric_by_model(
+        df,
+        metric,
+        model,
+        runtime_devices,
+        runtime_folds,
+    )
     filtered_df = _filter_kernel_triples(
         df,
         kernel_triples,
@@ -2602,11 +2672,25 @@ def plot_model_mean_std_comparison(
         for model_name in summary_df["model"]
     ]
     fig, ax = plt.subplots(figsize=figsize)
+    mean_values = summary_df["mean"].to_numpy(dtype=float)
+    std_values = summary_df["std"].to_numpy(dtype=float)
+    if log_y:
+        if (mean_values <= 0).any():
+            raise ValueError("log_y=True requires all mean values to be positive.")
+        positive_floor = float(np.min(mean_values)) * 0.1
+        lower_errors = np.minimum(
+            std_values,
+            np.maximum(mean_values - positive_floor, 0),
+        )
+        error_values = np.vstack([lower_errors, std_values])
+    else:
+        error_values = std_values
+
     bars = ax.bar(
         x_positions,
-        summary_df["mean"].to_numpy(dtype=float),
+        mean_values,
         width=0.67,
-        yerr=summary_df["std"].to_numpy(dtype=float),
+        yerr=error_values,
         capsize=5,
         color=colors,
         edgecolor="none",
@@ -2638,6 +2722,8 @@ def plot_model_mean_std_comparison(
     ax.tick_params(axis="both", labelsize=fontsize - 2)
     if y_lim is not None:
         ax.set_ylim(*y_lim)
+    if log_y:
+        ax.set_yscale("log")
 
     if show_values:
         lower, upper = ax.get_ylim()
@@ -5424,42 +5510,99 @@ if __name__ == "__main__":
     #     file_name="GPytorchMAP_bitwise_r2_profile_auc_heatmap.png",
     # )
 
-    
-    plot_model_comparison(
-        df=result_df,
-        metric="cvpp_ama",
-        model=[
-            "RF",
-            "XGBR",
-            "NGB",
-            "GPytorchMAP",
-            "GpyroHMC",
-            "MGK",
-            "GNN-GP",
-            "GNN-GP-SN",
-            "GNN-MLP-Ens",
-            "MLP-GP",
-            "MLP-GP-SN",
-        ],
-        kernel_triples=[
-            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
-            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
-            ("Graph", "Matern32", "(count:+)x(graph:x)"),
-        ],
-        y_label="AMA",
-        fontsize=17,
-        show=True,
-        y_lim=(0, .5),
-        figsize=(8, 5),
-        # log_y=True,
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "score_distribution"
-            / "model_comparison"
-        ),
-        file_name="AMA.png",
-    )
+    models = [
+        "RF",
+        "XGBR",
+        "NGB",
+        "GPytorchMAP",
+        "GpyroHMC",
+        "MGK",
+        "GNN-GP",
+        "GNN-GP-SN",
+        "GNN-MLP-Ens",
+        "MLP-GP",
+        "MLP-GP-SN",
+    ]
+    runtime_devices = [
+        "CPU",
+        "CPU",
+        "CPU",
+        "GPU",
+        "GPU",
+        "GPU",
+        "CPU",
+        "CPU",
+        "CPU",
+        "CPU",
+        "CPU",
+    ]
+    selected_kernel_triples = [
+        ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+        ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+        ("Graph", "Matern32", "(count:+)x(graph:x)"),
+    ]
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="Running time",
+    #     model=models,
+    #     runtime_devices=runtime_devices,
+    #     runtime_folds=5,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="Running Time (s)",
+    #     fontsize=17,
+    #     show=True,
+    #     figsize=(8, 5),
+    #     log_y=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "score_distribution"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="running_time_cpu_gpu.png",
+    # )
+
+    # plot_model_profile_comparison(
+    #     df=result_df,
+    #     metric="Running time",
+    #     model=models,
+    #     runtime_devices=runtime_devices,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="Profile AUC: Running Time",
+    #     fontsize=17,
+    #     figsize=(10, 5),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "performance_profile"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="running_time_cpu_gpu.png",
+    # )
+
+    # plot_model_mean_std_comparison(
+    #     df=result_df,
+    #     metric="Running time",
+    #     model=models,
+    #     runtime_devices=runtime_devices,
+    #     runtime_folds=5,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="Running Time (s)",
+    #     fontsize=17,
+    #     figsize=(10, 5),
+    #     log_y=True,
+    #     show_values=False,
+    #     gradient_bars=False,
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="running_time_cpu_gpu.png",
+    # )
 
     # plot_hybridization_method_comparison(
     #     df=result_df,
@@ -5483,9 +5626,9 @@ if __name__ == "__main__":
     
     # plot_hybridization_profile_comparison(
     #     df=result_df,
-    #     model="GPytorchMAP",
+    #     model="GpyroHMC",
     #     metric="OOF_R2",
-    #     fp_kernels=["Matern32", "Matern52", "RBF"],
+    #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
     #     mixing_methods=[
     #         "sum",
@@ -5497,7 +5640,7 @@ if __name__ == "__main__":
     #     fontsize=16,
     #     figsize=(6, 5),
     #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-    #     file_name="R2OOF_GPytorchMAP_Bitwise_hybridization_profile_comparison_avg_over_config.png",
+    #     file_name="R2OOF_GpyroHMC_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
 
@@ -5520,31 +5663,31 @@ if __name__ == "__main__":
     #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-    # plot_hybridization_mean_std_comparison(
-    #     df=result_df,
-    #     model="GPytorchMAP",
-    #     metric="OOF_R2",
-    #     fp_kernels=["RBF", "Matern32", "Matern52"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="R² (OOF)",
-    #     y_lim=(0, 1.05),
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=(
-    #         HERE
-    #         / "result_analysis"
-    #         / "average_performance"
-    #         / "hybridization_comparison"
-    #     ),
-    #     file_name=(
-    #         "R2OOF_GPytorchMAP_Bitwise_hybridization.png" ),
-    # )
+    plot_hybridization_mean_std_comparison(
+        df=result_df,
+        model="GpyroHMC",
+        metric="OOF_R2",
+        fp_kernels=["RBF", "Matern32", "Matern52"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:+)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        y_lim=(0, 1.05),
+        fontsize=16,
+        figsize=(6, 5),
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "average_performance"
+            / "hybridization_comparison"
+        ),
+        file_name=(
+            "R2OOF_GpyroHMC_Bitwise_hybridization.png" ),
+    )
 
 
     # plot_hybridization_profile_comparison(

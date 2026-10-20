@@ -471,6 +471,245 @@ def plot_model_performance_by_target(
     return pd.concat(summaries, ignore_index=True)
 
 
+def plot_model_performance_by_target_grid(
+    df: pd.DataFrame,
+    metric: str = "r2",
+    model: Any = None,
+    kernel_triples: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    include_kernel_config: bool = True,
+    complete_cases: bool = True,
+    figsize: tuple = (7, 5),
+    ncols: int = 3,
+    fontsize: int = 12,
+    x_label: str = "Model",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 35,
+    y_lim: Optional[tuple] = None,
+    show_values: bool = False,
+    show: bool = False,
+    high_quality: bool = False,
+    save_dir: Optional[Path] = DEFAULT_SAVE_DIR / "absolute_metric" / "model_comparison",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot all per-target OOD/IID model comparisons in one figure.
+
+    This is the combined-subplot counterpart of
+    :func:`plot_model_performance_by_target`. Each subplot represents one
+    dataset-target pair, ordered by full dataset size. Models or GP kernel
+    configurations are shown on the x-axis, with paired OOD and IID bars.
+    ``figsize`` is the size of one subplot and ``ncols`` controls the grid.
+
+    Cluster repeats, completeness rules, colors, and error bars match the
+    separate-target function. The returned DataFrame has one row per plotted
+    task/configuration/evaluation and records the shared output path.
+    """
+    metric = _metric_name(metric)
+    if ncols < 1:
+        raise ValueError("ncols must be at least 1.")
+    if y_lim is not None:
+        if len(y_lim) != 2 or not np.isfinite(y_lim).all() or not y_lim[0] < y_lim[1]:
+            raise ValueError("y_lim must contain two finite values with lower < upper.")
+
+    scores, metadata = _select_scores(
+        df,
+        metric=metric,
+        model=model,
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        include_kernel_config=include_kernel_config,
+        complete_cases=False,
+        ood_and_iid=None,
+    )
+    metadata = _ordered_metadata(metadata, model)
+    configuration_columns = [
+        "configuration", "model", "fp kernel", "count kernel", "mixing method",
+    ]
+    configuration_rank = {
+        key: index
+        for index, key in enumerate(metadata["configuration key"])
+    }
+    summaries = []
+    for (paper, target), task_scores in scores.groupby(
+        ["paper", "target"], sort=False, dropna=False,
+    ):
+        coverage = task_scores.groupby("configuration key")["evaluation"].nunique()
+        keys = set(coverage.index[coverage.eq(len(EVALUATIONS))])
+        present = metadata["configuration key"].map(lambda key: key in keys)
+        if not present.all():
+            warnings.warn(
+                f"{paper!r}, {target!r}: missing OOD or IID {metric} scores for "
+                f"{metadata.loc[~present, 'configuration'].tolist()}; omitting those bars.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        task_scores = task_scores[
+            task_scores["configuration key"].map(lambda key: key in keys)
+        ].copy()
+        if task_scores.empty:
+            continue
+        if complete_cases:
+            task_scores = _keep_common_complete_clusters(
+                task_scores, evaluations=EVALUATIONS,
+            )
+        if task_scores.empty:
+            warnings.warn(
+                f"Skipping {paper!r}, {target!r}: no common OOD/IID clusters "
+                "remain for the selected configurations.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            continue
+
+        cases = task_scores.groupby(
+            ["evaluation", "cluster", "configuration key", *configuration_columns],
+            as_index=False,
+            dropna=False,
+        )["score"].mean()
+        summary = cases.groupby(
+            ["evaluation", "configuration key", *configuration_columns],
+            as_index=False,
+            dropna=False,
+        )["score"].agg(mean="mean", std="std", n_cases="count")
+        summary["std"] = summary["std"].fillna(0.0)
+        counts = task_scores.groupby(
+            ["evaluation", "configuration key"],
+        ).size()
+        summary = summary.merge(
+            counts.rename("n_scores").reset_index(),
+            on=["evaluation", "configuration key"],
+            validate="one_to_one",
+        )
+        summary["dataset"] = paper
+        summary["target"] = target
+        summary["metric"] = metric
+        summary = _add_datapoint_counts(summary)
+        summary["_configuration order"] = summary["configuration key"].map(
+            configuration_rank
+        )
+        summary["_evaluation order"] = summary["evaluation"].map(
+            {"OOD": 0, "IID": 1}
+        )
+        summaries.append(summary)
+
+    if not summaries:
+        raise ValueError("No dataset/target has usable cases for the model comparison.")
+
+    summary_df = pd.concat(summaries, ignore_index=True)
+    summary_df = summary_df.sort_values(
+        [
+            "n datapoints", "dataset", "target",
+            "_configuration order", "_evaluation order",
+        ],
+        kind="stable",
+    ).reset_index(drop=True)
+    summary_df["output path"] = None
+    target_groups = list(
+        summary_df.groupby(["dataset", "target"], sort=False, dropna=False)
+    )
+    nrows = int(np.ceil(len(target_groups) / ncols))
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(figsize[0] * ncols, figsize[1] * nrows),
+        squeeze=False,
+    )
+    axes_flat = axes.ravel()
+
+    try:
+        for ax, ((dataset, target), target_df) in zip(axes_flat, target_groups):
+            order_df = target_df[
+                ["configuration", "_configuration order"]
+            ].drop_duplicates().sort_values("_configuration order", kind="stable")
+            order = order_df["configuration"].tolist()
+            positions = np.arange(len(order), dtype=float)
+            width = 0.33
+            for evaluation, offset in (("OOD", -width / 2), ("IID", width / 2)):
+                values = target_df[target_df["evaluation"].eq(evaluation)].set_index(
+                    "configuration"
+                ).reindex(order)
+                colors = [model_type_color(value) for value in values["model"]]
+                if evaluation == "IID":
+                    colors = [lighten_color(color) for color in colors]
+                bars = ax.bar(
+                    positions + offset,
+                    values["mean"].to_numpy(dtype=float),
+                    width=width,
+                    yerr=values["std"].to_numpy(dtype=float),
+                    capsize=3,
+                    color=colors,
+                    edgecolor="none",
+                    error_kw={"elinewidth": 1.0, "capthick": 1.0},
+                )
+                if show_values:
+                    ax.bar_label(
+                        bars,
+                        labels=[f"{value:.2f}" for value in values["mean"]],
+                        padding=2,
+                        fontsize=max(fontsize - 5, 6),
+                        clip_on=True,
+                    )
+
+            n_datapoints = target_df["n datapoints"].iloc[0]
+            n_label = (
+                f"{int(n_datapoints)}"
+                if float(n_datapoints).is_integer()
+                else f"{n_datapoints:g}"
+            )
+            target_label = str(target).removeprefix("target_")
+            ax.set_title(f"{target_label} (n={n_label})", fontsize=fontsize + 1)
+            ax.set_xticks(positions)
+            ax.set_xticklabels(
+                order,
+                rotation=x_tick_rotation,
+                ha="right" if x_tick_rotation else "center",
+            )
+            ax.set_xlabel(x_label, fontsize=fontsize)
+            ax.set_ylabel(y_label or f"Mean {metric.upper()}", fontsize=fontsize)
+            ax.tick_params(axis="both", labelsize=fontsize - 2)
+            if y_lim is not None:
+                ax.set_ylim(*y_lim)
+
+        for ax in axes_flat[len(target_groups):]:
+            ax.set_visible(False)
+
+        fig.legend(
+            handles=[
+                Patch(facecolor="#666666", label="OOD"),
+                Patch(facecolor=lighten_color("#666666"), label="IID"),
+            ],
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.995),
+            ncol=2,
+            frameon=False,
+            fontsize=fontsize + 2,
+        )
+        fig.tight_layout(rect=(0, 0, 1, 0.96))
+        if save_dir is not None:
+            output_dir = ensure_long_path(Path(save_dir))
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_name = file_name or f"{metric}_model_comparison_by_target.png"
+            output_path = ensure_long_path(output_dir / output_name)
+            fig.savefig(
+                output_path,
+                bbox_inches="tight",
+                dpi=900 if high_quality else 150,
+            )
+            summary_df["output path"] = str(output_path)
+        if show:
+            plt.show()
+    finally:
+        plt.close(fig)
+
+    return summary_df.drop(
+        columns=["_configuration order", "_evaluation order"]
+    )
+
+
 if __name__ == "__main__":
     models = [
         "RF", "XGBR", "NGB", "GPytorchMAP", "GNN-GP", "GNN-GP-SN",
@@ -490,23 +729,43 @@ if __name__ == "__main__":
         result_df = pd.read_pickle(
             MASTER_DATA / f"Tree_GP_MLP_{ood_type}_cluster_OOD.pkl"
         )
-        metrics = "cvpp_ama"
-        plot_model_performance_by_target(
+        metrics = "r2"
+        plot_model_performance_by_target_grid(
             df=result_df,
             metric=metrics,
             model=models,
             kernel_triples=kernel_triples,
-            y_label="AMA",
-            y_lim=(0, .5),
+            y_label="R²",
+            # y_lim=(0, .5),
+            ncols=3,
             fontsize=15,
-            figsize=(9, 5),
+            figsize=(7, 5),
             show=False,
             high_quality=False,
             save_dir=(
                 DEFAULT_SAVE_DIR / "absolute_metric" / "model_comparison"
-                / "separate_datasets" / ood_type/f"{metrics.capitalize()}"
+                / "all_targets" / ood_type / metrics.capitalize()
             ),
+            file_name=f"{ood_type}_{metrics.capitalize()}.png",
         )
+
+        # metrics = "cvpp_ama"
+        # plot_model_performance_by_target(
+        #     df=result_df,
+        #     metric=metrics,
+        #     model=models,
+        #     kernel_triples=kernel_triples,
+        #     y_label="AMA",
+        #     y_lim=(0, .5),
+        #     fontsize=15,
+        #     figsize=(9, 5),
+        #     show=False,
+        #     high_quality=False,
+        #     save_dir=(
+        #         DEFAULT_SAVE_DIR / "absolute_metric" / "model_comparison"
+        #         / "separate_datasets" / ood_type/f"{metrics.capitalize()}"
+        #     ),
+        # )
 
         # for evaluation in EVALUATIONS:
             # plot_hybridization_performance_vs_data_number(
