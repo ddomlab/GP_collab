@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 0.00014752820930045,
+    "rel_error_max": 0.0373537017383895,
+    "top3_x_cols": [
+      "pore maker wt% (pore maker to total weight)",
+      "oraganic compound concentration (mg/L)",
+      "TMP (bar)"
+    ],
+    "chemistry_share_mean": 0.7980296565272534
+  },
+  "13": {
+    "rel_error_median": 0.00011647653731695,
+    "rel_error_max": 0.2016567219073513,
+    "top3_x_cols": [
+      "oraganic compound concentration (mg/L)",
+      "foulant concentration (mg/L)",
+      "TMP (bar)"
+    ],
+    "chemistry_share_mean": 0.795640580296588
+  },
+  "42": {
+    "rel_error_median": 0.00012755217207565,
+    "rel_error_max": 0.1889685986898319,
+    "top3_x_cols": [
+      "pore maker wt% (pore maker to total weight)",
+      "foulant concentration (mg/L)",
+      "oraganic compound concentration (mg/L)"
+    ],
+    "chemistry_share_mean": 0.7912151723352188
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9353535353535354,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9030303030303032,
+    "top3_overlap": 0.6666666666666666,
+    "same_top1": false,
+    "row_kendall_w_median": 0.6303030303030303,
+    "n_x_cols": 11,
+    "n_rows": 318,
+    "spearman_seed6_vs_seed13": 0.9,
+    "spearman_seed6_vs_seed42": 0.9181818181818184,
+    "spearman_seed13_vs_seed42": 0.8909090909090911
+  }
+}

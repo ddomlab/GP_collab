@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 0.0,
+    "abs_error_max": 1.5642075297250813e-05,
+    "top3_x_cols": [
+      "organic compound size (Da)",
+      "pore maker molecular weight (Da)",
+      "TMP (bar)"
+    ]
+  },
+  "13": {
+    "abs_error_median": 0.0,
+    "abs_error_max": 1.5258789069605427e-05,
+    "top3_x_cols": [
+      "organic compound size (Da)",
+      "pore maker molecular weight (Da)",
+      "oraganic compound concentration (mg/L)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 0.0,
+    "abs_error_max": 1.52587890625e-05,
+    "top3_x_cols": [
+      "organic compound size (Da)",
+      "pore maker molecular weight (Da)",
+      "oraganic compound concentration (mg/L)"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9717171717171718,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9575757575757576,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": true,
+    "row_kendall_w_median": 0.9171717171717172,
+    "n_x_cols": 11,
+    "n_rows": 318,
+    "spearman_seed6_vs_seed13": 0.9363636363636364,
+    "spearman_seed6_vs_seed42": 0.990909090909091,
+    "spearman_seed13_vs_seed42": 0.9454545454545454
+  }
+}

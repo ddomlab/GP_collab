@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 0.0001498530336391,
+    "rel_error_max": 0.0592574810962068,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Temperature (\u00b0C)",
+      "Thickness \u2113 (um)"
+    ],
+    "chemistry_share_mean": 0.6472610376543214
+  },
+  "13": {
+    "rel_error_median": 6.881977912398659e-05,
+    "rel_error_max": 0.0282961285733052,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Temperature (\u00b0C)",
+      "Thickness \u2113 (um)"
+    ],
+    "chemistry_share_mean": 0.5706232410164813
+  },
+  "42": {
+    "rel_error_median": 8.193061356789637e-05,
+    "rel_error_max": 0.0125619793895894,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Temperature (\u00b0C)",
+      "Thickness \u2113 (um)"
+    ],
+    "chemistry_share_mean": 0.6206489950269111
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.8984126984126984,
+    "w_p": 0.0012998700129987,
+    "spearman_mean": 0.8476190476190477,
+    "top3_overlap": 1.0,
+    "same_top1": true,
+    "row_kendall_w_median": 0.8984126984126984,
+    "n_x_cols": 6,
+    "n_rows": 681,
+    "spearman_seed6_vs_seed13": 0.8285714285714287,
+    "spearman_seed6_vs_seed42": 0.7714285714285715,
+    "spearman_seed13_vs_seed42": 0.942857142857143
+  }
+}

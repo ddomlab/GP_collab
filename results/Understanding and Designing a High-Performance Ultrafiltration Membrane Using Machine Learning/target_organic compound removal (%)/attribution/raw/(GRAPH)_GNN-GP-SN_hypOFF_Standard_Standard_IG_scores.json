@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 7.751423917923691e-05,
+    "rel_error_max": 0.0179050779684066,
+    "top3_x_cols": [
+      "oraganic compound concentration (mg/L)",
+      "organic compound size (Da)",
+      "additive wt% (additive to polymer)"
+    ],
+    "chemistry_share_mean": 0.7761798541663899
+  },
+  "13": {
+    "rel_error_median": 6.028345069283594e-05,
+    "rel_error_max": 0.0066074327901589,
+    "top3_x_cols": [
+      "oraganic compound concentration (mg/L)",
+      "organic compound size (Da)",
+      "TMP (bar)"
+    ],
+    "chemistry_share_mean": 0.7474094753554003
+  },
+  "42": {
+    "rel_error_median": 4.8896807660721533e-05,
+    "rel_error_max": 0.0051944044435301,
+    "top3_x_cols": [
+      "oraganic compound concentration (mg/L)",
+      "organic compound size (Da)",
+      "additive wt% (additive to polymer)"
+    ],
+    "chemistry_share_mean": 0.7620395680314763
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9454545454545454,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9181818181818184,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": true,
+    "row_kendall_w_median": 0.6868686868686869,
+    "n_x_cols": 11,
+    "n_rows": 318,
+    "spearman_seed6_vs_seed13": 0.9272727272727276,
+    "spearman_seed6_vs_seed42": 0.881818181818182,
+    "spearman_seed13_vs_seed42": 0.9454545454545454
+  }
+}

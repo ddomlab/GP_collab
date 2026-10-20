@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 1.525878909092171e-05,
+    "abs_error_max": 0.0001220703125,
+    "top3_x_cols": [
+      "TMP (bar)",
+      "oraganic compound concentration (mg/L)",
+      "additive wt% (additive to polymer)"
+    ]
+  },
+  "13": {
+    "abs_error_median": 2.2888183579539145e-05,
+    "abs_error_max": 0.0001678466797159,
+    "top3_x_cols": [
+      "TMP (bar)",
+      "oraganic compound concentration (mg/L)",
+      "additive wt% (additive to polymer)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 2.2888183636382564e-05,
+    "abs_error_max": 0.0001144409179403,
+    "top3_x_cols": [
+      "TMP (bar)",
+      "oraganic compound concentration (mg/L)",
+      "additive wt% (additive to polymer)"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9696969696969696,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9545454545454546,
+    "top3_overlap": 1.0,
+    "same_top1": true,
+    "row_kendall_w_median": 0.9414141414141414,
+    "n_x_cols": 11,
+    "n_rows": 318,
+    "spearman_seed6_vs_seed13": 0.9818181818181818,
+    "spearman_seed6_vs_seed42": 0.9272727272727276,
+    "spearman_seed13_vs_seed42": 0.9545454545454546
+  }
+}

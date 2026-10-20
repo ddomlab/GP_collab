@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 0.0002100655405494,
+    "rel_error_max": 0.9307228915662652,
+    "top3_x_cols": [
+      "Experimental_temperature",
+      "Selective_layer_thickness",
+      "Organic_Hildebrand_solubility_parameter"
+    ],
+    "chemistry_share_mean": 0.863046067373732
+  },
+  "13": {
+    "rel_error_median": 0.0002867669791959,
+    "rel_error_max": 0.1424564169139466,
+    "top3_x_cols": [
+      "Experimental_temperature",
+      "Selective_layer_thickness",
+      "Organic_Hildebrand_solubility_parameter"
+    ],
+    "chemistry_share_mean": 0.8501232832854255
+  },
+  "42": {
+    "rel_error_median": 0.0002478571012175,
+    "rel_error_max": 2.43148306117475,
+    "top3_x_cols": [
+      "Experimental_temperature",
+      "Selective_layer_thickness",
+      "Organic_Hildebrand_solubility_parameter"
+    ],
+    "chemistry_share_mean": 0.8485797278133062
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9730639730639732,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9595959595959594,
+    "top3_overlap": 1.0,
+    "same_top1": true,
+    "row_kendall_w_median": 0.7952861952861953,
+    "n_x_cols": 10,
+    "n_rows": 2283,
+    "spearman_seed6_vs_seed13": 0.9636363636363636,
+    "spearman_seed6_vs_seed42": 0.9757575757575756,
+    "spearman_seed13_vs_seed42": 0.9393939393939392
+  }
+}

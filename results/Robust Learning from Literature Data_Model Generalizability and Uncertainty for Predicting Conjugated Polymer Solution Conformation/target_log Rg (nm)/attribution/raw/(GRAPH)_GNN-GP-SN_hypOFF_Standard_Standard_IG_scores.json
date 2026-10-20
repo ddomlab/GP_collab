@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 6.150984094775299e-05,
+    "rel_error_max": 0.0089471152377752,
+    "top3_x_cols": [
+      "solvent dP",
+      "solvent dD",
+      "PDI"
+    ],
+    "chemistry_share_mean": 0.8610916365297138
+  },
+  "13": {
+    "rel_error_median": 4.501054349325016e-05,
+    "rel_error_max": 0.1654508113861084,
+    "top3_x_cols": [
+      "solvent dD",
+      "PDI",
+      "solvent dP"
+    ],
+    "chemistry_share_mean": 0.85918468646369
+  },
+  "42": {
+    "rel_error_median": 7.967764523935589e-05,
+    "rel_error_max": 0.1291590880582037,
+    "top3_x_cols": [
+      "solvent dD",
+      "solvent dP",
+      "PDI"
+    ],
+    "chemistry_share_mean": 0.8617951673203615
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9696969696969696,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9545454545454546,
+    "top3_overlap": 1.0,
+    "same_top1": false,
+    "row_kendall_w_median": 0.6141414141414141,
+    "n_x_cols": 11,
+    "n_rows": 256,
+    "spearman_seed6_vs_seed13": 0.9636363636363636,
+    "spearman_seed6_vs_seed42": 0.9454545454545454,
+    "spearman_seed13_vs_seed42": 0.9545454545454546
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 5.960464488641294e-08,
+    "abs_error_max": 4.768371586472142e-07,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Contact angle \u03b8 \uff08\u00b0\uff09",
+      "Thickness \u2113 (um)"
+    ]
+  },
+  "13": {
+    "abs_error_median": 5.960464477539065e-08,
+    "abs_error_max": 3.5762786954052217e-07,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Contact angle \u03b8 \uff08\u00b0\uff09",
+      "Thickness \u2113 (um)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 5.960464499743523e-08,
+    "abs_error_max": 4.768371590913034e-07,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Contact angle \u03b8 \uff08\u00b0\uff09",
+      "Thickness \u2113 (um)"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9746031746031746,
+    "w_p": 0.0001999800019998,
+    "spearman_mean": 0.961904761904762,
+    "top3_overlap": 1.0,
+    "same_top1": true,
+    "row_kendall_w_median": 1.0,
+    "n_x_cols": 6,
+    "n_rows": 681,
+    "spearman_seed6_vs_seed13": 0.942857142857143,
+    "spearman_seed6_vs_seed42": 1.0,
+    "spearman_seed13_vs_seed42": 0.942857142857143
+  }
+}

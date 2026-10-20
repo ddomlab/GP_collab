@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 0.0024725201586906,
+    "rel_error_max": 0.6564984285450176,
+    "top3_x_cols": [
+      "LUMO_A (eV)",
+      "Eg_A (eV)",
+      "HOMO_D (eV)"
+    ],
+    "chemistry_share_mean": 0.4400112722324931
+  },
+  "13": {
+    "rel_error_median": 0.00178031295066,
+    "rel_error_max": 0.5991299431479097,
+    "top3_x_cols": [
+      "LUMO_A (eV)",
+      "Eg_A (eV)",
+      "HOMO_D (eV)"
+    ],
+    "chemistry_share_mean": 0.4950153817484345
+  },
+  "42": {
+    "rel_error_median": 0.0034360806827233503,
+    "rel_error_max": 1.88611730702774,
+    "top3_x_cols": [
+      "LUMO_A (eV)",
+      "temperature of thermal annealing",
+      "Ehl_A (eV)"
+    ],
+    "chemistry_share_mean": 0.4758336997569248
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.7753357753357754,
+    "w_p": 0.0003999600039996,
+    "spearman_mean": 0.663003663003663,
+    "top3_overlap": 0.5555555555555555,
+    "same_top1": true,
+    "row_kendall_w_median": 0.5457875457875457,
+    "n_x_cols": 13,
+    "n_rows": 558,
+    "spearman_seed6_vs_seed13": 0.6153846153846153,
+    "spearman_seed6_vs_seed42": 0.5989010989010989,
+    "spearman_seed13_vs_seed42": 0.7747252747252747
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 0.0043517220764246,
+    "rel_error_max": 2.964922424154132,
+    "top3_x_cols": [
+      "Eg_A (eV)",
+      "temperature of thermal annealing",
+      "ETL energy level (eV)"
+    ],
+    "chemistry_share_mean": 0.3728321263436783
+  },
+  "13": {
+    "rel_error_median": 0.004593548790760051,
+    "rel_error_max": 11.638288414363094,
+    "top3_x_cols": [
+      "Eg_A (eV)",
+      "Eg_D (eV)",
+      "LUMO_A (eV)"
+    ],
+    "chemistry_share_mean": 0.35584875605624305
+  },
+  "42": {
+    "rel_error_median": 0.0058741154080398,
+    "rel_error_max": 2.0296454259058687,
+    "top3_x_cols": [
+      "Eg_A (eV)",
+      "temperature of thermal annealing",
+      "LUMO_A (eV)"
+    ],
+    "chemistry_share_mean": 0.4178725270975136
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.8424908424908425,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.7637362637362637,
+    "top3_overlap": 0.5555555555555555,
+    "same_top1": true,
+    "row_kendall_w_median": 0.4365079365079365,
+    "n_x_cols": 13,
+    "n_rows": 558,
+    "spearman_seed6_vs_seed13": 0.7087912087912087,
+    "spearman_seed6_vs_seed42": 0.6978021978021978,
+    "spearman_seed13_vs_seed42": 0.8846153846153846
+  }
+}

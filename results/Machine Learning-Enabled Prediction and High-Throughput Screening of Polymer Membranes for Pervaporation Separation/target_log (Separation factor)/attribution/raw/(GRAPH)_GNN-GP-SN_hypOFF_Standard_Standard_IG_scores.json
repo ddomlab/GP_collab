@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 8.527143219798089e-05,
+    "rel_error_max": 0.1548998794928487,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Solvent solubility parameter \uff08MPa1/2\uff09",
+      "Permeate pressure (mbar)"
+    ],
+    "chemistry_share_mean": 0.6907253391088528
+  },
+  "13": {
+    "rel_error_median": 4.0899003797035856e-05,
+    "rel_error_max": 0.0684669206344108,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Solvent solubility parameter \uff08MPa1/2\uff09",
+      "Contact angle \u03b8 \uff08\u00b0\uff09"
+    ],
+    "chemistry_share_mean": 0.6489434120003594
+  },
+  "42": {
+    "rel_error_median": 4.281513699253228e-05,
+    "rel_error_max": 0.0598293996047341,
+    "top3_x_cols": [
+      "xw (wt%)",
+      "Solvent solubility parameter \uff08MPa1/2\uff09",
+      "Permeate pressure (mbar)"
+    ],
+    "chemistry_share_mean": 0.6428008462475362
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9365079365079364,
+    "w_p": 0.0003999600039996,
+    "spearman_mean": 0.904761904761905,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": true,
+    "row_kendall_w_median": 0.8222222222222222,
+    "n_x_cols": 6,
+    "n_rows": 681,
+    "spearman_seed6_vs_seed13": 0.8285714285714287,
+    "spearman_seed6_vs_seed42": 0.942857142857143,
+    "spearman_seed13_vs_seed42": 0.942857142857143
+  }
+}

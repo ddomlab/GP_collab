@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 2.2767555141189888e-07,
+    "abs_error_max": 1.1920928955078125e-06,
+    "top3_x_cols": [
+      "PDI",
+      "solvent dP",
+      "Temperature SANS/SLS/DLS/SEC (K)"
+    ]
+  },
+  "13": {
+    "abs_error_median": 1.2278556815736868e-07,
+    "abs_error_max": 9.59634781416696e-07,
+    "top3_x_cols": [
+      "solvent dD",
+      "PDI",
+      "Temperature SANS/SLS/DLS/SEC (K)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 1.4043989637890775e-07,
+    "abs_error_max": 9.510630647469044e-07,
+    "top3_x_cols": [
+      "solvent dD",
+      "solvent dP",
+      "PDI"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9575757575757576,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9363636363636364,
+    "top3_overlap": 0.6666666666666666,
+    "same_top1": false,
+    "row_kendall_w_median": 0.7636363636363637,
+    "n_x_cols": 11,
+    "n_rows": 256,
+    "spearman_seed6_vs_seed13": 0.9181818181818184,
+    "spearman_seed6_vs_seed42": 0.9272727272727276,
+    "spearman_seed13_vs_seed42": 0.9636363636363636
+  }
+}

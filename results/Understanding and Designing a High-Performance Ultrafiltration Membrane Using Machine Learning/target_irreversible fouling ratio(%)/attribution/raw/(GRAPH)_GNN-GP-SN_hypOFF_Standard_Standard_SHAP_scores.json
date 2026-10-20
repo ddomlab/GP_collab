@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 3.728866579066903e-06,
+    "abs_error_max": 1.550424666163508e-05,
+    "top3_x_cols": [
+      "additive wt% (additive to polymer)",
+      "TMP (bar)",
+      "P_wt%"
+    ]
+  },
+  "13": {
+    "abs_error_median": 3.638267516592464e-06,
+    "abs_error_max": 2.0060539245747577e-05,
+    "top3_x_cols": [
+      "additive wt% (additive to polymer)",
+      "TMP (bar)",
+      "foulant concentration (mg/L)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 3.7950561173616393e-06,
+    "abs_error_max": 2.1093459352528043e-05,
+    "top3_x_cols": [
+      "additive wt% (additive to polymer)",
+      "TMP (bar)",
+      "foulant concentration (mg/L)"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.8767676767676768,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.8151515151515151,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": true,
+    "row_kendall_w_median": 0.8252525252525252,
+    "n_x_cols": 11,
+    "n_rows": 318,
+    "spearman_seed6_vs_seed13": 0.7636363636363637,
+    "spearman_seed6_vs_seed42": 0.7818181818181819,
+    "spearman_seed13_vs_seed42": 0.9
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 8.795925269391136e-05,
+    "rel_error_max": 0.0291065251103423,
+    "top3_x_cols": [
+      "solvent dP",
+      "solvent dD",
+      "Temperature SANS/SLS/DLS/SEC (K)"
+    ],
+    "chemistry_share_mean": 0.18847924518966064
+  },
+  "13": {
+    "rel_error_median": 9.970153585996743e-05,
+    "rel_error_max": 0.1462873610071001,
+    "top3_x_cols": [
+      "Temperature SANS/SLS/DLS/SEC (K)",
+      "solvent dD",
+      "solvent dP"
+    ],
+    "chemistry_share_mean": 0.18444652261266659
+  },
+  "42": {
+    "rel_error_median": 0.00010462095899645,
+    "rel_error_max": 0.0235569343051877,
+    "top3_x_cols": [
+      "Concentration (mg/ml)",
+      "solvent dD",
+      "Temperature SANS/SLS/DLS/SEC (K)"
+    ],
+    "chemistry_share_mean": 0.17416391042517756
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.8444444444444444,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.7666666666666667,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": false,
+    "row_kendall_w_median": 0.5808080808080808,
+    "n_x_cols": 11,
+    "n_rows": 256,
+    "spearman_seed6_vs_seed13": 0.8000000000000002,
+    "spearman_seed6_vs_seed42": 0.6727272727272727,
+    "spearman_seed13_vs_seed42": 0.8272727272727273
+  }
+}

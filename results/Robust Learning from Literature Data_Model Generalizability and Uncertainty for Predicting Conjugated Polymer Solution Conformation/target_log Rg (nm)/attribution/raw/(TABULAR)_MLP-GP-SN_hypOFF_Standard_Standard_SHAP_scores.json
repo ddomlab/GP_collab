@@ -1,0 +1,45 @@
+{
+  "6": {
+    "abs_error_median": 1.1920928955078125e-07,
+    "abs_error_max": 3.933906555175781e-06,
+    "top3_x_cols": [
+      "polymer dH",
+      "solvent dD",
+      "solvent dP"
+    ]
+  },
+  "13": {
+    "abs_error_median": 1.1920928938424781e-07,
+    "abs_error_max": 1.5497207641601562e-06,
+    "top3_x_cols": [
+      "solvent dD",
+      "polymer dH",
+      "Mw (g/mol)"
+    ]
+  },
+  "42": {
+    "abs_error_median": 1.1920928955078125e-07,
+    "abs_error_max": 1.3113021850585938e-06,
+    "top3_x_cols": [
+      "solvent dD",
+      "polymer dH",
+      "solvent dP"
+    ]
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9111111111111112,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.8666666666666668,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": false,
+    "row_kendall_w_median": 0.897979797979798,
+    "n_x_cols": 11,
+    "n_rows": 256,
+    "spearman_seed6_vs_seed13": 0.7636363636363637,
+    "spearman_seed6_vs_seed42": 0.9181818181818184,
+    "spearman_seed13_vs_seed42": 0.9181818181818184
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "6": {
+    "rel_error_median": 5.220546506671386e-05,
+    "rel_error_max": 0.1109912207562901,
+    "top3_x_cols": [
+      "Organic_molecular_volume",
+      "Filler_concentration",
+      "Crosslinker_concentration"
+    ],
+    "chemistry_share_mean": 0.20546470624021998
+  },
+  "13": {
+    "rel_error_median": 7.376997243409635e-05,
+    "rel_error_max": 0.2977413937867338,
+    "top3_x_cols": [
+      "Crosslinker_concentration",
+      "Organic_molecular_volume",
+      "Experimental_temperature"
+    ],
+    "chemistry_share_mean": 0.20000799027298116
+  },
+  "42": {
+    "rel_error_median": 8.442866384929118e-05,
+    "rel_error_max": 0.422008547008547,
+    "top3_x_cols": [
+      "Crosslinker_concentration",
+      "Filler_concentration",
+      "Organic_molecular_volume"
+    ],
+    "chemistry_share_mean": 0.22917951809582596
+  },
+  "seed_consistency": {
+    "seeds": "6 13 42",
+    "n_raters": 3,
+    "w_chance": 0.3333333333333333,
+    "kendall_w": 0.9407407407407408,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9111111111111112,
+    "top3_overlap": 0.7777777777777777,
+    "same_top1": false,
+    "row_kendall_w_median": 0.4747474747474747,
+    "n_x_cols": 10,
+    "n_rows": 2311,
+    "spearman_seed6_vs_seed13": 0.8787878787878788,
+    "spearman_seed6_vs_seed42": 0.9393939393939392,
+    "spearman_seed13_vs_seed42": 0.9151515151515152
+  }
+}
