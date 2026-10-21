@@ -8,8 +8,8 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 model="GPytorchMAP"
-k_fps=("Tanimoto" "TanimotoRBF" "TanimotoMatern32" "TanimotoMatern52" "Matern32" "Matern52" "RBF")
-k_counts=("Matern32" "Matern52" "RBF")
+k_fps=("TanimotoMatern32")
+k_counts=("Matern32")
 k_mixing_methods=("sum" "product" "(count:x)+(fp:x)" "(count:+)x(fp:+)")
 
 
@@ -21,7 +21,7 @@ for mixing_method in "${k_mixing_methods[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 25:30
+#BSUB -W 60:30
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
