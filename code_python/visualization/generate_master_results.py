@@ -1411,27 +1411,27 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Extract feature stability separately from the performance tables:
-    extract_feature_importance_stability()
+    # extract_feature_importance_stability()
 
     # Choose one feature set and a distinct output name:
-    # feature_set: FeatureSet = "HDF"
+    feature_set: FeatureSet = "unique_fp_permutation"
 
-    # output_name = {
-    #     "HDF": "Tree_HDF",
-    #     "structure_and_count": "Tree_and_GP_structure_and_count",
-    #     "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
-    #     "count_and_graph": "MLP_GNN_GP_SNGP_count_and_graph",
-    #     "count_only": "Tree_and_GP_COUNT_only",
-    #     "random_count_permutation": "GP_random_count_permutation",
-    #     "random_fp_permutation": "GP_random_fp_permutation",
-    #     "unique_fp_permutation": "GP_unique_fp_permutation",
-    # }[feature_set]
+    output_name = {
+        "HDF": "Tree_HDF",
+        "structure_and_count": "Tree_and_GP_structure_and_count",
+        "count_and_fingerprint": "Tree_and_GP_count_and_fingerprint",
+        "count_and_graph": "MLP_GNN_GP_SNGP_count_and_graph",
+        "count_only": "Tree_and_GP_COUNT_only",
+        "random_count_permutation": "GP_random_count_permutation",
+        "random_fp_permutation": "GP_random_fp_permutation",
+        "unique_fp_permutation": "GP_unique_fp_permutation",
+    }[feature_set]
 
-    # build_master_performance_data(
-    #     save_path=RESULTS / "master_performance_data" / output_name,
-    #     score_metrics=DEFAULT_SCORE_METRICS,
-    #     feature_set=feature_set,
-    # )
+    build_master_performance_data(
+        save_path=RESULTS / "master_performance_data" / output_name,
+        score_metrics=DEFAULT_SCORE_METRICS,
+        feature_set=feature_set,
+    )
 
     # ood_type: OODType = "structure_cluster_OOD"
     # output_name = {

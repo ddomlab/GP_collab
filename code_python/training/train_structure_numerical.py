@@ -150,7 +150,16 @@ if __name__ == "__main__":
                 "use_cuda": True,
             }
 
-        for targ in all_targets:
+        targets_to_train = all_targets
+        if args.target_features:
+            if args.target_features not in all_targets:
+                raise ValueError(
+                    f"Unknown target {args.target_features!r}. "
+                    f"Available targets: {all_targets}"
+                )
+            targets_to_train = [args.target_features]
+
+        for targ in targets_to_train:
             main_structural_numerical(
                 dataset=w_data,
                 regressor_type=model_name,

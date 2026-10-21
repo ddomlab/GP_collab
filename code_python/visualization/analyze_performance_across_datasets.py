@@ -962,16 +962,16 @@ if __name__ == "__main__":
         MASTER_DATA / f"Tree_and_GP_count_and_fingerprint_{master_device}.pkl"
     )
 
-    # structure_and_count_results = pd.read_pickle(
-    #     MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
-    # )
+    structure_and_count_results = pd.read_pickle(
+        MASTER_DATA / f"Tree_and_GP_structure_and_count_{master_device}.pkl"
+    )
     
-    # count_results = pd.read_pickle(
-    #     MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
-    # )
-    # permuted_fp_result = pd.read_pickle(
-    #     MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
-    # )
+    count_results = pd.read_pickle(
+        MASTER_DATA / f"Tree_and_GP_COUNT_only_{master_device}.pkl"
+    )
+    permuted_fp_result = pd.read_pickle(
+        MASTER_DATA / f"GP_random_fp_permutation_{master_device}.pkl"
+    )
 
     unique_permuted_fp_result = pd.read_pickle(
         MASTER_DATA / f"GP_unique_fp_permutation_{master_device}.pkl"
@@ -1052,7 +1052,7 @@ if __name__ == "__main__":
 
     # plot_regular_vs_permuted_fp_performance_by_target(
     #     regular_df=count_and_fingerprint_result,
-    #     permuted_df=permuted_fp_result,
+    #     permuted_df=unique_permuted_fp_result,
     #     count_only_df=count_results,
     #     permuted_count_df=permuted_count_result,
     #     metric="OOF_R2",
