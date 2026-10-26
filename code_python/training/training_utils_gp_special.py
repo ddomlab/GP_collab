@@ -583,7 +583,7 @@ def run(
                                             X, y,
                                             cv_outer,
                                             cluster_group=cluster_group,
-                                            ood_validation_mode="both",
+                                            ood_validation_mode="ood",
                                             n_jobs=n_jobs,
                                             return_ls=True,
                                             UQ=True

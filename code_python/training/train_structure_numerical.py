@@ -84,7 +84,7 @@ def main_structural_numerical(
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='HDF',
-                # special_file_name='random_count_permutation' if kwargs.get("permute_features", False) else None,
+                special_file_name="ood",
                 **kwargs,
                 )
 
