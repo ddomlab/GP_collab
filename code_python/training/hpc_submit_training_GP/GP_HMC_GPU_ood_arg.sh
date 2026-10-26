@@ -1,20 +1,32 @@
 #!/bin/bash
 
-# Train the two missing continuous-cluster GpyroHMC OOD models with one
-# independently scheduled job per target.
+# Train GpyroHMC OOD models with one independently scheduled job per target.
+# With the configured kernels and mixing method, this submits 26 jobs:
+# 13 dataset/target combinations x 2 clustering methods.
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-k_fps=("TanimotoMatern32")
+k_fps=("Matern32")
 k_counts=("Matern32")
 k_mixing_methods=("(count:x)+(fp:x)")
-clustering_methods=("continuous_cluster")
+clustering_methods=("continuous_cluster" "structure_cluster")
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
 job_index=0
 
 dataset_targets=(
+    "Beyond molecular structure_ critically assessing machine learning for designing organic photovoltaic materials and devices|Beyond molecular structure_seifrid_imputed|calculated PCE (%)"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|flux_data_imputed|log (Total flux)"
     "Machine Learning for Polymer Design to Enhance Pervaporation-Based Organic Recovery|separation_data_imputed|log (Separation factor)"
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|log (Total flux)"
+    "Machine Learning-Enabled Prediction and High-Throughput Screening of Polymer Membranes for Pervaporation Separation|cleaned_dataset_pervaporation_membranes_wang|log (Separation factor)"
+    "Miniaturization of Popular Reactions from the Medicinal Chemists Toolbox for Ultrahigh_Throughput Experimentation|cleaned_suzuki_synthesis|Approx Conv (%)"
+    "Robust Learning from Literature Data_Model Generalizability and Uncertainty for Predicting Conjugated Polymer Solution Conformation|Rg data with clusters aging imputed|log Rg (nm)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|water permeability (LMH/bar)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|organic compound removal (%)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|flux decline ratio (%)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|flux recovery ratio (%)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|reversible fouling ratio (%)"
+    "Understanding and Designing a High-Performance Ultrafiltration Membrane Using Machine Learning|cleaned_dataset_Ultrafiltration Membrane_imputed|irreversible fouling ratio(%)"
 )
 
 submit_job() {
@@ -35,7 +47,7 @@ submit_job() {
 
     bsub <<EOT
 #BSUB -n 1
-#BSUB -W 60:10
+#BSUB -W 50:10
 #BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"

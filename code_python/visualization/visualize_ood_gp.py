@@ -1423,6 +1423,7 @@ if __name__ == "__main__":
         "XGBR",
         "NGB",
         "GPytorchMAP",
+        "GpyroHMC",
         "GNN-GP",
         "GNN-GP-SN",
         "GNN-MLP",
@@ -1438,23 +1439,23 @@ if __name__ == "__main__":
         "structure": structure_ood_results,
         "continuous": continuous_ood_results,
     }
-    # for ood_type, result_df in ood_results.items():
-    #     for ood_and_iid in ["OOD", "IID"]:
-    #         plot_model_profile_comparison(
-    #             df=result_df,
-    #             model=models,
-    #             kernel_triples=kernel_triples,
-    #             metric="NLL",
-    #             ood_and_iid=ood_and_iid,
-    #             fontsize=15,
-    #             y_label="Profile AUC: NLL",
-    #             figsize=(7.5, 5),
-    #             save_dir=(
-    #                 DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
-    #             ),
-    #             show=False,
-    #             file_name=f"NLL_{ood_type}_{ood_and_iid.lower()}.png",
-    #         )
+    for ood_type, result_df in ood_results.items():
+        for ood_and_iid in ["OOD", "IID"]:
+            plot_model_profile_comparison(
+                df=result_df,
+                model=models,
+                kernel_triples=kernel_triples,
+                metric="r2",
+                ood_and_iid=ood_and_iid,
+                fontsize=15,
+                y_label="Profile AUC: R2",
+                figsize=(7.5, 5),
+                save_dir=(
+                    DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
+                ),
+                show=False,
+                file_name=f"R2_{ood_type}_{ood_and_iid.lower()}.png",
+            )
 
     # nll_models = [
     #     "RF",
@@ -1501,27 +1502,27 @@ if __name__ == "__main__":
 
     # Hybridization comparisons: select kernel pairs rather than the model
     # comparison's kernel_triples, and compare the four requested methods.
-    for ood_type, result_df in ood_results.items():
-        for evaluation in EVALUATIONS:
-            plot_hybridization_profile_comparison(
-                df=result_df,
-                model="GPytorchMAP",
-                fp_kernels="TanimotoMatern32",
-                count_kernels="Matern32",
-                mixing_methods=[
-                    "sum",
-                    "product",
-                    "(count:+)x(fp:+)",
-                    "(count:x)+(fp:x)",
-                ],
-                metric="r2",
-                ood_and_iid=evaluation,
-                fontsize=15,
-                show_values=True,
-                show=False,
-                save_dir=DEFAULT_SAVE_DIR / "performance_profile" / "hybridization_comparison",
-                file_name=f"R2_{ood_type}_{evaluation.lower()}.png",
-            )
+    # for ood_type, result_df in ood_results.items():
+    #     for evaluation in EVALUATIONS:
+    #         plot_hybridization_profile_comparison(
+    #             df=result_df,
+    #             model="GPytorchMAP",
+    #             fp_kernels="TanimotoMatern32",
+    #             count_kernels="Matern32",
+    #             mixing_methods=[
+    #                 "sum",
+    #                 "product",
+    #                 "(count:+)x(fp:+)",
+    #                 "(count:x)+(fp:x)",
+    #             ],
+    #             metric="r2",
+    #             ood_and_iid=evaluation,
+    #             fontsize=15,
+    #             show_values=True,
+    #             show=False,
+    #             save_dir=DEFAULT_SAVE_DIR / "performance_profile" / "hybridization_comparison",
+    #             file_name=f"R2_{ood_type}_{evaluation.lower()}.png",
+    #         )
     #     plot_hybridization_mean_std_comparison(
     #         df=result_df,
     #         model="GPytorchMAP",
