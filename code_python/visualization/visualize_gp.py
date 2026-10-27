@@ -6107,7 +6107,7 @@ if __name__ == "__main__":
     #     mixing_methods=[
     #         "sum",
     #         "product",
-    #         "(count:+)x(fp:+)",
+    #         "(count:+)x(fp:x)",
     #         "(count:x)+(fp:x)",
     #     ],
     #     y_label="Profile AUC of R² (OOF)",
@@ -6118,24 +6118,24 @@ if __name__ == "__main__":
     # )
 
 
-    # plot_hybridization_profile_comparison(
-    #     df=result_df,
-    #     model="GPytorchMAP",
-    #     metric="OOF_R2",
-    #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="Profile AUC of R² (OOF)",
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-    #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
-    # )
+    plot_hybridization_profile_comparison(
+        df=result_df,
+        model="GPytorchMAP",
+        metric="OOF_R2",
+        fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:x)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="Profile AUC of R² (OOF)",
+        fontsize=16,
+        figsize=(6, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+        file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
+    )
 
     # plot_hybridization_mean_std_comparison(
     #     df=result_df,

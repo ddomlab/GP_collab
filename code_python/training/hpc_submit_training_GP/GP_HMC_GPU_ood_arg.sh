@@ -6,9 +6,9 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-k_fps=("Matern32")
+k_fps=("TanimotoMatern32")
 k_counts=("Matern32")
-k_mixing_methods=("(count:+)x(fp:+)")
+k_mixing_methods=("(count:+)x(fp:x)")
 clustering_methods=("continuous_cluster" "structure_cluster")
 output_root="/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/hpc_${DATE}"
 job_index=0
