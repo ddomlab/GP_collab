@@ -276,10 +276,12 @@ def _score_file_stems(
         feature_set = "count_and_fingerprint"
 
     if feature_set == "count_and_graph":
-        if use_gpu or model not in COUNT_AND_GRAPH_MODELS:
+        if model not in COUNT_AND_GRAPH_MODELS:
             return []
+        device_suffix = "_GPU" if use_gpu else ""
         return [
-            f"{COUNT_AND_GRAPH_MODELS[model]}_hypOFF_Standard_Standard_scores"
+            f"{COUNT_AND_GRAPH_MODELS[model]}_hypOFF_Standard_Standard"
+            f"{device_suffix}_scores"
         ]
 
     if feature_set in RANDOM_PERMUTATION_FEATURE_SETS:
@@ -1067,18 +1069,24 @@ def build_master_ood_performance_data(
     ),
     score_metrics: Optional[List[str]] = None,
     ood_type: OODType = "structure_cluster_OOD",
-) -> pd.DataFrame:
-    """Build pickle and CSV master datasets for the selected OOD split type.
+) -> Dict[str, pd.DataFrame]:
+    """Build CPU and GPU master datasets for the selected OOD split type.
 
     Each metric cell retains the JSON representation for that validation
     split: OOD cells map cluster IDs to scalar scores, while IID cells map
     cluster IDs to lists of scores. In addition to the tree, GP, and MGK
-    configurations, the CPU count-and-graph GNN/MLP models contribute one row
-    per task with empty kernel metadata. Point-prediction GNN-MLP rows retain
-    their available prediction metrics while uncertainty/calibration cells are
-    left empty. Lengthscales and feature importances are intentionally
-    excluded. Missing result configurations are represented by rows whose
-    metric cells are ``None``, matching the regular master builder.
+    configurations, the count-and-graph GNN/MLP models contribute one row per
+    task with empty kernel metadata. Tree-model results are included in both
+    device datasets from their CPU files. Every non-tree row uses only the
+    requested device, with no cross-device fallback. Point-prediction GNN-MLP
+    rows retain their available prediction metrics while uncertainty and
+    calibration cells are left empty.
+
+    When ``save_path`` is provided, the function writes
+    ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``, matching
+    :func:`build_master_performance_data`. Lengthscales and feature importances
+    are intentionally excluded. Missing result configurations are represented
+    by rows whose metric cells are ``None``.
     """
     ood_type = _validate_ood_type(ood_type)
 
@@ -1092,68 +1100,78 @@ def build_master_ood_performance_data(
             )
         )
     )
-    rows = []
+    dataframes = {}
+    for device in ("CPU", "GPU"):
+        use_gpu = device == "GPU"
+        rows = []
 
-    for paper_name, paper_info in PAPER.items():
-        for target in paper_info["target"]:
-            ood_dir = RESULTS / paper_name / target / ood_type
+        for paper_name, paper_info in PAPER.items():
+            for target in paper_info["target"]:
+                ood_dir = RESULTS / paper_name / target / ood_type
 
-            for model in OOD_MODELS:
-                for fp_kernel, count_kernel, mixing_method in (
-                    _ood_model_configurations(model)
-                ):
-                    is_count_and_graph = model in COUNT_AND_GRAPH_MODELS
-                    data, _ = _load_score_file(
-                        ood_dir,
-                        model,
-                        (
-                            "count_and_graph"
-                            if is_count_and_graph
-                            else "count_and_fingerprint"
-                        ),
-                        fp_kernel,
-                        count_kernel,
-                        mixing_method,
-                        use_gpu=(
-                            not _is_tree_model(model)
-                            and not is_count_and_graph
-                        ),
-                    )
-                    rows.append(
-                        {
-                            "paper": paper_name,
-                            "target": target,
-                            "model": model,
-                            "fp kernel": fp_kernel,
-                            "count kernel": count_kernel,
-                            "mixing method": mixing_method,
-                            **_ood_score_row_values(data, metrics),
-                        }
-                    )
+                for model in OOD_MODELS:
+                    for fp_kernel, count_kernel, mixing_method in (
+                        _ood_model_configurations(model)
+                    ):
+                        is_count_and_graph = model in COUNT_AND_GRAPH_MODELS
+                        data, _ = _load_score_file(
+                            ood_dir,
+                            model,
+                            (
+                                "count_and_graph"
+                                if is_count_and_graph
+                                else "count_and_fingerprint"
+                            ),
+                            fp_kernel,
+                            count_kernel,
+                            mixing_method,
+                            use_gpu=use_gpu and not _is_tree_model(model),
+                        )
+                        rows.append(
+                            {
+                                "paper": paper_name,
+                                "target": target,
+                                "model": model,
+                                "fp kernel": fp_kernel,
+                                "count kernel": count_kernel,
+                                "mixing method": mixing_method,
+                                **_ood_score_row_values(data, metrics),
+                            }
+                        )
 
-    dataframe = pd.DataFrame(
-        rows,
-        columns=_ood_master_result_columns(metrics),
-        dtype=object,
-    )
-    if save_path is not None:
-        output_path = Path(save_path)
-        ensure_long_path(output_path.parent).mkdir(parents=True, exist_ok=True)
-        dataframe.to_pickle(ensure_long_path(Path(f"{output_path}.pkl")))
-
-        csv_data = dataframe.copy()
-        for column in _ood_master_result_columns(metrics)[
-            len(BASE_MASTER_RESULT_COLUMNS):
-        ]:
-            csv_data[column] = csv_data[column].apply(
-                lambda value: json.dumps(value) if value is not None else None
-            )
-        csv_data.to_csv(
-            ensure_long_path(Path(f"{output_path}.csv")),
-            index=False,
+        dataframe = pd.DataFrame(
+            rows,
+            columns=_ood_master_result_columns(metrics),
+            dtype=object,
         )
+        dataframes[device] = dataframe
 
-    return dataframe
+        if save_path is not None:
+            output_path = Path(f"{save_path}_{device}")
+            ensure_long_path(output_path.parent).mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+            dataframe.to_pickle(
+                ensure_long_path(Path(f"{output_path}.pkl"))
+            )
+
+            csv_data = dataframe.copy()
+            metric_columns = _ood_master_result_columns(metrics)[
+                len(BASE_MASTER_RESULT_COLUMNS):
+            ]
+            for column in metric_columns:
+                csv_data[column] = csv_data[column].apply(
+                    lambda value: (
+                        json.dumps(value) if value is not None else None
+                    )
+                )
+            csv_data.to_csv(
+                ensure_long_path(Path(f"{output_path}.csv")),
+                index=False,
+            )
+
+    return dataframes
 
 
 def build_master_performance_data(
@@ -1173,7 +1191,7 @@ def build_master_performance_data(
     ``feature_set="count_only"`` includes COUNT-only tree results and
     GPytorchMAP results for the Matern32, Matern52, and RBF count kernels with
     the ``sum`` and ``product`` mixing methods.
-    ``feature_set="count_and_graph"`` includes the CPU-only GNN-GP,
+    ``feature_set="count_and_graph"`` includes the CPU and GPU GNN-GP,
     GNN-GP-SN, GNN-MLP, GNN-MLP-Ens, MLP-GP, and MLP-GP-SN results. The
     ``*-GP-SN`` models are the spectrally normalized SNGP variants, and
     GNN-MLP-Ens is the uncertainty-aware GNN-MLP ensemble. The point-prediction
@@ -1195,17 +1213,17 @@ def build_master_performance_data(
     configurations for results trained after permuting unique fingerprint
     feature vectors.
 
-    Tree-model results are included in both device datasets. GP rows use only
-    the requested device, with no cross-device fallback. Count-and-graph
-    and HDF results are CPU-only. Feature-importance stability is excluded;
-    use ``extract_feature_importance_stability`` to build its separate table.
+    Tree-model results are included in both device datasets. GP and
+    count-and-graph rows use only the requested device, with no cross-device
+    fallback. HDF results are CPU-only. Feature-importance stability is
+    excluded; use ``extract_feature_importance_stability`` to build its
+    separate table.
 
     When ``save_path`` is provided, standard modes write
     ``<save_path>_CPU.{pkl,csv}`` and ``<save_path>_GPU.{pkl,csv}``. Random
     fingerprint and COUNT permutation results are GPU-only, so those modes
     write only ``<save_path>_GPU.{pkl,csv}``. Count-and-graph results write
-    only ``<save_path>_CPU.{pkl,csv}``. HDF results are also written only to
-    the CPU output.
+    both CPU and GPU outputs. HDF results are written only to the CPU output.
     """
     feature_set = _validate_feature_set(feature_set)
     metrics = list(
@@ -1217,7 +1235,7 @@ def build_master_performance_data(
     devices = (
         ("GPU",)
         if feature_set in RANDOM_PERMUTATION_FEATURE_SETS
-        else ("CPU",) if feature_set in {"count_and_graph", "HDF"}
+        else ("CPU",) if feature_set == "HDF"
         else ("CPU", "GPU")
     )
     if feature_set == "count_only":
@@ -1310,6 +1328,7 @@ def build_master_performance_data(
                             paper_dir,
                             model,
                             feature_set,
+                            use_gpu=use_gpu,
                         )
                         rows.append(
                             _master_row(
@@ -1322,7 +1341,7 @@ def build_master_performance_data(
                                 metrics,
                                 data,
                                 score_path,
-                                use_gpu=False,
+                                use_gpu=use_gpu,
                             )
                         )
                         continue
@@ -1414,7 +1433,7 @@ if __name__ == "__main__":
     # extract_feature_importance_stability()
 
     # Choose one feature set and a distinct output name:
-    # feature_set: FeatureSet = "unique_fp_permutation"
+    # feature_set: FeatureSet = "count_and_graph"
 
     # output_name = {
     #     "HDF": "Tree_HDF",
@@ -1433,7 +1452,7 @@ if __name__ == "__main__":
     #     feature_set=feature_set,
     # )
 
-    ood_type: OODType = "structure_cluster_OOD"
+    ood_type: OODType = "continuous_cluster_OOD"
     output_name = {
         "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
         "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",

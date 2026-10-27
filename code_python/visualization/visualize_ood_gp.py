@@ -1,9 +1,9 @@
 """Compare model performance on cluster-OOD and size-matched IID tests.
 
-The master OOD pickle stores one scalar score per OOD cluster and five IID
-random-seed scores per matching cluster. This module expands those nested
-values into performance-profile cases and reports each model's profile AUC
-separately for OOD and IID evaluation.
+Each device-specific master OOD pickle stores one scalar score per OOD cluster
+and five IID random-seed scores per matching cluster. This module expands those
+nested values into performance-profile cases and reports each model's profile
+AUC separately for OOD and IID evaluation.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ import pandas as pd
 try:  # Support both direct execution and package-style imports.
     from .visualization_setting import (
         apply_vertical_bar_gradients,
+        display_model_name as _display_model_name,
         ensure_long_path,
         filter_selection as _filter_selection,
         lighten_color as _lighten_color,
@@ -34,6 +35,7 @@ try:  # Support both direct execution and package-style imports.
 except ImportError:
     from visualization_setting import (
         apply_vertical_bar_gradients,
+        display_model_name as _display_model_name,
         ensure_long_path,
         filter_selection as _filter_selection,
         lighten_color as _lighten_color,
@@ -121,12 +123,60 @@ def _filter_configurations(
     mixing_methods: Any = None,
     kernel_triples: Any = None,
 ) -> pd.DataFrame:
-    """Apply kernel filters while retaining all kernel-free model families."""
+    """Apply global or per-model kernel filters and retain kernel-free models."""
     filtered = _filter_selection(df, "model", model)
     kernel_free_mask = _kernel_free_configuration_mask(filtered)
 
-    triples = _normalize_kernel_triples(kernel_triples)
-    if triples is not None:
+    if isinstance(kernel_triples, Mapping):
+        selected_by_model = {}
+        for model_name, model_triples in kernel_triples.items():
+            model_key = str(model_name).strip().lower()
+            if model_key in selected_by_model:
+                raise ValueError(
+                    f"Duplicate model key in kernel_triples: {model_name!r}."
+                )
+            triples = _normalize_kernel_triples(model_triples)
+            if triples is None:
+                raise ValueError(
+                    "Each model in kernel_triples must map to a triple or a "
+                    "list of triples."
+                )
+            selected_by_model[model_key] = {
+                (str(fp).lower(), str(count).lower(), str(mix).lower())
+                for fp, count, mix in triples
+            }
+
+        row_triples = pd.Series(
+            list(
+                zip(
+                    filtered["fp kernel"].astype(str).str.lower(),
+                    filtered["count kernel"].astype(str).str.lower(),
+                    filtered["mixing method"].astype(str).str.lower(),
+                )
+            ),
+            index=filtered.index,
+        )
+        raw_model_keys = filtered["model"].astype(str).str.strip().str.lower()
+        display_model_keys = (
+            filtered["model"]
+            .map(_display_model_name)
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+        triple_mask = pd.Series(False, index=filtered.index)
+        for model_key, selected_triples in selected_by_model.items():
+            model_mask = raw_model_keys.eq(model_key) | display_model_keys.eq(
+                model_key
+            )
+            triple_mask |= model_mask & row_triples.isin(selected_triples)
+        filtered = filtered[kernel_free_mask | triple_mask].copy()
+    else:
+        triples = _normalize_kernel_triples(kernel_triples)
+        if triples is None:
+            triples = []
+
+    if not isinstance(kernel_triples, Mapping) and triples:
         triple_mask = pd.Series(False, index=filtered.index)
         for fp_kernel, count_kernel, mixing_method in triples:
             triple_mask |= (
@@ -652,11 +702,12 @@ def plot_model_profile_comparison(
 ) -> pd.DataFrame:
     """Plot model profile AUC for either the OOD or matched-IID evaluation.
 
-    Exact GP configurations can be selected with ``kernel_triples``. Kernel-free
-    tree, GNN, and MLP models are retained automatically. ``ood_and_iid`` is
-    case-insensitive and must be either ``"OOD"`` or ``"IID"``. The returned
-    DataFrame contains only the plotted split, including its AUC, rank, and
-    number of contributing cases.
+    Exact GP configurations can be selected with ``kernel_triples``. Pass one
+    triple, a list of triples, or a dictionary mapping each raw/display model
+    name to its own triple selection. Kernel-free tree, GNN, and MLP models are
+    retained automatically. ``ood_and_iid`` is case-insensitive and must be
+    either ``"OOD"`` or ``"IID"``. The returned DataFrame contains only the
+    plotted split, including its AUC, rank, and number of contributing cases.
     """
     evaluation = _normalize_evaluations(ood_and_iid)[0]
     results = _performance_profile_results(
@@ -825,7 +876,9 @@ def plot_model_comparison(
     ``average_iid_repeats=True`` to average the seeds so both halves contain
     one point per cluster. OOD halves use the shared model-aware color and IID
     halves a lighter shade of it. Set ``log_y=True`` for a log-scaled y-axis (all
-    scores must be positive). Returns the long-form scores that were plotted.
+    scores must be positive). ``kernel_triples`` accepts a global triple/list
+    or a dictionary mapping each model to separate triples. Returns the
+    long-form scores that were plotted.
     """
     if not 0 < violin_width <= 1:
         raise ValueError("violin_width must be in the interval (0, 1].")
@@ -963,8 +1016,10 @@ def plot_model_mean_std_comparison(
     sample standard deviation. Thus IID repeats and datasets with more clusters
     do not receive extra weight relative to their matched OOD cases.
 
-    Kernel filters retain kernel-free tree, GNN, and MLP models. The returned
-    DataFrame contains one OOD row and one IID row per plotted configuration.
+    ``kernel_triples`` accepts a global triple/list or a dictionary mapping
+    each model to separate triples. Kernel filters retain kernel-free tree,
+    GNN, and MLP models. The returned DataFrame contains one OOD row and one
+    IID row per plotted configuration.
     """
     if y_lim is not None:
         if len(y_lim) != 2 or not y_lim[0] < y_lim[1]:
@@ -1410,13 +1465,25 @@ def plot_hybridization_mean_std_comparison(
     )
 
 
+def load_ood_model_results(
+    master_device: str = "GPU",
+) -> dict[str, pd.DataFrame]:
+    """Load structure- and continuous-cluster OOD masters for one device."""
+    if master_device not in {"CPU", "GPU"}:
+        raise ValueError("master_device must be either 'CPU' or 'GPU'.")
+
+    return {
+        ood_type: pd.read_pickle(
+            DEFAULT_RESULTS_FILE
+            / f"Tree_GP_MLP_{ood_type}_cluster_OOD_{master_device}.pkl"
+        )
+        for ood_type in ("structure", "continuous")
+    }
+
+
 if __name__ == "__main__":
-    structure_ood_results = pd.read_pickle(
-        DEFAULT_RESULTS_FILE / "Tree_GP_MLP_structure_cluster_OOD.pkl"
-    )
-    continuous_ood_results = pd.read_pickle(
-        DEFAULT_RESULTS_FILE / "Tree_GP_MLP_continuous_cluster_OOD.pkl"
-    )
+    master_device = "GPU"
+    ood_results = load_ood_model_results(master_device)
 
     models = [
         "RF",
@@ -1424,6 +1491,7 @@ if __name__ == "__main__":
         "NGB",
         "GPytorchMAP",
         "GpyroHMC",
+        "MGK",
         "GNN-GP",
         "GNN-GP-SN",
         "GNN-MLP",
@@ -1431,30 +1499,33 @@ if __name__ == "__main__":
         "MLP-GP",
         "MLP-GP-SN",
     ]
-    kernel_triples = [
-        ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
-        ("Matern32", "Matern32", "(count:x)+(fp:x)"),
-    ]
-    ood_results = {
-        "structure": structure_ood_results,
-        "continuous": continuous_ood_results,
+    selected_kernel_triples = {
+        "MGK": ("Graph", "Matern32", "(count:+)x(graph:x)"),
+        "GP-MAP": [
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+        ],
+        "GP-HMC": [
+            ("Matern32", "Matern32", "(count:+)x(fp:+)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+        ],
     }
     for ood_type, result_df in ood_results.items():
         for ood_and_iid in ["OOD", "IID"]:
             plot_model_profile_comparison(
                 df=result_df,
                 model=models,
-                kernel_triples=kernel_triples,
-                metric="r2",
+                kernel_triples=selected_kernel_triples,
+                metric="cdf_ama",
                 ood_and_iid=ood_and_iid,
                 fontsize=15,
-                y_label="Profile AUC: R2",
+                y_label="Profile AUC: AMA",
                 figsize=(7.5, 5),
                 save_dir=(
                     DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
                 ),
                 show=False,
-                file_name=f"R2_{ood_type}_{ood_and_iid.lower()}.png",
+                file_name=f"CDFAMA_{ood_type}_{ood_and_iid.lower()}.png",
             )
 
     # nll_models = [

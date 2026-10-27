@@ -992,35 +992,35 @@ if __name__ == "__main__":
     )
 
 
-    plot_hybridization_performance_vs_data_number(
-        df=unique_permuted_fp_result,
-        metric="OOF_R2",
-        model="GPytorchMAP",
-        fp_kernels=[
-            # "RBF",
-            "TanimotoMatern32",
-            # "Matern52",
-        ],
-        count_kernels=["Matern32"],
-        show_all_targets=True,
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:+)", 
-            "(count:x)+(fp:x)",
-        ],
-        y_label="R² (OOF)",
-        fontsize=17,
-        figsize=(11, 8),
-        show=True,
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "absolute_metric"
-            / "hybridization_comparison"
-        ),
-        file_name="R2OOF_GPytorchMAP_SK_all_config_vs_data_number_all_targets_unique_permuted_fp.png",
-    )
+    # plot_hybridization_performance_vs_data_number(
+    #     df=unique_permuted_fp_result,
+    #     metric="OOF_R2",
+    #     model="GPytorchMAP",
+    #     fp_kernels=[
+    #         # "RBF",
+    #         "TanimotoMatern32",
+    #         # "Matern52",
+    #     ],
+    #     count_kernels=["Matern32"],
+    #     show_all_targets=True,
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:+)", 
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(11, 8),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "absolute_metric"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name="R2OOF_GPytorchMAP_SK_all_config_vs_data_number_all_targets_unique_permuted_fp.png",
+    # )
 
 
     # plot_hybridization_performance_vs_data_number(

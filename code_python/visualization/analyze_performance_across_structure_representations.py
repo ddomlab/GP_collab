@@ -12,6 +12,7 @@ from sklearn.metrics import auc
 
 from visualization_setting import apply_vertical_bar_gradients, ensure_long_path
 from visualize_gp import (
+    _add_datapoint_counts,
     _display_model_name,
     _expand_master_scores_for_profile,
     _filter_kernel_triples,
@@ -24,6 +25,7 @@ HERE = Path(__file__).resolve().parent
 MASTER_DATA = HERE.parent.parent / "results" / "master_performance_data"
 
 DEFAULT_STRUCTURE_REPRESENTATION_ORDER = [
+    "No Fingerprint",
     "ECFP",
     "Graph",
     "LE",
@@ -35,7 +37,16 @@ STRUCTURE_REPRESENTATION_COLORS = {
     "ECFP": "#f0c571",         # gold
     "Mordred": "#e02b35",      # red
     "HDF2_256bit": "#082a54",  # dark blue
+    "No Fingerprint": "#808080",  # gray
 }
+STRUCTURE_REPRESENTATION_DISPLAY_NAMES = {
+    "HDF2_256bit": "HDF",
+}
+
+
+def _display_structure_representation(value: Any) -> str:
+    """Return a concise representation label for plot text."""
+    return STRUCTURE_REPRESENTATION_DISPLAY_NAMES.get(str(value), str(value))
 
 
 def add_hdf_configuration_to_structure_results(
@@ -78,6 +89,34 @@ def add_hdf_configuration_to_structure_results(
     ]
     return pd.concat(
         [structure_without_selected_hdf, selected_hdf],
+        ignore_index=True,
+        sort=False,
+    )
+
+
+def add_no_fingerprint_to_structure_results(
+    structure_df: pd.DataFrame,
+    count_only_df: pd.DataFrame,
+    representation_label: str = "No Fingerprint",
+) -> pd.DataFrame:
+    """Append COUNT-only results as a molecular-representation baseline."""
+    column = "structure_representation"
+    if column not in structure_df.columns:
+        raise ValueError(f"structure_df is missing required column: {column}")
+    if count_only_df.empty:
+        raise ValueError("count_only_df does not contain any results.")
+
+    selected_count_only = count_only_df.copy()
+    selected_count_only[column] = representation_label
+
+    # Replace an existing baseline with the same label so repeated notebook or
+    # interactive calls cannot duplicate its rows.
+    existing_labels = structure_df[column].astype(str)
+    structure_without_count_only = structure_df.loc[
+        ~existing_labels.str.casefold().eq(representation_label.casefold())
+    ]
+    return pd.concat(
+        [structure_without_count_only, selected_count_only],
         ignore_index=True,
         sort=False,
     )
@@ -384,7 +423,10 @@ def _plot_grouped_profiles(
             tau_grid,
             curves[representation],
             color=STRUCTURE_REPRESENTATION_COLORS.get(representation),
-            label=f"{representation}, {representation_auc:.2f}",
+            label=(
+                f"{_display_structure_representation(representation)}, "
+                f"{representation_auc:.2f}"
+            ),
         )
 
     legend_ncols = options.get("legend_ncols")
@@ -441,7 +483,7 @@ def plot_structure_representation_profile_comparison(
     title: Optional[str] = None,
     x_label: str = "Structure representation",
     y_label: str = "Performance profile AUC",
-    x_tick_rotation: int = 0,
+    x_tick_rotation: int = 20,
     y_lim: tuple[float, float] = (0, 1.05),
     show_values: bool = True,
     gradient_bars: bool = True,
@@ -571,7 +613,10 @@ def plot_structure_representation_profile_comparison(
     ax.tick_params(axis="both", labelsize=fontsize - 2)
     ax.set_xticks(range(len(representation_order)))
     ax.set_xticklabels(
-        representation_order,
+        [
+            _display_structure_representation(representation)
+            for representation in representation_order
+        ],
         rotation=x_tick_rotation,
         ha="right" if x_tick_rotation else "center",
     )
@@ -733,7 +778,10 @@ def plot_structure_representation_mean_std_comparison(
 
     ax.set_xticks(x_positions)
     ax.set_xticklabels(
-        plotted_representations,
+        [
+            _display_structure_representation(representation)
+            for representation in plotted_representations
+        ],
         rotation=x_tick_rotation,
         ha="right" if x_tick_rotation else "center",
     )
@@ -756,7 +804,7 @@ def plot_structure_representation_mean_std_comparison(
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 row.mean + row.std + label_offset,
-                f"{row.mean:.2f} ± {row.std:.2f}",
+                f"{row.mean:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=fontsize - 2,
@@ -786,6 +834,267 @@ def plot_structure_representation_mean_std_comparison(
     else:
         plt.close(fig)
     return summary
+
+
+def plot_structure_representation_performance_by_target_grid(
+    df: pd.DataFrame,
+    model: Any = None,
+    structure_representations: Any = None,
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    metric: str = "OOF_R2",
+    figsize: tuple[float, float] = (7, 5),
+    ncols: int = 3,
+    fontsize: int = 12,
+    x_label: str = "Structure representation",
+    y_label: Optional[str] = None,
+    x_tick_rotation: int = 20,
+    y_lim: Optional[tuple[float, float]] = None,
+    show_values: bool = True,
+    gradient_bars: bool = False,
+    show: bool = False,
+    high_quality: bool = False,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot representation performance for every dataset-target in one grid.
+
+    Each subplot contains one bar per selected molecular representation and is
+    ordered by the full dataset-target size. Scores are first reduced to one
+    value per model, kernel configuration, and repeat/fold. Bars then show the
+    mean +/- sample standard deviation across those task values, matching the
+    aggregation used by :func:`plot_structure_representation_mean_std_comparison`.
+
+    ``figsize`` specifies the size of one subplot, rather than the size of the
+    complete figure. The returned table contains the plotted summary values,
+    datapoint counts, and the shared output path.
+    """
+    if ncols < 1:
+        raise ValueError("ncols must be at least 1.")
+    if y_lim is not None:
+        if (
+            len(y_lim) != 2
+            or not np.isfinite(y_lim).all()
+            or not y_lim[0] < y_lim[1]
+        ):
+            raise ValueError(
+                "y_lim must contain two finite values with lower < upper."
+            )
+
+    df = _filter_kernel_triples(df, kernel_triples, keep_missing=True)
+    filtered_df, representation_order = _filter_structure_representations(
+        df,
+        structure_representations,
+    )
+
+    task_frames = []
+    for representation in representation_order:
+        representation_df = filtered_df.loc[
+            filtered_df["structure_representation"].astype(str).str.lower()
+            == representation.lower()
+        ]
+        expanded = _expand_master_scores_for_profile(
+            representation_df,
+            metric=metric,
+            model=model,
+            fp_kernels=fp_kernels,
+            count_kernels=count_kernels,
+            mixing_methods=mixing_methods,
+        )
+        if expanded.empty:
+            continue
+        expanded["structure representation"] = representation
+        expanded["configuration task"] = expanded.apply(
+            _configuration_task_label,
+            axis=1,
+        )
+        task_frames.append(expanded)
+
+    if not task_frames:
+        raise ValueError(
+            f"No {metric} values were found for the requested models, "
+            "representations, and kernel configurations."
+        )
+
+    task_values = pd.concat(task_frames, ignore_index=True)
+    task_columns = [
+        "dataset",
+        "target",
+        "model",
+        "configuration task",
+        "repeat",
+        "structure representation",
+    ]
+    task_values = task_values.groupby(
+        task_columns,
+        dropna=False,
+        as_index=False,
+    )[metric].mean()
+    summary = task_values.groupby(
+        ["dataset", "target", "structure representation"],
+        as_index=False,
+        dropna=False,
+    )[metric].agg(mean="mean", std="std", n_tasks="count")
+    summary["std"] = summary["std"].fillna(0.0)
+    summary["metric"] = metric
+    summary = _add_datapoint_counts(summary)
+
+    representation_rank = {
+        representation: position
+        for position, representation in enumerate(representation_order)
+    }
+    summary["_representation order"] = summary[
+        "structure representation"
+    ].map(representation_rank)
+    summary = summary.sort_values(
+        [
+            "n datapoints",
+            "dataset",
+            "target",
+            "_representation order",
+        ],
+        kind="stable",
+    ).reset_index(drop=True)
+    summary["output path"] = None
+
+    target_groups = list(
+        summary.groupby(["dataset", "target"], sort=False, dropna=False)
+    )
+    nrows = int(np.ceil(len(target_groups) / ncols))
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(figsize[0] * ncols, figsize[1] * nrows),
+        squeeze=False,
+    )
+    axes_flat = axes.ravel()
+    fallback_colors = sns.color_palette(
+        "Set2",
+        n_colors=len(representation_order),
+    )
+    representation_colors = {
+        representation: STRUCTURE_REPRESENTATION_COLORS.get(
+            representation,
+            fallback_colors[position],
+        )
+        for position, representation in enumerate(representation_order)
+    }
+
+    try:
+        for ax, ((dataset, target), target_df) in zip(
+            axes_flat,
+            target_groups,
+        ):
+            target_df = target_df.sort_values(
+                "_representation order",
+                kind="stable",
+            )
+            plotted_representations = target_df[
+                "structure representation"
+            ].tolist()
+            positions = np.arange(len(plotted_representations), dtype=float)
+            colors = [
+                representation_colors[representation]
+                for representation in plotted_representations
+            ]
+            bars = ax.bar(
+                positions,
+                target_df["mean"].to_numpy(dtype=float),
+                width=0.67,
+                yerr=target_df["std"].to_numpy(dtype=float),
+                capsize=3,
+                color=colors,
+                edgecolor="none",
+                error_kw={"elinewidth": 1.0, "capthick": 1.0},
+            )
+            if gradient_bars:
+                apply_vertical_bar_gradients(
+                    ax,
+                    list(bars),
+                    colors,
+                    gradient_fraction=0.35,
+                    edge_linewidth=0,
+                )
+            if show_values:
+                means = target_df["mean"].to_numpy(dtype=float)
+                ax.bar_label(
+                    bars,
+                    labels=[
+                        f"{value:.2f}" if value >= 0 else ""
+                        for value in means
+                    ],
+                    padding=2,
+                    fontsize=max(fontsize - 3, 8),
+                    clip_on=True,
+                )
+                for bar, value in zip(bars, means):
+                    if value >= 0:
+                        continue
+                    # Keep negative values readable when the displayed axis
+                    # begins at zero by placing their labels above the baseline.
+                    ax.annotate(
+                        f"{value:.2f}",
+                        xy=(bar.get_x() + bar.get_width() / 2, 0.0),
+                        xytext=(0, 2),
+                        textcoords="offset points",
+                        ha="center",
+                        va="bottom",
+                        fontsize=max(fontsize - 3, 8),
+                        clip_on=True,
+                    )
+
+            n_datapoints = float(target_df["n datapoints"].iloc[0])
+            n_label = (
+                f"{int(n_datapoints)}"
+                if n_datapoints.is_integer()
+                else f"{n_datapoints:g}"
+            )
+            target_label = str(target).removeprefix("target_")
+            ax.set_title(
+                f"{target_label} (n={n_label})",
+                fontsize=fontsize + 1,
+            )
+            ax.set_xticks(positions)
+            ax.set_xticklabels(
+                [
+                    _display_structure_representation(representation)
+                    for representation in plotted_representations
+                ],
+                rotation=x_tick_rotation,
+                ha="right" if x_tick_rotation else "center",
+            )
+            ax.set_xlabel(x_label, fontsize=fontsize)
+            ax.set_ylabel(y_label or f"Mean {metric}", fontsize=fontsize)
+            ax.tick_params(axis="both", labelsize=fontsize - 2)
+            if y_lim is not None:
+                ax.set_ylim(*y_lim)
+
+        for ax in axes_flat[len(target_groups):]:
+            ax.set_visible(False)
+
+        fig.tight_layout()
+        if save_dir is not None:
+            output_dir = ensure_long_path(Path(save_dir))
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_name = file_name or (
+                f"{metric}_structure_representation_by_target.png"
+            )
+            output_path = ensure_long_path(output_dir / output_name)
+            fig.savefig(
+                output_path,
+                bbox_inches="tight",
+                format="png",
+                dpi=900 if high_quality else 150,
+            )
+            summary["output path"] = str(output_path)
+        if show:
+            plt.show()
+    finally:
+        plt.close(fig)
+
+    return summary.drop(columns="_representation order")
 
 
 def plot_structure_representation_profile_heatmap(
@@ -1400,11 +1709,17 @@ if __name__ == "__main__":
     )
 
     HDF_results = pd.read_pickle(MASTER_DATA / "Tree_HDF_CPU.pkl")
+
+    Count_results = pd.read_pickle(MASTER_DATA / "Tree_and_GP_COUNT_only_GPU.pkl")
     structure_results = add_hdf_configuration_to_structure_results(
         structure_results,
         HDF_results,
         depth=2,
         bits=256,
+    )
+    structure_results = add_no_fingerprint_to_structure_results(
+        structure_results,
+        Count_results,
     )
     RESULTS = (
         HERE
@@ -1412,42 +1727,82 @@ if __name__ == "__main__":
     )
 
     STRUCTURE_REPRESENTATION_ORDER = [
+        "No Fingerprint",
         "LE",
         "ECFP",
         "Mordred",
         "HDF2_256bit",
     ]
-    plot_structure_representation_profile_comparison(
-        structure_results,
-        metric="OOF_R2",
-        model=["RF", "XGBR", "NGB"],
-        # kernel_triples=("Graph", "Matern32", "(count:+)x(graph:x)"),
-        compare_models_as_methods=True,
-        structure_representations=STRUCTURE_REPRESENTATION_ORDER,
-        y_label="Profile AUC of R² (OOF)",
-        fontsize=16,
-        figsize=(7, 5),
-        save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
-        file_name=f"R2OOF.png",
-    )
-
-    plot_structure_representation_mean_std_comparison(
-        structure_results,
-        metric="OOF_R2",
-        model=["RF", "XGBR", "NGB"],
-        structure_representations=STRUCTURE_REPRESENTATION_ORDER,
-        y_label="R² (OOF)",
-        y_lim=(0, 1),
-        fontsize=16,
-        figsize=(7, 5),
-        save_dir=(
-            RESULTS
-            / "average_performance"
-            / "strcuture_representation_comparison"
-        ),
-        file_name="R2OOF.png",
-    )
-
+    # plot_structure_representation_profile_comparison(
+    #     structure_results,
+    #     metric="OOF_R2",
+    #     model=["RF", "XGBR", "NGB"],
+    #     # kernel_triples=("Graph", "Matern32", "(count:+)x(graph:x)"),
+    #     compare_models_as_methods=True,
+    #     structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+    #     y_label="Profile AUC of R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(7, 5),
+    #     save_dir=RESULTS/"performance_profile"/"strcuture_representation_comparison",
+    #     file_name=f"R2OOF.png",
+    # )
+    # for x in ["RF", "XGBR", "NGB"]:
+    #     plot_structure_representation_mean_std_comparison(
+    #         structure_results,
+    #         metric="OOF_R2",
+    #         model=[x],
+    #         structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+    #         y_label="R² (OOF)",
+    #         y_lim=(0, 1.05),
+    #         fontsize=17,
+    #         figsize=(7, 5),
+    #         show=False,
+    #         save_dir=(
+    #             RESULTS
+    #             / "average_performance"
+    #             / "strcuture_representation_comparison"
+    #         ),
+    #         file_name=f"R2OOF_{x}.png",
+    #     )
+    # for x in ["RF", "XGBR", "NGB"]:
+    #     plot_structure_representation_performance_by_target_grid(
+    #         structure_results,
+    #         metric="OOF_R2",
+    #         model=[x],
+    #         structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+    #         y_label="R² (OOF)",
+    #         y_lim=(0, 1),
+    #         ncols=3,
+    #         fontsize=16,
+    #         figsize=(7, 5),
+    #         show=False,
+    #         save_dir=(
+    #             RESULTS
+    #             / "average_performance"
+    #             / "strcuture_representation_comparison"
+    #             / "all_targets"
+    #         ),
+    #         file_name=f"R2OOF_{x}.png",
+    #     )
+    plot_structure_representation_performance_by_target_grid(
+            structure_results,
+            metric="OOF_R2",
+            model=["RF", "XGBR", "NGB"],
+            structure_representations=STRUCTURE_REPRESENTATION_ORDER,
+            y_label="R² (OOF)",
+            y_lim=(0, 1.05),
+            ncols=3,
+            fontsize=16,
+            figsize=(7, 5),
+            show=False,
+            save_dir=(
+                RESULTS
+                / "average_performance"
+                / "strcuture_representation_comparison"
+                / "all_targets"
+            ),
+            file_name=f"R2OOF.png",
+        )
     # plot_structure_representation_profile_heatmap(
     #     structure_results,
     #     metric="OOF_R2",

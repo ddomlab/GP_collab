@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import simpson
+from scipy.integrate import simpson, trapezoid
 from typing import Callable, Optional, Tuple, OrderedDict, Dict, Union
 from scipy.stats import pearsonr, spearmanr, norm
 from sklearn.metrics import root_mean_squared_error
