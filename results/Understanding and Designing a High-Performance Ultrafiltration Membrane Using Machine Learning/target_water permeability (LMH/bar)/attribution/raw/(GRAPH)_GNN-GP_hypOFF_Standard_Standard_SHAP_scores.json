@@ -26,20 +26,156 @@
       "oraganic compound concentration (mg/L)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 3.0836377817422544e-05,
+      "abs_error_max": 0.0001201248169309,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 2.0348685126236887e-05,
+      "abs_error_max": 0.0001575469970873,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 2.5846390492745286e-05,
+      "abs_error_max": 0.0002741077968551,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 2.9701959533667832e-05,
+      "abs_error_max": 0.0001512908934842,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 2.8839111337219947e-05,
+      "abs_error_max": 0.000123009454569,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 3.196897964130585e-05,
+      "abs_error_max": 0.0001831817627362,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 3.051031204392984e-05,
+      "abs_error_max": 0.0003797149658453,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 3.291720438269863e-05,
+      "abs_error_max": 0.0001831054687357,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 3.327324279212007e-05,
+      "abs_error_max": 0.0001845695858264,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "oraganic compound concentration (mg/L)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 3.051757815342171e-05,
+      "abs_error_max": 0.0002143133254435,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 3.070286342676809e-05,
+      "abs_error_max": 0.000183181762793,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 4.065014067577977e-05,
+      "abs_error_max": 0.0001558158510874,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 3.145217897326802e-05,
+      "abs_error_max": 0.0002614212035894,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 3.184182304494243e-05,
+      "abs_error_max": 0.0001668221610202,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "oraganic compound concentration (mg/L)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 3.0036199632377247e-05,
+      "abs_error_max": 9.262084964234418e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9595959595959596,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8924444444444445,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.9393939393939394,
-    "top3_overlap": 1.0,
+    "spearman_mean": 0.8847619047619049,
+    "top3_overlap": 0.819047619047619,
     "same_top1": true,
-    "row_kendall_w_median": 0.8646464646464647,
     "n_x_cols": 11,
-    "n_rows": 318,
-    "spearman_seed6_vs_seed13": 0.9090909090909092,
-    "spearman_seed6_vs_seed42": 1.0,
-    "spearman_seed13_vs_seed42": 0.9090909090909092
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8646464646464647,
+    "n_rows": 318
   }
 }

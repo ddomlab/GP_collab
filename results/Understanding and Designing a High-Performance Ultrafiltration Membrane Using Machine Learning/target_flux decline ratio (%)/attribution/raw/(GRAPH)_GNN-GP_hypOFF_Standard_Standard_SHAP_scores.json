@@ -26,20 +26,156 @@
       "P_wt%"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 3.86714935629584e-06,
+      "abs_error_max": 1.539230346736531e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 3.6394028448683002e-06,
+      "abs_error_max": 2.1781921390129355e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "P_wt%",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 3.833770751526799e-06,
+      "abs_error_max": 2.6702880859375e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "P_wt%"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 4.216148745683768e-06,
+      "abs_error_max": 1.734733581315595e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "P_wt%",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 3.5953521759779505e-06,
+      "abs_error_max": 2.333641052132407e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 4.190717426411084e-06,
+      "abs_error_max": 1.543998718034345e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "P_wt%",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 4.024505614097507e-06,
+      "abs_error_max": 2.675056457945857e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 3.993170604843499e-06,
+      "abs_error_max": 1.5453156976263926e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "foulant concentration (mg/L)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 3.5994393527971624e-06,
+      "abs_error_max": 1.5268325796569115e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "P_wt%",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 4.482269282846119e-06,
+      "abs_error_max": 1.94572267133708e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "foulant concentration (mg/L)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 5.631446839515775e-06,
+      "abs_error_max": 3.4332275390625e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 3.814697265625e-06,
+      "abs_error_max": 1.561210268263835e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 3.910518827865417e-06,
+      "abs_error_max": 1.71661376953125e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 3.623962399501579e-06,
+      "abs_error_max": 1.9207000740095737e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 4.457746229036275e-06,
+      "abs_error_max": 1.897630237124304e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "P_wt%",
+        "pore maker molecular weight (Da)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9555555555555556,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8295757575757575,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.9333333333333336,
-    "top3_overlap": 0.7777777777777777,
+    "spearman_mean": 0.8174025974025977,
+    "top3_overlap": 0.6603174603174604,
     "same_top1": false,
-    "row_kendall_w_median": 0.7717171717171717,
     "n_x_cols": 11,
-    "n_rows": 318,
-    "spearman_seed6_vs_seed13": 0.9181818181818184,
-    "spearman_seed6_vs_seed42": 0.9818181818181818,
-    "spearman_seed13_vs_seed42": 0.9
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7717171717171717,
+    "n_rows": 318
   }
 }

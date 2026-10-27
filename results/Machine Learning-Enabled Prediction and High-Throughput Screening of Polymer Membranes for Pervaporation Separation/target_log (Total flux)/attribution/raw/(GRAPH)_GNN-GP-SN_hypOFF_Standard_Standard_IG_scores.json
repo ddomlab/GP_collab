@@ -29,20 +29,171 @@
     ],
     "chemistry_share_mean": 0.6206489950269111
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "rel_error_median": 0.000155818897407,
+      "rel_error_max": 0.0224215707986764,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6683581129748217
+    },
+    "seed_6_fold_1": {
+      "rel_error_median": 9.919686515230146e-05,
+      "rel_error_max": 0.0026462393570383,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.6475444848993152
+    },
+    "seed_6_fold_2": {
+      "rel_error_median": 0.00012947642242129998,
+      "rel_error_max": 0.0592574810962068,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.6357668300075435
+    },
+    "seed_6_fold_3": {
+      "rel_error_median": 0.00015195538738385,
+      "rel_error_max": 0.0092237718960791,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6263013557041494
+    },
+    "seed_6_fold_4": {
+      "rel_error_median": 0.00027803409823074995,
+      "rel_error_max": 0.0102408793359079,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6581792791319498
+    },
+    "seed_13_fold_0": {
+      "rel_error_median": 8.529293006979562e-05,
+      "rel_error_max": 0.0075252462336597,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.5861592725902954
+    },
+    "seed_13_fold_1": {
+      "rel_error_median": 6.294778096798664e-05,
+      "rel_error_max": 0.0029445979351461,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.5693220022880038
+    },
+    "seed_13_fold_2": {
+      "rel_error_median": 6.705887985138551e-05,
+      "rel_error_max": 0.007445897033881,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.5704672573178843
+    },
+    "seed_13_fold_3": {
+      "rel_error_median": 7.692745355581315e-05,
+      "rel_error_max": 0.0086189611285797,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.581799789202994
+    },
+    "seed_13_fold_4": {
+      "rel_error_median": 5.839295774637599e-05,
+      "rel_error_max": 0.0282961285733052,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.5452536481569517
+    },
+    "seed_42_fold_0": {
+      "rel_error_median": 5.487090617857583e-05,
+      "rel_error_max": 0.004335143563824,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.6204545934888881
+    },
+    "seed_42_fold_1": {
+      "rel_error_median": 0.00015114813242285,
+      "rel_error_max": 0.0038240983999527,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6260138919504084
+    },
+    "seed_42_fold_2": {
+      "rel_error_median": 8.40145605638703e-05,
+      "rel_error_max": 0.0037260442987689,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6008188640819783
+    },
+    "seed_42_fold_3": {
+      "rel_error_median": 0.00011655446643340001,
+      "rel_error_max": 0.0125619793895894,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.6689297548072858
+    },
+    "seed_42_fold_4": {
+      "rel_error_median": 4.820915869405654e-05,
+      "rel_error_max": 0.0076591640466218,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Temperature (\u00b0C)",
+        "Thickness \u2113 (um)"
+      ],
+      "chemistry_share_mean": 0.5870293002290687
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.8984126984126984,
-    "w_p": 0.0012998700129987,
-    "spearman_mean": 0.8476190476190477,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8679365079365079,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.8585034013605443,
     "top3_overlap": 1.0,
     "same_top1": true,
-    "row_kendall_w_median": 0.8984126984126984,
     "n_x_cols": 6,
-    "n_rows": 681,
-    "spearman_seed6_vs_seed13": 0.8285714285714287,
-    "spearman_seed6_vs_seed42": 0.7714285714285715,
-    "spearman_seed13_vs_seed42": 0.942857142857143
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8984126984126984,
+    "n_rows": 681
   }
 }

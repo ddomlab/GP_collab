@@ -26,20 +26,156 @@
       "temperature of thermal annealing"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 3.7484698900414066e-08,
+      "abs_error_max": 1.921388838255212e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 3.059705111496669e-08,
+      "abs_error_max": 3.807412253920006e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "temperature of thermal annealing"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 2.324581149792948e-08,
+      "abs_error_max": 1.9278791203447554e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 2.993477643542519e-08,
+      "abs_error_max": 1.4360745748120962e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 2.1457672971791908e-08,
+      "abs_error_max": 1.8848313221297983e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 2.8212865377241776e-08,
+      "abs_error_max": 1.4003117883021332e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 5.0067900936312526e-08,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "ETL energy level (eV)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 3.0994415034513174e-08,
+      "abs_error_max": 1.9142362788215905e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 2.1457672971791908e-08,
+      "abs_error_max": 1.4207098208984803e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 3.0994415922691594e-08,
+      "abs_error_max": 1.904699537647048e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 3.3908420515871285e-08,
+      "abs_error_max": 1.854896544806195e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 2.847777480496916e-08,
+      "abs_error_max": 1.9305282172865645e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "temperature of thermal annealing",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 1.920594172588608e-08,
+      "abs_error_max": 1.8668174730507303e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "temperature of thermal annealing"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 2.3974312313157498e-08,
+      "abs_error_max": 1.8756919430984447e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_A (eV)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 2.1457672971791908e-08,
+      "abs_error_max": 9.89437102916213e-07,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.8144078144078144,
-    "w_p": 0.0001999800019998,
-    "spearman_mean": 0.7216117216117217,
-    "top3_overlap": 0.6666666666666666,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.6186568986568987,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.59141810570382,
+    "top3_overlap": 0.6730158730158731,
     "same_top1": true,
-    "row_kendall_w_median": 0.7301587301587301,
     "n_x_cols": 13,
-    "n_rows": 558,
-    "spearman_seed6_vs_seed13": 0.901098901098901,
-    "spearman_seed6_vs_seed42": 0.576923076923077,
-    "spearman_seed13_vs_seed42": 0.6868131868131868
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7301587301587301,
+    "n_rows": 558
   }
 }

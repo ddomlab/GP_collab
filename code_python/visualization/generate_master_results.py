@@ -732,28 +732,31 @@ def _attribution_feature_importance_stability_rows(
     target: str,
     paper_dir: Path,
 ) -> List[Dict[str, Any]]:
-    consistency_path = ensure_long_path(
-        paper_dir / "attribution" / "summary" / "seed_consistency.csv"
+    summary_dir = paper_dir / "attribution" / "summary"
+    fold_consistency_path = ensure_long_path(
+        summary_dir / "fold_consistency.csv"
     )
-    if not consistency_path.exists():
+    if not fold_consistency_path.exists():
         return []
 
-    consistency = pd.read_csv(consistency_path)
+    fold_consistency = pd.read_csv(fold_consistency_path)
     required_columns = {"method", "model", "kendall_w"}
-    missing_columns = required_columns.difference(consistency.columns)
+    missing_columns = required_columns.difference(fold_consistency.columns)
     if missing_columns:
         raise ValueError(
-            f"{consistency_path} is missing required columns: "
+            f"{fold_consistency_path} is missing required columns: "
             + ", ".join(sorted(missing_columns))
         )
 
-    consistency = consistency[
-        consistency["model"].isin(ATTRIBUTION_MODEL_NAMES)
-        & consistency["method"].isin(ATTRIBUTION_METHOD_COLUMNS)
+    fold_consistency = fold_consistency[
+        fold_consistency["model"].isin(ATTRIBUTION_MODEL_NAMES)
+        & fold_consistency["method"].isin(ATTRIBUTION_METHOD_COLUMNS)
     ].copy()
-    duplicate_rows = consistency.duplicated(["model", "method"], keep=False)
+    duplicate_rows = fold_consistency.duplicated(
+        ["model", "method"], keep=False
+    )
     if duplicate_rows.any():
-        duplicates = consistency.loc[
+        duplicates = fold_consistency.loc[
             duplicate_rows,
             ["model", "method"],
         ].drop_duplicates()
@@ -762,26 +765,29 @@ def _attribution_feature_importance_stability_rows(
             for row in duplicates.itertuples(index=False)
         )
         raise ValueError(
-            f"{consistency_path} contains duplicate model/method rows: "
+            f"{fold_consistency_path} contains duplicate model/method rows: "
             f"{duplicate_names}"
         )
 
     rows = []
     for source_model, tidy_model in ATTRIBUTION_MODEL_NAMES.items():
-        model_data = consistency[consistency["model"] == source_model]
+        model_data = fold_consistency[
+            fold_consistency["model"] == source_model
+        ]
         values = {}
         for record in model_data.itertuples(index=False):
             value = pd.to_numeric(record.kendall_w, errors="coerce")
             values[ATTRIBUTION_METHOD_COLUMNS[record.method]] = (
                 None if pd.isna(value) else float(value)
             )
+
         if values:
             rows.append(
                 _feature_importance_stability_row(
                     paper,
                     target,
                     tidy_model,
-                    "CPU",
+                    "GPU",
                     None,
                     None,
                     None,
@@ -803,9 +809,12 @@ def extract_feature_importance_stability(
     Tree-model MDI and SHAP stability is calculated from CPU score files.
     GpyroHMC and GPytorchMAP lengthscale stability is calculated only from GPU
     COUNT-plus-fingerprint score files. Neural and deep-kernel model SHAP,
-    GP-SHAP, and integrated-gradients stability is read from each task's
-    ``attribution/summary/seed_consistency.csv`` file. The attribution model
-    aliases are converted to their tidy display names.
+    GP-SHAP, and integrated-gradients stability is read directly from each
+    task's ``attribution/summary/fold_consistency.csv`` file. These are
+    Kendall's W values across all CV fold models, not means of per-fold
+    agreement statistics. Attribution-derived models are recorded as GPU;
+    only tree models are recorded as CPU. The attribution model aliases are
+    converted to their tidy display names.
 
     MGK is intentionally excluded because it has no corresponding feature
     importance. Only configurations with at least one stability value are
@@ -1430,7 +1439,7 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Extract feature stability separately from the performance tables:
-    # extract_feature_importance_stability()
+    extract_feature_importance_stability()
 
     # Choose one feature set and a distinct output name:
     # feature_set: FeatureSet = "count_and_graph"
@@ -1452,14 +1461,14 @@ if __name__ == "__main__":
     #     feature_set=feature_set,
     # )
 
-    ood_type: OODType = "structure_cluster_OOD"
-    output_name = {
-        "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
-        "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
-    }[ood_type]
+    # ood_type: OODType = "structure_cluster_OOD"
+    # output_name = {
+    #     "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
+    #     "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
+    # }[ood_type]
 
-    build_master_ood_performance_data(
-        save_path=RESULTS / "master_ood_performance_data" / output_name,
-        score_metrics=DEFAULT_OOD_SCORE_METRICS,
-        ood_type=ood_type,
-    )
+    # build_master_ood_performance_data(
+    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
+    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
+    #     ood_type=ood_type,
+    # )

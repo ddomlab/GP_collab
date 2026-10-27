@@ -26,20 +26,156 @@
       "HOMO_D (eV)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "HOMO_D (eV)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "HTL energy level (eV)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.907348634588857e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 1.7763568394002505e-15,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "ETL energy level (eV)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.430511474609375e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 9.536743172944284e-07,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 1.3322676295501878e-15,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "HTL energy level (eV)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.430511474609375e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "HOMO_D (eV)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.430511474609375e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "HOMO_D (eV)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 1.7763568394002505e-15,
+      "abs_error_max": 2.384185791015625e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9218559218559218,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.6707203907203907,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.8827838827838828,
-    "top3_overlap": 0.6666666666666666,
+    "spearman_mean": 0.6472004186289899,
+    "top3_overlap": 0.6444444444444445,
     "same_top1": true,
-    "row_kendall_w_median": 0.7912087912087912,
     "n_x_cols": 13,
-    "n_rows": 558,
-    "spearman_seed6_vs_seed13": 0.8791208791208791,
-    "spearman_seed6_vs_seed42": 0.7912087912087913,
-    "spearman_seed13_vs_seed42": 0.978021978021978
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7912087912087912,
+    "n_rows": 558
   }
 }

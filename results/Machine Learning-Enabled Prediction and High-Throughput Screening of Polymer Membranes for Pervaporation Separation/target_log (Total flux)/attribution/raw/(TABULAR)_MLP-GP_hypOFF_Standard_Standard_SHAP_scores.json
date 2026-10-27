@@ -26,20 +26,156 @@
       "Thickness \u2113 (um)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 2.9802322498717615e-08,
+      "abs_error_max": 2.384185795456517e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 4.4703483553787406e-08,
+      "abs_error_max": 2.682209013782355e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 5.551115123125785e-16,
+      "abs_error_max": 2.384185794346294e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 2.980232272076222e-08,
+      "abs_error_max": 3.576278688743884e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 2.980232241545089e-08,
+      "abs_error_max": 4.76837158203125e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 2.9802322942806825e-08,
+      "abs_error_max": 2.384185794346294e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 5.960464427579028e-08,
+      "abs_error_max": 4.172325134277344e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 5.960464424803469e-08,
+      "abs_error_max": 3.576278688743884e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 5.960464477539065e-08,
+      "abs_error_max": 2.384185793236071e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 5.960464458110161e-08,
+      "abs_error_max": 3.5762786820825454e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 5.9604644553346033e-08,
+      "abs_error_max": 3.576278688743884e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 5.960464466436832e-08,
+      "abs_error_max": 2.384185795456517e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 5.960464466436832e-08,
+      "abs_error_max": 4.76837158203125e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 2.9802322387695312e-08,
+      "abs_error_max": 2.384185791015625e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 5.9604644331301415e-08,
+      "abs_error_max": 2.6822090154476896e-07,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09",
+        "Thickness \u2113 (um)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 1.0,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.9746031746031746,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 1.0,
+    "spearman_mean": 0.9727891156462586,
     "top3_overlap": 1.0,
     "same_top1": true,
-    "row_kendall_w_median": 0.9746031746031746,
     "n_x_cols": 6,
-    "n_rows": 681,
-    "spearman_seed6_vs_seed13": 1.0,
-    "spearman_seed6_vs_seed42": 1.0,
-    "spearman_seed13_vs_seed42": 1.0
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.9746031746031746,
+    "n_rows": 681
   }
 }

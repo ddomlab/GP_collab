@@ -26,20 +26,156 @@
       "PDI"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 2.3916363711684596e-07,
+      "abs_error_max": 9.437118260180456e-07,
+      "top3_x_cols": [
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)",
+        "solvent dD"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 1.357850574201791e-07,
+      "abs_error_max": 5.960464477539062e-07,
+      "top3_x_cols": [
+        "solvent dP",
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 2.198559894139862e-07,
+      "abs_error_max": 1.0705136119781855e-06,
+      "top3_x_cols": [
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)",
+        "solvent dD"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 1.4844394868873678e-07,
+      "abs_error_max": 8.279652821130412e-07,
+      "top3_x_cols": [
+        "PDI",
+        "solvent dP",
+        "solvent dD"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 2.429882683951945e-07,
+      "abs_error_max": 1.1920928955078125e-06,
+      "top3_x_cols": [
+        "solvent dP",
+        "Temperature SANS/SLS/DLS/SEC (K)",
+        "PDI"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 1.2576580044054708e-07,
+      "abs_error_max": 9.57846641558291e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "solvent dP",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 1.2612059019367905e-07,
+      "abs_error_max": 4.87750484889915e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 1.1563301094419388e-07,
+      "abs_error_max": 7.256439754632638e-07,
+      "top3_x_cols": [
+        "PDI",
+        "solvent dD",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 1.735630488219897e-07,
+      "abs_error_max": 7.155395689295574e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 1.2278556837941326e-07,
+      "abs_error_max": 9.59634781416696e-07,
+      "top3_x_cols": [
+        "Temperature SANS/SLS/DLS/SEC (K)",
+        "PDI",
+        "solvent dD"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 2.374677431360439e-07,
+      "abs_error_max": 8.431077004322773e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "solvent dP",
+        "PDI"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 1.1920928943975897e-07,
+      "abs_error_max": 4.586293582686807e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "PDI",
+        "solvent dP"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 1.2217533007508052e-07,
+      "abs_error_max": 4.701954978703071e-07,
+      "top3_x_cols": [
+        "solvent dD",
+        "PDI",
+        "Temperature SANS/SLS/DLS/SEC (K)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 1.788139343261719e-07,
+      "abs_error_max": 7.055486951346168e-07,
+      "top3_x_cols": [
+        "solvent dP",
+        "solvent dD",
+        "PDI"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 2.384185791015625e-07,
+      "abs_error_max": 9.510630647469044e-07,
+      "top3_x_cols": [
+        "PDI",
+        "solvent dD",
+        "solvent dP"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9575757575757576,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8904242424242425,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.9363636363636364,
-    "top3_overlap": 0.6666666666666666,
+    "spearman_mean": 0.8825974025974027,
+    "top3_overlap": 0.7682539682539683,
     "same_top1": false,
-    "row_kendall_w_median": 0.7636363636363637,
     "n_x_cols": 11,
-    "n_rows": 256,
-    "spearman_seed6_vs_seed13": 0.9181818181818184,
-    "spearman_seed6_vs_seed42": 0.9272727272727276,
-    "spearman_seed13_vs_seed42": 0.9636363636363636
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7636363636363637,
+    "n_rows": 256
   }
 }

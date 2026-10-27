@@ -29,20 +29,171 @@
     ],
     "chemistry_share_mean": 0.6428008462475362
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "rel_error_median": 8.22262469294092e-05,
+      "rel_error_max": 0.1098751562394779,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6998984276918493
+    },
+    "seed_6_fold_1": {
+      "rel_error_median": 6.383197132356339e-05,
+      "rel_error_max": 0.00896437721856,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Permeate pressure (mbar)",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6607887757892039
+    },
+    "seed_6_fold_2": {
+      "rel_error_median": 7.597850042534353e-05,
+      "rel_error_max": 0.1548998794928487,
+      "top3_x_cols": [
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "xw (wt%)",
+        "Permeate pressure (mbar)"
+      ],
+      "chemistry_share_mean": 0.7007943758121675
+    },
+    "seed_6_fold_3": {
+      "rel_error_median": 6.764373665280133e-05,
+      "rel_error_max": 0.0211161212926952,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Permeate pressure (mbar)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09"
+      ],
+      "chemistry_share_mean": 0.6931500572356919
+    },
+    "seed_6_fold_4": {
+      "rel_error_median": 0.0002099984559512,
+      "rel_error_max": 0.0100844209702699,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Permeate pressure (mbar)"
+      ],
+      "chemistry_share_mean": 0.6989276098345938
+    },
+    "seed_13_fold_0": {
+      "rel_error_median": 4.329370372259909e-05,
+      "rel_error_max": 0.0635985390062671,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ],
+      "chemistry_share_mean": 0.677889430189068
+    },
+    "seed_13_fold_1": {
+      "rel_error_median": 3.4739713390312665e-05,
+      "rel_error_max": 0.0684669206344108,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ],
+      "chemistry_share_mean": 0.6471409993143267
+    },
+    "seed_13_fold_2": {
+      "rel_error_median": 3.1711120873954016e-05,
+      "rel_error_max": 0.0128057852017852,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ],
+      "chemistry_share_mean": 0.6312230305988107
+    },
+    "seed_13_fold_3": {
+      "rel_error_median": 4.704702858891215e-05,
+      "rel_error_max": 0.0064340192360321,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ],
+      "chemistry_share_mean": 0.6466094244041996
+    },
+    "seed_13_fold_4": {
+      "rel_error_median": 5.094822012838487e-05,
+      "rel_error_max": 0.0047898790761854,
+      "top3_x_cols": [
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "xw (wt%)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ],
+      "chemistry_share_mean": 0.6416413371263578
+    },
+    "seed_42_fold_0": {
+      "rel_error_median": 2.915981334638421e-05,
+      "rel_error_max": 0.0015955387908134,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Permeate pressure (mbar)"
+      ],
+      "chemistry_share_mean": 0.6193137912374492
+    },
+    "seed_42_fold_1": {
+      "rel_error_median": 5.2749454045647955e-05,
+      "rel_error_max": 0.0185692883120247,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Temperature (\u00b0C)"
+      ],
+      "chemistry_share_mean": 0.6499469319789289
+    },
+    "seed_42_fold_2": {
+      "rel_error_median": 6.0878199627398795e-05,
+      "rel_error_max": 0.0022868211582875,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Permeate pressure (mbar)"
+      ],
+      "chemistry_share_mean": 0.6281992712550322
+    },
+    "seed_42_fold_3": {
+      "rel_error_median": 5.0891743704322705e-05,
+      "rel_error_max": 0.0076738662486606,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Permeate pressure (mbar)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09"
+      ],
+      "chemistry_share_mean": 0.657160320886053
+    },
+    "seed_42_fold_4": {
+      "rel_error_median": 2.992258744085799e-05,
+      "rel_error_max": 0.0598293996047341,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Solvent solubility parameter \uff08MPa1/2\uff09",
+        "Permeate pressure (mbar)"
+      ],
+      "chemistry_share_mean": 0.6595566148141155
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9365079365079364,
-    "w_p": 0.0003999600039996,
-    "spearman_mean": 0.904761904761905,
-    "top3_overlap": 0.7777777777777777,
-    "same_top1": true,
-    "row_kendall_w_median": 0.8222222222222222,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.7775238095238095,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.7616326530612245,
+    "top3_overlap": 0.7523809523809523,
+    "same_top1": false,
     "n_x_cols": 6,
-    "n_rows": 681,
-    "spearman_seed6_vs_seed13": 0.8285714285714287,
-    "spearman_seed6_vs_seed42": 0.942857142857143,
-    "spearman_seed13_vs_seed42": 0.942857142857143
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8222222222222222,
+    "n_rows": 681
   }
 }

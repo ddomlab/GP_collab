@@ -26,20 +26,156 @@
       "Selective_layer_thickness"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 8.940696705206366e-08,
+      "abs_error_max": 8.940696716308594e-07,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 5.960464488641294e-08,
+      "abs_error_max": 1.847743988148132e-06,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Selective_layer_thickness",
+        "Organic_Hildebrand_solubility_parameter"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 5.960464510845753e-08,
+      "abs_error_max": 1.788139343039674e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Organic_molecular_volume",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 8.94069672185971e-08,
+      "abs_error_max": 2.7418136596679688e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Organic_molecular_volume",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 5.96046450251908e-08,
+      "abs_error_max": 1.728534698819395e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Organic_molecular_volume",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 1.1920928932873665e-07,
+      "abs_error_max": 1.907348632590456e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 5.960464499743523e-08,
+      "abs_error_max": 1.3113021846145043e-06,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 5.960464488641294e-08,
+      "abs_error_max": 8.344650268554688e-07,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 5.960464499743523e-08,
+      "abs_error_max": 1.1920928955078125e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 5.960464488641294e-08,
+      "abs_error_max": 1.2218952178955078e-06,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 8.940696727410825e-08,
+      "abs_error_max": 9.5367431640625e-07,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 1.1920928955078125e-07,
+      "abs_error_max": 9.5367431640625e-07,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Organic_molecular_volume",
+        "Experimental_temperature"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 1.1920928943975897e-07,
+      "abs_error_max": 8.344650268554688e-07,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Organic_molecular_volume",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 1.1920928943975897e-07,
+      "abs_error_max": 8.940696717418817e-07,
+      "top3_x_cols": [
+        "Organic_molecular_volume",
+        "Organic_Hildebrand_solubility_parameter",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 8.940696732961939e-08,
+      "abs_error_max": 1.490116119495788e-06,
+      "top3_x_cols": [
+        "Organic_Hildebrand_solubility_parameter",
+        "Organic_molecular_volume",
+        "Selective_layer_thickness"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 1.0,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.9664915824915824,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 1.0,
-    "top3_overlap": 1.0,
-    "same_top1": true,
-    "row_kendall_w_median": 0.9622895622895624,
+    "spearman_mean": 0.964098124098124,
+    "top3_overlap": 0.9555555555555556,
+    "same_top1": false,
     "n_x_cols": 10,
-    "n_rows": 2283,
-    "spearman_seed6_vs_seed13": 1.0,
-    "spearman_seed6_vs_seed42": 1.0,
-    "spearman_seed13_vs_seed42": 1.0
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.9622895622895624,
+    "n_rows": 2283
   }
 }

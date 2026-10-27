@@ -26,20 +26,156 @@
       "Solvent_Encoded"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 3.552713678800501e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 1.1546319456101628e-14,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 3.552713678800501e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697279835855e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697279835855e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 9.769962616701378e-15,
+      "abs_error_max": 3.814697283388568e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Reaction Conc (mM)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697279835855e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697279835855e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Reaction Conc (mM)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 5.722045905542927e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697279835855e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 7.105427357601002e-15,
+      "abs_error_max": 3.814697272730427e-06,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Solvent_Encoded"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 1.0,
-    "w_p": 0.0018998100189981,
-    "spearman_mean": 1.0,
-    "top3_overlap": 1.0,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.9537777777777776,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9504761904761906,
+    "top3_overlap": 0.9174603174603174,
     "same_top1": true,
-    "row_kendall_w_median": 0.9111111111111112,
     "n_x_cols": 4,
-    "n_rows": 768,
-    "spearman_seed6_vs_seed13": 1.0,
-    "spearman_seed6_vs_seed42": 1.0,
-    "spearman_seed13_vs_seed42": 1.0
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.9111111111111112,
+    "n_rows": 768
   }
 }

@@ -26,20 +26,156 @@
       "Contact angle \u03b8 \uff08\u00b0\uff09"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 3.3306690738754696e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 9.020562075079397e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 9.020562075079397e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Permeate pressure (mbar)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 6.938893903907227e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 6.661338147750939e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Permeate pressure (mbar)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 6.938893903907227e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Permeate pressure (mbar)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 5.551115123125783e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 5.551115123125783e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 5.551115123125783e-17,
+      "abs_error_max": 5.551115123125785e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Permeate pressure (mbar)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 5.551115123125783e-17,
+      "abs_error_max": 3.3306690738754696e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 8.326672684688674e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Temperature (\u00b0C)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 6.245004513516506e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 6.245004513516506e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 5.551115123125783e-17,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 4.440892098500626e-16,
+      "top3_x_cols": [
+        "xw (wt%)",
+        "Thickness \u2113 (um)",
+        "Contact angle \u03b8 \uff08\u00b0\uff09"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9746031746031746,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.870984126984127,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.961904761904762,
-    "top3_overlap": 1.0,
+    "spearman_mean": 0.8617687074829933,
+    "top3_overlap": 0.8285714285714286,
     "same_top1": true,
-    "row_kendall_w_median": 0.9492063492063492,
     "n_x_cols": 6,
-    "n_rows": 681,
-    "spearman_seed6_vs_seed13": 1.0,
-    "spearman_seed6_vs_seed42": 0.942857142857143,
-    "spearman_seed13_vs_seed42": 0.942857142857143
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.9492063492063492,
+    "n_rows": 681
   }
 }

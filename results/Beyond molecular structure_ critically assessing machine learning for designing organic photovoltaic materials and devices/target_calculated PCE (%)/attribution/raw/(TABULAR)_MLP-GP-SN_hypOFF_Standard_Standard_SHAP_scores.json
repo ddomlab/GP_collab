@@ -26,20 +26,156 @@
       "Ehl_A (eV)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 9.5367431640625e-07,
+      "abs_error_max": 2.384185792791982e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 4.768371590913034e-07,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 7.152557373046875e-07,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 4.768371564267682e-07,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 9.5367431640625e-07,
+      "abs_error_max": 2.861022950995107e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 9.5367431640625e-07,
+      "abs_error_max": 2.861022950995107e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 4.76837158203125e-07,
+      "abs_error_max": 2.384185791015625e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 4.76837158203125e-07,
+      "abs_error_max": 2.384185791015625e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 4.768371573149466e-07,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 1.7763568394002505e-15,
+      "abs_error_max": 2.861022950995107e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 4.768371586472142e-07,
+      "abs_error_max": 1.907348634588857e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 9.5367431640625e-07,
+      "abs_error_max": 2.86102294921875e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 4.768371577590358e-07,
+      "abs_error_max": 3.337860108310053e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "Ehl_A (eV)",
+        "LUMO_A (eV)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 4.768371573149466e-07,
+      "abs_error_max": 1.9073486328125e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 4.76837158203125e-07,
+      "abs_error_max": 2.384185791015625e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.8498168498168498,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.6688644688644688,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.7747252747252747,
-    "top3_overlap": 0.7777777777777777,
+    "spearman_mean": 0.6452119309262164,
+    "top3_overlap": 0.7015873015873016,
     "same_top1": true,
-    "row_kendall_w_median": 0.8266178266178266,
     "n_x_cols": 13,
-    "n_rows": 558,
-    "spearman_seed6_vs_seed13": 0.7747252747252747,
-    "spearman_seed6_vs_seed42": 0.6593406593406593,
-    "spearman_seed13_vs_seed42": 0.8901098901098902
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8266178266178266,
+    "n_rows": 558
   }
 }

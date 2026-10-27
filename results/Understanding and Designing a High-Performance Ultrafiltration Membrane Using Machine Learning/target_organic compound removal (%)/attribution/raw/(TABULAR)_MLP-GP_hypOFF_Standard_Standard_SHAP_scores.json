@@ -26,20 +26,156 @@
       "oraganic compound concentration (mg/L)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.1444091803980427e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "P_wt%"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.52587890625e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.5258789055394573e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.7856154661049e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "solubility parameter (MPa1/2)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.52587890625e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.1444091803980427e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.629394545460855e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 1.5193394247603464e-05,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 0.0,
+      "abs_error_max": 7.62939453125e-06,
+      "top3_x_cols": [
+        "organic compound size (Da)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9494949494949496,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.819959595959596,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.9242424242424244,
-    "top3_overlap": 0.7777777777777777,
+    "spearman_mean": 0.8070995670995671,
+    "top3_overlap": 0.7619047619047619,
     "same_top1": true,
-    "row_kendall_w_median": 0.8656565656565657,
     "n_x_cols": 11,
-    "n_rows": 318,
-    "spearman_seed6_vs_seed13": 0.9090909090909092,
-    "spearman_seed6_vs_seed42": 0.9636363636363636,
-    "spearman_seed13_vs_seed42": 0.9
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8656565656565657,
+    "n_rows": 318
   }
 }

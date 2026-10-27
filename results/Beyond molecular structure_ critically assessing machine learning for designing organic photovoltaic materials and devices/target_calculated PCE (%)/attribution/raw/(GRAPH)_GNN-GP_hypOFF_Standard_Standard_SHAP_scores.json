@@ -26,20 +26,156 @@
       "LUMO_D (eV)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 4.7028064731335917e-07,
+      "abs_error_max": 5.309714211421124e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 5.00480333620601e-07,
+      "abs_error_max": 8.996857538079439e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "temperature of thermal annealing"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 4.837248059885724e-07,
+      "abs_error_max": 8.483595316910453e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_A (eV)",
+        "HOMO_D (eV)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 4.749827917649441e-07,
+      "abs_error_max": 1.769065857004648e-05,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "Ehl_A (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 8.373790318927377e-07,
+      "abs_error_max": 3.855228422722234e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 7.986360124334624e-07,
+      "abs_error_max": 2.09808349609375e-05,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 7.483694286491983e-08,
+      "abs_error_max": 1.928806305784292e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 8.132722761899913e-08,
+      "abs_error_max": 1.4291604358618317e-05,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "Eg_D (eV)",
+        "LUMO_A (eV)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 9.202957151899228e-07,
+      "abs_error_max": 7.754166921891681e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 6.67572024326546e-08,
+      "abs_error_max": 1.9527806180974494e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "D:A ratio (m/m)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 4.6690305133267884e-07,
+      "abs_error_max": 2.41319338423196e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "D:A ratio (m/m)",
+        "LUMO_D (eV)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 4.780954774297186e-07,
+      "abs_error_max": 2.8657913206942e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "ETL energy level (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 4.973014195996939e-07,
+      "abs_error_max": 3.722111383552829e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "HTL energy level (eV)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 4.525979360181509e-07,
+      "abs_error_max": 2.8562545786314786e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "LUMO_D (eV)",
+        "Eg_D (eV)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 4.720687867276752e-07,
+      "abs_error_max": 4.754331376588539e-06,
+      "top3_x_cols": [
+        "Eg_A (eV)",
+        "HOMO_D (eV)",
+        "Ehl_A (eV)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.8778998778998779,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.6127472527472527,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.816849816849817,
-    "top3_overlap": 0.7777777777777777,
+    "spearman_mean": 0.5850863422291994,
+    "top3_overlap": 0.5650793650793651,
     "same_top1": true,
-    "row_kendall_w_median": 0.6831501831501832,
     "n_x_cols": 13,
-    "n_rows": 558,
-    "spearman_seed6_vs_seed13": 0.8571428571428571,
-    "spearman_seed6_vs_seed42": 0.7747252747252747,
-    "spearman_seed13_vs_seed42": 0.8186813186813187
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.6831501831501832,
+    "n_rows": 558
   }
 }

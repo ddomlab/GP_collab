@@ -26,20 +26,156 @@
       "TMP (bar)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 1.9112087468187156e-06,
+      "abs_error_max": 1.1402311784536325e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 2.2606622618326355e-06,
+      "abs_error_max": 7.905960089260589e-06,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 1.4259701686114568e-07,
+      "abs_error_max": 7.677078244228142e-06,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 1.8692016610089013e-06,
+      "abs_error_max": 1.5201568601241888e-05,
+      "top3_x_cols": [
+        "P_wt%",
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 1.827421641564797e-06,
+      "abs_error_max": 7.753372202046194e-06,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "P_wt%",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 2.665746841046257e-07,
+      "abs_error_max": 1.152992248165674e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "foulant concentration (mg/L)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 1.9563947368794743e-06,
+      "abs_error_max": 7.915496830435131e-06,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "surface tension (mN/m)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 3.1918571146150043e-06,
+      "abs_error_max": 1.154672531455958e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "foulant concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 3.3283233733527595e-06,
+      "abs_error_max": 1.9054412845775914e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "P_wt%",
+        "oraganic compound concentration (mg/L)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 1.8310546892053024e-06,
+      "abs_error_max": 2.6741027838284023e-05,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "foulant concentration (mg/L)",
+        "surface tension (mN/m)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 1.6880035396127369e-06,
+      "abs_error_max": 8.211135853031237e-06,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker wt% (pore maker to total weight)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 2.384185791015625e-07,
+      "abs_error_max": 1.1329650874358776e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "P_wt%",
+        "TMP (bar)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 1.9936334716419424e-07,
+      "abs_error_max": 1.147542680968172e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 2.384185791015625e-07,
+      "abs_error_max": 1.1337371098818494e-05,
+      "top3_x_cols": [
+        "pore maker wt% (pore maker to total weight)",
+        "TMP (bar)",
+        "P_wt%"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 1.9741058352451546e-06,
+      "abs_error_max": 7.839202879722507e-06,
+      "top3_x_cols": [
+        "oraganic compound concentration (mg/L)",
+        "P_wt%",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9232323232323232,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8475959595959596,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.8848484848484849,
-    "top3_overlap": 0.7777777777777777,
+    "spearman_mean": 0.8367099567099566,
+    "top3_overlap": 0.7047619047619048,
     "same_top1": false,
-    "row_kendall_w_median": 0.7919191919191919,
     "n_x_cols": 11,
-    "n_rows": 318,
-    "spearman_seed6_vs_seed13": 0.8545454545454546,
-    "spearman_seed6_vs_seed42": 0.9363636363636364,
-    "spearman_seed13_vs_seed42": 0.8636363636363636
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7919191919191919,
+    "n_rows": 318
   }
 }

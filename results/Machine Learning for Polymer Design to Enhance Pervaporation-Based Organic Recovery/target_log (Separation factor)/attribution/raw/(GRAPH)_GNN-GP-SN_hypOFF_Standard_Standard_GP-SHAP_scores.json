@@ -26,20 +26,156 @@
       "Downstream_pressure"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 1.3877787807814454e-16,
+      "abs_error_max": 1.1102230246251563e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Crosslinker_concentration",
+        "Experimental_temperature"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 1.249000902703301e-16,
+      "abs_error_max": 8.881784197001252e-16,
+      "top3_x_cols": [
+        "Downstream_pressure",
+        "Crosslinker_concentration",
+        "Selective_layer_thickness"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 1.5959455978986625e-16,
+      "abs_error_max": 1.1102230246251563e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Experimental_temperature",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 8.881784197001252e-16,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Experimental_temperature",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 8.881784197001252e-16,
+      "top3_x_cols": [
+        "Downstream_pressure",
+        "Selective_layer_thickness",
+        "Experimental_temperature"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 1.3877787807814454e-16,
+      "abs_error_max": 1.5681900222830336e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Downstream_pressure",
+        "Crosslinker_concentration"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 1.6653345369377348e-16,
+      "abs_error_max": 1.3322676295501878e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Experimental_temperature",
+        "Crosslinker_concentration"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 1.3322676295501878e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Downstream_pressure",
+        "Crosslinker_concentration"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 1.3877787807814454e-16,
+      "abs_error_max": 1.4988010832439613e-15,
+      "top3_x_cols": [
+        "Downstream_pressure",
+        "Selective_layer_thickness",
+        "Crosslinker_concentration"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 1.6653345369377348e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Downstream_pressure",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 1.3877787807814454e-16,
+      "abs_error_max": 1.3322676295501878e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Downstream_pressure",
+        "Experimental_temperature"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 1.1102230246251563e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Experimental_temperature",
+        "Crosslinker_concentration"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 1.3877787807814454e-16,
+      "abs_error_max": 1.3322676295501878e-15,
+      "top3_x_cols": [
+        "Crosslinker_concentration",
+        "Downstream_pressure",
+        "Organic_molecular_volume"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 1.1102230246251563e-16,
+      "abs_error_max": 8.881784197001252e-16,
+      "top3_x_cols": [
+        "Crosslinker_concentration",
+        "Selective_layer_thickness",
+        "Downstream_pressure"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 1.6653345369377348e-16,
+      "abs_error_max": 1.2212453270876722e-15,
+      "top3_x_cols": [
+        "Selective_layer_thickness",
+        "Organic_molecular_volume",
+        "Crosslinker_concentration"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9542087542087542,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8380606060606061,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.9313131313131312,
-    "top3_overlap": 0.7777777777777777,
-    "same_top1": true,
-    "row_kendall_w_median": 0.8976430976430977,
+    "spearman_mean": 0.8264935064935062,
+    "top3_overlap": 0.6444444444444445,
+    "same_top1": false,
     "n_x_cols": 10,
-    "n_rows": 2311,
-    "spearman_seed6_vs_seed13": 0.9151515151515152,
-    "spearman_seed6_vs_seed42": 0.8909090909090909,
-    "spearman_seed13_vs_seed42": 0.9878787878787878
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.8976430976430977,
+    "n_rows": 2311
   }
 }

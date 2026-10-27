@@ -29,20 +29,171 @@
     ],
     "chemistry_share_mean": 0.9584778744114085
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "rel_error_median": 0.0002182386519121,
+      "rel_error_max": 0.0305301950615938,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9539113659049266
+    },
+    "seed_6_fold_1": {
+      "rel_error_median": 0.0002029701774293,
+      "rel_error_max": 2.498580999479204,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9468644893862419
+    },
+    "seed_6_fold_2": {
+      "rel_error_median": 0.00013171224606254998,
+      "rel_error_max": 0.0646824057325471,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9496324370129411
+    },
+    "seed_6_fold_3": {
+      "rel_error_median": 0.0002130215877863,
+      "rel_error_max": 0.1947587725410407,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.95160326944929
+    },
+    "seed_6_fold_4": {
+      "rel_error_median": 0.0002252211613535,
+      "rel_error_max": 0.2347787127002113,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9538415280363605
+    },
+    "seed_13_fold_0": {
+      "rel_error_median": 0.00017479530477255002,
+      "rel_error_max": 0.0115229430147216,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9602341338739898
+    },
+    "seed_13_fold_1": {
+      "rel_error_median": 0.0001989995427056,
+      "rel_error_max": 0.0060954941061363,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9628564663954816
+    },
+    "seed_13_fold_2": {
+      "rel_error_median": 0.0002630379705544,
+      "rel_error_max": 0.4720671035628577,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9629253965868687
+    },
+    "seed_13_fold_3": {
+      "rel_error_median": 0.0002682692322197,
+      "rel_error_max": 0.2347704932918662,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9606315343755059
+    },
+    "seed_13_fold_4": {
+      "rel_error_median": 0.00028707669529,
+      "rel_error_max": 0.2824099508177116,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9685274480151318
+    },
+    "seed_42_fold_0": {
+      "rel_error_median": 0.00011815670397215001,
+      "rel_error_max": 0.0132277971096777,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9591288418628697
+    },
+    "seed_42_fold_1": {
+      "rel_error_median": 0.0001332030279267,
+      "rel_error_max": 0.0251365237029313,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9629545811886411
+    },
+    "seed_42_fold_2": {
+      "rel_error_median": 9.812796362660961e-05,
+      "rel_error_max": 0.0512948109210637,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9554419212710342
+    },
+    "seed_42_fold_3": {
+      "rel_error_median": 0.0001843494023726,
+      "rel_error_max": 0.0669037000465158,
+      "top3_x_cols": [
+        "Equiv TTIP",
+        "Equiv AcOH",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9639327878268357
+    },
+    "seed_42_fold_4": {
+      "rel_error_median": 0.0001196434610608,
+      "rel_error_max": 0.0137287204832509,
+      "top3_x_cols": [
+        "Equiv AcOH",
+        "Equiv TTIP",
+        "Reaction Conc (mM)"
+      ],
+      "chemistry_share_mean": 0.9509175685279999
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 1.0,
-    "w_p": 0.0018998100189981,
-    "spearman_mean": 1.0,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.936,
+    "w_p": 9.999000099990002e-05,
+    "spearman_mean": 0.9314285714285714,
     "top3_overlap": 1.0,
-    "same_top1": true,
-    "row_kendall_w_median": 0.7333333333333333,
+    "same_top1": false,
     "n_x_cols": 4,
-    "n_rows": 768,
-    "spearman_seed6_vs_seed13": 1.0,
-    "spearman_seed6_vs_seed42": 1.0,
-    "spearman_seed13_vs_seed42": 1.0
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.7333333333333333,
+    "n_rows": 768
   }
 }

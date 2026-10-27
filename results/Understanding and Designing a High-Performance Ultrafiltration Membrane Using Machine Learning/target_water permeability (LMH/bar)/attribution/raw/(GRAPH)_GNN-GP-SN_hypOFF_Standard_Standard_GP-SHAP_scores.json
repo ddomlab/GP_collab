@@ -26,20 +26,156 @@
       "additive wt% (additive to polymer)"
     ]
   },
-  "seed_consistency": {
+  "folds": {
+    "seed_6_fold_0": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.3145040611561853e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_6_fold_1": {
+      "abs_error_median": 2.664535259100376e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_6_fold_2": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.7053025658242404e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_6_fold_3": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.9895196601282805e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_6_fold_4": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_13_fold_0": {
+      "abs_error_median": 1.9539925233402758e-14,
+      "abs_error_max": 2.273736754432321e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_1": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_13_fold_2": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 9.237055564881302e-14,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_13_fold_3": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 8.526512829121202e-14,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "surface tension (mN/m)"
+      ]
+    },
+    "seed_13_fold_4": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.7053025658242404e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_42_fold_0": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_42_fold_1": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "pore maker wt% (pore maker to total weight)"
+      ]
+    },
+    "seed_42_fold_2": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 2.273736754432321e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "pore maker molecular weight (Da)",
+        "additive wt% (additive to polymer)"
+      ]
+    },
+    "seed_42_fold_3": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.4210854715202006e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    },
+    "seed_42_fold_4": {
+      "abs_error_median": 2.8421709430404014e-14,
+      "abs_error_max": 1.1368683772161605e-13,
+      "top3_x_cols": [
+        "TMP (bar)",
+        "additive wt% (additive to polymer)",
+        "pore maker molecular weight (Da)"
+      ]
+    }
+  },
+  "fold_consistency": {
     "seeds": "6 13 42",
-    "n_raters": 3,
-    "w_chance": 0.3333333333333333,
-    "kendall_w": 0.9838383838383838,
+    "n_raters": 15,
+    "w_chance": 0.0666666666666666,
+    "kendall_w": 0.8933333333333333,
     "w_p": 9.999000099990002e-05,
-    "spearman_mean": 0.975757575757576,
-    "top3_overlap": 1.0,
+    "spearman_mean": 0.8857142857142859,
+    "top3_overlap": 0.8507936507936508,
     "same_top1": true,
-    "row_kendall_w_median": 0.9494949494949496,
     "n_x_cols": 11,
-    "n_rows": 318,
-    "spearman_seed6_vs_seed13": 0.9727272727272728,
-    "spearman_seed6_vs_seed42": 0.9727272727272728,
-    "spearman_seed13_vs_seed42": 0.9818181818181818
+    "row_raters": 3,
+    "row_w_chance": 0.3333333333333333,
+    "row_kendall_w_median": 0.9494949494949496,
+    "n_rows": 318
   }
 }

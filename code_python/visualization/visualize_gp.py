@@ -1072,8 +1072,36 @@ def _feature_stability_source_label(column: str) -> str:
         "lengthscale_kendalls_w": "Lengthscale",
         "feature_importance_MDI_kendalls_w": "MDI",
         "feature_importance_SHAP_kendalls_w": "SHAP",
+        "feature_importance_GP_SHAP_kendalls_w": "GP-SHAP",
+        "feature_importance_IG_kendalls_w": "IG",
     }
     return labels.get(column, column)
+
+
+def _feature_importance_stability_metric_column(metric: Any) -> str:
+    """Resolve a friendly feature-stability metric name to its data column."""
+    aliases = {
+        "lengthscale": "lengthscale_kendalls_w",
+        "lengthscalekendallsw": "lengthscale_kendalls_w",
+        "mdi": "feature_importance_MDI_kendalls_w",
+        "featureimportancemdikendallsw": "feature_importance_MDI_kendalls_w",
+        "shap": "feature_importance_SHAP_kendalls_w",
+        "featureimportanceshapkendallsw": "feature_importance_SHAP_kendalls_w",
+        "gpshap": "feature_importance_GP_SHAP_kendalls_w",
+        "featureimportancegpshapkendallsw": (
+            "feature_importance_GP_SHAP_kendalls_w"
+        ),
+        "ig": "feature_importance_IG_kendalls_w",
+        "integratedgradients": "feature_importance_IG_kendalls_w",
+        "featureimportanceigkendallsw": "feature_importance_IG_kendalls_w",
+    }
+    key = re.sub(r"[^a-z0-9]+", "", str(metric).strip().lower())
+    if key not in aliases:
+        raise ValueError(
+            "Feature-importance stability metric must be one of: "
+            "lengthscale, MDI, SHAP, GP-SHAP, or IG."
+        )
+    return aliases[key]
 
 
 def _feature_stability_column_for_model(
@@ -2613,6 +2641,139 @@ def plot_model_profile_comparison(
     else:
         plt.close(fig)
 
+    return plot_df
+
+
+def plot_model_feature_importance_stability_profile_comparison(
+    df: pd.DataFrame,
+    model_importance_metrics: Mapping[str, str],
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    plot_profile: bool = False,
+    profile_options: Optional[Dict[str, Any]] = None,
+    include_kernel_config: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "Feature-stability profile AUC",
+    x_tick_rotation: int = 35,
+    y_lim: tuple = (0, 1.05),
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare models using a caller-selected stability metric per model.
+
+    ``model_importance_metrics`` both selects the models and assigns the
+    Kendall's W column used for each one. Model keys may use raw names (for
+    example, ``GPytorchMAP``) or display names (``GP-MAP``). Metric values may
+    be friendly names -- ``lengthscale``, ``MDI``, ``SHAP``, ``GP-SHAP``, or
+    ``IG`` -- or their full master-table column names.
+
+    The selected scalar for every dataset/target/configuration is passed to
+    the same profile-ranking and AUC implementation as
+    :func:`plot_model_profile_comparison`. Higher Kendall's W is always
+    treated as better. Set ``plot_profile=True`` to also draw the underlying
+    profile curves.
+    """
+    if (
+        not isinstance(model_importance_metrics, Mapping)
+        or not model_importance_metrics
+    ):
+        raise ValueError("model_importance_metrics must be a non-empty mapping.")
+    if "model" not in df.columns:
+        raise ValueError("df is missing required column: model")
+
+    available_models = df["model"].dropna().astype(str).drop_duplicates().tolist()
+    model_aliases = {}
+    for raw_model in available_models:
+        for alias in {raw_model, _display_model_name(raw_model)}:
+            key = str(alias).strip().lower()
+            previous = model_aliases.get(key)
+            if previous is not None and previous != raw_model:
+                raise ValueError(f"Ambiguous model alias: {alias}")
+            model_aliases[key] = raw_model
+
+    resolved_metrics = {}
+    for requested_model, requested_metric in model_importance_metrics.items():
+        model_key = str(requested_model).strip().lower()
+        if model_key not in model_aliases:
+            raise ValueError(
+                f"Unknown model in model_importance_metrics: {requested_model}"
+            )
+        raw_model = model_aliases[model_key]
+        if raw_model in resolved_metrics:
+            raise ValueError(
+                f"Multiple metric assignments were provided for model {raw_model}."
+            )
+        metric_column = _feature_importance_stability_metric_column(
+            requested_metric
+        )
+        if metric_column not in df.columns:
+            raise ValueError(f"df is missing required column: {metric_column}")
+        model_values = pd.to_numeric(
+            df.loc[df["model"] == raw_model, metric_column],
+            errors="coerce",
+        )
+        if not model_values.notna().any():
+            raise ValueError(
+                f"Model {raw_model} has no values for {metric_column}."
+            )
+        resolved_metrics[raw_model] = metric_column
+
+    # Reuse the generic scalar-metric profile path. This working column is
+    # populated from the caller's per-model selection and never mutates df.
+    working_metric = "lengthscale_kendalls_w"
+    profile_input = df.copy()
+    profile_input[working_metric] = np.nan
+    for raw_model, metric_column in resolved_metrics.items():
+        model_mask = profile_input["model"] == raw_model
+        profile_input.loc[model_mask, working_metric] = pd.to_numeric(
+            df.loc[model_mask, metric_column],
+            errors="coerce",
+        )
+
+    plot_df = plot_model_profile_comparison(
+        df=profile_input,
+        model=list(resolved_metrics),
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        metric=working_metric,
+        tree_feature_importance=None,
+        plot_profile=plot_profile,
+        profile_options=profile_options,
+        include_kernel_config=include_kernel_config,
+        figsize=figsize,
+        fontsize=fontsize,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        x_tick_rotation=x_tick_rotation,
+        y_lim=y_lim,
+        show_values=show_values,
+        show=show,
+        high_quality=high_quality,
+        save_dir=save_dir,
+        file_name=file_name,
+    )
+
+    plot_df["metric"] = "feature_importance_stability"
+    plot_df["feature stability source"] = plot_df["model"].map(
+        {
+            model_name: _feature_stability_source_label(metric_column)
+            for model_name, metric_column in resolved_metrics.items()
+        }
+    )
+    plot_df["feature stability column"] = plot_df["model"].map(
+        resolved_metrics
+    )
     return plot_df
 
 
@@ -6193,9 +6354,52 @@ if __name__ == "__main__":
     # )
 
 
+    #### Feature importance stability comparison
+    ### load pickle file of importance here
+    feature_importance_df = pd.read_pickle(
+        MASTER_DATA / "feature_importance_stability.pkl"
+    )
 
+    selected_kernel_triples = {
+        "MGK": ("Graph", "Matern32", "(count:+)x(graph:x)"),
+        "GP-MAP": [
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+        ],
+        "GP-HMC": [
+            ("Matern32", "Matern32", "(count:+)x(fp:+)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+        ],
+    }
 
+    model_importance_metrics = {
+        "RF": "SHAP",
+        "XGBR": "SHAP",
+        "NGB": "SHAP",
+        "GPytorchMAP": "lengthscale",
+        "GpyroHMC": "lengthscale",
+        "GNN-GP": "GP-SHAP",
+        "GNN-GP-SN": "GP-SHAP",
+        "GNN-MLP": "IG",
+        "MLP-GP": "GP-SHAP",
+        "MLP-GP-SN": "GP-SHAP",
+    }
 
+    plot_model_feature_importance_stability_profile_comparison(
+        df=feature_importance_df,
+        model_importance_metrics=model_importance_metrics,
+        kernel_triples=selected_kernel_triples,
+        y_label="Profile AUC: Kendall's W",
+        fontsize=17,
+        figsize=(8, 5),
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "performance_profile"
+            / "model_comparison"
+        ),
+        file_name="feature_importance_stability.png",
+    )
 
 
     ##############TOPSIS #################
