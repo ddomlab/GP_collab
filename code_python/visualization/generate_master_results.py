@@ -1452,7 +1452,7 @@ if __name__ == "__main__":
     #     feature_set=feature_set,
     # )
 
-    ood_type: OODType = "continuous_cluster_OOD"
+    ood_type: OODType = "structure_cluster_OOD"
     output_name = {
         "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
         "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",

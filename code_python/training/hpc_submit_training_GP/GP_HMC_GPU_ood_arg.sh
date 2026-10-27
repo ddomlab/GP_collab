@@ -6,7 +6,7 @@
 
 DATE=$(date +%Y%m%d)
 model="GpyroHMC"
-k_fps=("TanimotoMatern32")
+k_fps=("Matern32")
 k_counts=("Matern32")
 k_mixing_methods=("(count:+)x(fp:+)")
 clustering_methods=("continuous_cluster" "structure_cluster")
