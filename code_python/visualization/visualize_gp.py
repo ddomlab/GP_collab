@@ -2644,43 +2644,11 @@ def plot_model_profile_comparison(
     return plot_df
 
 
-def plot_model_feature_importance_stability_profile_comparison(
+def _prepare_model_feature_importance_stability_data(
     df: pd.DataFrame,
     model_importance_metrics: Mapping[str, str],
-    fp_kernels: Any = None,
-    count_kernels: Any = None,
-    mixing_methods: Any = None,
-    kernel_triples: Any = None,
-    plot_profile: bool = False,
-    profile_options: Optional[Dict[str, Any]] = None,
-    include_kernel_config: bool = True,
-    figsize: tuple = (7, 5),
-    fontsize: int = 12,
-    title: Optional[str] = None,
-    x_label: str = "Model",
-    y_label: str = "Feature-stability profile AUC",
-    x_tick_rotation: int = 35,
-    y_lim: tuple = (0, 1.05),
-    show_values: bool = True,
-    show: bool = True,
-    high_quality: bool = True,
-    save_dir: Optional[Path] = HERE / "result_analysis",
-    file_name: Optional[str] = None,
-) -> pd.DataFrame:
-    """Compare models using a caller-selected stability metric per model.
-
-    ``model_importance_metrics`` both selects the models and assigns the
-    Kendall's W column used for each one. Model keys may use raw names (for
-    example, ``GPytorchMAP``) or display names (``GP-MAP``). Metric values may
-    be friendly names -- ``lengthscale``, ``MDI``, ``SHAP``, ``GP-SHAP``, or
-    ``IG`` -- or their full master-table column names.
-
-    The selected scalar for every dataset/target/configuration is passed to
-    the same profile-ranking and AUC implementation as
-    :func:`plot_model_profile_comparison`. Higher Kendall's W is always
-    treated as better. Set ``plot_profile=True`` to also draw the underlying
-    profile curves.
-    """
+) -> tuple[pd.DataFrame, Dict[str, str]]:
+    """Select one Kendall's W source per model in a working data frame."""
     if (
         not isinstance(model_importance_metrics, Mapping)
         or not model_importance_metrics
@@ -2726,17 +2694,64 @@ def plot_model_feature_importance_stability_profile_comparison(
             )
         resolved_metrics[raw_model] = metric_column
 
-    # Reuse the generic scalar-metric profile path. This working column is
-    # populated from the caller's per-model selection and never mutates df.
+    # Reuse the generic scalar-metric paths in the existing profile and
+    # mean/std functions. The caller's data frame is never mutated.
     working_metric = "lengthscale_kendalls_w"
-    profile_input = df.copy()
-    profile_input[working_metric] = np.nan
+    comparison_df = df.copy()
+    comparison_df[working_metric] = np.nan
     for raw_model, metric_column in resolved_metrics.items():
-        model_mask = profile_input["model"] == raw_model
-        profile_input.loc[model_mask, working_metric] = pd.to_numeric(
+        model_mask = comparison_df["model"] == raw_model
+        comparison_df.loc[model_mask, working_metric] = pd.to_numeric(
             df.loc[model_mask, metric_column],
             errors="coerce",
         )
+    return comparison_df, resolved_metrics
+
+
+def plot_model_feature_importance_stability_profile_comparison(
+    df: pd.DataFrame,
+    model_importance_metrics: Mapping[str, str],
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    plot_profile: bool = False,
+    profile_options: Optional[Dict[str, Any]] = None,
+    include_kernel_config: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "Feature-stability profile AUC",
+    x_tick_rotation: int = 35,
+    y_lim: tuple = (0, 1.05),
+    show_values: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Compare models using a caller-selected stability metric per model.
+
+    ``model_importance_metrics`` both selects the models and assigns the
+    Kendall's W column used for each one. Model keys may use raw names (for
+    example, ``GPytorchMAP``) or display names (``GP-MAP``). Metric values may
+    be friendly names -- ``lengthscale``, ``MDI``, ``SHAP``, ``GP-SHAP``, or
+    ``IG`` -- or their full master-table column names.
+
+    The selected scalar for every dataset/target/configuration is passed to
+    the same profile-ranking and AUC implementation as
+    :func:`plot_model_profile_comparison`. Higher Kendall's W is always
+    treated as better. Set ``plot_profile=True`` to also draw the underlying
+    profile curves.
+    """
+    working_metric = "lengthscale_kendalls_w"
+    profile_input, resolved_metrics = (
+        _prepare_model_feature_importance_stability_data(
+            df,
+            model_importance_metrics,
+        )
+    )
 
     plot_df = plot_model_profile_comparison(
         df=profile_input,
@@ -2777,6 +2792,82 @@ def plot_model_feature_importance_stability_profile_comparison(
     return plot_df
 
 
+def plot_model_feature_importance_stability_mean_std_comparison(
+    df: pd.DataFrame,
+    model_importance_metrics: Mapping[str, str],
+    fp_kernels: Any = None,
+    count_kernels: Any = None,
+    mixing_methods: Any = None,
+    kernel_triples: Any = None,
+    include_kernel_config: bool = True,
+    figsize: tuple = (7, 5),
+    fontsize: int = 12,
+    title: Optional[str] = None,
+    x_label: str = "Model",
+    y_label: str = "Kendall's W (mean ± SD across tasks)",
+    x_tick_rotation: int = 35,
+    y_lim: Optional[tuple] = (0, 1.05),
+    show_values: bool = True,
+    values_inside_bars: bool = True,
+    inside_bar_min_height: Optional[float] = 0.4,
+    gradient_bars: bool = True,
+    show: bool = True,
+    high_quality: bool = True,
+    save_dir: Optional[Path] = HERE / "result_analysis",
+    file_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Plot task-level mean +/- SD for a selected stability metric per model.
+
+    The model and metric mapping follows
+    :func:`plot_model_feature_importance_stability_profile_comparison`.
+    Every dataset/target contributes one Kendall's W value to the mean and
+    sample standard deviation for each model configuration.
+    """
+    working_metric = "lengthscale_kendalls_w"
+    comparison_df, resolved_metrics = (
+        _prepare_model_feature_importance_stability_data(
+            df,
+            model_importance_metrics,
+        )
+    )
+    summary_df = plot_model_mean_std_comparison(
+        df=comparison_df,
+        model=list(resolved_metrics),
+        fp_kernels=fp_kernels,
+        count_kernels=count_kernels,
+        mixing_methods=mixing_methods,
+        kernel_triples=kernel_triples,
+        metric=working_metric,
+        include_kernel_config=include_kernel_config,
+        figsize=figsize,
+        fontsize=fontsize,
+        title=title,
+        x_label=x_label,
+        y_label=y_label,
+        x_tick_rotation=x_tick_rotation,
+        y_lim=y_lim,
+        show_values=show_values,
+        values_inside_bars=values_inside_bars,
+        inside_bar_min_height=inside_bar_min_height,
+        gradient_bars=gradient_bars,
+        show=show,
+        high_quality=high_quality,
+        save_dir=save_dir,
+        file_name=file_name,
+    )
+    summary_df["metric"] = "feature_importance_stability"
+    summary_df["feature stability source"] = summary_df["model"].map(
+        {
+            model_name: _feature_stability_source_label(metric_column)
+            for model_name, metric_column in resolved_metrics.items()
+        }
+    )
+    summary_df["feature stability column"] = summary_df["model"].map(
+        resolved_metrics
+    )
+    return summary_df
+
+
 def plot_model_mean_std_comparison(
     df: pd.DataFrame,
     model: Any = None,
@@ -2794,6 +2885,8 @@ def plot_model_mean_std_comparison(
     x_tick_rotation: int = 35,
     y_lim: Optional[tuple] = None,
     show_values: bool = True,
+    values_inside_bars: bool = False,
+    inside_bar_min_height: Optional[float] = None,
     gradient_bars: bool = True,
     show: bool = True,
     high_quality: bool = True,
@@ -2820,6 +2913,9 @@ def plot_model_mean_std_comparison(
     Set ``runtime_folds`` to the number of cross-validation folds represented
     by each stored runtime to plot average runtime per fold.
     Set ``log_y=True`` when values span multiple orders of magnitude.
+    Set ``values_inside_bars=True`` to place the value annotations inside
+    their bars. If ``inside_bar_min_height`` is set, shorter bars retain the
+    original annotation position above their error bars.
     """
     df, metric, _ = _select_runtime_metric_by_model(
         df,
@@ -2957,6 +3053,10 @@ def plot_model_mean_std_comparison(
         ax.set_yscale("log")
 
     if show_values:
+        if inside_bar_min_height is not None:
+            inside_bar_min_height = float(inside_bar_min_height)
+            if inside_bar_min_height < 0:
+                raise ValueError("inside_bar_min_height cannot be negative.")
         lower, upper = ax.get_ylim()
         label_start_offset = 0.02 * (upper - lower)
         error_bar_label_gap = 0.015 * (upper - lower)
@@ -2964,26 +3064,41 @@ def plot_model_mean_std_comparison(
         annotate_std = metric_key not in {"nll", "oof_nll"}
         annotate_inside_bar = metric_key in {"r2", "oof_r2"}
         for bar, row in zip(bars, summary_df.itertuples(index=False)):
-            label_start = (
-                bar.get_y() + label_start_offset
-                if annotate_inside_bar
-                else row.mean + row.std + error_bar_label_gap
-            )
             value_label = (
                 f"{row.mean:.2f} ± {row.std:.2f}"
                 if annotate_std
                 else f"{row.mean:.2f}"
             )
+            place_inside_bar = values_inside_bars and (
+                inside_bar_min_height is None
+                or bar.get_height() >= inside_bar_min_height
+            )
+            if place_inside_bar:
+                label_start = bar.get_y() + label_start_offset
+                horizontal_alignment = "left" if annotate_std else "center"
+                vertical_alignment = "center" if annotate_std else "bottom"
+                text_rotation = 90 if annotate_std else 0
+                annotation_fontsize = max(fontsize - 4, 7)
+            else:
+                label_start = (
+                    bar.get_y() + label_start_offset
+                    if annotate_inside_bar
+                    else row.mean + row.std + error_bar_label_gap
+                )
+                horizontal_alignment = "left" if annotate_std else "center"
+                vertical_alignment = "center" if annotate_std else "bottom"
+                text_rotation = 90 if annotate_std else 0
+                annotation_fontsize = max(fontsize - 3, 7)
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 label_start,
                 value_label,
-                ha="left" if annotate_std else "center",
-                va="center" if annotate_std else "bottom",
+                ha=horizontal_alignment,
+                va=vertical_alignment,
                 color="black",
-                fontsize=max(fontsize - 3, 7),
+                fontsize=annotation_fontsize,
                 fontweight="bold",
-                rotation=90 if annotate_std else 0,
+                rotation=text_rotation,
                 rotation_mode="anchor",
             )
 
@@ -6011,8 +6126,8 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
         ],
         "GP-HMC": [
-            ("Matern32", "Matern32", "(count:+)x(fp:+)"),
-            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+            ("Matern32", "Matern32", "(count:+)x(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:x)"),
         ],
     }
     # plot_model_comparison(
@@ -6118,24 +6233,24 @@ if __name__ == "__main__":
     # )
 
 
-    plot_hybridization_profile_comparison(
-        df=result_df,
-        model="GPytorchMAP",
-        metric="OOF_R2",
-        fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:x)",
-            "(count:x)+(fp:x)",
-        ],
-        y_label="Profile AUC of R² (OOF)",
-        fontsize=16,
-        figsize=(6, 5),
-        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-        file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
-    )
+    # plot_hybridization_profile_comparison(
+    #     df=result_df,
+    #     model="GPytorchMAP",
+    #     metric="OOF_R2",
+    #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
+    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:x)",
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="Profile AUC of R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+    #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
+    # )
 
     # plot_hybridization_mean_std_comparison(
     #     df=result_df,
@@ -6367,8 +6482,8 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
         ],
         "GP-HMC": [
-            ("Matern32", "Matern32", "(count:+)x(fp:+)"),
-            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+            ("Matern32", "Matern32", "(count:+)x(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:x)"),
         ],
     }
 
@@ -6385,20 +6500,36 @@ if __name__ == "__main__":
         "MLP-GP-SN": "GP-SHAP",
     }
 
-    plot_model_feature_importance_stability_profile_comparison(
+    # plot_model_feature_importance_stability_profile_comparison(
+    #     df=feature_importance_df,
+    #     model_importance_metrics=model_importance_metrics,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="Profile AUC: Kendall's W",
+    #     fontsize=17,
+    #     figsize=(8, 5),
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "performance_profile"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="feature_importance_stability.png",
+    # )
+
+    plot_model_feature_importance_stability_mean_std_comparison(
         df=feature_importance_df,
         model_importance_metrics=model_importance_metrics,
         kernel_triples=selected_kernel_triples,
-        y_label="Profile AUC: Kendall's W",
+        y_label="Kendall's W",
         fontsize=17,
         figsize=(8, 5),
         save_dir=(
             HERE
             / "result_analysis"
-            / "performance_profile"
+            / "average_performance"
             / "model_comparison"
         ),
-        file_name="feature_importance_stability.png",
+        file_name="feature_importance_stability_mean_std.png",
     )
 
 
