@@ -14,6 +14,7 @@ from typing import Any, Iterable, Mapping, Optional
 import warnings
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_hex, to_rgb
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
@@ -61,6 +62,20 @@ DEFAULT_SAVE_DIR = HERE / "ood_result_analysis"
 ID_COLUMNS = ["paper", "target", "model", "fp kernel", "count kernel", "mixing method"]
 CASE_COLUMNS = ["paper", "target", "cluster"]
 EVALUATIONS = ("OOD", "IID")
+HIGHEST_BAR_HATCH = "xxxxx"
+# OOD-specific model palette. Keep this local so the shared visualization
+# palette—and figures produced by other modules—remain unchanged.
+OOD_MODEL_COLORS = {
+    "tree": "#225075",
+    "gp": "#f25d71",
+    "gnn": "#4D4E4E",
+    "GNN-GP": "#7C1F44",
+    "GNN-GP-SN": "#7C1F44",
+    "GNN-MLP": "#7BAA82",
+    "GNN-MLP-Ens": "#7BAA82",
+    "MLP-GP": "#FF7551",
+    "MLP-GP-SN": "#FF7551",
+}
 # Match the hybridization palette and notation used by visualize_gp.py.
 HYBRIDIZATION_METHOD_COLORS = {
     "sum": "#2A9C9D",
@@ -502,7 +517,9 @@ def _ordered_metadata(metadata: pd.DataFrame, model: Any) -> pd.DataFrame:
 def _evaluation_colors(metadata: pd.DataFrame) -> dict[str, dict[str, str]]:
     """Return model-aware OOD colors and lighter matching IID colors."""
     ood_colors = {
-        row["configuration"]: _model_type_color(row["model"])
+        row["configuration"]: _model_type_color(
+            row["model"], palette=OOD_MODEL_COLORS
+        )
         for _, row in metadata.iterrows()
     }
     return {
@@ -522,6 +539,35 @@ def _evaluation_legend(ax: plt.Axes, **kwargs: Any) -> None:
         title="Evaluation",
         **kwargs,
     )
+
+
+def _darken_color(color: Any, amount: float = 0.35) -> str:
+    """Blend a color toward black while preserving its hue."""
+    rgb = np.asarray(to_rgb(color), dtype=float)
+    return to_hex(rgb * (1.0 - amount))
+
+
+def _hatch_highest_bars(
+    bars: Iterable[Any],
+    values: Iterable[float],
+    colors: Iterable[Any],
+) -> None:
+    """Hatch the highest finite bar, including all bars tied for highest."""
+    bar_list = list(bars)
+    numeric_values = np.asarray(list(values), dtype=float)
+    bar_colors = list(colors)
+    finite_values = numeric_values[np.isfinite(numeric_values)]
+    if not bar_list or finite_values.size == 0:
+        return
+
+    highest_value = finite_values.max()
+    for bar, value, color in zip(bar_list, numeric_values, bar_colors):
+        if np.isfinite(value) and np.isclose(
+            value, highest_value, rtol=1e-12, atol=1e-12
+        ):
+            bar.set_hatch(HIGHEST_BAR_HATCH)
+            bar.set_edgecolor(_darken_color(color))
+            bar.set_linewidth(0)
 
 
 def _finalize_figure(
@@ -728,7 +774,9 @@ def plot_model_profile_comparison(
     order = metadata["configuration"].tolist()
     values = auc_df.set_index("configuration")["auc"].reindex(order)
     bar_colors = {
-        row["configuration"]: _model_type_color(row["model"])
+        row["configuration"]: _model_type_color(
+            row["model"], palette=OOD_MODEL_COLORS
+        )
         for _, row in metadata.iterrows()
     }
 
@@ -742,6 +790,11 @@ def plot_model_profile_comparison(
         color=[bar_colors[label] for label in order],
     )
     apply_vertical_bar_gradients(ax, bars=bars, edge_linewidth=0)
+    _hatch_highest_bars(
+        bars,
+        heights,
+        [bar_colors[label] for label in order],
+    )
     if show_values:
         ax.bar_label(
             bars,
@@ -1126,6 +1179,9 @@ def plot_model_mean_std_comparison(
     x_positions = np.arange(len(order), dtype=float)
     width = 0.33
     offsets = {"OOD": -width / 2, "IID": width / 2}
+    plotted_bars = []
+    plotted_values = []
+    plotted_colors = []
 
     for evaluation in EVALUATIONS:
         evaluation_df = (
@@ -1156,6 +1212,11 @@ def plot_model_mean_std_comparison(
                 colors=bar_colors,
                 edge_linewidth=0,
             )
+        plotted_bars.extend(bars)
+        plotted_values.extend(evaluation_df["mean"].to_numpy(dtype=float))
+        plotted_colors.extend(bar_colors)
+
+    _hatch_highest_bars(plotted_bars, plotted_values, plotted_colors)
 
     ax.set_xticks(x_positions)
     ax.set_xticklabels(
@@ -1506,8 +1567,8 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
         ],
         "GP-HMC": [
-            ("Matern32", "Matern32", "(count:+)x(fp:+)"),
-            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:+)"),
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
         ],
     }
     for ood_type, result_df in ood_results.items():
@@ -1516,16 +1577,17 @@ if __name__ == "__main__":
                 df=result_df,
                 model=models,
                 kernel_triples=selected_kernel_triples,
-                metric="cdf_ama",
+                metric="cvpp",
                 ood_and_iid=ood_and_iid,
                 fontsize=15,
-                y_label="Profile AUC: AMA",
+                y_label="Profile AUC: R²",
                 figsize=(7.5, 5),
                 save_dir=(
                     DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
                 ),
                 show=False,
-                file_name=f"CDFAMA_{ood_type}_{ood_and_iid.lower()}.png",
+                high_quality=True,
+                file_name=f"R2_{ood_type}_{ood_and_iid.lower()}.png",
             )
 
     # nll_models = [

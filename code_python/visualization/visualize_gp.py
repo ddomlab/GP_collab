@@ -6102,6 +6102,7 @@ if __name__ == "__main__":
         "MGK",
         "GNN-GP",
         "GNN-GP-SN",
+        "GNN-MLP",
         "GNN-MLP-Ens",
         "MLP-GP",
         "MLP-GP-SN",
@@ -6151,6 +6152,27 @@ if __name__ == "__main__":
     #     file_name="running_time_cpu_gpu.png",
     # )
 
+    # plot_model_comparison(
+    #     df=result_df,
+    #     metric="cdf_ama",
+    #     model=models,
+    #     # runtime_devices=runtime_devices,
+    #     # runtime_folds=5,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="AMA",
+    #     fontsize=17,
+    #     show=True,
+    #     figsize=(8, 5),
+    #     # log_y=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "score_distribution"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="CDFAMA.png",
+    # )
+
     # plot_model_profile_comparison(
     #     df=result_df,
     #     metric="Running time",
@@ -6196,27 +6218,7 @@ if __name__ == "__main__":
     # plot_hybridization_method_comparison(
     #     df=result_df,
     #     metric="r2",
-    #     model="GPytorchMAP",
-    #     fp_kernels=["Matern32", "Matern52", "RBF"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)",
-    #         ],
-    #     figsize=(5, 5),
-    #     fontsize=17,
-    #     y_label="R²",
-    #     show=True,
-    #     save_dir=HERE / "result_analysis"/"score_distribution"/"hybridization_comparison",
-    #     file_name="r2_GPytorchMAP_Bitwise.png",
-    # )
-    
-    # plot_hybridization_profile_comparison(
-    #     df=result_df,
     #     model="GpyroHMC",
-    #     metric="OOF_R2",
     #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
     #     mixing_methods=[
@@ -6224,13 +6226,33 @@ if __name__ == "__main__":
     #         "product",
     #         "(count:+)x(fp:x)",
     #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="Profile AUC of R² (OOF)",
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-    #     file_name="R2OOF_GpyroHMC_SK_hybridization_profile_comparison_avg_over_config.png",
+    #         ],
+    #     figsize=(5, 5),
+    #     fontsize=17,
+    #     y_label="R²",
+    #     show=True,
+    #     save_dir=HERE / "result_analysis"/"score_distribution"/"hybridization_comparison",
+    #     file_name="r2_GpyroHMC_SK.png",
     # )
+    
+    plot_hybridization_profile_comparison(
+        df=result_df,
+        model="GpyroHMC",
+        metric="OOF_R2",
+        fp_kernels=["Matern32", "Matern52", "RBF"],
+        count_kernels=["RBF", "Matern32", "Matern52"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:x)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="Profile AUC of R² (OOF)",
+        fontsize=16,
+        figsize=(6, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+        file_name="R2OOF_GpyroHMC_Bitwise_avg_over_config.png",
+    )
 
 
     # plot_hybridization_profile_comparison(
@@ -6375,19 +6397,17 @@ if __name__ == "__main__":
     #     file_name=f"AMA_model_profile_comparison.png",
     # )
 
+    # for metric in ["R2", "nll", "cvpp_ama", "cdf_ama","RUSC"]:
     # plot_model_profile_comparison(
     #     df=result_df,
     #     model=models,
     #     kernel_triples=selected_kernel_triples,
-    #     metric="OOF_R2",
-    #     # profile_options={"dataset_as_experiment_points": True},
-    #     # tolerance=0.01,
-    #     # tree_feature_importance="MDI",
-    #     y_label="Profile AUC: R2 (OOF)",
+    #     metric="OOF_RUSC",
+    #     y_label="Profile AUC: RUSC (OOF)",
     #     fontsize=17,
     #     figsize=(8, 5),
     #     save_dir=HERE / "result_analysis"/"performance_profile"/"model_comparison",
-    #     file_name="R2OOF.png",
+    #     file_name="RUSCOOF.png",
     # )
 
 
@@ -6400,8 +6420,8 @@ if __name__ == "__main__":
     #     df=result_df,
     #     model=models,
     #     kernel_triples=selected_kernel_triples,
-    #     metric="r2",
-    #     y_label="R²",
+    #     metric="OOF_RUSC",
+    #     y_label="RUSC (OOF)",
     #     y_lim=(0, 1.05),
     #     fontsize=17,
     #     figsize=(8, 5),
@@ -6411,7 +6431,7 @@ if __name__ == "__main__":
     #         / "average_performance"
     #         / "model_comparison"
     #     ),
-    #     file_name="R2.png",
+    #     file_name="RUSCOOF.png",
     # )
 
     # plot_feature_importance_difference_distribution(
@@ -6516,21 +6536,21 @@ if __name__ == "__main__":
     #     file_name="feature_importance_stability.png",
     # )
 
-    plot_model_feature_importance_stability_mean_std_comparison(
-        df=feature_importance_df,
-        model_importance_metrics=model_importance_metrics,
-        kernel_triples=selected_kernel_triples,
-        y_label="Kendall's W",
-        fontsize=17,
-        figsize=(8, 5),
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "average_performance"
-            / "model_comparison"
-        ),
-        file_name="feature_importance_stability_mean_std.png",
-    )
+    # plot_model_feature_importance_stability_mean_std_comparison(
+    #     df=feature_importance_df,
+    #     model_importance_metrics=model_importance_metrics,
+    #     kernel_triples=selected_kernel_triples,
+    #     y_label="Kendall's W",
+    #     fontsize=17,
+    #     figsize=(8, 5),
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "model_comparison"
+    #     ),
+    #     file_name="feature_importance_stability_mean_std.png",
+    # )
 
 
     ##############TOPSIS #################

@@ -991,11 +991,45 @@ if __name__ == "__main__":
         / "separate_dataset"
     )
 
+    plot_hybridization_performance_vs_data_number(
+        df=count_and_fingerprint_result,
+        metric="OOF_R2",
+        model="GpyroHMC",
+        fp_kernels=[
+            "TanimotoRBF",
+            "TanimotoMatern32",
+            "TanimotoMatern52",
+        ],
+        count_kernels=[            
+            "RBF",
+            "Matern32",
+            "Matern52",],
+        show_all_targets=True,
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:+)", 
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        fontsize=17,
+        figsize=(11, 8),
+        show=True,
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "average_performance"
+            / "hybridization_comparison"
+            / "dataset_downbreak"
+        ),
+        file_name="R2OOF_GpyroHMC_SK_all_config_vs_data_number_all_targets.png",
+    )
+
 
     # plot_hybridization_performance_vs_data_number(
     #     df=unique_permuted_fp_result,
     #     metric="OOF_R2",
-    #     model="GPytorchMAP",
+    #     model="GpytorchMAP",
     #     fp_kernels=[
     #         # "RBF",
     #         "TanimotoMatern32",
@@ -1016,12 +1050,44 @@ if __name__ == "__main__":
     #     save_dir=(
     #         HERE
     #         / "result_analysis"
-    #         / "absolute_metric"
+    #         / "average_performance"
     #         / "hybridization_comparison"
+    #         / "dataset_downbreak"
     #     ),
     #     file_name="R2OOF_GPytorchMAP_SK_all_config_vs_data_number_all_targets_unique_permuted_fp.png",
     # )
 
+
+    # plot_hybridization_performance_vs_data_number(
+    #     df=count_and_fingerprint_result,
+    #     metric="OOF_R2",
+    #     model="GpytorchMAP",
+    #     fp_kernels=[
+    #         # "RBF",
+    #         "TanimotoMatern32",
+    #         # "Matern52",
+    #     ],
+    #     count_kernels=["Matern32"],
+    #     show_all_targets=True,
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:x)", 
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="R² (OOF)",
+    #     fontsize=17,
+    #     figsize=(11, 8),
+    #     show=True,
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "hybridization_comparison"
+    #         / "dataset_downbreak"
+    #     ),
+    #     file_name="R2OOF_GPytorchMAP_SK_all_config_vs_data_number_all_targets_unique_permuted_fp.png",
+    # )
 
     # plot_hybridization_performance_vs_data_number(
     #     df=count_and_fingerprint_result,
@@ -1043,8 +1109,9 @@ if __name__ == "__main__":
     #     save_dir=(
     #         HERE
     #         / "result_analysis"
-    #         / "absolute_metric"
+    #         / "average_performance"
     #         / "hybridization_comparison"
+    #         / "dataset_downbreak"
     #     ),
     #     file_name="R2OOF_MGK_all_config_vs_data_number_all_targets.png",
     # )
