@@ -1,0 +1,36 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "polykernels"
+version = "0.0.1"
+description = "Graph neural networks and Gaussian processes for polymer and membrane property regression, with uncertainty and attribution."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 88
+src = ["polykernels"]
+include = ["pyproject.toml", "polykernels/**/*.py"]
+
+[tool.ruff.lint]
+ignore = [
+  "F722", # Forward annotation syntax error (jaxtyping shapes cause this)
+]
+extend-select = [
+  "I", # Add import sorting
+  "N",   # enforce naming conventions, e.g. ClassName vs function_name
+  "FBT", # detect boolean traps
+  "BLE", # disallow catch-all exceptions
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["polykernels"]
+force-sort-within-sections = true
+
+[tool.pyrefly]
+project_excludes = [
+  "**/__pyrefly_virtual__/**",
+  "**/node_modules",
+  "**/__pycache__"
+]

@@ -688,6 +688,9 @@ def _feature_row_values(data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         "lengthscale_kendalls_w": "test_lengthscale",
         "feature_importance_MDI_kendalls_w": "test_feature_importance_MDI",
         "feature_importance_SHAP_kendalls_w": "test_feature_importance_SHAP",
+        "feature_importance_GP_SHAP_kendalls_w": (
+            "test_feature_importance_GP_SHAP"
+        ),
     }
     return {
         output_column: _feature_kendalls_w(

@@ -364,6 +364,7 @@ def _fit_predict_score(
     UQ: bool,
     return_estimator: bool = False,
     return_tree_importances: bool = False,
+    return_gp_shap: bool = False,
 ):
     """
     Shared GP/tree worker that runs inside a parallel worker:
@@ -413,6 +414,13 @@ def _fit_predict_score(
         results["feature_importance_MDI"] = fitted_regressor._get_MDI()
         results["feature_importance_SHAP"] = fitted_regressor._get_SHAP()
 
+    if return_gp_shap:
+        if not hasattr(fitted_regressor, "_get_SHAP"):
+            raise AttributeError(
+                f"{type(fitted_regressor).__name__} does not implement GP-SHAP."
+            )
+        results["feature_importance_GP_SHAP"] = fitted_regressor._get_SHAP()
+
     if return_estimator:
         results["estimator"] = est
 
@@ -455,6 +463,7 @@ def _fit_predict_score_iid(
     UQ: bool,
     return_estimator: bool = False,
     return_tree_importances: bool = False,
+    return_gp_shap: bool = False,
 ):
     n_samples = len(y)
     test_size = len(reference_test_idx)
@@ -486,6 +495,7 @@ def _fit_predict_score_iid(
         UQ=UQ,
         return_estimator=return_estimator,
         return_tree_importances=return_tree_importances,
+        return_gp_shap=return_gp_shap,
     )
 
     return group_name, test_idx, y_result, results
@@ -503,6 +513,7 @@ def cross_validate(
     return_ls,
     return_estimator,
     return_tree_importances,
+    return_gp_shap=False,
     cluster_group=None,
     ood_validation_mode="ood",
 ):
@@ -565,6 +576,7 @@ def cross_validate(
                 UQ,
                 return_estimator,
                 return_tree_importances,
+                return_gp_shap,
             )
             for train_idx, test_idx in splits
         )
@@ -663,6 +675,7 @@ def cross_validate(
                     UQ,
                     return_estimator,
                     return_tree_importances,
+                    return_gp_shap,
                 )
                 for fold in folds
             )
@@ -735,6 +748,7 @@ def cross_validate(
                     UQ=UQ,
                     return_estimator=return_estimator,
                     return_tree_importances=return_tree_importances,
+                    return_gp_shap=return_gp_shap,
                 )
                 for fold in folds
                 for base_seed in IID_SEEDS
@@ -803,6 +817,7 @@ def cross_validate_regressor(
     return_ls:bool=False,
     return_estimator:bool=False,
     return_tree_importances:bool=False,
+    return_gp_shap:bool=False,
     n_jobs:int=1,     
     cluster_group: Optional[pd.Series]=None,
     ood_validation_mode: str="ood"
@@ -827,6 +842,7 @@ def cross_validate_regressor(
             UQ=UQ,
             return_estimator=return_estimator,
             return_tree_importances=return_tree_importances,
+            return_gp_shap=return_gp_shap,
             cluster_group=cluster_group,
             ood_validation_mode=ood_validation_mode
             )

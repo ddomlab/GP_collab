@@ -586,6 +586,10 @@ def run(
                                             ood_validation_mode="ood",
                                             n_jobs=n_jobs,
                                             return_ls=True,
+                                            return_gp_shap=(
+                                                regressor_type.lower() == "gpytorchmap"
+                                                and kwargs.get("return_gp_shap", False)
+                                            ),
                                             UQ=True
                                             )
                     

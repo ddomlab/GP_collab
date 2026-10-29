@@ -1,0 +1,45 @@
+name: polykernels
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.14
+  - ipython
+  - ipykernel
+  - jupyterlab
+  - matplotlib
+  - seaborn
+  - notebook
+  - numpy
+  - scipy
+  - pandas
+  - pytest
+  - ruff
+  - pre-commit
+  - scikit-learn
+  - tqdm
+  - pyrefly
+  - draccus
+  - loguru
+  - safetensors
+  - xgboost
+  - umap-learn
+  - pytorch
+  - torchmetrics
+  - tabulate
+  - torchinfo
+  - optuna
+  - torch-geometric
+  - jaxtyping
+  - rdkit
+  - pip
+  - pip:
+    - more-itertools
+    - descriptastorus
+    # Pure-Python; installed via pip so the conda solve does not need a
+    # python=3.14 build of gpytorch/linear_operator to exist.
+    - gpytorch
+
+    # Model-agnostic feature attribution for the tabular mlp_gp models. Pulls in
+    # slicer + cloudpickle; no existing package is upgraded by installing it.
+    - shap
