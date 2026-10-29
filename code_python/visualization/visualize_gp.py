@@ -6235,24 +6235,24 @@ if __name__ == "__main__":
     #     file_name="r2_GpyroHMC_SK.png",
     # )
     
-    plot_hybridization_profile_comparison(
-        df=result_df,
-        model="GpyroHMC",
-        metric="OOF_R2",
-        fp_kernels=["Matern32", "Matern52", "RBF"],
-        count_kernels=["RBF", "Matern32", "Matern52"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:x)",
-            "(count:x)+(fp:x)",
-        ],
-        y_label="Profile AUC of R² (OOF)",
-        fontsize=16,
-        figsize=(6, 5),
-        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-        file_name="R2OOF_GpyroHMC_Bitwise_avg_over_config.png",
-    )
+    # plot_hybridization_profile_comparison(
+    #     df=result_df,
+    #     model="GpyroHMC",
+    #     metric="OOF_R2",
+    #     fp_kernels=["TanimotoMatern32"],
+    #     count_kernels=["Matern32"],
+    #     mixing_methods=[
+    #         "sum",
+    #         "product",
+    #         "(count:+)x(fp:x)",
+    #         "(count:x)+(fp:x)",
+    #     ],
+    #     y_label="Profile AUC of R² (OOF)",
+    #     fontsize=16,
+    #     figsize=(6, 5),
+    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+    #     file_name="R2OOF_GpyroHMC_SK_avg_over_config.png",
+    # )
 
 
     # plot_hybridization_profile_comparison(
@@ -6274,31 +6274,31 @@ if __name__ == "__main__":
     #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
     # )
 
-    # plot_hybridization_mean_std_comparison(
-    #     df=result_df,
-    #     model="GpyroHMC",
-    #     metric="OOF_R2",
-    #     fp_kernels=["RBF", "Matern32", "Matern52"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
-    #     mixing_methods=[
-    #         "sum",
-    #         "product",
-    #         "(count:+)x(fp:+)",
-    #         "(count:x)+(fp:x)",
-    #     ],
-    #     y_label="R² (OOF)",
-    #     y_lim=(0, 1.05),
-    #     fontsize=16,
-    #     figsize=(6, 5),
-    #     save_dir=(
-    #         HERE
-    #         / "result_analysis"
-    #         / "average_performance"
-    #         / "hybridization_comparison"
-    #     ),
-    #     file_name=(
-    #         "R2OOF_GpyroHMC_Bitwise_hybridization.png" ),
-    # )
+    plot_hybridization_mean_std_comparison(
+        df=result_df,
+        model="GpyroHMC",
+        metric="OOF_R2",
+        fp_kernels=["TanimotoMatern32"],
+        count_kernels=["Matern32"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:+)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="R² (OOF)",
+        y_lim=(0, 1.05),
+        fontsize=16,
+        figsize=(6, 5),
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "average_performance"
+            / "hybridization_comparison"
+        ),
+        file_name=(
+            "R2OOF_GpyroHMC_TanimotoMatern32_Matern32_SK_hybridization.png" ),
+    )
 
 
     # plot_hybridization_profile_comparison(
