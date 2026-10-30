@@ -1,6 +1,4 @@
 import gpytorch
-from itertools import combinations
-import math
 import numpy as np
 import pandas as pd
 import torch
@@ -23,154 +21,12 @@ from tqdm import tqdm
 import os, sys
 import gc
 from Gpytorch_sskkernel import SubsequenceStringKernel
+from gpSHAP import (
+    explain_posterior,
+    grouped_feature_players,
+    mean_absolute_importance,
+)
 
-
-def _gpshap_coalitions(n_players, n_coalitions, rng):
-    """Build a Kernel-SHAP design without enumerating a large power set.
-
-    ``n_coalitions`` is the number of interior coalitions; the empty and full
-    coalitions are added as exact efficiency constraints.  Singleton coalitions
-    are always retained in a sampled design so the weighted regression has full
-    column rank.
-    """
-    if n_players < 1:
-        raise ValueError("GP-SHAP needs at least one player.")
-
-    total_interior = (1 << n_players) - 2
-    exact = n_coalitions <= 0 or n_coalitions >= total_interior
-    if exact:
-        if n_players > 13:
-            raise ValueError(
-                "Exact GP-SHAP is limited to 13 players to bound memory use. "
-                "Set gpshap_n_coalitions to a positive sampling budget."
-            )
-        interior = [
-            coalition
-            for size in range(1, n_players)
-            for coalition in combinations(range(n_players), size)
-        ]
-    else:
-        if n_coalitions < n_players:
-            raise ValueError(
-                "gpshap_n_coalitions must be at least the number of GP-SHAP "
-                "players so the SHAP regression is identifiable."
-            )
-        selected = {(i,) for i in range(n_players)}
-        while len(selected) < n_coalitions:
-            mask = rng.random(n_players) < 0.5
-            size = int(mask.sum())
-            if 0 < size < n_players:
-                selected.add(tuple(np.flatnonzero(mask).tolist()))
-        interior = sorted(selected, key=lambda item: (len(item), item))
-
-    rows = [()] + interior + [tuple(range(n_players))]
-    z = torch.zeros((len(rows), n_players), dtype=torch.float64)
-    for row, members in enumerate(rows):
-        if members:
-            z[row, list(members)] = 1.0
-
-    sizes = z.sum(dim=1)
-    weights = torch.full((len(rows),), float("inf"), dtype=torch.float64)
-    interior_mask = (sizes > 0) & (sizes < n_players)
-    if interior_mask.any():
-        s = sizes[interior_mask]
-        binomial = torch.tensor(
-            [math.comb(n_players, int(value)) for value in s],
-            dtype=torch.float64,
-        )
-        weights[interior_mask] = (n_players - 1) / (
-            binomial * s * (n_players - s)
-        )
-    return z, weights
-
-
-def _gpshap_projection(z, weights):
-    """Linear payoff-to-SHAP map with exact centering and efficiency."""
-    n_players, n_rows = z.shape[1], z.shape[0]
-    if n_players == 1:
-        return torch.tensor([[-1.0, 1.0]], dtype=z.dtype)
-
-    interior = torch.isfinite(weights)
-    z_interior, w_interior = z[interior], weights[interior]
-    zt_w = z_interior.T * w_interior
-    normal = zt_w @ z_interior
-    unconstrained = torch.linalg.solve(normal, zt_w)
-
-    ones = torch.ones(n_players, dtype=z.dtype)
-    normal_inv_one = torch.linalg.solve(normal, ones)
-    g = normal_inv_one / (ones @ normal_inv_one)
-    correction = torch.eye(n_players, dtype=z.dtype) - torch.outer(g, ones)
-
-    projection = torch.zeros((n_players, n_rows), dtype=z.dtype)
-    projection[:, interior] = correction @ unconstrained
-    projection[:, 0] -= (
-        correction @ unconstrained @ torch.ones(z_interior.shape[0], dtype=z.dtype)
-    ) + g
-    projection[:, -1] += g
-    return projection
-
-
-def _stable_cholesky(matrix, initial_jitter=1e-8, max_tries=6):
-    """Cholesky with bounded adaptive jitter for numerical GP covariances."""
-    eye = torch.eye(matrix.shape[-1], dtype=matrix.dtype, device=matrix.device)
-    jitter = initial_jitter
-    for _ in range(max_tries):
-        chol, info = torch.linalg.cholesky_ex(matrix + jitter * eye)
-        if int(info.max()) == 0:
-            return chol
-        jitter *= 10.0
-    raise RuntimeError(
-        f"GP-SHAP Cholesky failed after adding jitter up to {jitter / 10.0:g}."
-    )
-
-
-def _grouped_cme_projections(
-    x_reference,
-    x_query,
-    z,
-    player_columns,
-    ridge,
-):
-    """Conditional-mean-embedding weights for grouped GP-SHAP players."""
-    n_reference, n_query = x_reference.shape[0], x_query.shape[0]
-    projections = torch.empty(
-        (z.shape[0], n_reference, n_query), dtype=torch.float64
-    )
-
-    # Put binary fingerprint bits and continuous columns on comparable scales.
-    center = x_reference.mean(dim=0)
-    scale = x_reference.std(dim=0, unbiased=False)
-    scale = torch.where(scale > 1e-12, scale, torch.ones_like(scale))
-    x_reference = (x_reference - center) / scale
-    x_query = (x_query - center) / scale
-
-    eye = torch.eye(n_reference, dtype=torch.float64)
-
-    for coalition_idx, player_mask in enumerate(z):
-        active_players = torch.flatnonzero(player_mask).tolist()
-        if not active_players:
-            projections[coalition_idx] = 1.0 / n_reference
-            continue
-        active_columns = sorted(
-            {
-                column
-                for player in active_players
-                for column in player_columns[player]
-            }
-        )
-        ref_subset = x_reference[:, active_columns]
-        query_subset = x_query[:, active_columns]
-        # Coalition-specific median bandwidth prevents a 512-bit fingerprint
-        # player from setting an unusably broad scale for a one-column player.
-        pairwise = torch.pdist(ref_subset)
-        positive = pairwise[pairwise > 0]
-        bandwidth = float(positive.median()) if len(positive) else 1.0
-        gamma = 1.0 / (2.0 * bandwidth**2)
-        k_reference = torch.exp(-gamma * torch.cdist(ref_subset, ref_subset).square())
-        k_query = torch.exp(-gamma * torch.cdist(ref_subset, query_subset).square())
-        chol = _stable_cholesky(k_reference + ridge * eye)
-        projections[coalition_idx] = torch.cholesky_solve(k_query, chol)
-    return projections
 
 def weighted_tanimoto(x1, x2, eps=1e-6, dist=True, batch_size=128):
     """
@@ -578,7 +434,7 @@ class GPytorchMAPRegressor:
         normalize_y: bool = True,
         use_cuda: bool = True,
         gpshap_n_reference: int = 64,
-        gpshap_n_coalitions: int = 128,
+        gpshap_n_coalitions: int = 0,
         gpshap_max_query: int = 64,
         gpshap_ridge: float = 1e-3,
     ):
@@ -901,53 +757,9 @@ class GPytorchMAPRegressor:
         declared in ``feat_group`` is retained as an individual player rather
         than silently omitted.
         """
-        players = []
-        covered = set()
-
-        for name in sorted(self.feat_idx_):
-            if not name.startswith("fp_") or not self.feat_idx_[name]:
-                continue
-            columns = list(self.feat_idx_[name])
-            overlap = covered.intersection(columns)
-            if overlap:
-                raise ValueError(
-                    f"GP-SHAP feature groups overlap at column indices {sorted(overlap)}."
-                )
-            players.append((name, columns))
-            covered.update(columns)
-
-        for name, column in sorted(
-            self.count_feat_name_idx_.items(), key=lambda item: item[1]
-        ):
-            if column in covered:
-                raise ValueError(
-                    f"GP-SHAP feature groups overlap at column index {column}."
-                )
-            players.append((str(name), [column]))
-            covered.add(column)
-
-        for column, name in enumerate(self.feature_names_in_):
-            if column not in covered:
-                players.append((str(name), [column]))
-
-        names = [name for name, _ in players]
-        if len(names) != len(set(names)):
-            raise ValueError(f"GP-SHAP player names must be unique; got {names}.")
-        return names, [columns for _, columns in players]
+        return grouped_feature_players(self.feature_names_in_, self.feat_idx_)
 
     def _get_SHAP(self):
-        """Return in-memory GP-SHAP global importance for the last prediction.
-
-        The latent exact-GP posterior is evaluated on a training reference set.
-        Conditional mean embeddings turn its posterior into a Gaussian payoff
-        for each player coalition, and the linear SHAP projection propagates
-        both its mean and covariance. The returned dictionary is the fold-level
-        ``mean(abs(posterior mean SHAP))`` used by the scoring pipeline.
-
-        Detailed local posterior means, standard deviations, covariance, row
-        indices, and coalition metadata remain available in ``gpshap_*_``
-        attributes until this fitted fold estimator is discarded.
-        """
         if not hasattr(self, "is_fitted_"):
             raise RuntimeError("Model is not fitted. Call fit() first.")
         if not hasattr(self, "X_test_"):
@@ -993,53 +805,29 @@ class GPytorchMAPRegressor:
             )
 
         player_names, player_columns = self._gpshap_players()
-        z, weights = _gpshap_coalitions(
-            len(player_names), self.gpshap_n_coalitions, rng
-        )
-        projection = _gpshap_projection(z, weights)
-        cme = _grouped_cme_projections(
+        result = explain_posterior(
+            posterior_mean,
+            posterior_covariance,
             torch.as_tensor(reference_frame.to_numpy(), dtype=torch.float64),
             torch.as_tensor(query_frame.to_numpy(), dtype=torch.float64),
-            z,
             player_columns,
-            self.gpshap_ridge,
+            n_coalitions=self.gpshap_n_coalitions,
+            ridge=self.gpshap_ridge,
+            rng=rng,
         )
-
-        payoffs = torch.einsum("crq,r->cq", cme, posterior_mean)
-        phi = projection @ payoffs
-        posterior_chol = _stable_cholesky(posterior_covariance)
-        payoff_factor = torch.einsum("crq,rs->cqs", cme, posterior_chol)
-        shap_factor = torch.einsum("pc,cqs->pqs", projection, payoff_factor)
-        covariance = torch.einsum("pqs,rqs->qpr", shap_factor, shap_factor)
-        standard_deviation = torch.sqrt(
-            torch.clamp(torch.diagonal(covariance, dim1=1, dim2=2), min=0.0)
-        )
-        efficiency_error = torch.max(
-            torch.abs(phi.sum(dim=0) - (payoffs[-1] - payoffs[0]))
-        ).item()
-        payoff_scale = max(1.0, float(torch.max(torch.abs(payoffs))))
-        if efficiency_error > 1e-7 * payoff_scale:
-            raise RuntimeError(
-                "GP-SHAP efficiency check failed: feature attributions do not "
-                f"sum to the payoff span (max error {efficiency_error:.3e})."
-            )
 
         # Store query-major arrays, matching the rest of the attribution code.
-        self.gpshap_values_ = phi.T.numpy()
-        self.gpshap_sd_ = standard_deviation.numpy()
-        self.gpshap_covariance_ = covariance.numpy()
-        self.gpshap_payoffs_ = payoffs.numpy()
+        self.gpshap_values_ = result.values.numpy()
+        self.gpshap_sd_ = result.standard_deviations.numpy()
+        self.gpshap_covariance_ = result.covariance.numpy()
+        self.gpshap_payoffs_ = result.payoffs.numpy()
         self.gpshap_player_names_ = np.asarray(player_names, dtype=object)
         self.gpshap_reference_index_ = reference_frame.index.to_numpy(copy=True)
         self.gpshap_query_index_ = query_frame.index.to_numpy(copy=True)
-        self.gpshap_coalitions_ = z.numpy()
-        self.gpshap_efficiency_error_ = efficiency_error
+        self.gpshap_coalitions_ = result.coalitions.numpy()
+        self.gpshap_efficiency_error_ = result.efficiency_error
 
-        importance = np.abs(self.gpshap_values_).mean(axis=0)
-        return {
-            name: float(value)
-            for name, value in zip(player_names, importance, strict=True)
-        }
+        return mean_absolute_importance(self.gpshap_values_, player_names)
     
 
 class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
@@ -1057,7 +845,7 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         normalize_y: bool = True,
         use_cuda: bool = True,
         gpshap_n_reference: int = 64,
-        gpshap_n_coalitions: int = 128,
+        gpshap_n_coalitions: int = 0,
         gpshap_max_query: int = 64,
         gpshap_ridge: float = 1e-3,
     ):
