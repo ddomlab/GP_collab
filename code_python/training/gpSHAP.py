@@ -102,6 +102,29 @@ def grouped_feature_players(
     return player_names, [columns for _, columns in players]
 
 
+def resolve_reference_count(
+    requested: int,
+    n_available: int,
+) -> int:
+    """Resolve a reference-row limit; ``0`` means all available rows."""
+    if n_available < 1:
+        raise ValueError("GP-SHAP requires at least one training row.")
+    if isinstance(requested, bool):
+        raise TypeError(
+            "gpshap_n_reference must be a non-negative integer."
+        )
+    if not isinstance(requested, (int, np.integer)):
+        raise TypeError(
+            "gpshap_n_reference must be a non-negative integer."
+        )
+    requested = int(requested)
+    if requested == 0:
+        return n_available
+    if requested < 1:
+        raise ValueError("gpshap_n_reference cannot be negative.")
+    return min(requested, n_available)
+
+
 def coalition_matrix(
     n_players: int,
     n_coalitions: int = 0,
@@ -428,6 +451,7 @@ __all__ = [
     "grouped_feature_players",
     "mean_absolute_importance",
     "mixture_posterior_moments",
+    "resolve_reference_count",
     "shapley_projection",
     "stable_cholesky",
 ]

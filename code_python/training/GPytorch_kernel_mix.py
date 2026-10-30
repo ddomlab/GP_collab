@@ -25,6 +25,7 @@ from gpSHAP import (
     explain_posterior,
     grouped_feature_players,
     mean_absolute_importance,
+    resolve_reference_count,
 )
 
 
@@ -764,15 +765,15 @@ class GPytorchMAPRegressor:
             raise RuntimeError("Model is not fitted. Call fit() first.")
         if not hasattr(self, "X_test_"):
             raise RuntimeError("Prediction data do not exist. Call predict() first.")
-        if self.gpshap_n_reference < 1:
-            raise ValueError("gpshap_n_reference must be positive.")
         if self.gpshap_max_query < 0:
             raise ValueError("gpshap_max_query cannot be negative.")
         if self.gpshap_ridge <= 0:
             raise ValueError("gpshap_ridge must be positive.")
 
         rng = np.random.default_rng(self.random_state)
-        n_reference = min(self.gpshap_n_reference, len(self.X_train_))
+        n_reference = resolve_reference_count(
+            self.gpshap_n_reference, len(self.X_train_)
+        )
         reference_positions = np.sort(
             rng.choice(len(self.X_train_), size=n_reference, replace=False)
         )
