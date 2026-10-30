@@ -84,7 +84,9 @@ def main_structural_numerical(
                 output_dir_name= output_dir_name,
                 TEST=DEBUGGING,
                 # special_folder_name='HDF',
-                # special_file_name="ood",
+                special_file_name=(
+                    "SHAP" if kwargs.get("return_gp_shap", False) else None
+                ),
                 **kwargs,
                 )
 
