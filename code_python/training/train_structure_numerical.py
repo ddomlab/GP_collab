@@ -148,6 +148,7 @@ if __name__ == "__main__":
                     args.Kernel_mixing_method or "product"
                 ),
                 "use_cuda": True,
+                "return_gp_shap": args.return_gp_shap,
             }
 
         targets_to_train = all_targets

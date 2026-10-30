@@ -15,12 +15,6 @@ from pyro.nn import PyroSample
 from pyro.nn.module import PyroParam
 from torch.distributions import constraints
 from GPytorch_kernel_mix import weighted_tanimoto
-from gpSHAP import (
-    explain_posterior,
-    grouped_feature_players,
-    mean_absolute_importance,
-    mixture_posterior_moments,
-)
 
 
 def _as_torch_tensor(value, *, dtype=None, device=None):
@@ -600,10 +594,6 @@ class GpyroHMCRegressor:
         kernel_type:dict|None=None,
         normalize_y: bool = True,
         jit_compile: bool = True,
-        gpshap_n_reference: int = 64,
-        gpshap_n_coalitions: int = 0,
-        gpshap_max_query: int = 64,
-        gpshap_ridge: float = 1e-3,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -618,10 +608,6 @@ class GpyroHMCRegressor:
         )
         self.normalize_y = normalize_y
         self.jit_compile = jit_compile
-        self.gpshap_n_reference = gpshap_n_reference
-        self.gpshap_n_coalitions = gpshap_n_coalitions
-        self.gpshap_max_query = gpshap_max_query
-        self.gpshap_ridge = gpshap_ridge
 
         self.is_fitted_ = False
         self.gp_model_ = None
@@ -724,8 +710,7 @@ class GpyroHMCRegressor:
         torch.manual_seed(self.random_state)
         np.random.seed(self.random_state)
 
-        self.X_train_ = X_train.copy()
-        X_train = self._prepare_X(self.X_train_, fit=True)
+        X_train = self._prepare_X(X_train, fit=True)
         self._X_train = X_train
 
         # Calls the y setter.
@@ -839,15 +824,7 @@ class GpyroHMCRegressor:
         return mean_pred, variance_pred
 
     def predict(self, X_test: pd.DataFrame, return_std=False):
-        if not self.is_fitted_:
-            raise RuntimeError("Call fit before predict.")
-        if not isinstance(X_test, pd.DataFrame):
-            raise TypeError(
-                "GpyroHMCRegressor expects X_test to be a pandas DataFrame. "
-                f"Got {type(X_test).__name__} instead."
-            )
-        self.X_test_ = X_test.loc[:, self.feature_names_in_].copy()
-        mean_pred, variance_pred = self._predictive_moments(self.X_test_)
+        mean_pred, variance_pred = self._predictive_moments(X_test)
 
         y_pred = mean_pred.detach().cpu().numpy() * self.y_std_ + self.y_mean_
 
@@ -861,103 +838,6 @@ class GpyroHMCRegressor:
             "y_pred": np.asarray(y_pred).ravel(),
             "y_std": np.asarray(y_std).ravel() if y_std is not None else None,
         }
-
-    def _latent_posterior_strategy(self, X_new):
-        return self.gp_model_(X_new, full_cov=True, noiseless=True)
-
-    def _latent_posterior_moments(self, X_reference):
-        if not self.samples_:
-            raise RuntimeError("No posterior samples are available.")
-
-        sample_counts = {sample.size(0) for sample in self.samples_.values()}
-        if len(sample_counts) != 1:
-            raise RuntimeError(
-                "Posterior sample sites have inconsistent sample counts: "
-                f"{sorted(sample_counts)}"
-            )
-
-        mean_samples = []
-        covariance_samples = []
-        with torch.no_grad():
-            for draw_index in range(sample_counts.pop()):
-                draw = {
-                    name: samples[draw_index]
-                    for name, samples in self.samples_.items()
-                }
-                conditioned_strategy = pyro.poutine.condition(
-                    self._latent_posterior_strategy,
-                    data=draw,
-                )
-                draw_mean, draw_covariance = conditioned_strategy(X_reference)
-                mean_samples.append(draw_mean)
-                covariance_samples.append(draw_covariance)
-
-        return mixture_posterior_moments(
-            torch.stack(mean_samples, dim=0),
-            torch.stack(covariance_samples, dim=0),
-        )
-
-    def _gpshap_players(self):
-        return grouped_feature_players(self.feature_names_in_, self.feat_idx_)
-
-    def _get_SHAP(self):
-        if not self.is_fitted_:
-            raise RuntimeError("Model is not fitted. Call fit() first.")
-        if not hasattr(self, "X_test_"):
-            raise RuntimeError("Prediction data do not exist. Call predict() first.")
-        if self.gpshap_n_reference < 1:
-            raise ValueError("gpshap_n_reference must be positive.")
-        if self.gpshap_max_query < 0:
-            raise ValueError("gpshap_max_query cannot be negative.")
-        if self.gpshap_ridge <= 0:
-            raise ValueError("gpshap_ridge must be positive.")
-
-        rng = np.random.default_rng(self.random_state)
-        n_reference = min(self.gpshap_n_reference, len(self.X_train_))
-        reference_positions = np.sort(
-            rng.choice(len(self.X_train_), size=n_reference, replace=False)
-        )
-        if self.gpshap_max_query and len(self.X_test_) > self.gpshap_max_query:
-            query_positions = np.sort(
-                rng.choice(
-                    len(self.X_test_), size=self.gpshap_max_query, replace=False
-                )
-            )
-        else:
-            query_positions = np.arange(len(self.X_test_))
-
-        reference_frame = self.X_train_.iloc[reference_positions]
-        query_frame = self.X_test_.iloc[query_positions]
-        x_reference_device = self._prepare_X(reference_frame, fit=False)
-        posterior_mean, posterior_covariance = self._latent_posterior_moments(
-            x_reference_device
-        )
-        posterior_mean = posterior_mean * self.y_std_ + self.y_mean_
-        posterior_covariance = posterior_covariance * self.y_std_**2
-
-        player_names, player_columns = self._gpshap_players()
-        result = explain_posterior(
-            posterior_mean,
-            posterior_covariance,
-            torch.as_tensor(reference_frame.to_numpy(), dtype=torch.float64),
-            torch.as_tensor(query_frame.to_numpy(), dtype=torch.float64),
-            player_columns,
-            n_coalitions=self.gpshap_n_coalitions,
-            ridge=self.gpshap_ridge,
-            rng=rng,
-        )
-
-        self.gpshap_values_ = result.values.numpy()
-        self.gpshap_sd_ = result.standard_deviations.numpy()
-        self.gpshap_covariance_ = result.covariance.numpy()
-        self.gpshap_payoffs_ = result.payoffs.numpy()
-        self.gpshap_player_names_ = np.asarray(player_names, dtype=object)
-        self.gpshap_reference_index_ = reference_frame.index.to_numpy(copy=True)
-        self.gpshap_query_index_ = query_frame.index.to_numpy(copy=True)
-        self.gpshap_coalitions_ = result.coalitions.numpy()
-        self.gpshap_efficiency_error_ = result.efficiency_error
-
-        return mean_absolute_importance(self.gpshap_values_, player_names)
 
 
     def _get_latent_values(self, var_names):
@@ -1049,10 +929,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         kernel_type:dict|None=None,
         normalize_y: bool = True,
         jit_compile: bool = True,
-        gpshap_n_reference: int = 64,
-        gpshap_n_coalitions: int = 0,
-        gpshap_max_query: int = 64,
-        gpshap_ridge: float = 1e-3,
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -1064,10 +940,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         self.kernel_type = kernel_type
         self.normalize_y = normalize_y
         self.jit_compile = jit_compile
-        self.gpshap_n_reference = gpshap_n_reference
-        self.gpshap_n_coalitions = gpshap_n_coalitions
-        self.gpshap_max_query = gpshap_max_query
-        self.gpshap_ridge = gpshap_ridge
 
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
@@ -1087,10 +959,6 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
             kernel_type=self.kernel_type,
             normalize_y=self.normalize_y,
             jit_compile=self.jit_compile,
-            gpshap_n_reference=self.gpshap_n_reference,
-            gpshap_n_coalitions=self.gpshap_n_coalitions,
-            gpshap_max_query=self.gpshap_max_query,
-            gpshap_ridge=self.gpshap_ridge,
         )
 
         self.regressor_.fit(X, y)
@@ -1115,19 +983,3 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
 
     def _get_lengthscale(self):
         return self.regressor_._get_lengthscale()
-
-    def _get_SHAP(self):
-        result = self.regressor_._get_SHAP()
-        for name in (
-            "gpshap_values_",
-            "gpshap_sd_",
-            "gpshap_covariance_",
-            "gpshap_payoffs_",
-            "gpshap_player_names_",
-            "gpshap_reference_index_",
-            "gpshap_query_index_",
-            "gpshap_coalitions_",
-            "gpshap_efficiency_error_",
-        ):
-            setattr(self, name, getattr(self.regressor_, name))
-        return result

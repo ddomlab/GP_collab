@@ -177,6 +177,12 @@ def parse_arguments():
         help='Type of clustering method'
     )
 
+    parser.add_argument(
+        '--return_gp_shap',
+        action='store_true',
+        help='Calculate GP-SHAP feature importance for each fitted GP fold.'
+    )
+
     return parser.parse_args()
 
 

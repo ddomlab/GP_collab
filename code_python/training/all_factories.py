@@ -134,10 +134,10 @@ def optimized_models(
                                     random_state=random_state,
                                     normalize_y=normalize_y,
                                     use_cuda=kwargs.get('use_cuda', True),
-                                    # gpshap_n_reference=kwargs.get('gpshap_n_reference', 128),
-                                    # gpshap_n_coalitions=kwargs.get('gpshap_n_coalitions', 0),
-                                    # gpshap_max_query=kwargs.get('gpshap_max_query', 0),
-                                    # gpshap_ridge=kwargs.get('gpshap_ridge', 1e-3),
+                                    gpshap_n_reference=kwargs.get('gpshap_n_reference', 128),
+                                    gpshap_n_coalitions=kwargs.get('gpshap_n_coalitions', 0),
+                                    gpshap_max_query=kwargs.get('gpshap_max_query', 0),
+                                    gpshap_ridge=kwargs.get('gpshap_ridge', 1e-3),
                                     )
     if "GPytorchHMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
@@ -153,6 +153,10 @@ def optimized_models(
                                     kernel_mixing_method=kernel_mixing_method,
                                     kernel_type=kernel_type,
                                     normalize_y=normalize_y,
+                                    gpshap_n_reference=kwargs.get('gpshap_n_reference', 128),
+                                    gpshap_n_coalitions=kwargs.get('gpshap_n_coalitions', 0),
+                                    gpshap_max_query=kwargs.get('gpshap_max_query', 0),
+                                    gpshap_ridge=kwargs.get('gpshap_ridge', 1e-3),
                                     )
     
 

@@ -21,6 +21,12 @@ from tqdm import tqdm
 import os, sys
 import gc
 from Gpytorch_sskkernel import SubsequenceStringKernel
+from gpSHAP import (
+    explain_posterior,
+    grouped_feature_players,
+    mean_absolute_importance,
+)
+
 
 def weighted_tanimoto(x1, x2, eps=1e-6, dist=True, batch_size=128):
     """
@@ -427,6 +433,10 @@ class GPytorchMAPRegressor:
         prior=False,
         normalize_y: bool = True,
         use_cuda: bool = True,
+        gpshap_n_reference: int = 64,
+        gpshap_n_coalitions: int = 0,
+        gpshap_max_query: int = 64,
+        gpshap_ridge: float = 1e-3,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -443,6 +453,10 @@ class GPytorchMAPRegressor:
         self.prior = prior
         self.normalize_y = normalize_y
         self.use_cuda= use_cuda
+        self.gpshap_n_reference = gpshap_n_reference
+        self.gpshap_n_coalitions = gpshap_n_coalitions
+        self.gpshap_max_query = gpshap_max_query
+        self.gpshap_ridge = gpshap_ridge
         device = torch.device(
             "cuda" if self.use_cuda and torch.cuda.is_available() else "cpu"
         )
@@ -558,7 +572,8 @@ class GPytorchMAPRegressor:
         torch.manual_seed(self.random_state)
         np.random.seed(self.random_state)
 
-        X_train = self._prepare_X(X_train, fit=True)
+        self.X_train_ = X_train.copy()
+        X_train = self._prepare_X(self.X_train_, fit=True)
 
         # Calls the y setter.
         self.y = y_train
@@ -622,7 +637,8 @@ class GPytorchMAPRegressor:
         if not hasattr(self, "is_fitted_"):
             raise RuntimeError("Model is not fitted. Call fit() first.")
 
-        X_test = self._prepare_X(X_test, fit=False)
+        self.X_test_ = X_test.loc[:, self.feature_names_in_].copy()
+        X_test = self._prepare_X(self.X_test_, fit=False)
 
         self.gp_model_.eval()
         self.likelihood_.eval()
@@ -732,6 +748,86 @@ class GPytorchMAPRegressor:
         _add_count_lengthscales(leaf_kernels[len(fp_keys):])
 
         return summary
+
+    def _gpshap_players(self):
+        """Return player names and raw-column indices for grouped GP-SHAP.
+
+        A fingerprint block is one interpretable structural player. Numerical
+        ``count`` columns remain individual players. Any fitted column not
+        declared in ``feat_group`` is retained as an individual player rather
+        than silently omitted.
+        """
+        return grouped_feature_players(self.feature_names_in_, self.feat_idx_)
+
+    def _get_SHAP(self):
+        if not hasattr(self, "is_fitted_"):
+            raise RuntimeError("Model is not fitted. Call fit() first.")
+        if not hasattr(self, "X_test_"):
+            raise RuntimeError("Prediction data do not exist. Call predict() first.")
+        if self.gpshap_n_reference < 1:
+            raise ValueError("gpshap_n_reference must be positive.")
+        if self.gpshap_max_query < 0:
+            raise ValueError("gpshap_max_query cannot be negative.")
+        if self.gpshap_ridge <= 0:
+            raise ValueError("gpshap_ridge must be positive.")
+
+        rng = np.random.default_rng(self.random_state)
+        n_reference = min(self.gpshap_n_reference, len(self.X_train_))
+        reference_positions = np.sort(
+            rng.choice(len(self.X_train_), size=n_reference, replace=False)
+        )
+        if self.gpshap_max_query and len(self.X_test_) > self.gpshap_max_query:
+            query_positions = np.sort(
+                rng.choice(
+                    len(self.X_test_), size=self.gpshap_max_query, replace=False
+                )
+            )
+        else:
+            query_positions = np.arange(len(self.X_test_))
+
+        reference_frame = self.X_train_.iloc[reference_positions]
+        query_frame = self.X_test_.iloc[query_positions]
+        x_reference_device = self._prepare_X(reference_frame, fit=False)
+
+        self.gp_model_.eval()
+        self.likelihood_.eval()
+        with torch.no_grad(), gpytorch.settings.cholesky_jitter(
+            float_value=1e-4, double_value=1e-6
+        ), gpytorch.settings.cholesky_max_tries(5):
+            # Latent posterior only: likelihood noise is aleatoric observation
+            # noise and must not be propagated as epistemic explanation variance.
+            latent = self.gp_model_(x_reference_device)
+            posterior_mean = (
+                latent.mean.detach().double().cpu() * self.y_std_ + self.y_mean_
+            )
+            posterior_covariance = (
+                latent.covariance_matrix.detach().double().cpu() * self.y_std_**2
+            )
+
+        player_names, player_columns = self._gpshap_players()
+        result = explain_posterior(
+            posterior_mean,
+            posterior_covariance,
+            torch.as_tensor(reference_frame.to_numpy(), dtype=torch.float64),
+            torch.as_tensor(query_frame.to_numpy(), dtype=torch.float64),
+            player_columns,
+            n_coalitions=self.gpshap_n_coalitions,
+            ridge=self.gpshap_ridge,
+            rng=rng,
+        )
+
+        # Store query-major arrays, matching the rest of the attribution code.
+        self.gpshap_values_ = result.values.numpy()
+        self.gpshap_sd_ = result.standard_deviations.numpy()
+        self.gpshap_covariance_ = result.covariance.numpy()
+        self.gpshap_payoffs_ = result.payoffs.numpy()
+        self.gpshap_player_names_ = np.asarray(player_names, dtype=object)
+        self.gpshap_reference_index_ = reference_frame.index.to_numpy(copy=True)
+        self.gpshap_query_index_ = query_frame.index.to_numpy(copy=True)
+        self.gpshap_coalitions_ = result.coalitions.numpy()
+        self.gpshap_efficiency_error_ = result.efficiency_error
+
+        return mean_absolute_importance(self.gpshap_values_, player_names)
     
 
 class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
@@ -748,6 +844,10 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         prior=False,
         normalize_y: bool = True,
         use_cuda: bool = True,
+        gpshap_n_reference: int = 64,
+        gpshap_n_coalitions: int = 0,
+        gpshap_max_query: int = 64,
+        gpshap_ridge: float = 1e-3,
     ):
         self.feat_group = feat_group
         self.lr = lr
@@ -760,6 +860,10 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
         self.prior = prior
         self.normalize_y = normalize_y
         self.use_cuda = use_cuda
+        self.gpshap_n_reference = gpshap_n_reference
+        self.gpshap_n_coalitions = gpshap_n_coalitions
+        self.gpshap_max_query = gpshap_max_query
+        self.gpshap_ridge = gpshap_ridge
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
             raise TypeError(
@@ -779,6 +883,10 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
             prior=self.prior,
             normalize_y=self.normalize_y,
             use_cuda=self.use_cuda,
+            gpshap_n_reference=self.gpshap_n_reference,
+            gpshap_n_coalitions=self.gpshap_n_coalitions,
+            gpshap_max_query=self.gpshap_max_query,
+            gpshap_ridge=self.gpshap_ridge,
         )
 
         self.regressor_.fit(X, y)
@@ -800,6 +908,23 @@ class GPytorchMAPsklearnRegressor(BaseEstimator, RegressorMixin):
 
     def _get_lengthscale(self):
         return self.regressor_._get_lengthscale()
+
+    def _get_SHAP(self):
+        """Return grouped GP-SHAP importance for the last prediction X."""
+        result = self.regressor_._get_SHAP()
+        for name in (
+            "gpshap_values_",
+            "gpshap_sd_",
+            "gpshap_covariance_",
+            "gpshap_payoffs_",
+            "gpshap_player_names_",
+            "gpshap_reference_index_",
+            "gpshap_query_index_",
+            "gpshap_coalitions_",
+            "gpshap_efficiency_error_",
+        ):
+            setattr(self, name, getattr(self.regressor_, name))
+        return result
 
 
 
