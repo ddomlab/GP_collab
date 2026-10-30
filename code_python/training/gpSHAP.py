@@ -248,7 +248,9 @@ def grouped_conditional_mean_projections(
     eye = torch.eye(n_reference, dtype=torch.float64)
 
     for coalition_index, player_mask in enumerate(coalitions):
-        active_players = torch.flatnonzero(player_mask).tolist()
+        active_players = torch.nonzero(
+            player_mask, as_tuple=False
+        ).flatten().tolist()
         if not active_players:
             projections[coalition_index] = 1.0 / n_reference
             continue
