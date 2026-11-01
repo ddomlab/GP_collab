@@ -21,6 +21,7 @@ from gpSHAP import (
     mean_absolute_importance,
     mixture_posterior_moments,
     resolve_reference_count,
+    should_group_fingerprint_players,
 )
 
 
@@ -605,6 +606,7 @@ class GpyroHMCRegressor:
         gpshap_n_coalitions: int = 0,
         gpshap_max_query: int = 64,
         gpshap_ridge: float = 1e-3,
+        gpshap_fp_mode: str = "auto",
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -623,6 +625,7 @@ class GpyroHMCRegressor:
         self.gpshap_n_coalitions = gpshap_n_coalitions
         self.gpshap_max_query = gpshap_max_query
         self.gpshap_ridge = gpshap_ridge
+        self.gpshap_fp_mode = gpshap_fp_mode
 
         self.is_fitted_ = False
         self.gp_model_ = None
@@ -899,7 +902,14 @@ class GpyroHMCRegressor:
         )
 
     def _gpshap_players(self):
-        return grouped_feature_players(self.feature_names_in_, self.feat_idx_)
+        group_structural = should_group_fingerprint_players(
+            self.kernel_type["fp"], self.gpshap_fp_mode
+        )
+        return grouped_feature_players(
+            self.feature_names_in_,
+            self.feat_idx_,
+            group_structural=group_structural,
+        )
 
     def _get_SHAP(self):
         if not self.is_fitted_:
@@ -910,6 +920,17 @@ class GpyroHMCRegressor:
             raise ValueError("gpshap_max_query cannot be negative.")
         if self.gpshap_ridge <= 0:
             raise ValueError("gpshap_ridge must be positive.")
+
+        player_names, player_columns = self._gpshap_players()
+        group_structural = should_group_fingerprint_players(
+            self.kernel_type["fp"], self.gpshap_fp_mode
+        )
+        if not group_structural and self.gpshap_n_coalitions <= 0:
+            raise ValueError(
+                "Bitwise GP-SHAP requires a positive gpshap_n_coalitions "
+                "sampling budget at least as large as the number of players "
+                f"({len(player_names)})."
+            )
 
         rng = np.random.default_rng(self.random_state)
         n_reference = resolve_reference_count(
@@ -936,7 +957,6 @@ class GpyroHMCRegressor:
         posterior_mean = posterior_mean * self.y_std_ + self.y_mean_
         posterior_covariance = posterior_covariance * self.y_std_**2
 
-        player_names, player_columns = self._gpshap_players()
         result = explain_posterior(
             posterior_mean,
             posterior_covariance,
@@ -1054,6 +1074,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         gpshap_n_coalitions: int = 0,
         gpshap_max_query: int = 64,
         gpshap_ridge: float = 1e-3,
+        gpshap_fp_mode: str = "auto",
     ):
         self.feat_group = feat_group
         self.num_samples = num_samples
@@ -1069,6 +1090,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
         self.gpshap_n_coalitions = gpshap_n_coalitions
         self.gpshap_max_query = gpshap_max_query
         self.gpshap_ridge = gpshap_ridge
+        self.gpshap_fp_mode = gpshap_fp_mode
 
     def fit(self, X, y):
         if not isinstance(X, pd.DataFrame):
@@ -1092,6 +1114,7 @@ class GpyroHMCsklearnRegressor(BaseEstimator, RegressorMixin):
             gpshap_n_coalitions=self.gpshap_n_coalitions,
             gpshap_max_query=self.gpshap_max_query,
             gpshap_ridge=self.gpshap_ridge,
+            gpshap_fp_mode=self.gpshap_fp_mode,
         )
 
         self.regressor_.fit(X, y)

@@ -9,7 +9,7 @@ output_dir=/share/ddomlab/sdehgha2/working_space/GP_collab/results/HPC_history/h
 mkdir -p "$output_dir"
 
 model="GPytorchMAP"
-k_fps=("TanimotoMatern32")
+k_fps=("Matern32")
 k_counts=("Matern32")
 k_mixing_methods=("(count:x)+(fp:x)")
 

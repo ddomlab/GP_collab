@@ -138,6 +138,7 @@ def optimized_models(
                                     gpshap_n_coalitions=kwargs.get('gpshap_n_coalitions', 0),
                                     gpshap_max_query=kwargs.get('gpshap_max_query', 0),
                                     gpshap_ridge=kwargs.get('gpshap_ridge', 1e-3),
+                                    gpshap_fp_mode=kwargs.get('gpshap_fp_mode', 'auto'),
                                     )
     if "GPytorchHMC" == model_name:
         return GPytorchMCMCRegressor(**kwargs)
@@ -157,6 +158,7 @@ def optimized_models(
                                     gpshap_n_coalitions=kwargs.get('gpshap_n_coalitions', 0),
                                     gpshap_max_query=kwargs.get('gpshap_max_query', 0),
                                     gpshap_ridge=kwargs.get('gpshap_ridge', 1e-3),
+                                    gpshap_fp_mode=kwargs.get('gpshap_fp_mode', 'auto'),
                                     )
     
 

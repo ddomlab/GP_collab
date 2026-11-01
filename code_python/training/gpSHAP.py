@@ -52,6 +52,7 @@ def grouped_feature_players(
     feature_group_indices: dict[str, Sequence[int]],
     *,
     structural_prefix: str = "fp_",
+    group_structural: bool = True,
 ) -> tuple[list[str], list[list[int]]]:
     """Build interpretable players from structural groups and scalar columns.
 
@@ -61,6 +62,13 @@ def grouped_feature_players(
     """
     names_by_column = [str(name) for name in feature_names]
     n_columns = len(names_by_column)
+    if not group_structural:
+        if len(names_by_column) != len(set(names_by_column)):
+            raise ValueError(
+                "GP-SHAP player names must be unique for bitwise attribution."
+            )
+        return names_by_column, [[column] for column in range(n_columns)]
+
     players: list[tuple[str, list[int]]] = []
     covered: set[int] = set()
 
@@ -100,6 +108,23 @@ def grouped_feature_players(
             f"GP-SHAP player names must be unique; got {player_names}."
         )
     return player_names, [columns for _, columns in players]
+
+
+def should_group_fingerprint_players(
+    fingerprint_kernel: str,
+    mode: str = "auto",
+) -> bool:
+    """Resolve grouped versus bitwise fingerprint attribution."""
+    if not isinstance(mode, str):
+        raise TypeError("gpshap_fp_mode must be 'auto', 'grouped', or 'bitwise'.")
+    normalized_mode = mode.strip().lower()
+    if normalized_mode == "auto":
+        return "tanimoto" in str(fingerprint_kernel).lower()
+    if normalized_mode == "grouped":
+        return True
+    if normalized_mode == "bitwise":
+        return False
+    raise ValueError("gpshap_fp_mode must be 'auto', 'grouped', or 'bitwise'.")
 
 
 def resolve_reference_count(
@@ -453,5 +478,6 @@ __all__ = [
     "mixture_posterior_moments",
     "resolve_reference_count",
     "shapley_projection",
+    "should_group_fingerprint_players",
     "stable_cholesky",
 ]
