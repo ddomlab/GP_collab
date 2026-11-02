@@ -26,7 +26,9 @@ from gpSHAP import (
 
 
 def _as_torch_tensor(value, *, dtype=None, device=None):
-    return torch.as_tensor(value, dtype=dtype or torch.float32, device=device)
+    if dtype is None:
+        dtype = value.dtype if torch.is_tensor(value) else torch.float32
+    return torch.as_tensor(value, dtype=dtype, device=device)
 
 
 class TanimotoRBF(pk.Kernel):
@@ -56,6 +58,46 @@ class TanimotoRBF(pk.Kernel):
 
         D = weighted_tanimoto(X, Z, eps=1e-6, dist=True)
         return  self.variance * torch.exp(-0.5 * (D / self.lengthscale)**2)
+
+
+class TanimotoRQ(pk.Kernel):
+    def __init__(
+        self,
+        variance=None,
+        lengthscale=None,
+        scale_mixture=None,
+        input_dim=None,
+        active_dims=None,
+    ):
+        super().__init__(input_dim=input_dim, active_dims=active_dims)
+
+        variance = _as_torch_tensor(1.0 if variance is None else variance)
+        self.variance = PyroParam(variance, constraints.positive)
+        lengthscale = _as_torch_tensor(1.0 if lengthscale is None else lengthscale)
+        self.lengthscale = PyroParam(lengthscale, constraints.positive)
+        scale_mixture = _as_torch_tensor(
+            1.0 if scale_mixture is None else scale_mixture
+        )
+        self.scale_mixture = PyroParam(scale_mixture, constraints.positive)
+
+    def _diag(self, X):
+        return self.variance.expand(X.size(0))
+
+    def forward(self, X, Z=None, diag=False):
+        if diag:
+            return self._diag(X)
+        if Z is None:
+            Z = X
+        X = self._slice_input(X)
+        Z = self._slice_input(Z)
+        if X.size(1) != Z.size(1):
+            raise ValueError("Inputs must have the same number of features.")
+
+        D = weighted_tanimoto(X, Z, eps=1e-6, dist=True)
+        scaled_dist_sq = (D / self.lengthscale).pow(2)
+        return self.variance * (
+            1.0 + 0.5 * scaled_dist_sq / self.scale_mixture
+        ).pow(-self.scale_mixture)
 
 
 
@@ -294,12 +336,14 @@ mixing_factory: dict = {
 
 kernel_factory: dict = {
     "TanimotoRBF": TanimotoRBF,
+    "TanimotoRQ": TanimotoRQ,
     "TanimotoMatern32": lambda **kwargs: TanimotoMatern(nu=1.5, **kwargs),
     "TanimotoMatern52": lambda **kwargs: TanimotoMatern(nu=2.5, **kwargs),
     "Tanimoto": Tanimoto,
     "RBF": pk.RBF,
     "Matern32": pk.Matern32,
     "Matern52": pk.Matern52,
+    "RQ": pk.RationalQuadratic,
 }
 
 
@@ -330,6 +374,9 @@ class MixingKernelPyro:
         if kernel_name.lower() != "tanimoto":
             kwargs["variance"] = self._tensor(1.0)
             kwargs["lengthscale"] = self._tensor(1.0)
+
+        if kernel_name.lower() in {"rq", "tanimotorq"}:
+            kwargs["scale_mixture"] = self._tensor(1.0)
 
         return kwargs
 
@@ -551,6 +598,11 @@ class GPMixPyro(gp.models.GPRegression):
                     )
             else:
                 target_kern.lengthscale = PyroSample(
+                    dist.Gamma(five, five)
+                )
+
+            if isinstance(target_kern, (TanimotoRQ, pk.RationalQuadratic)):
+                target_kern.scale_mixture = PyroSample(
                     dist.Gamma(five, five)
                 )
 

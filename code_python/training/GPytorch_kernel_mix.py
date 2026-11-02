@@ -10,7 +10,7 @@ from gpytorch.constraints import Positive
 from gpytorch.kernels import Kernel, ProductKernel, AdditiveKernel
 from gpytorch.kernels.rbf_kernel import postprocess_rbf
 from gpytorch.priors import NormalPrior, GammaPrior
-from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel, RBFKernel
+from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel, RBFKernel, RQKernel
 import pyro
 from gpytorch.models import PyroGP # <-- Import PyroGP
 # from pyro.distributions import inverse_gamma as InvGammaPrior
@@ -119,6 +119,58 @@ class TanimotoRBF(Kernel):
         )
 
 
+class TanimotoRQ(Kernel):
+    is_stationary = False
+    has_lengthscale = True
+
+    def __init__(self, alpha_constraint=None, **kwargs):
+        super().__init__(**kwargs)
+        self.register_parameter(
+            name="raw_alpha",
+            parameter=torch.nn.Parameter(torch.zeros(*self.batch_shape, 1)),
+        )
+        if alpha_constraint is None:
+            alpha_constraint = Positive()
+        self.register_constraint("raw_alpha", alpha_constraint)
+
+    @property
+    def alpha(self):
+        return self.raw_alpha_constraint.transform(self.raw_alpha)
+
+    @alpha.setter
+    def alpha(self, value):
+        if not torch.is_tensor(value):
+            value = torch.as_tensor(value).to(self.raw_lengthscale)
+        self.initialize(
+            raw_alpha=self.raw_alpha_constraint.inverse_transform(value)
+        )
+
+    def _postprocess_rq(self, dist, diag=False):
+        lengthscale = self.lengthscale.squeeze(-1) if diag else self.lengthscale
+        scaled_dist_sq = (dist / lengthscale).pow(2)
+        alpha = self.alpha
+        for _ in range(1, len(scaled_dist_sq.shape) - len(self.batch_shape)):
+            alpha = alpha.unsqueeze(-1)
+        return (1.0 + scaled_dist_sq / (2.0 * alpha)).pow(-alpha)
+
+    def forward(self, x1, x2, diag=False, **params):
+        if diag:
+            if torch.equal(x1, x2):
+                return torch.ones(
+                    *x1.shape[:-1],
+                    device=x1.device,
+                    dtype=x1.dtype,
+                )
+
+            num = torch.min(x1, x2).sum(dim=-1)
+            den = torch.max(x1, x2).sum(dim=-1)
+            dist = 1.0 - (num + 1e-6) / (den + 1e-6)
+            return self._postprocess_rq(dist.clamp(min=0.0), diag=True)
+
+        dist = weighted_tanimoto(x1, x2)
+        return self._postprocess_rq(dist)
+
+
 class TanimotoMatern(Kernel):
     is_stationary = False
     has_lengthscale=True
@@ -164,10 +216,12 @@ class TanimotoMatern(Kernel):
     
 kernel_factory = {
     "TanimotoRBF": TanimotoRBF,
+    "TanimotoRQ": TanimotoRQ,
     "TanimotoMatern32": lambda **kw: TanimotoMatern(nu=1.5, **kw),
     "TanimotoMatern52": lambda **kw: TanimotoMatern(nu=2.5, **kw),
     "Tanimoto": Tanimoto,
     "RBF": RBFKernel,
+    "RQ": RQKernel,
     "Matern32": lambda **kw: MaternKernel(nu=1.5, **kw),
     "Matern52": lambda **kw: MaternKernel(nu=2.5, **kw),
     "SSK": SubsequenceStringKernel,
