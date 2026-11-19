@@ -41,8 +41,8 @@ for training_target in "${training_targets[@]}"; do
 
 
 #BSUB -n 1
-#BSUB -W 1:59
-#BSUB -q short_gpu
+#BSUB -W 23:59
+#BSUB -q gpu
 #BSUB -gpu "num=1:mode=shared:mps=no"
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[a10 || a30 || a100 || l40 || h100]"
