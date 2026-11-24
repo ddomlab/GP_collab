@@ -1309,27 +1309,32 @@ def _select_runtime_metric_by_model(
     model: Any,
     runtime_devices: Any,
     runtime_folds: int = 1,
+    runtime_unit: str = "seconds",
 ) -> tuple[pd.DataFrame, str, Optional[Dict[str, str]]]:
     """Build one runtime column using a CPU/GPU choice for each model."""
     if not isinstance(runtime_folds, int) or runtime_folds < 1:
         raise ValueError("runtime_folds must be a positive integer.")
+    seconds_per_unit = {"seconds": 1, "minutes": 60}.get(runtime_unit)
+    if seconds_per_unit is None:
+        raise ValueError("runtime_unit must be 'seconds' or 'minutes'.")
+    runtime_divisor = runtime_folds * seconds_per_unit
+    runtime_metric_names = {
+        "running time",
+        "running time (cpu)",
+        "running time (gpu)",
+    }
 
     if runtime_devices is None:
-        if runtime_folds == 1:
+        if runtime_divisor == 1:
             return df, metric, None
-        if str(metric).strip().lower() not in {
-            "running time",
-            "running time (cpu)",
-            "running time (gpu)",
-        }:
-            raise ValueError(
-                "runtime_folds can only be used with a running-time metric."
-            )
+        if str(metric).strip().lower() not in runtime_metric_names:
+            option = "runtime_unit" if runtime_unit == "minutes" else "runtime_folds"
+            raise ValueError(f"{option} can only be used with a running-time metric.")
         if metric not in df.columns:
             raise ValueError(f"Missing required column: {metric}")
         runtime_df = df.copy()
         runtime_df[metric] = (
-            pd.to_numeric(runtime_df[metric], errors="coerce") / runtime_folds
+            pd.to_numeric(runtime_df[metric], errors="coerce") / runtime_divisor
         )
         return runtime_df, metric, None
 
@@ -1366,11 +1371,6 @@ def _select_runtime_metric_by_model(
             )
         runtime_device_map[model_key] = normalized_device
 
-    runtime_metric_names = {
-        "running time",
-        "running time (cpu)",
-        "running time (gpu)",
-    }
     if str(metric).strip().lower() not in runtime_metric_names:
         raise ValueError(
             "runtime_devices can only be used with a running-time metric."
@@ -1397,7 +1397,7 @@ def _select_runtime_metric_by_model(
         runtime_df.loc[device_mask, metric] = pd.to_numeric(
             runtime_df.loc[device_mask, f"Running time ({device})"],
             errors="coerce",
-        ) / runtime_folds
+        ) / runtime_divisor
 
     return runtime_df, metric, runtime_device_map
 
@@ -3425,6 +3425,9 @@ def plot_hybridization_mean_std_comparison(
     high_quality: bool = True,
     save_dir: Optional[Path] = HERE / "result_analysis",
     file_name: Optional[str] = None,
+    log_y: bool = False,
+    runtime_folds: int = 1,
+    runtime_unit: str = "seconds",
 ) -> pd.DataFrame:
     """Compare hybridization methods using task-level mean +/- std.
 
@@ -3434,7 +3437,26 @@ def plot_hybridization_mean_std_comparison(
     stored seed/fold value as a task by default. Set
     ``dataset_as_experiment_points=True`` to first average those repeats within
     each dataset-target-model-kernel configuration.
+    Set ``runtime_folds`` to divide stored runtimes by their fold count and
+    ``runtime_unit="minutes"`` (or ``"min"``) to convert seconds to minutes.
+    Both conversions occur before aggregation. Set ``log_y=True`` for positive
+    means on a logarithmic axis.
     """
+    runtime_unit = {"s": "seconds", "sec": "seconds", "min": "minutes"}.get(
+        runtime_unit, runtime_unit
+    )
+    df, metric, _ = _select_runtime_metric_by_model(
+        df,
+        metric,
+        model,
+        runtime_devices=None,
+        runtime_folds=runtime_folds,
+        runtime_unit=runtime_unit,
+    )
+    if y_label is None and (runtime_folds > 1 or runtime_unit == "minutes"):
+        runtime_scope = " per fold" if runtime_folds > 1 else ""
+        unit_label = "min" if runtime_unit == "minutes" else "s"
+        y_label = f"Running time{runtime_scope} ({unit_label})"
     filtered_df = _filter_kernel_triples(
         df,
         kernel_triples,
@@ -3565,12 +3587,29 @@ def plot_hybridization_mean_std_comparison(
 
     x_positions = np.arange(len(summary_df))
     colors = [bar_palette[label] for label in summary_df[x_col]]
+    mean_values = summary_df["mean"].to_numpy(dtype=float)
+    std_values = summary_df["std"].to_numpy(dtype=float)
+    bar_bottom = 0.0
+    error_values = std_values
+    if log_y:
+        if not np.all(np.isfinite(mean_values) & (mean_values > 0)):
+            raise ValueError("log_y=True requires all mean values to be finite and positive.")
+        if y_lim is not None and not all(np.isfinite(limit) and limit > 0 for limit in y_lim):
+            raise ValueError("log_y=True requires positive, finite y-axis limits.")
+        positive_floor = float(mean_values.min()) * 0.1
+        bar_bottom = positive_floor if y_lim is None else min(positive_floor, *y_lim)
+        lower_errors = np.minimum(std_values, mean_values - bar_bottom)
+        error_values = np.vstack([lower_errors, std_values])
+
     fig, ax = plt.subplots(figsize=figsize)
+    if log_y:
+        ax.set_yscale("log")
     bars = ax.bar(
         x_positions,
-        summary_df["mean"].to_numpy(dtype=float),
+        mean_values - bar_bottom,
+        bottom=bar_bottom,
         width=0.67,
-        yerr=summary_df["std"].to_numpy(dtype=float),
+        yerr=error_values,
         capsize=5,
         color=colors,
         edgecolor="none",
@@ -3606,21 +3645,29 @@ def plot_hybridization_mean_std_comparison(
 
     if show_values:
         lower, upper = ax.get_ylim()
-        label_offset = 0.02 * (upper - lower)
-        for bar, row in zip(bars, summary_df.itertuples(index=False)):
+        error_tops = mean_values + std_values
+        if log_y:
+            label_factor = (upper / lower) ** 0.02
+            label_positions = error_tops * label_factor
+            required_upper = float(error_tops.max()) * label_factor**3
+        else:
+            label_offset = 0.02 * (upper - lower)
+            label_positions = error_tops + label_offset
+            required_upper = float(error_tops.max()) + 3 * label_offset
+        for bar, row, label_y in zip(
+            bars, summary_df.itertuples(index=False), label_positions
+        ):
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
-                row.mean + row.std + label_offset,
+                label_y,
                 f"{row.mean:.2f} ± {row.std:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=fontsize - 2,
+                clip_on=log_y and y_lim is not None,
             )
-        _, current_upper = ax.get_ylim()
-        required_upper = max(
-            summary_df["mean"] + summary_df["std"] + 3 * label_offset
-        )
-        ax.set_ylim(lower, max(current_upper, required_upper))
+        if not log_y or y_lim is None:
+            ax.set_ylim(lower, max(upper, required_upper))
 
     plt.tight_layout()
     if save_dir is not None:
@@ -6217,7 +6264,7 @@ if __name__ == "__main__":
 
     # plot_hybridization_method_comparison(
     #     df=result_df,
-    #     metric="r2",
+    #     metric="OOF_R2",
     #     model="GpyroHMC",
     #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
     #     count_kernels=["RBF", "Matern32", "Matern52"],
@@ -6232,7 +6279,7 @@ if __name__ == "__main__":
     #     y_label="R²",
     #     show=True,
     #     save_dir=HERE / "result_analysis"/"score_distribution"/"hybridization_comparison",
-    #     file_name="r2_GpyroHMC_SK.png",
+    #     file_name="R2OOF_GpyroHMC_SK.png",
     # )
     
     # plot_hybridization_profile_comparison(
@@ -6255,50 +6302,80 @@ if __name__ == "__main__":
     # )
 
 
-    # plot_hybridization_profile_comparison(
+    plot_hybridization_profile_comparison(
+        df=result_df,
+        model="GpyroHMC",
+        metric="Running time (GPU)",
+        fp_kernels=["Matern32"],
+        count_kernels=["Matern32"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:x)",
+            "(count:x)+(fp:x)",
+        ],
+        y_label="Profile AUC of Running Time",
+        fontsize=16,
+        figsize=(6, 5),
+        save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
+        file_name="RunningTime_GpyroHMC_TanimotoMatern32_Matern32_Bitwise_hybridization_profile_comparison_avg_over_config.png",
+    )
+
+
+    plot_hybridization_mean_std_comparison(
+        df=result_df,
+        model="GpyroHMC",
+        metric="Running time (GPU)",
+        fp_kernels=["Matern32"],
+        count_kernels=["Matern32"],
+        mixing_methods=[
+            "sum",
+            "product",
+            "(count:+)x(fp:x)",
+            "(count:x)+(fp:x)",
+        ],
+        log_y=True,
+        show_values=False,
+        runtime_folds=5,
+        fontsize=16,
+        figsize=(6, 5),
+        y_label="Running Time (S)",
+        save_dir=(
+            HERE
+            / "result_analysis"
+            / "average_performance"
+            / "hybridization_comparison"
+            / "overall"
+        ),
+        file_name=(
+            "RunningTime_GpyroHMC_Bitwise_hybridization.png" ),
+    )
+
+    # plot_hybridization_mean_std_comparison(
     #     df=result_df,
-    #     model="GPytorchMAP",
+    #     model="GpyroHMC",
     #     metric="OOF_R2",
-    #     fp_kernels=["TanimotoMatern32", "TanimotoMatern52", "TanimotoRBF"],
-    #     count_kernels=["RBF", "Matern32", "Matern52"],
+    #     fp_kernels=["TanimotoMatern32"],
+    #     count_kernels=["Matern32"],
     #     mixing_methods=[
     #         "sum",
     #         "product",
     #         "(count:+)x(fp:x)",
     #         "(count:x)+(fp:x)",
     #     ],
-    #     y_label="Profile AUC of R² (OOF)",
+    #     y_label="R² (OOF)",
+    #     y_lim=(0, 1.07),
     #     fontsize=16,
     #     figsize=(6, 5),
-    #     save_dir=HERE / "result_analysis"/"performance_profile"/"hybridization_comparison",
-    #     file_name="R2OOF_GPytorchMAP_SK_hybridization_profile_comparison_avg_over_config.png",
+    #     save_dir=(
+    #         HERE
+    #         / "result_analysis"
+    #         / "average_performance"
+    #         / "hybridization_comparison"
+    #     ),
+    #     file_name=(
+    #         "R2OOF_GpyroHMC_TanimotoMatern32_Matern32_SK_hybridization.png" ),
     # )
-
-    plot_hybridization_mean_std_comparison(
-        df=result_df,
-        model="GpyroHMC",
-        metric="OOF_R2",
-        fp_kernels=["TanimotoMatern32"],
-        count_kernels=["Matern32"],
-        mixing_methods=[
-            "sum",
-            "product",
-            "(count:+)x(fp:+)",
-            "(count:x)+(fp:x)",
-        ],
-        y_label="R² (OOF)",
-        y_lim=(0, 1.05),
-        fontsize=16,
-        figsize=(6, 5),
-        save_dir=(
-            HERE
-            / "result_analysis"
-            / "average_performance"
-            / "hybridization_comparison"
-        ),
-        file_name=(
-            "R2OOF_GpyroHMC_TanimotoMatern32_Matern32_SK_hybridization.png" ),
-    )
 
 
     # plot_hybridization_profile_comparison(
