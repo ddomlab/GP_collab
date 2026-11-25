@@ -62,7 +62,7 @@ DEFAULT_SAVE_DIR = HERE / "ood_result_analysis"
 ID_COLUMNS = ["paper", "target", "model", "fp kernel", "count kernel", "mixing method"]
 CASE_COLUMNS = ["paper", "target", "cluster"]
 EVALUATIONS = ("OOD", "IID")
-HIGHEST_BAR_HATCH = "xxxxx"
+BEST_BAR_HATCH = "xxxxx"
 # OOD-specific model palette. Keep this local so the shared visualization
 # palette—and figures produced by other modules—remain unchanged.
 OOD_MODEL_COLORS = {
@@ -225,22 +225,27 @@ def _metric_name(metric: str) -> str:
     return metric
 
 
-def _metric_columns(df: pd.DataFrame, metric: str) -> tuple[str, str, str]:
+def _metric_columns(
+    df: pd.DataFrame, metric: str, evaluations: tuple[str, ...]
+) -> tuple[str, dict[str, str]]:
     metric = _metric_name(metric)
     lower_lookup = {column.lower(): column for column in df.columns}
-    requested = [f"ood_test_{metric}", f"iid_test_{metric}"]
     try:
-        ood_column, iid_column = [lower_lookup[column.lower()] for column in requested]
+        columns = {
+            evaluation: lower_lookup[f"{evaluation}_test_{metric}".lower()]
+            for evaluation in evaluations
+        }
     except KeyError as exc:
+        prefix = f"{evaluations[0].lower()}_test_"
         available = sorted(
-            column.removeprefix("ood_test_")
-            for column in df.columns
-            if column.startswith("ood_test_")
+            column.removeprefix(prefix)
+            for column in lower_lookup
+            if column.startswith(prefix)
         )
         raise ValueError(
             f"Metric {metric!r} is unavailable. Available metrics: {available}"
         ) from exc
-    return metric, ood_column, iid_column
+    return metric, columns
 
 
 def _normalize_evaluations(ood_and_iid: Optional[str]) -> tuple[str, ...]:
@@ -297,7 +302,7 @@ def _expand_scores(
     evaluations: tuple[str, ...] = EVALUATIONS,
 ) -> pd.DataFrame:
     """Expand nested OOD cluster scalars and IID seed lists to long form."""
-    metric, ood_column, iid_column = _metric_columns(df, metric)
+    metric, score_columns = _metric_columns(df, metric, evaluations)
     records: list[dict[str, Any]] = []
 
     for _, row in df.iterrows():
@@ -312,9 +317,7 @@ def _expand_scores(
             "mixing method": row["mixing method"],
         }
 
-        score_columns = {"OOD": ood_column, "IID": iid_column}
-        for evaluation in evaluations:
-            score_column = score_columns[evaluation]
+        for evaluation, score_column in score_columns.items():
             cluster_scores = _as_mapping(row[score_column])
             if cluster_scores is None:
                 continue
@@ -547,12 +550,14 @@ def _darken_color(color: Any, amount: float = 0.35) -> str:
     return to_hex(rgb * (1.0 - amount))
 
 
-def _hatch_highest_bars(
+def _hatch_best_bars(
     bars: Iterable[Any],
     values: Iterable[float],
     colors: Iterable[Any],
+    *,
+    higher_is_better: bool,
 ) -> None:
-    """Hatch the highest finite bar, including all bars tied for highest."""
+    """Hatch the best finite bar, including ties."""
     bar_list = list(bars)
     numeric_values = np.asarray(list(values), dtype=float)
     bar_colors = list(colors)
@@ -560,12 +565,12 @@ def _hatch_highest_bars(
     if not bar_list or finite_values.size == 0:
         return
 
-    highest_value = finite_values.max()
+    best_value = finite_values.max() if higher_is_better else finite_values.min()
     for bar, value, color in zip(bar_list, numeric_values, bar_colors):
         if np.isfinite(value) and np.isclose(
-            value, highest_value, rtol=1e-12, atol=1e-12
+            value, best_value, rtol=1e-12, atol=1e-12
         ):
-            bar.set_hatch(HIGHEST_BAR_HATCH)
+            bar.set_hatch(BEST_BAR_HATCH)
             bar.set_edgecolor(_darken_color(color))
             bar.set_linewidth(0)
 
@@ -790,10 +795,11 @@ def plot_model_profile_comparison(
         color=[bar_colors[label] for label in order],
     )
     apply_vertical_bar_gradients(ax, bars=bars, edge_linewidth=0)
-    _hatch_highest_bars(
+    _hatch_best_bars(
         bars,
         heights,
         [bar_colors[label] for label in order],
+        higher_is_better=True,
     )
     if show_values:
         ax.bar_label(
@@ -1059,8 +1065,15 @@ def plot_model_mean_std_comparison(
     high_quality: bool = True,
     save_dir: Optional[Path] = DEFAULT_SAVE_DIR,
     file_name: Optional[str] = None,
+    *,
+    ood_and_iid: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Plot paired OOD/IID task-level means and standard deviations.
+    """Plot task-level means and standard deviations for OOD, IID, or both.
+
+    ``ood_and_iid`` accepts ``"OOD"``, ``"IID"``, or ``"both"`` (case-insensitive).
+    The default of ``None`` plots both side by side with a legend. Single-split
+    bars are centered on each model and omit the legend. With complete-case
+    filtering, clusters must be complete for the selected split(s).
 
     Scores are aggregated in two stages for each model configuration and
     evaluation split. Repeats are first averaged within each cluster, then the
@@ -1068,16 +1081,21 @@ def plot_model_mean_std_comparison(
     are the mean of those equally weighted task means, and error bars are their
     sample standard deviation. Thus IID repeats and datasets with more clusters
     do not receive extra weight relative to their matched OOD cases.
+    Hatching marks the best plotted mean according to the metric's direction.
 
     ``kernel_triples`` accepts a global triple/list or a dictionary mapping
     each model to separate triples. Kernel filters retain kernel-free tree,
-    GNN, and MLP models. The returned DataFrame contains one OOD row and one
-    IID row per plotted configuration.
+    GNN, and MLP models. The returned DataFrame contains one row per plotted
+    configuration and evaluation split.
     """
     if y_lim is not None:
         if len(y_lim) != 2 or not y_lim[0] < y_lim[1]:
             raise ValueError("y_lim must be a (lower, upper) pair with lower < upper.")
 
+    if str(ood_and_iid).strip().upper() == "BOTH":
+        ood_and_iid = None
+    evaluations = _normalize_evaluations(ood_and_iid)
+    paired = len(evaluations) == 2
     scores, metadata = _select_scores(
         df,
         metric=metric,
@@ -1088,6 +1106,7 @@ def plot_model_mean_std_comparison(
         kernel_triples=kernel_triples,
         include_kernel_config=include_kernel_config,
         complete_cases=complete_cases,
+        ood_and_iid=ood_and_iid,
     )
     metric = _metric_name(metric)
     metadata = _ordered_metadata(metadata, model)
@@ -1159,7 +1178,7 @@ def plot_model_mean_std_comparison(
     order_lookup = {label: index for index, label in enumerate(order)}
     evaluation_lookup = {
         evaluation: index
-        for index, evaluation in enumerate(EVALUATIONS)
+        for index, evaluation in enumerate(evaluations)
     }
     summary_df = (
         summary_df.assign(
@@ -1177,13 +1196,13 @@ def plot_model_mean_std_comparison(
     colors = _evaluation_colors(metadata)
     fig, ax = plt.subplots(figsize=figsize)
     x_positions = np.arange(len(order), dtype=float)
-    width = 0.33
-    offsets = {"OOD": -width / 2, "IID": width / 2}
+    width = 0.33 if paired else 0.67
+    offsets = {"OOD": -width / 2, "IID": width / 2} if paired else {evaluations[0]: 0.0}
     plotted_bars = []
     plotted_values = []
     plotted_colors = []
 
-    for evaluation in EVALUATIONS:
+    for evaluation in evaluations:
         evaluation_df = (
             summary_df[summary_df["evaluation"].eq(evaluation)]
             .set_index("configuration")
@@ -1216,7 +1235,12 @@ def plot_model_mean_std_comparison(
         plotted_values.extend(evaluation_df["mean"].to_numpy(dtype=float))
         plotted_colors.extend(bar_colors)
 
-    _hatch_highest_bars(plotted_bars, plotted_values, plotted_colors)
+    _hatch_best_bars(
+        plotted_bars,
+        plotted_values,
+        plotted_colors,
+        higher_is_better=_higher_is_better(metric),
+    )
 
     ax.set_xticks(x_positions)
     ax.set_xticklabels(
@@ -1235,15 +1259,14 @@ def plot_model_mean_std_comparison(
     ax.tick_params(axis="both", labelsize=fontsize - 2)
     if y_lim is not None:
         ax.set_ylim(*y_lim)
-    _evaluation_legend(ax)
+    if paired:
+        _evaluation_legend(ax)
 
+    evaluation_suffix = "_vs_".join(evaluation.lower() for evaluation in evaluations)
     _finalize_figure(
         fig,
         save_dir=save_dir,
-        file_name=(
-            file_name
-            or f"{metric}_ood_vs_iid_model_mean_std_comparison.png"
-        ),
+        file_name=file_name or f"{metric}_{evaluation_suffix}_model_mean_std_comparison.png",
         high_quality=high_quality,
         show=show,
     )
@@ -1571,29 +1594,29 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "(count:+)x(fp:x)"),
         ],
     }
-    for ood_type, result_df in ood_results.items():
-        for ood_and_iid in ["OOD", "IID"]:
-            plot_model_profile_comparison(
-                df=result_df,
-                model=models,
-                kernel_triples=selected_kernel_triples,
-                metric="r2",
-                ood_and_iid=ood_and_iid,
-                fontsize=15,
-                y_label="Profile AUC: R²",
-                figsize=(7.5, 5),
-                save_dir=(
-                    DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
-                ),
-                show=False,
-                high_quality=True,
-                file_name=f"R2_{ood_type}_{ood_and_iid.lower()}.png",
-            )
+    # for ood_type, result_df in ood_results.items():
+    #     for ood_and_iid in ["OOD"]:
+    #         plot_model_profile_comparison(
+    #             df=result_df,
+    #             model=models,
+    #             kernel_triples=selected_kernel_triples,
+    #             metric="nll",
+    #             ood_and_iid=ood_and_iid,
+    #             fontsize=15,
+    #             y_label="Profile AUC: NLL",
+    #             figsize=(7.5, 5),
+    #             save_dir=(
+    #                 DEFAULT_SAVE_DIR / "performance_profile" / "model_comparison"
+    #             ),
+    #             show=False,
+    #             high_quality=True,
+    #             file_name=f"NLL_{ood_type}_{ood_and_iid.lower()}.png",
+    #         )
 
-    # nll_models = [
+    # models = [
     #     "RF",
     #     "XGBR",
-    #     "NGB",
+    #     # "NGB",
     #     "GPytorchMAP",
     #     "GNN-GP",
     #     "GNN-GP-SN",
@@ -1605,11 +1628,11 @@ if __name__ == "__main__":
     # for ood_type, result_df in ood_results.items():
         # plot_model_comparison(
         #     df=result_df,
-        #     model=nll_models,
-        #     kernel_triples=kernel_triples,
+        #     model=models,
+        #     kernel_triples=selected_kernel_triples,
         #     metric="r2",
         #     y_label="R²",
-        #     y_lim=(-2, 1),
+        #     # y_lim=(-2, 1),
         #     fontsize=15,
         #     # log_y=False,
         #     figsize=(7.5, 5),
@@ -1620,17 +1643,19 @@ if __name__ == "__main__":
         # plot_model_mean_std_comparison(
         #     df=result_df,
         #     model=models,
-        #     kernel_triples=kernel_triples,
-        #     metric="RMSE",
-        #     y_label="RMSE",
-        #     # y_lim=(-1, 1),
+        #     kernel_triples=selected_kernel_triples,
+        #     metric="nll",
+        #     y_label="NLL",
+        #     y_lim=(0, 10),
         #     high_quality=False,
-        #     gradient_bars=False,
+        #     # high_quality=True,
+        #     gradient_bars=True,
         #     fontsize=15,
         #     figsize=(9, 5),
+        #     ood_and_iid="OOD",
         #     show=False,
         #     save_dir=(DEFAULT_SAVE_DIR / "average_performance" / "model_comparison"),
-        #     file_name=f"RMSE_{ood_type}_ood_vs_iid.png",
+        #     file_name=f"NLL_{ood_type}_ood.png",
         # )
 
     # Hybridization comparisons: select kernel pairs rather than the model

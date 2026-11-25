@@ -340,7 +340,9 @@ def apply_vertical_bar_gradients(
             interpolation=interpolation,
             zorder=bar.get_zorder() - 0.1,
         )
-        gradient_image.set_clip_path(bar)
+        # Passing a Rectangle directly replaces imshow's axes clip box.
+        # Set its path separately so the gradient is clipped to both.
+        gradient_image.set_clip_path(bar.get_path(), bar.get_transform())
         gradient_artists.append(gradient_image)
 
         bar.set_facecolor("none")

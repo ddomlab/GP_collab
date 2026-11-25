@@ -17,6 +17,7 @@ import pandas as pd
 from visualization_setting import (
     ensure_long_path,
     lighten_color,
+    metric_higher_is_better,
     model_type_color,
     selection_values,
 )
@@ -24,6 +25,7 @@ from visualize_gp import _add_datapoint_counts
 from visualize_ood_gp import (
     EVALUATIONS,
     HYBRIDIZATION_METHOD_COLORS,
+    _hatch_best_bars,
     _hybridization_input,
     _hybridization_metadata,
     _metric_name,
@@ -31,12 +33,11 @@ from visualize_ood_gp import (
     _keep_common_complete_clusters,
     _ordered_metadata,
     _select_scores,
+    load_ood_model_results,
 )
 
 
 HERE = Path(__file__).resolve().parent
-RESULTS = HERE.parent.parent / "results"
-MASTER_DATA = RESULTS / "master_ood_performance_data"
 DEFAULT_SAVE_DIR = HERE / "ood_result_analysis"
 
 
@@ -493,18 +494,24 @@ def plot_model_performance_by_target_grid(
     high_quality: bool = False,
     save_dir: Optional[Path] = DEFAULT_SAVE_DIR / "absolute_metric" / "model_comparison",
     file_name: Optional[str] = None,
+    *,
+    ood_and_iid: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Plot all per-target OOD/IID model comparisons in one figure.
+    """Plot per-target OOD, IID, or paired model comparisons in one figure.
 
     This is the combined-subplot counterpart of
     :func:`plot_model_performance_by_target`. Each subplot represents one
     dataset-target pair, ordered by full dataset size. Models or GP kernel
-    configurations are shown on the x-axis, with paired OOD and IID bars.
+    configurations are shown on the x-axis. Pass ``ood_and_iid="OOD"`` or
+    ``"IID"`` for centered bars without a legend, and ``"both"`` or ``None``
+    for side-by-side bars with a shared legend. The best mean in each subplot
+    is hatched according to the metric's direction.
     ``figsize`` is the size of one subplot and ``ncols`` controls the grid.
 
-    Cluster repeats, completeness rules, colors, and error bars match the
-    separate-target function. The returned DataFrame has one row per plotted
-    task/configuration/evaluation and records the shared output path.
+    Cluster repeats are averaged before computing the mean and standard
+    deviation. Complete cases are determined per target for the selected
+    splits. The returned DataFrame has one row per plotted task,
+    configuration, and split, and records the shared output path.
     """
     metric = _metric_name(metric)
     if ncols < 1:
@@ -512,6 +519,14 @@ def plot_model_performance_by_target_grid(
     if y_lim is not None:
         if len(y_lim) != 2 or not np.isfinite(y_lim).all() or not y_lim[0] < y_lim[1]:
             raise ValueError("y_lim must contain two finite values with lower < upper.")
+
+    if str(ood_and_iid).strip().upper() == "BOTH":
+        ood_and_iid = None
+    evaluations = _normalize_evaluations(ood_and_iid)
+    paired = len(evaluations) == 2
+    evaluation_label = " and ".join(evaluations)
+    evaluation_rank = {evaluation: i for i, evaluation in enumerate(evaluations)}
+    higher_is_better = metric_higher_is_better(metric)
 
     scores, metadata = _select_scores(
         df,
@@ -523,7 +538,7 @@ def plot_model_performance_by_target_grid(
         kernel_triples=kernel_triples,
         include_kernel_config=include_kernel_config,
         complete_cases=False,
-        ood_and_iid=None,
+        ood_and_iid=ood_and_iid,
     )
     metadata = _ordered_metadata(metadata, model)
     configuration_columns = [
@@ -538,11 +553,11 @@ def plot_model_performance_by_target_grid(
         ["paper", "target"], sort=False, dropna=False,
     ):
         coverage = task_scores.groupby("configuration key")["evaluation"].nunique()
-        keys = set(coverage.index[coverage.eq(len(EVALUATIONS))])
+        keys = set(coverage.index[coverage.eq(len(evaluations))])
         present = metadata["configuration key"].map(lambda key: key in keys)
         if not present.all():
             warnings.warn(
-                f"{paper!r}, {target!r}: missing OOD or IID {metric} scores for "
+                f"{paper!r}, {target!r}: incomplete {evaluation_label} {metric} scores for "
                 f"{metadata.loc[~present, 'configuration'].tolist()}; omitting those bars.",
                 RuntimeWarning,
                 stacklevel=2,
@@ -554,11 +569,11 @@ def plot_model_performance_by_target_grid(
             continue
         if complete_cases:
             task_scores = _keep_common_complete_clusters(
-                task_scores, evaluations=EVALUATIONS,
+                task_scores, evaluations=evaluations,
             )
         if task_scores.empty:
             warnings.warn(
-                f"Skipping {paper!r}, {target!r}: no common OOD/IID clusters "
+                f"Skipping {paper!r}, {target!r}: no common {evaluation_label} clusters "
                 "remain for the selected configurations.",
                 RuntimeWarning,
                 stacklevel=2,
@@ -591,9 +606,7 @@ def plot_model_performance_by_target_grid(
         summary["_configuration order"] = summary["configuration key"].map(
             configuration_rank
         )
-        summary["_evaluation order"] = summary["evaluation"].map(
-            {"OOD": 0, "IID": 1}
-        )
+        summary["_evaluation order"] = summary["evaluation"].map(evaluation_rank)
         summaries.append(summary)
 
     if not summaries:
@@ -619,6 +632,8 @@ def plot_model_performance_by_target_grid(
         squeeze=False,
     )
     axes_flat = axes.ravel()
+    width = 0.33 if paired else 0.67
+    offsets = {"OOD": -width / 2, "IID": width / 2} if paired else {evaluations[0]: 0.0}
 
     try:
         for ax, ((dataset, target), target_df) in zip(axes_flat, target_groups):
@@ -627,17 +642,20 @@ def plot_model_performance_by_target_grid(
             ].drop_duplicates().sort_values("_configuration order", kind="stable")
             order = order_df["configuration"].tolist()
             positions = np.arange(len(order), dtype=float)
-            width = 0.33
-            for evaluation, offset in (("OOD", -width / 2), ("IID", width / 2)):
+            plotted_bars = []
+            plotted_means = []
+            plotted_colors = []
+            for evaluation in evaluations:
                 values = target_df[target_df["evaluation"].eq(evaluation)].set_index(
                     "configuration"
                 ).reindex(order)
                 colors = [model_type_color(value) for value in values["model"]]
                 if evaluation == "IID":
                     colors = [lighten_color(color) for color in colors]
+                means = values["mean"].to_numpy(dtype=float)
                 bars = ax.bar(
-                    positions + offset,
-                    values["mean"].to_numpy(dtype=float),
+                    positions + offsets[evaluation],
+                    means,
                     width=width,
                     yerr=values["std"].to_numpy(dtype=float),
                     capsize=3,
@@ -645,6 +663,9 @@ def plot_model_performance_by_target_grid(
                     edgecolor="none",
                     error_kw={"elinewidth": 1.0, "capthick": 1.0},
                 )
+                plotted_bars.extend(bars)
+                plotted_means.extend(means)
+                plotted_colors.extend(colors)
                 if show_values:
                     ax.bar_label(
                         bars,
@@ -654,6 +675,10 @@ def plot_model_performance_by_target_grid(
                         clip_on=True,
                     )
 
+            _hatch_best_bars(
+                plotted_bars, plotted_means, plotted_colors,
+                higher_is_better=higher_is_better,
+            )
             n_datapoints = target_df["n datapoints"].iloc[0]
             n_label = (
                 f"{int(n_datapoints)}"
@@ -677,22 +702,24 @@ def plot_model_performance_by_target_grid(
         for ax in axes_flat[len(target_groups):]:
             ax.set_visible(False)
 
-        fig.legend(
-            handles=[
-                Patch(facecolor="#666666", label="OOD"),
-                Patch(facecolor=lighten_color("#666666"), label="IID"),
-            ],
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.995),
-            ncol=2,
-            frameon=False,
-            fontsize=fontsize + 2,
-        )
-        fig.tight_layout(rect=(0, 0, 1, 0.96))
+        if paired:
+            fig.legend(
+                handles=[
+                    Patch(facecolor="#666666", label="OOD"),
+                    Patch(facecolor=lighten_color("#666666"), label="IID"),
+                ],
+                loc="upper center",
+                bbox_to_anchor=(0.5, 0.995),
+                ncol=2,
+                frameon=False,
+                fontsize=fontsize + 2,
+            )
+        fig.tight_layout(rect=(0, 0, 1, 0.96) if paired else None)
         if save_dir is not None:
             output_dir = ensure_long_path(Path(save_dir))
             output_dir.mkdir(parents=True, exist_ok=True)
-            output_name = file_name or f"{metric}_model_comparison_by_target.png"
+            suffix = "" if paired else f"_{evaluations[0].lower()}"
+            output_name = file_name or f"{metric}_model_comparison_by_target{suffix}.png"
             output_path = ensure_long_path(output_dir / output_name)
             fig.savefig(
                 output_path,
@@ -711,32 +738,45 @@ def plot_model_performance_by_target_grid(
 
 
 if __name__ == "__main__":
+    master_device = "GPU"
+    ood_results = load_ood_model_results(master_device)
+    ood_and_iid = "OOD"
     models = [
-        "RF", "XGBR", "NGB", "GPytorchMAP", "GNN-GP", "GNN-GP-SN",
-        "GNN-MLP", "GNN-MLP-Ens", "MLP-GP", "MLP-GP-SN",
+        "RF",
+        "XGBR",
+        "NGB",
+        "GPytorchMAP",
+        "GpyroHMC",
+        "MGK",
+        "GNN-GP",
+        "GNN-GP-SN",
+        "GNN-MLP",
+        "GNN-MLP-Ens",
+        "MLP-GP",
+        "MLP-GP-SN",
     ]
-    kernel_triples = [
-        ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
-        ("Matern32", "Matern32", "(count:x)+(fp:x)"),
-    ]
-    requested_methods = [
-        # "sum",
-        "product",
-        "(count:+)x(fp:+)",
-        "(count:x)+(fp:x)",
-    ]
-    for ood_type in ("structure", "continuous"):
-        result_df = pd.read_pickle(
-            MASTER_DATA / f"Tree_GP_MLP_{ood_type}_cluster_OOD.pkl"
-        )
-        metrics = "r2"
+    selected_kernel_triples = {
+        "MGK": ("Graph", "Matern32", "(count:+)x(graph:x)"),
+        "GP-MAP": [
+            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+        ],
+        "GP-HMC": [
+            ("Matern32", "Matern32", "(count:+)x(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:x)"),
+        ],
+    }
+
+    for ood_type, result_df in ood_results.items():
+        metrics = "nll"
         plot_model_performance_by_target_grid(
             df=result_df,
             metric=metrics,
             model=models,
-            kernel_triples=kernel_triples,
-            y_label="R²",
-            # y_lim=(0, .5),
+            kernel_triples=selected_kernel_triples,
+            ood_and_iid=ood_and_iid,
+            y_label="NLL",
+            y_lim=(0, 10),
             ncols=3,
             fontsize=15,
             figsize=(7, 5),
@@ -746,7 +786,7 @@ if __name__ == "__main__":
                 DEFAULT_SAVE_DIR / "absolute_metric" / "model_comparison"
                 / "all_targets" / ood_type / metrics.capitalize()
             ),
-            file_name=f"{ood_type}_{metrics.capitalize()}.png",
+            file_name=f"{ood_type}_{metrics.capitalize()}_{ood_and_iid.lower()}.png",
         )
 
         # metrics = "cvpp_ama"
@@ -754,7 +794,7 @@ if __name__ == "__main__":
         #     df=result_df,
         #     metric=metrics,
         #     model=models,
-        #     kernel_triples=kernel_triples,
+        #     kernel_triples=selected_kernel_triples,
         #     y_label="AMA",
         #     y_lim=(0, .5),
         #     fontsize=15,
