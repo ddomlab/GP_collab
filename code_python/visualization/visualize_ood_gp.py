@@ -1567,8 +1567,8 @@ if __name__ == "__main__":
             ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
         ],
         "GP-HMC": [
-            ("Matern32", "Matern32", "(count:x)+(fp:x)"),
-            ("TanimotoMatern32", "Matern32", "(count:x)+(fp:x)"),
+            ("Matern32", "Matern32", "(count:+)x(fp:x)"),
+            ("TanimotoMatern32", "Matern32", "(count:+)x(fp:x)"),
         ],
     }
     for ood_type, result_df in ood_results.items():
@@ -1577,7 +1577,7 @@ if __name__ == "__main__":
                 df=result_df,
                 model=models,
                 kernel_triples=selected_kernel_triples,
-                metric="cvpp",
+                metric="r2",
                 ood_and_iid=ood_and_iid,
                 fontsize=15,
                 y_label="Profile AUC: R²",

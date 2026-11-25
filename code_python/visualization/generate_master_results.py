@@ -1442,7 +1442,7 @@ def build_master_performance_data(
 
 if __name__ == "__main__":
     # Extract feature stability separately from the performance tables:
-    extract_feature_importance_stability()
+    # extract_feature_importance_stability()
 
     # Choose one feature set and a distinct output name:
     # feature_set: FeatureSet = "count_and_graph"
@@ -1464,14 +1464,14 @@ if __name__ == "__main__":
     #     feature_set=feature_set,
     # )
 
-    # ood_type: OODType = "structure_cluster_OOD"
-    # output_name = {
-    #     "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
-    #     "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
-    # }[ood_type]
+    ood_type: OODType = "continuous_cluster_OOD"
+    output_name = {
+        "structure_cluster_OOD": "Tree_GP_MLP_structure_cluster_OOD",
+        "continuous_cluster_OOD": "Tree_GP_MLP_continuous_cluster_OOD",
+    }[ood_type]
 
-    # build_master_ood_performance_data(
-    #     save_path=RESULTS / "master_ood_performance_data" / output_name,
-    #     score_metrics=DEFAULT_OOD_SCORE_METRICS,
-    #     ood_type=ood_type,
-    # )
+    build_master_ood_performance_data(
+        save_path=RESULTS / "master_ood_performance_data" / output_name,
+        score_metrics=DEFAULT_OOD_SCORE_METRICS,
+        ood_type=ood_type,
+    )
